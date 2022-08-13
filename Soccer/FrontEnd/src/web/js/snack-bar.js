@@ -6,37 +6,21 @@
         const $style = document.createElement("style")
         $style.setAttribute("id", "snack-bar-css")
         $style.innerHTML = `
-        snack-bar.hide-snack-bar {
-            visibility: hidden;
-            min-width: 250px;
-            text-align: center;
-            z-index: 1;
+        root {
+            --snack-bar-duration: 3s;
         }
-        snack-bar.show {
-            visibility: visible;
-            -webkit-animation: fadein 0.5s, fadeout 0.5s var(--snack-bar-duration)s;
-            animation: fadein 0.5s, fadeout 0.5s var(--snack-bar-duration)s;
+        .snack-bar {
+            background-color: rgba(0, 0, 0, 0.25);
+            padding: 1em;
+            max-width: 600px;
+            margin: auto;
+            border-radius: 10px;
+            animation: fadeInOut var(--snack-bar-duration)s linear 1 forwards;
         }
-        @-webkit-keyframes fadein {
-            from {bottom: 0; opacity: 0;}
-            to {bottom: 30px; opacity: 1;}
-        }
-        @keyframes fadein {
-            from {bottom: 0; opacity: 0;}
-            to {bottom: 30px; opacity: 1;}
-        }
-        @-webkit-keyframes fadeout {
-            from {bottom: 30px; opacity: 1;}
-            to {bottom: 0; opacity: 0;}
-        }
-        @keyframes fadeout {
-            from {bottom: 30px; opacity: 1;}
-            to {bottom: 0; opacity: 0;}
-        }
-        fieldset[data-tab] {
-            margin-top: 3px;
-        }
-        `
+        @keyframes fadeInOut {
+            0%,100% { opacity: 0; }
+            25%,50% { opacity: 1; }
+        }`
         document.head.append($style)
     }
 
@@ -49,21 +33,15 @@
     }
 
     // Also known as "Toast" and "Snackbar"
-    class Snackbar extends HTMLElement {
-        constructor() {
-            super()
-            const shadowRoot = this.attachShadow({mode: 'open'})
-            shadowRoot.innerHTML = `<slot name="message"><p>I love cheeseburgers!</p></slot>`
+    customElements.define("snack-bar", 
+        class Snackbar extends HTMLElement {
+            connectedCallback() {
+                const timeout = (getSnackBarDuration(this) || getSnackBarDuration(document.documentElement) || 3) + 0.1
+                setTimeout(() => {
+                    this.remove()
+                } , timeout * 1e3)
+            }
         }
+    )
 
-        connectedCallback() {
-            this.classList.add("hide-snack-bar")
-            const timeout = (getSnackBarDuration(this) || getSnackBarDuration(document.documentElement) || 3) + 0.5
-            setTimeout(() => {
-                this.remove()
-            } , timeout * 1e3)
-        }
-    }
-
-    customElements.define("snack-bar", Snackbar)
 })()

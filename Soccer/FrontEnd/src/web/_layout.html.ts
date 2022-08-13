@@ -39,7 +39,7 @@ const render = (theme: string | undefined, syncCount: number, url: string) => (o
          ? html`<script src="${script}" type=module></script>`
        : null }
     <script src="/web/js/snack-bar.js"></script>
-    <script src="/web/js/main.js"></script>
+    <script src="/web/js/service-worker-loader.js"></script>
 </body>
 </html>`
 }

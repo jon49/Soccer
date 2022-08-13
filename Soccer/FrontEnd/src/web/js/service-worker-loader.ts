@@ -5,12 +5,15 @@
             console.log("State installed, initiate ask user.")
             const messages = document.getElementById('messages')
             if (!messages) return
-            const toaster = document.createElement("snack-bar")
-            toaster.setAttribute("class", "show")
-            toaster.setAttribute("style", "--snack-bar-duration: 20;")
-            toaster.innerHTML = /*html*/`<p slot=message>A new version the app has been loaded. <button data-action=refresh-service-worker>REFRESH</button></p>`
+            const template = document.createElement("template")
+            template.innerHTML = `
+                <snack-bar style="--snack-bar-duration: 20;">
+                    <div class="snack-bar">
+                    <p>A new version the app has been loaded. <button data-action=refresh-service-worker>Refresh</button></p>
+                    </div>
+                </snack-bar>`
             listenToUserResponse(this)
-            messages.appendChild(toaster)
+            messages.appendChild(template.content.children[0])
 
             return true
         } else if (this.state === "activated") {
@@ -42,10 +45,9 @@
         navigator.serviceWorker.addEventListener('controllerchange', function () {
             console.log("Controller change.")
             if (refreshing) return
-            // window.location.reload()
             refreshing = true
             console.log("Reload.")
-            window.location.href = window.location.href
+            window.location.reload()
         })
     }
 
