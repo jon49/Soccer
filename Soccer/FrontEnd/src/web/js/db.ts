@@ -1,5 +1,5 @@
+import { Theme } from "../user-settings/edit.html.js"
 import { get as get1, getMany, setMany, set as set1, update as update1 } from "./lib/db.min.js"
-import { Theme } from "../user-settings/edit.html"
 
 const get : DBGet = get1
 
@@ -24,13 +24,6 @@ async function set(key: string, value: any, sync = true) {
     }
 }
 
-interface DBAccessors {
-    "user-settings": UserSettings
-    "chart-settings": ChartSettings
-    "updated": Updated
-    "settings": Settings
-}
-
 function update<K extends keyof DBAccessors>(key: K, f: (val: DBAccessors[K]) => DBAccessors[K], sync?: { sync: boolean }): Promise<void>
 function update<T>(key: string, f: (val: T) => T, sync?: { sync: boolean }): Promise<void>
 async function update(key: string, f: (v: any) => any, sync = { sync: true }) {
@@ -42,43 +35,62 @@ async function update(key: string, f: (v: any) => any, sync = { sync: true }) {
 
 export { update, set, get, getMany, setMany }
 
-export interface WeightData {
-    date: string
-    weight: number | undefined
-    bedtime: string | undefined
-    sleep: number | undefined
-    waist: number | undefined
-    comments: string | undefined
-}
-
 export interface Settings {
     lastSyncedId?: number | undefined
-    theme?: Theme
+    theme: Theme
 }
 
-export interface UserSettings {
-    earliestDate: string | undefined
-    height: number | undefined
-    goalWeight: number | undefined
+export interface Stats {
+    id: number
+    name: string
 }
 
-export type DurationUnit = "month" | "year" | "week"
-export interface ChartSettings {
-    duration: number
-    durationUnit: DurationUnit
+export interface Game {
+    id: number
+    name: string
 }
+
+export interface PlayerGame {
+    gameId: number
+    stats: {statId: number, count: number}[]
+    gameTime: { start: number, end?: number }[]
+}
+
+export interface Player {
+    name: string
+    games: PlayerGame[]
+}
+
+export interface Team {
+    name: string
+    players: {name: string, active: boolean}[]
+}
+
+export interface TeamSingle {
+    name: string
+    year: string
+    active: boolean
+}
+export type Teams = TeamSingle[]
 
 export type Updated = Map<IDBValidKey, number>
 
+interface DBAccessors {
+    updated: Updated
+    settings: Settings
+    teams: Teams
+    error: any
+}
+
 interface DBGet {
-    (key: "user-settings"): Promise<UserSettings | undefined>
-    (key: "chart-settings"): Promise<ChartSettings | undefined>
     (key: "updated"): Promise<Updated | undefined>
     (key: "settings"): Promise<Settings | undefined>
+    (key: "teams"): Promise<Teams | undefined>
+    (key: "error"): Promise<any | undefined>
     <T>(key: string): Promise<T | undefined>
 }
 
 export type FormReturn<T> = { [key in keyof T]: string|undefined }
-export interface UserSettingsForm extends FormReturn<UserSettings> {}
-export interface WeightDataForm extends FormReturn<WeightData> {}
-export interface ChartSettingsForm extends FormReturn<ChartSettings> {}
+// export interface UserSettingsForm extends FormReturn<UserSettings> {}
+// export interface WeightDataForm extends FormReturn<WeightData> {}
+// export interface ChartSettingsForm extends FormReturn<ChartSettings> {}
