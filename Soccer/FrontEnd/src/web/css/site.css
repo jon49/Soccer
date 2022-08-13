@@ -124,8 +124,14 @@ input,select,textarea{font-size: 1em; color:var(--c4); background: var(--c2); bo
   --c4:#eee;
 }
 
+form > div {
+  padding: 10px 0;
+}
+
 input, select, textarea {
   font-size: inherit;
+  display: block;
+  margin-top: 5px;
 }
 
 .button, button, input[type=submit], input[type=reset] {
@@ -241,6 +247,10 @@ a.external {
     top: 0;
     border-width: 0px;
     height: 0;
+}
+
+p.error {
+  color: red;
 }
 
 footer {
