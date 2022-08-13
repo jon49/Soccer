@@ -6,8 +6,9 @@ import { RoutePostArgs } from "./js/route"
 async function start(req: Request) {
     const data = await get("teams")
     const url = new URL(req.url)
+    const showAll = url.searchParams.get("all") !== null
     let teams =
-        url.searchParams.get("all")
+        showAll
             ? data
         : data?.filter(x => x.active)
     teams?.sort((a, b) =>
@@ -15,21 +16,26 @@ async function start(req: Request) {
             ? b.year.localeCompare(a.year)
         : a.name.localeCompare(b.name)
     )
-    return teams
+    return { teams, showAll }
 }
 
-const render = (teams: Teams | undefined) => 
+const render = ({ teams, showAll }: { teams: Teams | undefined, showAll: boolean }) => 
     html`
 <h2>Teams</h2>
 
 ${
     teams ? html`
         <ul class=list>
-            ${teams?.map(x => html`<li><a href="?team=${x.name}">${x.name} - ${x.year}</a> <a href="/web/teams/edit?team=${x.name}">Edit</a></li>`)}
+            ${teams?.map(x => {
+                let uriName = encodeURIComponent(x.name)
+                return html`<li><a href="?team=${uriName}">${x.name} - ${x.year}</a> <a href="/web/teams/edit?team=${uriName}">Edit</a></li>`
+            })}
         </ul>
     `
     : html`<p>No teams found. Please add one!</p>`
 }
+
+${ teams && !showAll ? html`<p><a href="?all">Show inactive teams.</a></p>` : null }
 
 <p><strong>Add a team:</strong></p>
 
