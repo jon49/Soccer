@@ -1,10 +1,14 @@
-import { addRoutes, findRoute, RoutePost } from "./js/route.js"
+import { addRoutes, findRoute, RoutePost } from "./js/route"
 import indexHandler from "./index.html.js"
-import { version } from "./settings.js"
-import layout from "./_layout.html.js"
+import { version } from "./settings"
+import layout from "./_layout.html"
+import teamsHandler from "./teams.html"
+import { set } from "./js/db"
+import html from "./js/html-template-tag"
 
 addRoutes([
     indexHandler,
+    teamsHandler,
 ])
 
 const links : string[] = [] // File cache
@@ -87,9 +91,8 @@ async function post(url: string, req: Request) : Promise<Response> {
             // return new Response("<meta http-equiv='refresh' content='0'>", { headers: htmlHeader()})
         } catch (error) {
             if (error && typeof error === "object" && error.hasOwnProperty("message")) {
-                let template = await layout(req)
-                // @ts-ignore
-                streamResponse(url, template({ main: html`<p class=error>${error.message}</p>` }))
+                await set("error", error, false)
+                return Response.redirect(req.referrer, 302)
             } else {
                 console.error("Unknown error during post.", error)
             }

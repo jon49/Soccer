@@ -2,7 +2,7 @@ import html from "./js/html-template-tag.js"
 import * as db from "./js/db.js"
 import { version } from "./settings.js"
 
-const render = (theme: string | undefined, syncCount: number, url: string) => (o: LayoutTemplateArguments) => {
+const render = (theme: string | undefined, error: any, syncCount: number, url: string) => (o: LayoutTemplateArguments) => {
     const { main, head, script } = o
     return html`
 <!DOCTYPE html>
@@ -26,13 +26,16 @@ const render = (theme: string | undefined, syncCount: number, url: string) => (o
             </form>
         </div>
         <nav>
-            <a href="/web/entries">Entries</a>
-            | <a href="/web/entries/edit">Add/Edit</a>
+            <a href="/web/teams">Teams</a>
+            <!--| <a href="/web/entries/edit">Add/Edit</a>
             | <a href="/web/charts">Charts</a>
-            | <a href="/web/user-settings/edit">User Settings</a>
+            | <a href="/web/user-settings/edit">User Settings</a>-->
         </nav>
     </header>
-    <main>${main}</main>
+    <main>
+        ${error?.message ? (Array.isArray(error.message) ? error.message.map((x: string) => html`<p class=error>${x}</p>`) : html`<p class=error>${error.message}</p>` ) : null}
+        ${main}
+    </main>
     <footer><p>${version}</p></footer>
     <div id=messages></div>
     ${ script
@@ -48,8 +51,11 @@ const getSyncCount = async () => (await db.get("updated"))?.size ?? 0
 
 export default
     async function layout(req: Request) {
-        let [theme, count] = await Promise.all([db.get("settings"), getSyncCount()])
-        return render(theme?.theme, count, req.url)
+        let [theme, count, error] = await Promise.all([db.get("settings"), getSyncCount(), db.get("error")])
+        if (error) {
+            await db.set("error", void 0)
+        }
+        return render(theme?.theme, error, count, req.url)
     }
 
 export type Layout = typeof layout
