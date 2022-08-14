@@ -1,98 +1,82 @@
-// import html from "./js/html-template-tag"
-// import layout from "./_layout.html"
-// import { get, getMany, WeightData } from "./js/db"
+import html from "./js/html-template-tag"
+import layout from "./_layout.html"
+import { get, update, Team, Teams, TeamPlayer, TeamSingle } from "./js/db"
+import { searchParams } from "./js/utils"
 
-// interface WeightDataYear extends WeightData { year: string }
+export interface TeamView {
+    name?: string
+    players?: TeamPlayer[]
+}
 
-// async function start(req: Request) {
-//     let data : WeightDataYear[] = []
-//     const url = new URL(req.url)
-//     const year = +(url.searchParams.get("year") ?? new Date().getFullYear())
-//     const [ yearList, dataList ] = await Promise.all([getYears(), getData(year)])
-//     const years = yearList.map(x => ""+x)
-//     for (let index = 0; index < dataList.data.length; index++) {
-//         let d = <WeightDataYear>dataList.data[index];
-//         if (!d) continue
-//         d.year = dataList.dates[index]
-//         data.push(d)
-//     }
-//     return {data, years}
-// }
+interface PlayersView {
+    players: TeamView | undefined
+    teamExists: boolean
+}
 
-// const $row = ({date, weight, bedtime, sleep, waist, comments}: WeightDataYear) =>
-//     html`<tr>
-//         <td>${date}</td>
-//         <td>${weight}</td>
-//         <td>${cleanBedtime(bedtime)}</td>
-//         <td>${sleep}</td>
-//         <td>${waist}</td>
-//         <td>${comments}</td>
-//     </tr>`
+async function start(req: Request) {
+    let query = searchParams<{team: string}>(req)
+    let players = await get<Team>(query.team)
+    let team : TeamSingle | undefined
+    if (!players) {
+        let teams = await get("teams")
+        team = teams?.find(x => x.name === query.team)
+    }
+    let teamExists = !!(players || team)
+    let result: PlayersView = {
+        players: teamExists && players || { name: team?.name },
+        teamExists,
+    }
+    return result
+}
 
-// const render = (years: string[], data: WeightDataYear[]) => 
-//     html`
-// <h2>Entries</h2>
+function render({ players, teamExists }: PlayersView) {
+    return html`
+    <h2>Team ${players?.name ?? "Unknown"}</h2>
+    ${  !teamExists
+            ? html`<p>Could not find the team "${players?.name ?? ""}"!</p>`
+        : renderMain({players, teamExists}) }`
+}
 
-// <div class=date-list>
-//     ${years.reverse().map((year: string) => html`<a href="?year=${year}">${year}</a>`)}
-// </div>
+function renderMain({ players }: PlayersView) {
+    return html`
+    ${ players
+        ? html`
+    <ul class=list>
+        ${players.players?.map(x => {
+            let uriName = encodeURIComponent(x.name);
+            return html`<li><a href="?player=${uriName}">${x.name}</a> <a href="edit?player=${uriName}">Edit</a></li>`
+        })}
+    </ul>`
+       : html`<p>No players found. Please add one!</p>` }
+    <h3>Add a player</h3>
 
-// <table>
-//     <thead><tr><th>Date&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</th><th>Weight</th><th>Bedtime</th><th>Hours Slept</th><th>Waist (cm)</th><th>Comments</th></tr></thead>
-//     <tbody>${data.reverse().map($row)}</tbody>
-// </table>
+    <form method=post onchange="this.submit()">
+        <div>
+            <label for=name>Player Name</label><input id=name name=name type=text required>
+        </div>
+        <button>Save</button>
+    </form>`
+}
 
-// <a href="#" class="back-to-top button">Back to Top</a>`
+const head = `
+    <style>
+        ul.list {
+            list-style-type: none;
+            display: table;
+        }
+        ul.list > li {
+            display: table-row;
+        }
+        ul.list > li > a {
+            display: table-cell;
+            padding: 1px 5px;
+        }
+    </style>`
 
-// async function getData(year: number) : Promise<TableData> {
-//     const start = new Date()
-//     start.setDate(1)
-//     start.setMonth(0)
-//     start.setFullYear(year)
-//     const end = new Date(start)
-//     end.setMonth(11)
-//     end.setDate(31)
-//     const dates = dateFill(start, end)
-//     const data : WeightData[] = await getMany(dates)
-//     return {dates, data}
-// }
-
-// async function getYears() : Promise<number[]> {
-//     const thisYear = new Date().getFullYear()
-//     const settings = await get("user-settings")
-//     const startYearString = +(settings?.earliestDate?.slice(0, 4) ?? dateToString(new Date()))
-//     const startYear = Number.isNaN(startYearString) ? thisYear : startYearString
-//     return [...Array(thisYear - startYear + 1).keys()].map(x => x + startYear)
-// }
-
-// function cleanBedtime(bedtime: string | undefined) {
-//     if (!bedtime || bedtime.length !== 5 || bedtime[bedtime.length - 1] === "M") return bedtime
-
-//     let time = new Date(`1970-01-01T${bedtime}`).toLocaleTimeString()
-//     return html`${time.slice(0, time.lastIndexOf(":"))}&nbsp;${time.slice(-2)}`
-// }
-
-// const head = `
-//     <style>
-//         .date-list > a {
-//             display: inline-block;
-//             padding-right: 10px;
-//             padding-top: 3px;
-//         }
-//         tr > td:nth-child(3) {
-//             text-align: right;
-//         }
-//     </style>`
-
-// interface TableData {
-//     dates: string[]
-//     data: WeightData[]
-// }
-
-// export default {
-//     route: /\/entries\/$/,
-//     async get(req: Request) {
-//         const [result, template] = await Promise.all([start(req), layout(req)])
-//         return template({ main: render(result.years, result.data), head })
-//     }
-// }
+export default {
+    route: /\/players\/$/,
+    async get(req: Request) {
+        const [result, template] = await Promise.all([start(req), layout(req)])
+        return template({ main: render(result), head, nav: [{name: "Edit", url: `/web/teams/edit?team=${result.players?.name}`}] })
+    }
+}
