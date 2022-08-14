@@ -13,21 +13,28 @@ interface PlayersView {
     players: TeamView | undefined
     teamExists: boolean
     playerCache: { posted?: boolean, name?: string } | undefined
+    wasFiltered: boolean
 }
 
 async function start(req: Request) : Promise<PlayersView> {
-    let query = searchParams<{team: string}>(req)
+    let query = searchParams<{team: string, all: string | null}>(req)
     let [players, playerCache] = await Promise.all([get<Team>(query.team), cache.pop("players")])
     let team : TeamSingle | undefined
+    let wasFiltered = false
     if (!players) {
         let teams = await get("teams")
         team = teams?.find(x => x.name === query.team)
+    } else if (query.all === null) {
+        let filtered = players.players.filter(x => x.active)
+        wasFiltered = filtered.length !== players.players.length
+        players.players = filtered
     }
     let teamExists = !!(players || team)
     return {
         players: teamExists && players || { name: team?.name },
         teamExists,
-        playerCache
+        playerCache,
+        wasFiltered,
     }
 }
 
@@ -68,24 +75,26 @@ async function post({ data, req }: RoutePostArgsWithType<{name: string}>) {
     return
 }
 
-async function archive({ req }: RoutePostArgs) {
-    let query = searchParams<{team: string, player: string}>(req)
+function setActiveValueTo(active: boolean) {
+    return async ({ req }: RoutePostArgs) => {
+        let query = searchParams<{team: string, player: string}>(req)
 
-    let errors: string[] = []
-    let name = query.player?.trim()
-    if (!name) errors.push(`Player name is required.`)
-    let teamName = query.team?.trim()
-    if (!teamName) errors.push(`Team name is required.`)
-    if (errors.length > 0) return Promise.reject({message: errors})
+        let errors: string[] = []
+        let name = query.player?.trim()
+        if (!name) errors.push(`Player name is required.`)
+        let teamName = query.team?.trim()
+        if (!teamName) errors.push(`Team name is required.`)
+        if (errors.length > 0) return Promise.reject({message: errors})
 
-    let team = await get<Team>(teamName)
-    if (!team) return Promise.reject({message: [`Could not find team "${query.team}".`]})
-    let player = team.players.find(x => x.name === query.player)
-    if (!player) return Promise.reject({message: [`Could not find player "${query.player}".`]})
-    player.active = false
+        let team = await get<Team>(teamName)
+        if (!team) return Promise.reject({message: [`Could not find team "${query.team}".`]})
+        let player = team.players.find(x => x.name === query.player)
+        if (!player) return Promise.reject({message: [`Could not find player "${query.player}".`]})
+        player.active = active
 
-    await set<Team>(team.name, team)
-    return
+        await set<Team>(team.name, team)
+        return
+    }
 }
 
 function render(view: PlayersView) {
@@ -96,18 +105,31 @@ function render(view: PlayersView) {
         : renderMain(view) }`
 }
 
-function renderMain({ players, playerCache }: PlayersView) {
+function renderMain({ players, playerCache, wasFiltered }: PlayersView) {
     let { name, posted } = playerCache ?? {}
+    let teamUriName = encodeURIComponent(players?.name ?? "")
+    let playersExist = players?.players && players.players.length > 0
     return html`
-    ${ players && players.players
+    ${ playersExist
         ? html`
     <ul class=list>
-        ${players.players?.map(x => {
+        ${players?.players?.map(x => {
             let uriName = encodeURIComponent(x.name);
-            return html`<li><a href="?player=${uriName}">${x.name}</a> <a href="edit?player=${uriName}">Edit</a></li>`
+            return html`
+            <li>
+                <a href="?player=${uriName}&team=${teamUriName}">${x.name}</a>
+                ${ x.active
+                    ? html`<form method=post action="?handler=archive&player=${uriName}&team=${teamUriName}"><button>Archive</button></form>`
+                : html`<form method=post action="?handler=activate&player=${uriName}&team=${teamUriName}"><button>Activate</button></form>` }
+            </li>`
         })}
     </ul>`
        : html`<p>No players found. Please add one!</p>` }
+
+    ${ wasFiltered
+        ? html`<p><a href="?all&team=${teamUriName}">Show all players.</a></p>`
+    : (playersExist && players?.players?.find(x => !x.active) ? html`<p><a href="?team=${teamUriName}">Hide archived players.</a></p>` : null) }
+
     <h3>Add a player</h3>
 
     <form method=post onchange="this.submit()">
@@ -135,7 +157,9 @@ const head = `
     </style>`
 
 const postHandlers : PostHandlers = {
-    post, archive
+    post,
+    archive: setActiveValueTo(false),
+    activate: setActiveValueTo(true),
 }
 
 const route : Route = {
