@@ -33,7 +33,26 @@ async function update(key: string, f: (v: any) => any, sync = { sync: true }) {
     }
 }
 
-export { update, set, get, getMany, setMany }
+class TempCache1 {
+    async push(value: Partial<TempCache>) {
+        if (value instanceof Object && !Array.isArray(value))
+            await update1("temp-cache", x => x ? { ...x, ...value as {}} : value as {})
+    }
+    async pop<K extends keyof TempCache>(key: K): Promise<TempCache[K]> {
+        let result = await get("temp-cache")
+        await update1("temp-cache", x => {
+            if (x && x[key]) {
+                delete x[key]
+                return x
+            }
+            return x
+        })
+        return result ? result[key] : undefined
+    }
+}
+
+const cache = new TempCache1()
+export { update, set, get, getMany, setMany, cache }
 
 export interface Settings {
     lastSyncedId?: number | undefined
@@ -78,9 +97,15 @@ export interface TeamSingle {
 }
 export type Teams = TeamSingle[]
 
+export interface CacheTeams {
+    name?: string
+    year?: string
+    posted?: boolean
+}
+
 export interface TempCache {
-    errors?: { message?: any }
-    teams?: any
+    message?: any
+    teams?: CacheTeams
 }
 
 export type Updated = Map<IDBValidKey, number>
