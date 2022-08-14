@@ -1,7 +1,7 @@
 import html from "./js/html-template-tag"
 import layout from "./_layout.html"
 import { CacheTeams, get, set, Teams, TeamSingle, TempCache, cache, update } from "./js/db"
-import { RoutePostArgs } from "./js/route"
+import { handlePost, PostHandlers, RoutePostArgs, RoutePostArgsWithType } from "./js/route"
 import { searchParams } from "./js/utils"
 import teamView from "./players.html"
 
@@ -74,7 +74,7 @@ const head = `
         }
     </style>`
 
-async function post(data: {name: string, year: string}) {
+async function post({ data }: RoutePostArgsWithType<{name: string, year: string}>) {
     let errors: string[] = []
     if (!data.name) errors.push("Team name required!")
     if (!data.year) errors.push("The year is required!")
@@ -91,7 +91,7 @@ async function post(data: {name: string, year: string}) {
     return
 }
 
-async function handleArchive(req: Request) {
+async function archive({ req }: RoutePostArgs) {
     let query = searchParams<{team: string}>(req)
     let teams = await get("teams")
     await update("teams", xs => {
@@ -107,22 +107,17 @@ async function handleArchive(req: Request) {
     }
 }
 
+const postHandlers: PostHandlers = { post, archive }
+
 export default {
     route: /\/teams\/$/,
     async get(req: Request) {
         const [result, template] = await Promise.all([start(req), layout(req)])
         return template({ main: render(result), head })
     },
-    async post({ data, req }: RoutePostArgs) {
-        let query = searchParams<{handler?: "archive"}>(req)
-        switch (query.handler) {
-            case "archive":
-                await handleArchive(req)
-                break
-            default:
-                await post(data)
-        }
-        return Response.redirect(req.referrer, 302)
+    async post(args: RoutePostArgs) {
+        await handlePost(args, postHandlers)
+        return Response.redirect(args.req.referrer, 302)
     }
 }
 
