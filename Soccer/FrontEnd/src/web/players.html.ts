@@ -1,7 +1,8 @@
 import html from "./js/html-template-tag"
 import layout from "./_layout.html"
-import { get, update, Team, Teams, TeamPlayer, TeamSingle } from "./js/db"
+import { get, Team, TeamPlayer, TeamSingle } from "./js/db"
 import { searchParams } from "./js/utils"
+import { Route } from "./js/route"
 
 export interface TeamView {
     name?: string
@@ -73,10 +74,11 @@ const head = `
         }
     </style>`
 
-export default {
+const route : Route = {
     route: /\/players\/$/,
     async get(req: Request) {
         const [result, template] = await Promise.all([start(req), layout(req)])
-        return template({ main: render(result), head, nav: [{name: "Edit", url: `/web/teams/edit?team=${result.players?.name}`}] })
+        return template({ main: render(result), head, nav: [{name: "Edit", url: `edit?team=${result.players?.name}`}] })
     }
 }
+export default route
