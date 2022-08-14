@@ -101,6 +101,3 @@ interface DBGet {
 }
 
 export type FormReturn<T> = { [key in keyof T]: string|undefined }
-// export interface UserSettingsForm extends FormReturn<UserSettings> {}
-// export interface WeightDataForm extends FormReturn<WeightData> {}
-// export interface ChartSettingsForm extends FormReturn<ChartSettings> {}
