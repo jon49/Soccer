@@ -9,7 +9,7 @@ interface Nav {
 
 interface Render {
     theme: string | undefined
-    error: any
+    error: string[] | undefined
     syncCount: number
     url: string
 }
@@ -47,7 +47,7 @@ const render = ({theme, error, syncCount, url}: Render) => (o: LayoutTemplateArg
         </nav>
     </header>
     <main>
-        ${error?.message ? (Array.isArray(error.message) ? error.message.map((x: string) => html`<p class=error>${x}</p>`) : html`<p class=error>${error.message}</p>` ) : null}
+        ${error && error.map((x: string) => html`<p class=error>${x}</p>`)}
         ${main}
     </main>
     <footer><p>${version}</p></footer>
@@ -65,12 +65,11 @@ const getSyncCount = async () => (await db.get("updated"))?.size ?? 0
 
 export default
     async function layout(req: Request) {
-        let [theme, syncCount, error] = await Promise.all([db.get("settings"), getSyncCount(), db.get("temp-cache")])
-        if (error) {
-            await db.update("temp-cache", x => {
-                delete x.errors
-                return x
-            })
+        let [theme, syncCount, error] = await Promise.all([db.get("settings"), getSyncCount(), db.cache.pop("message")])
+        if (error && typeof error === "string") {
+            error = [error]
+        } else if(error && !Array.isArray(error)) {
+            error = void 0
         }
         return render({theme: theme?.theme, error, syncCount, url: req.url})
     }
