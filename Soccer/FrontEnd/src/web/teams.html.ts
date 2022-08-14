@@ -97,30 +97,28 @@ async function post({ data }: RoutePostArgsWithType<{name: string, year: string}
     return
 }
 
-async function setActiveValue({ req }: RoutePostArgs, active: boolean) {
-    let query = searchParams<{team: string}>(req)
-    let message : string[] = []
-    await update("teams", xs => {
-        let team = xs?.find(x => x.name === query.team)
-        if (team) {
-            team.active = active
-        } else {
-            message.push(`Could not find team "${query.team}".`)
-        }
-        return xs
-    })
-    if (message.length > 0) return Promise.reject({message})
+function setActiveValueTo(active: boolean) {
+    return async ({ req }: RoutePostArgs) => {
+        let query = searchParams<{team: string}>(req)
+        let message : string[] = []
+        await update("teams", xs => {
+            let team = xs?.find(x => x.name === query.team)
+            if (team) {
+                team.active = active
+            } else {
+                message.push(`Could not find team "${query.team}".`)
+            }
+            return xs
+        })
+        return message.length > 0 ? Promise.reject({message}) : void 0
+    }
 }
 
-function archive(args: RoutePostArgs) {
-    return setActiveValue(args, false)
+const postHandlers: PostHandlers = {
+    post,
+    archive: setActiveValueTo(false),
+    activate: setActiveValueTo(true),
 }
-
-function activate(args: RoutePostArgs) {
-    return setActiveValue(args, true)
-}
-
-const postHandlers: PostHandlers = { post, archive, activate }
 
 export default {
     route: /\/teams\/$/,
