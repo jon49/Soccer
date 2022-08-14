@@ -16,7 +16,7 @@ async function start(req: Request) {
             ? b.year.localeCompare(a.year)
         : a.name.localeCompare(b.name)
     )
-    return { teams, showAll }
+    return { teams, showAll: showAll && data?.length === teams?.length }
 }
 
 const render = ({ teams, showAll }: { teams: Teams | undefined, showAll: boolean }) => 
