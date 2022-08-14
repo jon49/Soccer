@@ -6,11 +6,11 @@ import { handlePost, PostHandlers, Route, RoutePostArgs, RoutePostArgsWithType }
 
 export interface TeamView {
     name?: string
-    players?: TeamPlayer[]
+    players: TeamPlayer[]
 }
 
 interface PlayersView {
-    players: TeamView | undefined
+    players: TeamView
     teamExists: boolean
     playerCache: { posted?: boolean, name?: string } | undefined
     wasFiltered: boolean
@@ -31,7 +31,7 @@ async function start(req: Request) : Promise<PlayersView> {
     }
     let teamExists = !!(players || team)
     return {
-        players: teamExists && players || { name: team?.name },
+        players: teamExists && players || { name: team?.name, players: [] },
         teamExists,
         playerCache,
         wasFiltered,
@@ -105,15 +105,15 @@ function render(view: PlayersView) {
         : renderMain(view) }`
 }
 
-function renderMain({ players, playerCache, wasFiltered }: PlayersView) {
+function renderMain({ players: o, playerCache, wasFiltered }: PlayersView) {
     let { name, posted } = playerCache ?? {}
-    let teamUriName = encodeURIComponent(players?.name ?? "")
-    let playersExist = players?.players && players.players.length > 0
+    let teamUriName = encodeURIComponent(o.name ?? "")
+    let playersExist = o.players.length > 0
     return html`
     ${ playersExist
         ? html`
     <ul class=list>
-        ${players?.players?.map(x => {
+        ${o.players.map(x => {
             let uriName = encodeURIComponent(x.name);
             return html`
             <li>
@@ -128,14 +128,16 @@ function renderMain({ players, playerCache, wasFiltered }: PlayersView) {
 
     ${ wasFiltered
         ? html`<p><a href="?all&team=${teamUriName}">Show all players.</a></p>`
-    : (playersExist && players?.players?.find(x => !x.active) ? html`<p><a href="?team=${teamUriName}">Hide archived players.</a></p>` : null) }
+    : playersExist && o.players.find(x => !x.active)
+        ? html`<p><a href="?team=${teamUriName}">Hide archived players.</a></p>`
+    : null }
 
     <h3>Add a player</h3>
 
     <form method=post onchange="this.submit()">
         <div>
             <label for=name>Player Name</label>
-            <input id=name name=name type=text value="${name}" $${posted || !players?.players ? "autofocus" : null} required>
+            <input id=name name=name type=text value="${name}" $${posted || !playersExist ? "autofocus" : null} required>
         </div>
         <button>Save</button>
     </form>`
