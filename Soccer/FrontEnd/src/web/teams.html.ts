@@ -36,7 +36,13 @@ ${
         <ul class=list>
             ${teams?.map(x => {
                 let uriName = encodeURIComponent(x.name)
-                return html`<li><a href="/web/players?team=${uriName}">${x.name} - ${x.year}</a> <form method=post action="?handler=archive&team=${uriName}"><button>Archive</button></form>`
+                return html`
+                <li>
+                    <a href="/web/players?team=${uriName}">${x.name} - ${x.year}</a>
+                    ${ x.active
+                        ? html`<form method=post action="?handler=archive&team=${uriName}"><button>Archive</button></form>`
+                    : html`<form method=post action="?handler=activate&team=${uriName}"><button>Activate</button></form>` }
+                </li>`
             })}
         </ul>
     `
@@ -91,23 +97,30 @@ async function post({ data }: RoutePostArgsWithType<{name: string, year: string}
     return
 }
 
-async function archive({ req }: RoutePostArgs) {
+async function setActiveValue({ req }: RoutePostArgs, active: boolean) {
     let query = searchParams<{team: string}>(req)
-    let teams = await get("teams")
+    let message : string[] = []
     await update("teams", xs => {
         let team = xs?.find(x => x.name === query.team)
         if (team) {
-            team.active = false
+            team.active = active
+        } else {
+            message.push(`Could not find team "${query.team}".`)
         }
         return xs
     })
-    let team = teams?.find(x => x.name === query.team)
-    if (team) {
-        team.active = false
-    }
+    if (message.length > 0) return Promise.reject({message})
 }
 
-const postHandlers: PostHandlers = { post, archive }
+function archive(args: RoutePostArgs) {
+    return setActiveValue(args, false)
+}
+
+function activate(args: RoutePostArgs) {
+    return setActiveValue(args, true)
+}
+
+const postHandlers: PostHandlers = { post, archive, activate }
 
 export default {
     route: /\/teams\/$/,
