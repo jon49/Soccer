@@ -78,20 +78,25 @@ export interface TeamSingle {
 }
 export type Teams = TeamSingle[]
 
+export interface TempCache {
+    errors?: { message?: any }
+    teams?: any
+}
+
 export type Updated = Map<IDBValidKey, number>
 
 interface DBAccessors {
     updated: Updated
     settings: Settings
     teams: Teams
-    error: any
+    "temp-cache": TempCache
 }
 
 interface DBGet {
     (key: "updated"): Promise<Updated | undefined>
     (key: "settings"): Promise<Settings | undefined>
     (key: "teams"): Promise<Teams | undefined>
-    (key: "error"): Promise<any | undefined>
+    (key: "temp-cache"): Promise<TempCache | undefined>
     <T>(key: string): Promise<T | undefined>
 }
 

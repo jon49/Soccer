@@ -64,10 +64,13 @@ const render = ({theme, error, syncCount, url}: Render) => (o: LayoutTemplateArg
 const getSyncCount = async () => (await db.get("updated"))?.size ?? 0
 
 export default
-    async function layout(req: Request, nav?: Nav[]) {
-        let [theme, syncCount, error] = await Promise.all([db.get("settings"), getSyncCount(), db.get("error")])
+    async function layout(req: Request) {
+        let [theme, syncCount, error] = await Promise.all([db.get("settings"), getSyncCount(), db.get("temp-cache")])
         if (error) {
-            await db.set("error", void 0)
+            await db.update("temp-cache", x => {
+                delete x.errors
+                return x
+            })
         }
         return render({theme: theme?.theme, error, syncCount, url: req.url})
     }
