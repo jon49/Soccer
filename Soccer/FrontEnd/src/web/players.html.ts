@@ -40,7 +40,7 @@ function render({ players, teamExists }: PlayersView) {
 
 function renderMain({ players }: PlayersView) {
     return html`
-    ${ players
+    ${ players && players.players
         ? html`
     <ul class=list>
         ${players.players?.map(x => {
@@ -53,7 +53,8 @@ function renderMain({ players }: PlayersView) {
 
     <form method=post onchange="this.submit()">
         <div>
-            <label for=name>Player Name</label><input id=name name=name type=text required>
+            <label for=name>Player Name</label>
+            <input id=name name=name type=text $${!players?.players ? "autofocus" : null} required>
         </div>
         <button>Save</button>
     </form>`
@@ -61,14 +62,14 @@ function renderMain({ players }: PlayersView) {
 
 const head = `
     <style>
-        ul.list {
+        .list {
             list-style-type: none;
             display: table;
         }
-        ul.list > li {
+        .list > li {
             display: table-row;
         }
-        ul.list > li > a {
+        .list > li > * {
             display: table-cell;
             padding: 1px 5px;
         }
