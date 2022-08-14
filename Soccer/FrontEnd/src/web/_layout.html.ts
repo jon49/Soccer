@@ -2,8 +2,20 @@ import html from "./js/html-template-tag.js"
 import * as db from "./js/db.js"
 import { version } from "./settings.js"
 
-const render = (theme: string | undefined, error: any, syncCount: number, url: string) => (o: LayoutTemplateArguments) => {
-    const { main, head, script } = o
+interface Nav {
+    name: string
+    url: string
+}
+
+interface Render {
+    theme: string | undefined
+    error: any
+    syncCount: number
+    url: string
+}
+
+const render = ({theme, error, syncCount, url}: Render) => (o: LayoutTemplateArguments) => {
+    const { main, head, script, nav } = o
     return html`
 <!DOCTYPE html>
 <html>
@@ -26,10 +38,12 @@ const render = (theme: string | undefined, error: any, syncCount: number, url: s
             </form>
         </div>
         <nav>
-            <a href="/web/teams">Teams</a>
-            <!--| <a href="/web/entries/edit">Add/Edit</a>
-            | <a href="/web/charts">Charts</a>
-            | <a href="/web/user-settings/edit">User Settings</a>-->
+            <ul>
+                <li><a href="/web/teams">Home</a></li>
+                ${ !nav || nav.length === 0
+                    ? null
+                : nav.map(x => html`<li><a href="$${x.url}">${x.name}</a></li>`) }
+            </ul>
         </nav>
     </header>
     <main>
@@ -50,12 +64,12 @@ const render = (theme: string | undefined, error: any, syncCount: number, url: s
 const getSyncCount = async () => (await db.get("updated"))?.size ?? 0
 
 export default
-    async function layout(req: Request) {
-        let [theme, count, error] = await Promise.all([db.get("settings"), getSyncCount(), db.get("error")])
+    async function layout(req: Request, nav?: Nav[]) {
+        let [theme, syncCount, error] = await Promise.all([db.get("settings"), getSyncCount(), db.get("error")])
         if (error) {
             await db.set("error", void 0)
         }
-        return render(theme?.theme, error, count, req.url)
+        return render({theme: theme?.theme, error, syncCount, url: req.url})
     }
 
 export type Layout = typeof layout
@@ -64,4 +78,5 @@ export interface LayoutTemplateArguments {
     head?: string
     main?: Generator|string
     script?: string
+    nav?: Nav[]
 }
