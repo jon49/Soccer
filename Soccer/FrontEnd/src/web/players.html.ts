@@ -168,7 +168,10 @@ const route : Route = {
     route: /\/players\/$/,
     async get(req: Request) {
         const [result, template] = await Promise.all([start(req), layout(req)])
-        return template({ main: render(result), head, nav: [{name: "Edit", url: `edit?team=${result.players?.name}`}] })
+        return template({
+            main: render(result),
+            head,
+            nav: [{name: "Settings", url: `edit?team=${encodeURIComponent(result.players.name ?? "")}`}] })
     },
     async post(args: RoutePostArgs) {
         await handlePost(args, postHandlers)
