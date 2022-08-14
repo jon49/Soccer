@@ -2,11 +2,17 @@ import html from "./js/html-template-tag"
 import layout from "./_layout.html"
 import { get, set, Teams, TeamSingle } from "./js/db"
 import { RoutePostArgs } from "./js/route"
+import { searchParams } from "./js/utils"
 
-async function start(req: Request) {
+interface TeamsView {
+    teams: Teams | undefined
+    wasFiltered: boolean
+}
+
+async function start(req: Request) : Promise<TeamsView> {
     const data = await get("teams")
-    const url = new URL(req.url)
-    const showAll = url.searchParams.get("all") !== null
+    const query = searchParams<{all: string}>(req)
+    const showAll = query.all !== null
     let teams =
         showAll
             ? data
@@ -16,10 +22,10 @@ async function start(req: Request) {
             ? b.year.localeCompare(a.year)
         : a.name.localeCompare(b.name)
     )
-    return { teams, showAll: showAll && data?.length === teams?.length }
+    return { teams, wasFiltered: !!data && !!teams && data.length !== teams.length }
 }
 
-const render = ({ teams, showAll }: { teams: Teams | undefined, showAll: boolean }) => 
+const render = ({ teams, wasFiltered }: TeamsView) => 
     html`
 <h2>Teams</h2>
 
@@ -35,9 +41,9 @@ ${
     : html`<p>No teams found. Please add one!</p>`
 }
 
-${ teams && !showAll ? html`<p><a href="?all">Show inactive teams.</a></p>` : null }
+${ wasFiltered ? html`<p><a href="?all">Show all teams.</a></p>` : null }
 
-<p><strong>Add a team:</strong></p>
+<h3>Add a team</h3>
 
 <form method=post>
     <div>
