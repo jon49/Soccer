@@ -40,7 +40,7 @@ export interface RoutePostArgs {
 export interface RoutePost {
     (options: RoutePostArgs): Promise<HTMLReturnType>|Promise<Response>
 }
-interface Route {
+export interface Route {
     route: RegExp
     get?: RouteGet
     post?: RoutePost
