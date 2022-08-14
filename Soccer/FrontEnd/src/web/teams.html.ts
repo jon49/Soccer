@@ -1,16 +1,18 @@
 import html from "./js/html-template-tag"
 import layout from "./_layout.html"
-import { get, set, Teams, TeamSingle } from "./js/db"
+import { CacheTeams, get, set, Teams, TeamSingle, TempCache, cache, update } from "./js/db"
 import { RoutePostArgs } from "./js/route"
 import { searchParams } from "./js/utils"
+import teamView from "./players.html"
 
 interface TeamsView {
     teams: Teams | undefined
     wasFiltered: boolean
+    cache?: CacheTeams
 }
 
 async function start(req: Request) : Promise<TeamsView> {
-    const data = await get("teams")
+    const [data, teamsCache] = await Promise.all([get("teams"), cache.pop("teams")])
     const query = searchParams<{all: string}>(req)
     const showAll = query.all !== null
     let teams =
@@ -22,10 +24,10 @@ async function start(req: Request) : Promise<TeamsView> {
             ? b.year.localeCompare(a.year)
         : a.name.localeCompare(b.name)
     )
-    return { teams, wasFiltered: !!data && !!teams && data.length !== teams.length }
+    return { teams, wasFiltered: !!data && !!teams && data.length !== teams.length, cache: teamsCache }
 }
 
-const render = ({ teams, wasFiltered }: TeamsView) => 
+const render = ({ teams, wasFiltered, cache }: TeamsView) => 
     html`
 <h2>Teams</h2>
 
@@ -34,7 +36,7 @@ ${
         <ul class=list>
             ${teams?.map(x => {
                 let uriName = encodeURIComponent(x.name)
-                return html`<li><a href="?team=${uriName}">${x.name} - ${x.year}</a> <a href="/web/teams/edit?team=${uriName}">Edit</a></li>`
+                return html`<li><a href="/web/players?team=${uriName}">${x.name} - ${x.year}</a> <form method=post action="?handler=archive&team=${uriName}"><button>Archive</button></form>`
             })}
         </ul>
     `
@@ -47,24 +49,26 @@ ${ wasFiltered ? html`<p><a href="?all">Show all teams.</a></p>` : null }
 
 <form method=post>
     <div>
-        <label for=name>Team Name</label><input id=name name=name type=text required>
+        <label for=name>Team Name</label>
+        <input id=name name=name type=text value="${cache?.name ?? ""}" $${cache?.posted || !teams ? "autofocus" : null} required>
     </div>
     <div>
-        <label for=year>Year</label><input id=year name=year type=text required value="$${new Date().getFullYear()}">
+        <label for=year>Year</label>
+        <input id=year name=year type=text required value="${cache?.year ?? new Date().getFullYear()}">
     </div>
     <button>Save</button>
 </form>`
 
 const head = `
     <style>
-        ul.list {
+        .list {
             list-style-type: none;
             display: table;
         }
-        ul.list > li {
+        .list > li {
             display: table-row;
         }
-        ul.list > li > a {
+        .list > li > * {
             display: table-cell;
             padding: 1px 5px;
         }
@@ -77,14 +81,30 @@ async function post(data: {name: string, year: string}) {
     let teams = (await get("teams") ?? [])
     if (data.name && teams.find(x => x.name === data.name)) errors.push("Team name must be unique!")
     if (errors.length) {
-        return Promise.reject({message: errors})
+        return Promise.reject({message: errors, teams: {name: data.name, year: data.year, posted: true} } as TempCache)
     }
 
     let team: TeamSingle = { ...data, active: true }
     teams.push(team)
-    await set("teams", teams)
+    await Promise.all([set("teams", teams), cache.push({teams: {posted: true}})])
 
     return
+}
+
+async function handleArchive(req: Request) {
+    let query = searchParams<{team: string}>(req)
+    let teams = await get("teams")
+    await update("teams", xs => {
+        let team = xs?.find(x => x.name === query.team)
+        if (team) {
+            team.active = false
+        }
+        return xs
+    })
+    let team = teams?.find(x => x.name === query.team)
+    if (team) {
+        team.active = false
+    }
 }
 
 export default {
@@ -94,7 +114,12 @@ export default {
         return template({ main: render(result), head })
     },
     async post({ data, req }: RoutePostArgs) {
-        await post(data)
+        let query = searchParams<{handler?: "archive"}>(req)
+        if (query.handler === "archive") {
+            await handleArchive(req)
+        } else {
+            await post(data)
+        }
         return Response.redirect(req.referrer, 302)
     }
 }
