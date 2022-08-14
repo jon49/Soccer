@@ -115,10 +115,12 @@ export default {
     },
     async post({ data, req }: RoutePostArgs) {
         let query = searchParams<{handler?: "archive"}>(req)
-        if (query.handler === "archive") {
-            await handleArchive(req)
-        } else {
-            await post(data)
+        switch (query.handler) {
+            case "archive":
+                await handleArchive(req)
+                break
+            default:
+                await post(data)
         }
         return Response.redirect(req.referrer, 302)
     }
