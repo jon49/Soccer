@@ -61,9 +61,14 @@ export interface Player {
     games: PlayerGame[]
 }
 
+export interface TeamPlayer {
+    name: string
+    active: boolean
+}
+
 export interface Team {
     name: string
-    players: {name: string, active: boolean}[]
+    players: TeamPlayer[]
 }
 
 export interface TeamSingle {
