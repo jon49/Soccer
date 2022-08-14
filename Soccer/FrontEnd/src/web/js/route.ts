@@ -1,4 +1,5 @@
 import { HTMLReturnType } from "./html-template-tag"
+import { searchParams } from "./utils"
 
 let routes : Route[] = []
 
@@ -30,9 +31,25 @@ export function findRoute(route: string, method: unknown) {
     return null
 }
 
+export type PostHandlers = Record<string, (o: RoutePostArgs) => Promise<void>>
+export async function handlePost(args: RoutePostArgs, handlers: PostHandlers) {
+    let query = searchParams<{handler?: string}>(args.req)
+    return query.handler && handlers[query.handler]
+        ? handlers[query.handler](args)
+    : handlers["post"]
+        ? handlers["post"](args)
+    : Promise.reject("I'm sorry, I didn't understand where to route your request.")
+}
+
 interface RouteGet {
     (req: Request): Promise<HTMLReturnType>
 }
+
+export interface RoutePostArgsWithType<T> {
+    data: T
+    req: Request 
+}
+
 export interface RoutePostArgs {
     data: any
     req: Request 
