@@ -1,14 +1,14 @@
 import { addRoutes, findRoute, RoutePost } from "./js/route"
 import indexHandler from "./index.html.js"
 import { version } from "./settings"
-import layout from "./_layout.html"
 import teamsHandler from "./teams.html"
-import { set } from "./js/db"
-import html from "./js/html-template-tag"
+import playersHandler from "./players.html"
+import { cache } from "./js/db"
 
 addRoutes([
     indexHandler,
     teamsHandler,
+    playersHandler,
 ])
 
 const links : string[] = [] // File cache
@@ -90,8 +90,8 @@ async function post(url: string, req: Request) : Promise<Response> {
             }
             // return new Response("<meta http-equiv='refresh' content='0'>", { headers: htmlHeader()})
         } catch (error) {
-            if (error && typeof error === "object" && error.hasOwnProperty("message")) {
-                await set("error", error, false)
+            if (error && error instanceof Object && !Array.isArray(error) && error.hasOwnProperty("message")) {
+                await cache.push(error)
                 return Response.redirect(req.referrer, 302)
             } else {
                 console.error("Unknown error during post.", error)
