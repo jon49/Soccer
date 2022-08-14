@@ -23,7 +23,7 @@ const render = ({theme, error, syncCount, url}: Render) => (o: LayoutTemplateArg
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Weight Tracker</title>
+    <title>Soccer</title>
     <link href="/web/css/site.css" rel=stylesheet>
     $${head}
 </head>
@@ -31,7 +31,7 @@ const render = ({theme, error, syncCount, url}: Render) => (o: LayoutTemplateArg
     <a href="/login?handler=logout" style="position: absolute; top: 10px; right: 10px;">Logout</a>
     <header>
         <div class=sync>
-            <h1 class=inline>Weight Tracker</h1>
+            <h1 class=inline>Soccer</h1>
             <form class=inline method=POST action="/web/sync/">
                 <input type=hidden name=url value="${url}">
                 <button>Sync&nbsp;-&nbsp;${""+syncCount}</button>
@@ -39,7 +39,7 @@ const render = ({theme, error, syncCount, url}: Render) => (o: LayoutTemplateArg
         </div>
         <nav>
             <ul>
-                <li><a href="/web/teams">Home</a></li>
+                <li><a href="/web/teams">Teams</a></li>
                 ${ !nav || nav.length === 0
                     ? null
                 : nav.map(x => html`<li><a href="$${x.url}">${x.name}</a></li>`) }
