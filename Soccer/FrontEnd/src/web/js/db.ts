@@ -38,7 +38,7 @@ class TempCache1 {
         if (value instanceof Object && !Array.isArray(value))
             await update1("temp-cache", x => x ? { ...x, ...value as {}} : value as {})
     }
-    async pop<K extends keyof TempCache>(key: K): Promise<TempCache[K]> {
+    async pop<K extends keyof TempCache>(key: K): Promise<TempCache[K] | undefined> {
         let result = await get("temp-cache")
         await update1("temp-cache", x => {
             if (x && x[key]) {
@@ -103,9 +103,15 @@ export interface CacheTeams {
     posted?: boolean
 }
 
+export interface CachePlayers {
+    name?: string
+    posted?: boolean
+}
+
 export interface TempCache {
     message?: any
     teams?: CacheTeams
+    players: CachePlayers
 }
 
 export type Updated = Map<IDBValidKey, number>
