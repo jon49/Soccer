@@ -3,7 +3,6 @@ import layout from "./_layout.html"
 import { CacheTeams, get, set, Teams, TeamSingle, TempCache, cache, update } from "./js/db"
 import { handlePost, PostHandlers, RoutePostArgs, RoutePostArgsWithType } from "./js/route"
 import { searchParams } from "./js/utils"
-import teamView from "./players.html"
 
 interface TeamsView {
     teams: Teams | undefined
