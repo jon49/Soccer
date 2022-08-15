@@ -1,6 +1,6 @@
 import { cache, get, set, Team, TeamPlayer, TeamSingle } from "../js/db"
 import html from "../js/html-template-tag"
-import { handlePost, PostHandlers, Route, RoutePostArgs, RoutePostArgsWithType } from "../js/route"
+import { handlePost, PostHandlers, Route, RoutePostArgsWithType } from "../js/route"
 import { searchParams } from "../js/utils"
 import layout from "../_layout.html"
 
