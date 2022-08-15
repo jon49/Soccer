@@ -1,3 +1,4 @@
+import { cache } from "./db"
 import { HTMLReturnType } from "./html-template-tag"
 import { searchParams } from "./utils"
 
@@ -31,23 +32,37 @@ export function findRoute(route: string, method: unknown) {
     return null
 }
 
-export type PostHandlers = Record<string, (o: RoutePostArgs) => Promise<void>>
+interface RoutePostArgsWithQuery extends RoutePostArgs {
+    query: any
+}
+
+export type PostHandlers = Record<string, (o: RoutePostArgsWithQuery) => Promise<any>>
 export async function handlePost(args: RoutePostArgs, handlers: PostHandlers) {
     let query = searchParams<{handler?: string}>(args.req)
-    return query.handler && handlers[query.handler]
-        ? handlers[query.handler](args)
+    let extendedArgs = { ...args, query }
+    let result = query.handler && handlers[query.handler]
+        ? handlers[query.handler](extendedArgs)
     : handlers["post"]
-        ? handlers["post"](args)
-    : Promise.reject("I'm sorry, I didn't understand where to route your request.")
+        ? handlers["post"](extendedArgs)
+    : Promise.reject({message: "I'm sorry, I didn't understand where to route your request."})
+
+    if (result instanceof Promise) {
+        await result.catch(x => cache.push(x))
+    }
+
+    return !(result instanceof Response)
+            ? Response.redirect(args.req.referrer, 302)
+        : result
 }
 
 interface RouteGet {
     (req: Request): Promise<HTMLReturnType>
 }
 
-export interface RoutePostArgsWithType<T> {
-    data: T
-    req: Request 
+export interface RoutePostArgsWithType<TData, TQuery = any> {
+    data: TData
+    req: Request
+    query: TQuery
 }
 
 export interface RoutePostArgs {

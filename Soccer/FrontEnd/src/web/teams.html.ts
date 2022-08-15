@@ -97,15 +97,14 @@ async function post({ data }: RoutePostArgsWithType<{name: string, year: string}
 }
 
 function setActiveValueTo(active: boolean) {
-    return async ({ req }: RoutePostArgs) => {
-        let query = searchParams<{team: string}>(req)
+    return async ({ query: { team: queryTeam } }: RoutePostArgsWithType<any, {team: string}>) => {
         let message : string[] = []
         await update("teams", xs => {
-            let team = xs?.find(x => x.name === query.team)
+            let team = xs?.find(x => x.name === queryTeam)
             if (team) {
                 team.active = active
             } else {
-                message.push(`Could not find team "${query.team}".`)
+                message.push(`Could not find team "${queryTeam}".`)
             }
             return xs
         })
@@ -126,8 +125,7 @@ export default {
         return template({ main: render(result), head })
     },
     async post(args: RoutePostArgs) {
-        await handlePost(args, postHandlers)
-        return Response.redirect(args.req.referrer, 302)
+        return handlePost(args, postHandlers)
     }
 }
 

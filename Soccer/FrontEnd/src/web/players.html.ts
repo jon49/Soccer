@@ -38,8 +38,7 @@ async function start(req: Request) : Promise<PlayersView> {
     }
 }
 
-async function post({ data, req }: RoutePostArgsWithType<{name: string}>) {
-    let query = searchParams<{team: string}>(req)
+async function post({ data, query }: RoutePostArgsWithType<{name: string}, {team: string}>) {
     let team = await get<Team>(query.team)
 
     let errors: string[] = []
@@ -76,20 +75,18 @@ async function post({ data, req }: RoutePostArgsWithType<{name: string}>) {
 }
 
 function setActiveValueTo(active: boolean) {
-    return async ({ req }: RoutePostArgs) => {
-        let query = searchParams<{team: string, player: string}>(req)
-
+    return async ({ query: {player: queryPlayer, team: queryTeam} }: RoutePostArgsWithType<any, { team: string, player: string }>) => {
         let errors: string[] = []
-        let name = query.player?.trim()
+        let name = queryPlayer?.trim()
         if (!name) errors.push(`Player name is required.`)
-        let teamName = query.team?.trim()
+        let teamName = queryTeam?.trim()
         if (!teamName) errors.push(`Team name is required.`)
         if (errors.length > 0) return Promise.reject({message: errors})
 
         let team = await get<Team>(teamName)
-        if (!team) return Promise.reject({message: [`Could not find team "${query.team}".`]})
-        let player = team.players.find(x => x.name === query.player)
-        if (!player) return Promise.reject({message: [`Could not find player "${query.player}".`]})
+        if (!team) return Promise.reject({message: [`Could not find team "${queryTeam}".`]})
+        let player = team.players.find(x => x.name === queryPlayer)
+        if (!player) return Promise.reject({message: [`Could not find player "${queryPlayer}".`]})
         player.active = active
 
         await set<Team>(team.name, team)
@@ -174,8 +171,7 @@ const route : Route = {
             nav: [{name: "Settings", url: `/web/players/edit?team=${encodeURIComponent(result.players.name ?? "")}`}] })
     },
     async post(args: RoutePostArgs) {
-        await handlePost(args, postHandlers)
-        return Response.redirect(args.req.referrer, 302)
+        return handlePost(args, postHandlers)
     }
 }
 export default route
