@@ -41,12 +41,13 @@ export function handlePost(handlers: PostHandlers) {
     return async (args: RoutePostArgs) => {
         let query = searchParams<{handler?: string}>(args.req)
         let extendedArgs = { ...args, query }
-        let result = query.handler && handlers[query.handler]
+        let resultTask = query.handler && handlers[query.handler]
             ? handlers[query.handler](extendedArgs)
         : handlers["post"]
             ? handlers["post"](extendedArgs)
         : Promise.reject({message: "I'm sorry, I didn't understand where to route your request."})
 
+        let result = await resultTask
         if (result instanceof Promise) {
             await result.catch(x => cache.push(x))
         }
