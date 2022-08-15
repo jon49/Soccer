@@ -2,7 +2,7 @@ import html from "./js/html-template-tag"
 import layout from "./_layout.html"
 import { cache, get, set, Team, TeamPlayer, TeamSingle } from "./js/db"
 import { searchParams } from "./js/utils"
-import { handlePost, PostHandlers, Route, RoutePostArgs, RoutePostArgsWithType } from "./js/route"
+import { handlePost, PostHandlers, Route, RoutePostArgsWithType } from "./js/route"
 
 export interface TeamView {
     name?: string
@@ -170,8 +170,6 @@ const route : Route = {
             head,
             nav: [{name: "Settings", url: `/web/players/edit?team=${encodeURIComponent(result.players.name ?? "")}`}] })
     },
-    async post(args: RoutePostArgs) {
-        return handlePost(args, postHandlers)
-    }
+    post: handlePost(postHandlers),
 }
 export default route

@@ -1,7 +1,7 @@
 import html from "./js/html-template-tag"
 import layout from "./_layout.html"
 import { CacheTeams, get, set, Teams, TeamSingle, TempCache, cache, update } from "./js/db"
-import { handlePost, PostHandlers, RoutePostArgs, RoutePostArgsWithType } from "./js/route"
+import { handlePost, PostHandlers, RoutePostArgsWithType } from "./js/route"
 import { searchParams } from "./js/utils"
 
 interface TeamsView {
@@ -124,8 +124,6 @@ export default {
         const [result, template] = await Promise.all([start(req), layout(req)])
         return template({ main: render(result), head })
     },
-    async post(args: RoutePostArgs) {
-        return handlePost(args, postHandlers)
-    }
+    post: handlePost(postHandlers),
 }
 

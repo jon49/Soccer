@@ -1,6 +1,6 @@
 import { cache, get, set, Team, TeamPlayer } from "../js/db"
 import html from "../js/html-template-tag"
-import { handlePost1, Route, RoutePostArgsWithType } from "../js/route"
+import { handlePost, Route, RoutePostArgsWithType } from "../js/route"
 import { searchParams } from "../js/utils"
 import layout from "../_layout.html"
 
@@ -91,7 +91,7 @@ const postHandlers = {
 
         player.name = playerName
         player.active = data.active === "on"
-        // Player name will also need to be updated for the individual play.
+        // Player name will also need to be updated for the individual player when implemented!
         await set(team.name, team)
         return
     }
@@ -107,6 +107,6 @@ const route : Route = {
             head
         })
     },
-    post: handlePost1(postHandlers)
+    post: handlePost(postHandlers)
 }
 export default route

@@ -37,7 +37,7 @@ interface RoutePostArgsWithQuery extends RoutePostArgs {
 }
 
 export type PostHandlers = Record<string, (o: RoutePostArgsWithQuery) => Promise<any>>
-export function handlePost1(handlers: PostHandlers) {
+export function handlePost(handlers: PostHandlers) {
     return async (args: RoutePostArgs) => {
         let query = searchParams<{handler?: string}>(args.req)
         let extendedArgs = { ...args, query }
@@ -55,23 +55,6 @@ export function handlePost1(handlers: PostHandlers) {
                 ? Response.redirect(args.req.referrer, 302)
             : result
     }
-}
-export async function handlePost(args: RoutePostArgs, handlers: PostHandlers) {
-    let query = searchParams<{handler?: string}>(args.req)
-    let extendedArgs = { ...args, query }
-    let result = query.handler && handlers[query.handler]
-        ? handlers[query.handler](extendedArgs)
-    : handlers["post"]
-        ? handlers["post"](extendedArgs)
-    : Promise.reject({message: "I'm sorry, I didn't understand where to route your request."})
-
-    if (result instanceof Promise) {
-        await result.catch(x => cache.push(x))
-    }
-
-    return !(result instanceof Response)
-            ? Response.redirect(args.req.referrer, 302)
-        : result
 }
 
 interface RouteGet {
