@@ -1,6 +1,6 @@
-import { cache, get, set, Team, TeamPlayer } from "../js/db"
+import { cache, get, set, Team, TeamPlayer, TeamSingle } from "../js/db"
 import html from "../js/html-template-tag"
-import { handlePost, Route, RoutePostArgsWithType } from "../js/route"
+import { handlePost, PostHandlers, Route, RoutePostArgs, RoutePostArgsWithType } from "../js/route"
 import { searchParams } from "../js/utils"
 import layout from "../_layout.html"
 
@@ -11,6 +11,7 @@ export interface TeamView {
 
 interface PlayersEditView {
     team: TeamView
+    aggregateTeam: TeamSingle
 }
 
 async function start(req: Request) : Promise<PlayersEditView | undefined> {
@@ -20,14 +21,20 @@ async function start(req: Request) : Promise<PlayersEditView | undefined> {
         await cache.push({message: "Team name is required!"})
         return
     }
-    let team = await get<Team>(teamName)
+    let [team, teams] = await Promise.all([get<Team>(teamName), get("teams")])
     if (!team) {
         await cache.push({message: "Players must be added to the team before editing a team!"})
+        return
+    }
+    let aggregateTeam = teams?.find(x => x.name === teamName)
+    if (!aggregateTeam) {
+        await cache.push({message: "Could not find the aggregate team!"})
         return
     }
 
     return {
         team,
+        aggregateTeam,
     }
 }
 
@@ -36,14 +43,20 @@ function render(o: PlayersEditView | undefined) {
         return html``
     }
 
-    let { team } = o
+    let { team, aggregateTeam } = o
     let teamUriName = encodeURIComponent(team.name ?? "")
 
     return html`
 <h2>Team ${ o?.team.name ??  "Unknown"}</h2>
-<form class=form method=post action="?handler=teamName&team=${teamUriName}">
+<form class=form method=post action="?handler=team&team=${teamUriName}">
     <div>
-        <label for=team>Team Name: </label><input id=team name=team type=text value="${team.name}">
+        <label for=team>Team Name:</label><input id=team name=team type=text value="${team.name}">
+    </div>
+    <div>
+        <label for=year>Year:</label> <input id=year name=year type=text value="${aggregateTeam.year}">
+    </div>
+    <div>
+        <label for=active>Active</label> <input id=active name=active type=checkbox $${aggregateTeam.active ? "checked" : null}>
     </div>
     <button>Save</button>
 </form>
@@ -51,7 +64,7 @@ ${team.players.map(x => {
     return html`
     <form method=post class=form action="?handler=player&team=${teamUriName}&player=${x.name}">
         <div>
-            <label for=player>Name:</label>
+            <label for=player>Player Name:</label>
             <input id=player name=player type=text value="${x.name}">
         </div>
         <div>
@@ -74,7 +87,7 @@ const head = `
 </style>
 `
 
-const postHandlers = {
+const postHandlers: PostHandlers = {
     player: async ({data, query}: RoutePostArgsWithType<{player: string, active: string}, {team: string, player: string}>) => {
         let errors: string[] = []
         let playerName = data.player?.trim()
@@ -94,6 +107,39 @@ const postHandlers = {
         // Player name will also need to be updated for the individual player when implemented!
         await set(team.name, team)
         return
+    },
+    team: async({ data: {team: dataTeam, year, active}, query: {team: queryTeam} }: RoutePostArgsWithType<{team: string, year: string, active?: "on"}, {team: string}>) => {
+        let newTeamName = dataTeam?.trim()
+        let newYear = year?.trim()
+
+        let errors: string[] = []
+        if (!newTeamName) errors.push("A team name is required!")
+        if (!newYear) errors.push("A year for the team is required!")
+        if (errors.length) return Promise.reject({message: errors})
+
+        let [team, teams] = await Promise.all([get<Team>(queryTeam), get("teams")])
+        if (!team) return Promise.reject({message: `Could not find team "${queryTeam}"!`})
+        let aggregateTeamIndex = teams?.findIndex(x => x.name === queryTeam)
+        if (aggregateTeamIndex === -1) return Promise.reject({message: `Could not find the aggregate team "${queryTeam}"`})
+        if (queryTeam !== newTeamName) {
+            let duplicate = teams?.find(x => x.name === newTeamName)
+            if (duplicate) return Promise.reject({message: `The team "${newTeamName}" already exists!`})
+        }
+
+        let newTeam : Team = {
+            name: newTeamName,
+            players: team.players
+        }
+
+        let newSingleTeam: TeamSingle = {
+            active: active === "on",
+            name: newTeamName,
+            year: newYear,
+        }
+        // @ts-ignore
+        teams[aggregateTeamIndex] = newSingleTeam
+        await Promise.all([set(newTeamName, newTeam), set("teams", teams)])
+        return Response.redirect(`/web/players/edit?team=${encodeURIComponent(newTeamName)}`, 302)
     }
 }
 
