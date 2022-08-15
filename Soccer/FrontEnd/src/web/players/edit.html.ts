@@ -1,6 +1,6 @@
-import { cache, get, Team, TeamPlayer } from "../js/db"
+import { cache, get, set, Team, TeamPlayer } from "../js/db"
 import html from "../js/html-template-tag"
-import { Route } from "../js/route"
+import { handlePost1, Route, RoutePostArgsWithType } from "../js/route"
 import { searchParams } from "../js/utils"
 import layout from "../_layout.html"
 
@@ -47,9 +47,9 @@ function render(o: PlayersEditView | undefined) {
     </div>
     <button>Save</button>
 </form>
-${team.players.map((x, index) => {
+${team.players.map(x => {
     return html`
-    <form method=post class=form action="?handler=player&team=${teamUriName}&index=${index}">
+    <form method=post class=form action="?handler=player&team=${teamUriName}&player=${x.name}">
         <div>
             <label for=player>Name:</label>
             <input id=player name=player type=text value="${x.name}">
@@ -74,6 +74,29 @@ const head = `
 </style>
 `
 
+const postHandlers = {
+    player: async ({data, query}: RoutePostArgsWithType<{player: string, active: string}, {team: string, player: string}>) => {
+        let errors: string[] = []
+        let playerName = data.player?.trim()
+        if (!playerName) errors.push("Player name is required.")
+        if (errors.length > 0) return Promise.reject({message: errors})
+        let team = await get<Team>(query.team)
+        if (!team) return Promise.reject({message: `Unknown team "${query.team}"`})
+        let player = team.players.find(x => x.name === query.player)
+        if (!player) return Promise.reject({message: `Unknown player "${query.player}"`})
+        if (player.name !== playerName) {
+            let duplicatePlayerName = team.players.find(x => x.name === playerName)
+            if (duplicatePlayerName) return Promise.reject({message: `The player name "${playerName}" has already been chosen.`})
+        }
+
+        player.name = playerName
+        player.active = data.active === "on"
+        // Player name will also need to be updated for the individual play.
+        await set(team.name, team)
+        return
+    }
+}
+
 const route : Route = {
     route: /\/players\/edit\/$/,
     async get(req: Request) {
@@ -84,5 +107,6 @@ const route : Route = {
             head
         })
     },
+    post: handlePost1(postHandlers)
 }
 export default route
