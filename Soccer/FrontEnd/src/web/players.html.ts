@@ -171,7 +171,7 @@ const route : Route = {
         return template({
             main: render(result),
             head,
-            nav: [{name: "Settings", url: `edit?team=${encodeURIComponent(result.players.name ?? "")}`}] })
+            nav: [{name: "Settings", url: `/web/players/edit?team=${encodeURIComponent(result.players.name ?? "")}`}] })
     },
     async post(args: RoutePostArgs) {
         await handlePost(args, postHandlers)

@@ -3,12 +3,14 @@ import indexHandler from "./index.html.js"
 import { version } from "./settings"
 import teamsHandler from "./teams.html"
 import playersHandler from "./players.html"
+import playersEditHandler from "./players/edit.html"
 import { cache } from "./js/db"
 
 addRoutes([
     indexHandler,
     teamsHandler,
     playersHandler,
+    playersEditHandler,
 ])
 
 const links : string[] = [] // File cache
