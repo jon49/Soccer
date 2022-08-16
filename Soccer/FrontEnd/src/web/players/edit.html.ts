@@ -96,24 +96,30 @@ const teamSingleValueObject = {
     year: createString50("Year"),
     active: createCheckbox
 }
+const teamPlayerValueObject = {
+    team: createString50("Query Team Name"),
+    player: createString50("Query Player Name")
+}
+const playerActiveValueObject = {
+    player: createString50("Player Name"),
+    active: createCheckbox
+}
 
 const postHandlers: PostHandlers = {
-    player: async ({data, query}: RoutePostArgsWithType<{player: string, active: string}, {team: string, player: string}>) => {
-        let errors: string[] = []
-        let playerName = data.player?.trim()
-        if (!playerName) errors.push("Player name is required.")
-        if (errors.length > 0) return Promise.reject({message: errors})
-        let team = await get<Team>(query.team)
-        if (!team) return Promise.reject({message: `Unknown team "${query.team}"`})
-        let player = team.players.find(x => x.name === query.player)
-        if (!player) return Promise.reject({message: `Unknown player "${query.player}"`})
-        if (player.name !== playerName) {
-            let duplicatePlayerName = team.players.find(x => x.name === playerName)
-            if (duplicatePlayerName) return Promise.reject({message: `The player name "${playerName}" has already been chosen.`})
-        }
+    player: async ({data: d, query: q}: RoutePostArgsWithType<{player: string, active: string}, {team: string, player: string}>) => {
+        let query = await validateObject(q, teamPlayerValueObject)
+        let { player: {value: playerName}, active } = await validateObject(d, playerActiveValueObject)
+        let [team] = await validate([requiredAsync(`Unknown team "${query.team}"`)(get<Team>(query.team.value))]) 
+        let [player] = await validate([
+            required(`Unknown player "${query.player}"`)(team.players.find(x => x.name === query.player.value))]) 
+
+        // Check for duplicates
+        await assert.isFalse(
+            player.name !== playerName && !!team.players.find(x => x.name === playerName),
+            `The player name "${playerName}" has already been chosen.`)
 
         player.name = playerName
-        player.active = data.active === "on"
+        player.active = active
         // Player name will also need to be updated for the individual player when implemented!
         await set(team.name, team)
         return

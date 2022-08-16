@@ -77,6 +77,9 @@ class Assert {
     isNil(value: any, message: string) {
         return value === null || value === undefined ? void 0 : Promise.reject({message})
     }
+    isNotNil<T>(value: T, message: string) {
+        return value !== null && value !== void 0 ? void 0 : Promise.reject({message})
+    }
 }
 export const assert = new Assert()
 
