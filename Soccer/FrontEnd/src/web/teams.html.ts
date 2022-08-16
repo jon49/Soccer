@@ -3,6 +3,7 @@ import layout from "./_layout.html"
 import { CacheTeams, get, set, Teams, TeamSingle, TempCache, cache, update } from "./js/db"
 import { handlePost, PostHandlers, RoutePostArgsWithType } from "./js/route"
 import { searchParams } from "./js/utils"
+import { assert, createString25, validateObject } from "./js/validation"
 
 interface TeamsView {
     teams: Teams | undefined
@@ -79,15 +80,16 @@ const head = `
         }
     </style>`
 
-async function post({ data }: RoutePostArgsWithType<{name: string, year: string}>) {
-    let errors: string[] = []
-    if (!data.name) errors.push("Team name required!")
-    if (!data.year) errors.push("The year is required!")
+const teamValidator = {
+    name: createString25("Team Name"),
+    year: createString25("Team Year"),
+}
+
+async function post({ data: d }: RoutePostArgsWithType<{name: string, year: string}>) {
+    let data = await validateObject(d, teamValidator)
     let teams = (await get("teams") ?? [])
-    if (data.name && teams.find(x => x.name === data.name)) errors.push("Team name must be unique!")
-    if (errors.length) {
-        return Promise.reject({message: errors, teams: {name: data.name, year: data.year, posted: true} } as TempCache)
-    }
+    await assert.isFalse(!!teams.find(x => x.name === data.name), "Team name must be unique!")
+    ?.catch(x => Promise.reject({ ...x, teams: {name: data.name, year: data.year, posted: true} } as TempCache))
 
     let team: TeamSingle = { ...data, active: true }
     teams.push(team)
