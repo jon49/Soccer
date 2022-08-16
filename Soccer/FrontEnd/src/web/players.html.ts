@@ -150,7 +150,7 @@ const route : Route = {
         return template({
             main: render(result),
             head,
-            nav: [{name: "Settings", url: `/web/players/edit?team=${getURITeamComponent(result.players)}`}] })
+            nav: [{name: "Edit", url: `/web/players/edit?team=${getURITeamComponent(result.players)}`}] })
     },
     post: handlePost(postHandlers),
 }

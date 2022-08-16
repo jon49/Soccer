@@ -25,3 +25,11 @@ export const unexpectedErrorMessage = "Oops! Something happened which shouldn't 
 export async function saveTeam(team: Team) {
     return set(getNormalizedTeamName(team), team)
 }
+
+export function createTeam({ name, year }: {name: string, year: string}): Team {
+    return {
+        name,
+        year,
+        players: []
+    }
+}

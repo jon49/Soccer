@@ -4,7 +4,7 @@ import { handlePost, PostHandlers, Route, RoutePostArgsWithType } from "../js/ro
 import { cleanHtmlId, searchParams } from "../js/utils"
 import layout from "../_layout.html"
 import { assert, createCheckbox, createString25, createString50, required, requiredAsync, validateObject } from "../js/validation"
-import { findTeamSingle, getURITeamComponent, saveTeam, splitTeamName } from "../js/shared"
+import { createTeam, findTeamSingle, getURITeamComponent, saveTeam, splitTeamName } from "../js/shared"
 
 export interface TeamView {
     name: string
@@ -25,10 +25,14 @@ async function start(req: Request) : Promise<PlayersEditView | undefined> {
     let { team: teamName } = await validateObject(searchParams<{team: string | undefined}>(req), teamQueryValidator)
 
     let [team, teams] = await Promise.all([
-        requiredAsync(get<Team>(teamName), "Players must be added to the team before editing a team!"),
+        get<Team>(teamName),
         requiredAsync(get("teams"))])
 
     let aggregateTeam = await required(findTeamSingle(teams, splitTeamName(teamName)), "Could not find the aggregate team!")
+
+    if (!team) {
+        team = createTeam(aggregateTeam)
+    }
 
     return {
         team,
@@ -71,6 +75,7 @@ function render(o: PlayersEditView | undefined) {
 </form>
 
 <h3 id=players>Players Settings</h3>
+${team.players.length === 0 ? html`<p>No players have been added.</p>` : null }
 ${team.players.map(x => {
     let teamPlayerQuery = `team=${teamUriName}&player=${encodeURIComponent(x.name)}`
     return html`
