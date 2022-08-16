@@ -3,6 +3,7 @@ import html from "../js/html-template-tag"
 import { handlePost, PostHandlers, Route, RoutePostArgsWithType } from "../js/route"
 import { searchParams } from "../js/utils"
 import layout from "../_layout.html"
+import { assert, createCheckbox, createString50, required, requiredAsync, validate, validateObject } from "../js/validation"
 
 export interface TeamView {
     name?: string
@@ -87,6 +88,15 @@ const head = `
 </style>
 `
 
+const teamStringValueObject = {
+    team: createString50("Team Name")
+}
+const teamSingleValueObject = {
+    ...teamStringValueObject,
+    year: createString50("Year"),
+    active: createCheckbox
+}
+
 const postHandlers: PostHandlers = {
     player: async ({data, query}: RoutePostArgsWithType<{player: string, active: string}, {team: string, player: string}>) => {
         let errors: string[] = []
@@ -108,23 +118,19 @@ const postHandlers: PostHandlers = {
         await set(team.name, team)
         return
     },
-    team: async({ data: {team: dataTeam, year, active}, query: {team: queryTeam} }: RoutePostArgsWithType<{team: string, year: string, active?: "on"}, {team: string}>) => {
-        let newTeamName = dataTeam?.trim()
-        let newYear = year?.trim()
+    team: async({ data, query }: RoutePostArgsWithType<{team: string, year: string, active?: "on"}, {team: string}>) => {
+        let { team: {value: newTeamName}, year, active } = await validateObject(data, teamSingleValueObject)
+        let { team: { value: queryTeam } } = await validateObject(query, teamStringValueObject)
 
-        let errors: string[] = []
-        if (!newTeamName) errors.push("A team name is required!")
-        if (!newYear) errors.push("A year for the team is required!")
-        if (errors.length) return Promise.reject({message: errors})
-
-        let [team, teams] = await Promise.all([get<Team>(queryTeam), get("teams")])
-        if (!team) return Promise.reject({message: `Could not find team "${queryTeam}"!`})
+        let [team, teams] = await validate([
+            requiredAsync(`Could not find team "${queryTeam}"!`)(get<Team>(queryTeam)),
+            requiredAsync(`Could not find teams!`)(get("teams"))])
         let aggregateTeamIndex = teams?.findIndex(x => x.name === queryTeam)
-        if (aggregateTeamIndex === -1) return Promise.reject({message: `Could not find the aggregate team "${queryTeam}"`})
-        if (queryTeam !== newTeamName) {
-            let duplicate = teams?.find(x => x.name === newTeamName)
-            if (duplicate) return Promise.reject({message: `The team "${newTeamName}" already exists!`})
-        }
+        await assert.isFalse(aggregateTeamIndex === -1, `Could not find the aggregate team "${queryTeam}"`)
+        // Check for duplicates
+        await assert.isFalse(
+            queryTeam !== newTeamName && !!teams?.find(x => x.name === newTeamName),
+            `The team "${newTeamName}" already exists!`)
 
         let newTeam : Team = {
             name: newTeamName,
@@ -132,9 +138,9 @@ const postHandlers: PostHandlers = {
         }
 
         let newSingleTeam: TeamSingle = {
-            active: active === "on",
+            active,
             name: newTeamName,
-            year: newYear,
+            year: year.value,
         }
         // @ts-ignore
         teams[aggregateTeamIndex] = newSingleTeam
