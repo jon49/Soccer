@@ -3,7 +3,7 @@ import html from "../js/html-template-tag"
 import { handlePost, PostHandlers, Route, RoutePostArgsWithType } from "../js/route"
 import { searchParams } from "../js/utils"
 import layout from "../_layout.html"
-import { assert, createCheckbox, createString50, required, requiredAsync, validate, validateObject } from "../js/validation"
+import { assert, createCheckbox, createString50, required, requiredAsync, validateObject } from "../js/validation"
 
 export interface TeamView {
     name?: string
@@ -109,9 +109,8 @@ const postHandlers: PostHandlers = {
     player: async ({data: d, query: q}: RoutePostArgsWithType<{player: string, active: string}, {team: string, player: string}>) => {
         let query = await validateObject(q, teamPlayerValueObject)
         let { player: {value: playerName}, active } = await validateObject(d, playerActiveValueObject)
-        let [team] = await validate([requiredAsync(`Unknown team "${query.team}"`)(get<Team>(query.team.value))]) 
-        let [player] = await validate([
-            required(`Unknown player "${query.player}"`)(team.players.find(x => x.name === query.player.value))]) 
+        let team = await requiredAsync(get<Team>(query.team.value), `Unknown team "${query.team}"`)
+        let player = await required(team.players.find(x => x.name === query.player.value), `Unknown player "${query.player}"`)
 
         // Check for duplicates
         await assert.isFalse(
@@ -128,9 +127,8 @@ const postHandlers: PostHandlers = {
         let { team: {value: newTeamName}, year, active } = await validateObject(data, teamSingleValueObject)
         let { team: { value: queryTeam } } = await validateObject(query, teamStringValueObject)
 
-        let [team, teams] = await validate([
-            requiredAsync(`Could not find team "${queryTeam}"!`)(get<Team>(queryTeam)),
-            requiredAsync(`Could not find teams!`)(get("teams"))])
+        let team = await requiredAsync(get<Team>(queryTeam), `Could not find team "${queryTeam}"!`)
+        let teams = await requiredAsync(get("teams"), `Could not find teams!`)
         let aggregateTeamIndex = teams?.findIndex(x => x.name === queryTeam)
         await assert.isFalse(aggregateTeamIndex === -1, `Could not find the aggregate team "${queryTeam}"`)
         // Check for duplicates

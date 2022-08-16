@@ -54,18 +54,19 @@ export const createIdNumber = (name: string, val: number) : Promise<IdNumber> =>
     return Promise.resolve(new IdNumber_(val))
 }
 
+export const createString25 = (name: string) =>
+    (val?: string | undefined): Promise<String50> =>
+        createString(s => ({ value: s }), name, 50, val)
+
 export const createString50 = (name: string) =>
     (val?: string | undefined): Promise<String50> =>
         createString(s => ({ value: s }), name, 50, val)
-export const createString100 = (name: string) =>
-    (val?: string | undefined) : Promise<String100> =>
-        createString(s => ({ value: s }), name, 100, val)
 
 export const createCheckbox = (val: string | undefined) => Promise.resolve(val === "on")
 
 type Nullable<T> = T | undefined | null
-export const required = (message: string) =>
-    async <T>(o: Nullable<T>): Promise<T> => {
+export const required =
+    async <T>(o: Nullable<T>, message: string): Promise<T> => {
         if (!o) return Promise.reject(message)
         return o
     }
@@ -74,17 +75,20 @@ class Assert {
     isFalse(value: boolean, message: string) {
         return !value ? void 0 : Promise.reject({message})
     }
-    isNil(value: any, message: string) {
-        return value === null || value === undefined ? void 0 : Promise.reject({message})
-    }
-    isNotNil<T>(value: T, message: string) {
-        return value !== null && value !== void 0 ? void 0 : Promise.reject({message})
-    }
+    // isNil(value: any, message: string) {
+    //     return value === null || value === undefined ? void 0 : Promise.reject({message})
+    // }
+    // isNotNil<T>(value: T, message: string) {
+    //     return value !== null && value !== void 0 ? void 0 : Promise.reject({message})
+    // }
 }
 export const assert = new Assert()
 
-export const requiredAsync = (message: string) =>
-    async <T>(oTask: Promise<Nullable<T>>) => required(message)(await oTask)
+export const requiredAsync =
+    async <T>(oTask: Promise<Nullable<T>>, message: string) => {
+        let [result] = await validate([required(await oTask, message)])
+        return result
+    }
 
 export async function validate<T extends readonly unknown[] | readonly [unknown]>(promises: T):
     Promise<{ -readonly [P in keyof T]: T[P] extends PromiseLike<infer U> ? U : T[P] }> {
