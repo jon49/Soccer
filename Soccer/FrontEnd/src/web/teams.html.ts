@@ -3,7 +3,7 @@ import layout from "./_layout.html"
 import { CacheTeams, get, set, Teams, TeamSingle, TempCache, cache, update } from "./js/db"
 import { handlePost, PostHandlers, RoutePostArgsWithType } from "./js/route"
 import { searchParams } from "./js/utils"
-import { assert, createString25, validateObject } from "./js/validation"
+import { assert, createString25, required, requiredAsync, validateObject } from "./js/validation"
 
 interface TeamsView {
     teams: Teams | undefined
@@ -100,17 +100,10 @@ async function post({ data: d }: RoutePostArgsWithType<{name: string, year: stri
 
 function setActiveValueTo(active: boolean) {
     return async ({ query: { team: queryTeam } }: RoutePostArgsWithType<any, {team: string}>) => {
-        let message : string[] = []
-        await update("teams", xs => {
-            let team = xs?.find(x => x.name === queryTeam)
-            if (team) {
-                team.active = active
-            } else {
-                message.push(`Could not find team "${queryTeam}".`)
-            }
-            return xs
-        })
-        return message.length > 0 ? Promise.reject({message}) : void 0
+        let teams = await requiredAsync(get("teams"), "Oops! Something happens which shouldn't have.")
+        let team = await required(teams.find(x => x.name === queryTeam), `Could not find team "${queryTeam}".`)
+        team.active = active
+        await set("teams", teams)
     }
 }
 
