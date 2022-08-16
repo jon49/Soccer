@@ -94,7 +94,7 @@ async function post(url: string, req: Request) : Promise<Response> {
         } catch (error) {
             if (error && error instanceof Object && !Array.isArray(error) && error.hasOwnProperty("message")) {
                 await cache.push(error)
-                return Response.redirect(req.referrer, 302)
+                return Response.redirect(req.referrer, 303)
             } else {
                 console.error("Unknown error during post.", error)
             }

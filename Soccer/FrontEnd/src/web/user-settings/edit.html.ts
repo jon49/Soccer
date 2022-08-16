@@ -63,6 +63,6 @@ export default {
         if (handlerType && (handle = handler[<any>handlerType])) {
             await handle(data)
         }
-        return Response.redirect(req.referrer, 302)
+        return Response.redirect(req.referrer, 303)
     }
 }

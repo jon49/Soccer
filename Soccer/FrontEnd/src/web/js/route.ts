@@ -53,7 +53,7 @@ export function handlePost(handlers: PostHandlers) {
         }
 
         return !(result instanceof Response)
-                ? Response.redirect(args.req.referrer, 302)
+                ? Response.redirect(args.req.referrer, 303)
             : result
     }
 }
