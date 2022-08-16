@@ -3,10 +3,12 @@ import html from "../js/html-template-tag"
 import { handlePost, PostHandlers, Route, RoutePostArgsWithType } from "../js/route"
 import { searchParams } from "../js/utils"
 import layout from "../_layout.html"
-import { assert, createCheckbox, createString50, required, requiredAsync, validateObject } from "../js/validation"
+import { assert, createCheckbox, createString25, createString50, required, requiredAsync, validateObject } from "../js/validation"
+import { findTeamSingle, getURITeamComponent, saveTeam, splitTeamName } from "../js/shared"
 
 export interface TeamView {
-    name?: string
+    name: string
+    year: string
     players: TeamPlayer[]
 }
 
@@ -15,23 +17,18 @@ interface PlayersEditView {
     aggregateTeam: TeamSingle
 }
 
+const teamQueryValidator = {
+    team: createString25("Query Team")
+}
+
 async function start(req: Request) : Promise<PlayersEditView | undefined> {
-    let query = searchParams<{team: string | null}>(req)
-    let teamName = query.team?.trim()
-    if (!teamName) {
-        await cache.push({message: "Team name is required!"})
-        return
-    }
-    let [team, teams] = await Promise.all([get<Team>(teamName), get("teams")])
-    if (!team) {
-        await cache.push({message: "Players must be added to the team before editing a team!"})
-        return
-    }
-    let aggregateTeam = teams?.find(x => x.name === teamName)
-    if (!aggregateTeam) {
-        await cache.push({message: "Could not find the aggregate team!"})
-        return
-    }
+    let { team: teamName } = await validateObject(searchParams<{team: string | undefined}>(req), teamQueryValidator)
+
+    let [team, teams] = await Promise.all([
+        requiredAsync(get<Team>(teamName), "Players must be added to the team before editing a team!"),
+        requiredAsync(get("teams"))])
+
+    let aggregateTeam = await required(findTeamSingle(teams, splitTeamName(teamName)), "Could not find the aggregate team!")
 
     return {
         team,
@@ -45,7 +42,7 @@ function render(o: PlayersEditView | undefined) {
     }
 
     let { team, aggregateTeam } = o
-    let teamUriName = encodeURIComponent(team.name ?? "")
+    let teamUriName = getURITeamComponent(team)
 
     return html`
 <h2>Team ${ o?.team.name ??  "Unknown"}</h2>
@@ -139,26 +136,29 @@ const postHandlers: PostHandlers = {
         player.name = playerName
         player.active = active
         // Player name will also need to be updated for the individual player when implemented!
-        await set(team.name, team)
+        await saveTeam(team)
         return
     },
     team: async({ data, query }: RoutePostArgsWithType<{team: string, year: string, active?: "on"}, {team: string}>) => {
         let { team: newTeamName, year, active } = await validateObject(data, teamSingleValueObject)
-        let { team: queryTeam } = await validateObject(query, teamStringValueObject)
+        let query_ = await validateObject(query, teamStringValueObject)
+
+        let queryTeam = splitTeamName(query_.team)
 
         let [team, teams] = await Promise.all([
-            requiredAsync(get<Team>(queryTeam), `Could not find team "${queryTeam}"!`),
+            requiredAsync(get<Team>(query_.team), `Could not find team "${queryTeam.name} - ${queryTeam.year}"!`),
             requiredAsync(get("teams"), `Could not find teams!`)
         ]) 
-        let aggregateTeamIndex = teams.findIndex(x => x.name === queryTeam)
+        let aggregateTeamIndex = teams.findIndex(x => x.name === queryTeam.name && x.year === queryTeam.year)
         await assert.isFalse(aggregateTeamIndex === -1, `Could not find the aggregate team "${queryTeam}"`)
         // Check for duplicates
         await assert.isFalse(
-            queryTeam !== newTeamName && !!teams.find(x => x.name === newTeamName),
+            queryTeam.name !== newTeamName && !!findTeamSingle(teams, {name: newTeamName, year}),
             `The team "${newTeamName}" already exists!`)
 
         let newTeam : Team = {
             name: newTeamName,
+            year,
             players: team.players
         }
 
@@ -169,15 +169,20 @@ const postHandlers: PostHandlers = {
         }
         // @ts-ignore
         teams[aggregateTeamIndex] = newSingleTeam
-        await Promise.all([set(newTeamName, newTeam), set("teams", teams)])
-        return Response.redirect(`/web/players/edit?team=${encodeURIComponent(newTeamName)}`, 303)
+        await Promise.all([saveTeam(newTeam), set("teams", teams)])
+        return Response.redirect(`/web/players/edit?team=${getURITeamComponent(newTeam)}`, 303)
     }
 }
 
 const route : Route = {
     route: /\/players\/edit\/$/,
     async get(req: Request) {
-        const result = await start(req)
+        let result
+        try {
+            result = await start(req)
+        } catch(x: any) {
+            cache.push(x)
+        }
         const template = await layout(req)
         return template({
             main: render(result),

@@ -1,3 +1,5 @@
+import { unexpectedErrorMessage } from "./shared"
+
 interface Value<T> {
     value: T
 }
@@ -87,8 +89,8 @@ class Assert {
 }
 export const assert = new Assert()
 
-export async function requiredAsync<T>(oTask: Promise<Nullable<T>>, message: string) {
-    let [result] = await validate([required(await oTask, message)])
+export async function requiredAsync<T>(oTask: Promise<Nullable<T>>, message?: string) {
+    let [result] = await validate([required(await oTask, message ?? "Oops! Something happened which shouldn't have! (requiredAsync)")])
     return result
 }
 

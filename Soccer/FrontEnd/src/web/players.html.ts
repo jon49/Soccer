@@ -1,11 +1,14 @@
 import html from "./js/html-template-tag"
 import layout from "./_layout.html"
-import { cache, get, set, Team, TeamPlayer, TeamSingle } from "./js/db"
+import { cache, get, set, Team, TeamPlayer, TeamSingle, TempCache } from "./js/db"
 import { searchParams } from "./js/utils"
 import { handlePost, PostHandlers, Route, RoutePostArgsWithType } from "./js/route"
+import { assert, createString25, createString50, required, requiredAsync, validateObject } from "./js/validation"
+import { findTeamSingle, getNormalizedTeamName, getURITeamComponent, saveTeam, splitTeamName } from "./js/shared"
 
 export interface TeamView {
-    name?: string
+    name: string
+    year: string
     players: TeamPlayer[]
 }
 
@@ -18,12 +21,15 @@ interface PlayersView {
 
 async function start(req: Request) : Promise<PlayersView> {
     let query = searchParams<{team: string, all: string | null}>(req)
+    let queryTeam = splitTeamName(query.team)
     let [players, playerCache] = await Promise.all([get<Team>(query.team), cache.pop("players")])
     let team : TeamSingle | undefined
     let wasFiltered = false
     if (!players) {
         let teams = await get("teams")
-        team = teams?.find(x => x.name === query.team)
+        if (teams) {
+            team = findTeamSingle(teams, queryTeam)
+        }
     } else if (query.all === null) {
         let filtered = players.players.filter(x => x.active)
         wasFiltered = filtered.length !== players.players.length
@@ -31,45 +37,45 @@ async function start(req: Request) : Promise<PlayersView> {
     }
     let teamExists = !!(players || team)
     return {
-        players: teamExists && players || { name: team?.name, players: [] },
+        players: teamExists && players || { name: queryTeam.name, year: queryTeam.year, players: [] },
         teamExists,
         playerCache,
         wasFiltered,
     }
 }
 
-async function post({ data, query }: RoutePostArgsWithType<{name: string}, {team: string}>) {
-    let team = await get<Team>(query.team)
+const playerCreateValidator = {
+    name: createString25("Player Name")
+}
+const queryTeamValidator = {
+    team: createString50("Query Team Name")
+}
 
-    let errors: string[] = []
-    let name = data.name?.trim()
-    if (!name) errors.push("Player name required!")
-    if (errors.length > 0) {
-        return Promise.reject({message: errors})
-    }
+async function post({ data, query }: RoutePostArgsWithType<{name: string}, {team: string}>) {
+    let { team: queryTeam } = await validateObject(query, queryTeamValidator)
+    let team = await get<Team>(queryTeam)
+
+    let { name } = await validateObject(data, playerCreateValidator)
 
     if (!team) {
-        let teams = await get("teams")
-        let team_ = teams?.find(x => query.team === x.name)
-        if (!team_) return Promise.reject({message: ["Could not find team."]})
+        let teams = await requiredAsync(get("teams"), "Oops! Something happened which shouldn't have!")
+        let team_ = await required(findTeamSingle(teams, splitTeamName(queryTeam)), "Could not find team.")
         team = {
             name: team_.name,
+            year: team_.year,
             players: []
         }
     }
 
-    let player = team.players.find(x => x.name === name)
-    if (player) {
-        await cache.push({players: { name, posted: true }})
-        return Promise.reject({message: ["Player names must be unique!"]})
-    }
+    await assert.isFalse(!!team.players.find(x => x.name === name), "Player names must be unique!")
+        ?.catch(x => Promise.reject({...x, players: { name, posted: true }}))
 
     team.players.push({
         active: true,
         name,
     })
 
-    await Promise.all([set(team.name, team), cache.push({players: { posted: true }})])
+    await Promise.all([saveTeam(team), cache.push({players: { posted: true }})])
 
     return
 }
@@ -89,7 +95,7 @@ function setActiveValueTo(active: boolean) {
         if (!player) return Promise.reject({message: [`Could not find player "${queryPlayer}".`]})
         player.active = active
 
-        await set<Team>(team.name, team)
+        await saveTeam(team)
         return
     }
 }
@@ -104,7 +110,7 @@ function render(view: PlayersView) {
 
 function renderMain({ players: o, playerCache, wasFiltered }: PlayersView) {
     let { name, posted } = playerCache ?? {}
-    let teamUriName = encodeURIComponent(o.name ?? "")
+    let teamUriName = getURITeamComponent(o)
     let playersExist = o.players.length > 0
     return html`
     ${ playersExist
@@ -168,7 +174,7 @@ const route : Route = {
         return template({
             main: render(result),
             head,
-            nav: [{name: "Settings", url: `/web/players/edit?team=${encodeURIComponent(result.players.name ?? "")}`}] })
+            nav: [{name: "Settings", url: `/web/players/edit?team=${getURITeamComponent(result.players)}`}] })
     },
     post: handlePost(postHandlers),
 }

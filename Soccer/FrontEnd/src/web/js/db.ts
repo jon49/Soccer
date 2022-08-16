@@ -87,6 +87,7 @@ export interface TeamPlayer {
 
 export interface Team {
     name: string
+    year: string
     players: TeamPlayer[]
 }
 

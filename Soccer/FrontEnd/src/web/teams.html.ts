@@ -4,6 +4,7 @@ import { CacheTeams, get, set, Teams, TeamSingle, TempCache, cache, } from "./js
 import { handlePost, PostHandlers, RoutePostArgsWithType } from "./js/route"
 import { searchParams } from "./js/utils"
 import { assert, createString25, required, requiredAsync, validateObject } from "./js/validation"
+import { findTeamSingle, getNormalizedTeamName, getURITeamComponent, splitTeamName } from "./js/shared"
 
 interface TeamsView {
     teams: Teams | undefined
@@ -35,7 +36,7 @@ ${
     teams ? html`
         <ul class=list>
             ${teams?.map(x => {
-                let uriName = encodeURIComponent(x.name)
+                let uriName = getURITeamComponent(x)
                 return html`
                 <li>
                     <a href="/web/players?team=${uriName}">${x.name} - ${x.year}</a>
@@ -101,7 +102,8 @@ async function post({ data: d }: RoutePostArgsWithType<{name: string, year: stri
 function setActiveValueTo(active: boolean) {
     return async ({ query: { team: queryTeam } }: RoutePostArgsWithType<any, {team: string}>) => {
         let teams = await requiredAsync(get("teams"), "Oops! Something happens which shouldn't have.")
-        let team = await required(teams.find(x => x.name === queryTeam), `Could not find team "${queryTeam}".`)
+        let query = splitTeamName(queryTeam)
+        let team = await required(findTeamSingle(teams, query), `Could not find team "${query.name} - ${query.year}".`)
         team.active = active
         await set("teams", teams)
     }
