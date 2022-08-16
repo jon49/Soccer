@@ -1,7 +1,7 @@
 import { cache, get, set, Team, TeamPlayer, TeamSingle } from "../js/db"
 import html from "../js/html-template-tag"
 import { handlePost, PostHandlers, Route, RoutePostArgsWithType } from "../js/route"
-import { searchParams } from "../js/utils"
+import { cleanHtmlId, searchParams } from "../js/utils"
 import layout from "../_layout.html"
 import { assert, createCheckbox, createString25, createString50, required, requiredAsync, validateObject } from "../js/validation"
 import { findTeamSingle, getURITeamComponent, saveTeam, splitTeamName } from "../js/shared"
@@ -72,8 +72,10 @@ function render(o: PlayersEditView | undefined) {
 
 <h3 id=players>Players Settings</h3>
 ${team.players.map(x => {
+    let teamPlayerQuery = `team=${teamUriName}&player=${encodeURIComponent(x.name)}`
     return html`
-    <form method=post class=form action="?handler=player&team=${teamUriName}&player=${x.name}">
+    <p id="${cleanHtmlId(x.name)}"><a href="/web/players?${teamPlayerQuery}">${x.name}</a></p>
+    <form method=post class=form action="?handler=player&${teamPlayerQuery}">
         <div>
             <label for=player>Player Name:</label>
             <input id=player name=player type=text value="${x.name}">

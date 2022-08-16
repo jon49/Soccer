@@ -9,6 +9,10 @@ const searchParamsHandler = {
 }
 
 export function searchParams<TReturn>(req: Request) : TReturn {
-    let url = new URL(req.url)
-    return new Proxy(url, searchParamsHandler)
+  let url = new URL(req.url)
+  return new Proxy(url, searchParamsHandler)
+}
+
+export function cleanHtmlId(s: string) {
+  return s.replace(/[\W_-]/g,'-');
 }

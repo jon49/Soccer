@@ -3,8 +3,8 @@ import layout from "./_layout.html"
 import { CacheTeams, get, set, Teams, TeamSingle, TempCache, cache, } from "./js/db"
 import { handlePost, PostHandlers, RoutePostArgsWithType } from "./js/route"
 import { searchParams } from "./js/utils"
-import { assert, createString25, required, requiredAsync, validateObject } from "./js/validation"
-import { findTeamSingle, getNormalizedTeamName, getURITeamComponent, splitTeamName } from "./js/shared"
+import { assert, createString25, validateObject } from "./js/validation"
+import { getURITeamComponent } from "./js/shared"
 
 interface TeamsView {
     teams: Teams | undefined
@@ -40,13 +40,10 @@ ${
                 return html`
                 <li>
                     <a href="/web/players?team=${uriName}">${x.name} - ${x.year}</a>
-                    ${ x.active
-                        ? html`<form method=post action="?handler=archive&team=${uriName}"><button>Archive</button></form>`
-                    : html`<form method=post action="?handler=activate&team=${uriName}"><button>Activate</button></form>` }
+                    <a href="/web/players/edit?team=${uriName}">Edit</a>
                 </li>`
             })}
-        </ul>
-    `
+        </ul>`
     : html`<p>No teams found. Please add one!</p>`
 }
 
@@ -99,20 +96,8 @@ async function post({ data: d }: RoutePostArgsWithType<{name: string, year: stri
     return
 }
 
-function setActiveValueTo(active: boolean) {
-    return async ({ query: { team: queryTeam } }: RoutePostArgsWithType<any, {team: string}>) => {
-        let teams = await requiredAsync(get("teams"), "Oops! Something happens which shouldn't have.")
-        let query = splitTeamName(queryTeam)
-        let team = await required(findTeamSingle(teams, query), `Could not find team "${query.name} - ${query.year}".`)
-        team.active = active
-        await set("teams", teams)
-    }
-}
-
 const postHandlers: PostHandlers = {
     post,
-    archive: setActiveValueTo(false),
-    activate: setActiveValueTo(true),
 }
 
 export default {

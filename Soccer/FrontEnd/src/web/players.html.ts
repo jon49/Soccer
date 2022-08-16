@@ -1,10 +1,10 @@
 import html from "./js/html-template-tag"
 import layout from "./_layout.html"
-import { cache, get, set, Team, TeamPlayer, TeamSingle, TempCache } from "./js/db"
-import { searchParams } from "./js/utils"
+import { cache, get, Team, TeamPlayer, TeamSingle } from "./js/db"
+import { cleanHtmlId, searchParams } from "./js/utils"
 import { handlePost, PostHandlers, Route, RoutePostArgsWithType } from "./js/route"
 import { assert, createString25, createString50, required, requiredAsync, validateObject } from "./js/validation"
-import { findTeamSingle, getNormalizedTeamName, getURITeamComponent, saveTeam, splitTeamName } from "./js/shared"
+import { findTeamSingle, getURITeamComponent, saveTeam, splitTeamName } from "./js/shared"
 
 export interface TeamView {
     name: string
@@ -58,7 +58,7 @@ async function post({ data, query }: RoutePostArgsWithType<{name: string}, {team
     let { name } = await validateObject(data, playerCreateValidator)
 
     if (!team) {
-        let teams = await requiredAsync(get("teams"), "Oops! Something happened which shouldn't have!")
+        let teams = await requiredAsync(get("teams"))
         let team_ = await required(findTeamSingle(teams, splitTeamName(queryTeam)), "Could not find team.")
         team = {
             name: team_.name,
@@ -78,26 +78,6 @@ async function post({ data, query }: RoutePostArgsWithType<{name: string}, {team
     await Promise.all([saveTeam(team), cache.push({players: { posted: true }})])
 
     return
-}
-
-function setActiveValueTo(active: boolean) {
-    return async ({ query: {player: queryPlayer, team: queryTeam} }: RoutePostArgsWithType<any, { team: string, player: string }>) => {
-        let errors: string[] = []
-        let name = queryPlayer?.trim()
-        if (!name) errors.push(`Player name is required.`)
-        let teamName = queryTeam?.trim()
-        if (!teamName) errors.push(`Team name is required.`)
-        if (errors.length > 0) return Promise.reject({message: errors})
-
-        let team = await get<Team>(teamName)
-        if (!team) return Promise.reject({message: [`Could not find team "${queryTeam}".`]})
-        let player = team.players.find(x => x.name === queryPlayer)
-        if (!player) return Promise.reject({message: [`Could not find player "${queryPlayer}".`]})
-        player.active = active
-
-        await saveTeam(team)
-        return
-    }
 }
 
 function render(view: PlayersView) {
@@ -121,9 +101,7 @@ function renderMain({ players: o, playerCache, wasFiltered }: PlayersView) {
             return html`
             <li>
                 <a href="?player=${uriName}&team=${teamUriName}">${x.name}</a>
-                ${ x.active
-                    ? html`<form method=post action="?handler=archive&player=${uriName}&team=${teamUriName}"><button>Archive</button></form>`
-                : html`<form method=post action="?handler=activate&player=${uriName}&team=${teamUriName}"><button>Activate</button></form>` }
+                <a href="/web/players/edit?team=${teamUriName}#${cleanHtmlId(x.name)}">Edit</a>
             </li>`
         })}
     </ul>`
@@ -163,8 +141,6 @@ const head = `
 
 const postHandlers : PostHandlers = {
     post,
-    archive: setActiveValueTo(false),
-    activate: setActiveValueTo(true),
 }
 
 const route : Route = {
