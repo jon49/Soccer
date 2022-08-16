@@ -12,19 +12,19 @@ export interface IDType<T extends TableType> extends Value<number> {
     _id: T
 }
 
-class PositiveWholeNumber_ {
-    readonly value: number
-    constructor (value: number) {
-        this.value = value
-    }
-}
+// class PositiveWholeNumber_ {
+//     readonly value: number
+//     constructor (value: number) {
+//         this.value = value
+//     }
+// }
 
-class IdNumber_ {
-    readonly value: number
-    constructor (value: number) {
-        this.value = value
-    }
-}
+// class IdNumber_ {
+//     readonly value: number
+//     constructor (value: number) {
+//         this.value = value
+//     }
+// }
 
 const notFalsey = (error: string, val: string | undefined) =>
     !val ? Promise.reject([error]) : Promise.resolve(val)
@@ -34,42 +34,45 @@ const maxLength = (error: string, val: string, maxLength: number) =>
         ? Promise.reject([error])
     : Promise.resolve(val)
 
-const createString = async <T>(ctor: (s: string) => T, name: string, maxLength_: number, val?: string | undefined) => {
+const createString = async (name: string, maxLength_: number, val?: string | undefined) => {
     const trimmed = await notFalsey(`"${name}" is required.`, val?.trim())
-    const s = await maxLength(`'${name}' must be less than 50 characters.`, trimmed, maxLength_)
-    return ctor(s)
+    const s = await maxLength(`'${name}' must be less than ${maxLength} characters.`, trimmed, maxLength_)
+    return s
 }
 
-const isInteger = (val: number) => val === (val|0)
+// const isInteger = (val: number) => val === (val|0)
 
-export const createPositiveWholeNumber = (name: string, val: number) : Promise<PositiveWholeNumber>  => {
-    if (val < 0) return Promise.reject([`'${name}' must be 0 or greater. But was given '${val}'.`])
-    if (!isInteger(val)) return Promise.reject([`${name} must be a whole number. But was given '${val}' and was expecting '${val|0}'.`])
-    return Promise.resolve(new PositiveWholeNumber_(val))
+// export const createPositiveWholeNumber = (name: string, val: number) : Promise<PositiveWholeNumber>  => {
+//     if (val < 0) return Promise.reject([`'${name}' must be 0 or greater. But was given '${val}'.`])
+//     if (!isInteger(val)) return Promise.reject([`${name} must be a whole number. But was given '${val}' and was expecting '${val|0}'.`])
+//     return Promise.resolve(new PositiveWholeNumber_(val))
+// }
+
+// export const createIdNumber = (name: string, val: number) : Promise<IdNumber> => {
+//     if (!isInteger(val)) return Promise.reject([`${name} must be a whole number. But was given '${val}' and was expecting '${val|0}'.`])
+//     if (val < 1) return Promise.reject([`'${name}' must be 1 or greater. But was given '${val}'.`])
+//     return Promise.resolve(new IdNumber_(val))
+// }
+
+export const createString25 =
+    (name: string) =>
+    (val: string | undefined) =>
+        createString(name, 25, val)
+
+export const createString50 =
+    (name: string) =>
+    (val: string | undefined) =>
+        createString(name, 50, val)
+
+export function createCheckbox(val: string | undefined) {
+    return Promise.resolve(val === "on")
 }
-
-export const createIdNumber = (name: string, val: number) : Promise<IdNumber> => {
-    if (!isInteger(val)) return Promise.reject([`${name} must be a whole number. But was given '${val}' and was expecting '${val|0}'.`])
-    if (val < 1) return Promise.reject([`'${name}' must be 1 or greater. But was given '${val}'.`])
-    return Promise.resolve(new IdNumber_(val))
-}
-
-export const createString25 = (name: string) =>
-    (val?: string | undefined): Promise<String50> =>
-        createString(s => ({ value: s }), name, 50, val)
-
-export const createString50 = (name: string) =>
-    (val?: string | undefined): Promise<String50> =>
-        createString(s => ({ value: s }), name, 50, val)
-
-export const createCheckbox = (val: string | undefined) => Promise.resolve(val === "on")
 
 type Nullable<T> = T | undefined | null
-export const required =
-    async <T>(o: Nullable<T>, message: string): Promise<T> => {
-        if (!o) return Promise.reject(message)
-        return o
-    }
+export async function required<T>(o: Nullable<T>, message: string): Promise<T> {
+    if (!o) return Promise.reject(message)
+    return o
+}
 
 class Assert {
     isFalse(value: boolean, message: string) {
@@ -84,11 +87,10 @@ class Assert {
 }
 export const assert = new Assert()
 
-export const requiredAsync =
-    async <T>(oTask: Promise<Nullable<T>>, message: string) => {
-        let [result] = await validate([required(await oTask, message)])
-        return result
-    }
+export async function requiredAsync<T>(oTask: Promise<Nullable<T>>, message: string) {
+    let [result] = await validate([required(await oTask, message)])
+    return result
+}
 
 export async function validate<T extends readonly unknown[] | readonly [unknown]>(promises: T):
     Promise<{ -readonly [P in keyof T]: T[P] extends PromiseLike<infer U> ? U : T[P] }> {

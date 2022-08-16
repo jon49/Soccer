@@ -108,9 +108,9 @@ const playerActiveValueObject = {
 const postHandlers: PostHandlers = {
     player: async ({data: d, query: q}: RoutePostArgsWithType<{player: string, active: string}, {team: string, player: string}>) => {
         let query = await validateObject(q, teamPlayerValueObject)
-        let { player: {value: playerName}, active } = await validateObject(d, playerActiveValueObject)
-        let team = await requiredAsync(get<Team>(query.team.value), `Unknown team "${query.team}"`)
-        let player = await required(team.players.find(x => x.name === query.player.value), `Unknown player "${query.player}"`)
+        let { player: playerName, active } = await validateObject(d, playerActiveValueObject)
+        let team = await requiredAsync(get<Team>(query.team), `Unknown team "${query.team}"`)
+        let player = await required(team.players.find(x => x.name === query.player), `Unknown player "${query.player}"`)
 
         // Check for duplicates
         await assert.isFalse(
@@ -124,8 +124,8 @@ const postHandlers: PostHandlers = {
         return
     },
     team: async({ data, query }: RoutePostArgsWithType<{team: string, year: string, active?: "on"}, {team: string}>) => {
-        let { team: {value: newTeamName}, year, active } = await validateObject(data, teamSingleValueObject)
-        let { team: { value: queryTeam } } = await validateObject(query, teamStringValueObject)
+        let { team: newTeamName, year, active } = await validateObject(data, teamSingleValueObject)
+        let { team: queryTeam } = await validateObject(query, teamStringValueObject)
 
         let team = await requiredAsync(get<Team>(queryTeam), `Could not find team "${queryTeam}"!`)
         let teams = await requiredAsync(get("teams"), `Could not find teams!`)
@@ -144,7 +144,7 @@ const postHandlers: PostHandlers = {
         let newSingleTeam: TeamSingle = {
             active,
             name: newTeamName,
-            year: year.value,
+            year: year,
         }
         // @ts-ignore
         teams[aggregateTeamIndex] = newSingleTeam
