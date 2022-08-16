@@ -1,6 +1,6 @@
 import html from "./js/html-template-tag"
 import layout from "./_layout.html"
-import { CacheTeams, get, set, Teams, TeamSingle, TempCache, cache, update } from "./js/db"
+import { CacheTeams, get, set, Teams, TeamSingle, TempCache, cache, } from "./js/db"
 import { handlePost, PostHandlers, RoutePostArgsWithType } from "./js/route"
 import { searchParams } from "./js/utils"
 import { assert, createString25, required, requiredAsync, validateObject } from "./js/validation"
