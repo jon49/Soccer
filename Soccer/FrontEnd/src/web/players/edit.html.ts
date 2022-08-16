@@ -49,18 +49,31 @@ function render(o: PlayersEditView | undefined) {
 
     return html`
 <h2>Team ${ o?.team.name ??  "Unknown"}</h2>
+
+<nav>
+    <ul>
+        <li><a href="#team">Team</a></li>
+        <li><a href="#players">Players</a></li>
+        <li><a href="#positions">Positions</a></li>
+        <li><a href="#activities">Activities</a></li>
+    </ul>
+</nav>
+
+<h3 id=team>Team Settings</h3>
 <form class=form method=post action="?handler=team&team=${teamUriName}">
-    <div>
+    <div class=inline>
         <label for=team>Team Name:</label><input id=team name=team type=text value="${team.name}">
     </div>
-    <div>
+    <div class=inline>
         <label for=year>Year:</label> <input id=year name=year type=text value="${aggregateTeam.year}">
     </div>
     <div>
-        <label for=active>Active</label> <input id=active name=active type=checkbox $${aggregateTeam.active ? "checked" : null}>
+        <label for=active>Active</label> <input id=active class=inline name=active type=checkbox $${aggregateTeam.active ? "checked" : null}>
     </div>
     <button>Save</button>
 </form>
+
+<h3 id=players>Players Settings</h3>
 ${team.players.map(x => {
     return html`
     <form method=post class=form action="?handler=player&team=${teamUriName}&player=${x.name}">
@@ -75,6 +88,12 @@ ${team.players.map(x => {
         <button>Save</button>
     </form>
 `})}
+
+<h3 id=positions>Positions Settings</h3>
+<p>This is a placeholder for default settings for team play positions. E.g., 1 Keeper, 3 Defenders, 2 Midfielders, 2 Strikers</p>
+
+<h3 id=activities>Activities Settings</h3>
+<p>This is a placeholder for activities associated with a player. E.g., the number of goals, number of assists, number of goal saves.</p>
     `
 }
 
@@ -127,13 +146,15 @@ const postHandlers: PostHandlers = {
         let { team: newTeamName, year, active } = await validateObject(data, teamSingleValueObject)
         let { team: queryTeam } = await validateObject(query, teamStringValueObject)
 
-        let team = await requiredAsync(get<Team>(queryTeam), `Could not find team "${queryTeam}"!`)
-        let teams = await requiredAsync(get("teams"), `Could not find teams!`)
-        let aggregateTeamIndex = teams?.findIndex(x => x.name === queryTeam)
+        let [team, teams] = await Promise.all([
+            requiredAsync(get<Team>(queryTeam), `Could not find team "${queryTeam}"!`),
+            requiredAsync(get("teams"), `Could not find teams!`)
+        ]) 
+        let aggregateTeamIndex = teams.findIndex(x => x.name === queryTeam)
         await assert.isFalse(aggregateTeamIndex === -1, `Could not find the aggregate team "${queryTeam}"`)
         // Check for duplicates
         await assert.isFalse(
-            queryTeam !== newTeamName && !!teams?.find(x => x.name === newTeamName),
+            queryTeam !== newTeamName && !!teams.find(x => x.name === newTeamName),
             `The team "${newTeamName}" already exists!`)
 
         let newTeam : Team = {
@@ -149,7 +170,7 @@ const postHandlers: PostHandlers = {
         // @ts-ignore
         teams[aggregateTeamIndex] = newSingleTeam
         await Promise.all([set(newTeamName, newTeam), set("teams", teams)])
-        return Response.redirect(`/web/players/edit?team=${encodeURIComponent(newTeamName)}`, 302)
+        return Response.redirect(`/web/players/edit?team=${encodeURIComponent(newTeamName)}`, 303)
     }
 }
 
