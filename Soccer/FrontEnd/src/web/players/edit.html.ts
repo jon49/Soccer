@@ -1,10 +1,10 @@
 import { cache, get, Message, set, Team, TeamPlayer, TeamSingle } from "../js/db"
 import html from "../js/html-template-tag"
 import { handlePost, PostHandlers, Route, RoutePostArgsWithType } from "../js/route"
-import { cleanHtmlId, getProperty, searchParams } from "../js/utils"
+import { cleanHtmlId, searchParams } from "../js/utils"
 import layout from "../_layout.html"
 import { assert, required, requiredAsync, validateObject } from "../js/validation"
-import { createTeam, findTeamSingle, getURITeamComponent, messageView, saveTeam, splitTeamName, when } from "../js/shared"
+import { createTeam, findTeamSingle, getOrCreateTeam, getURITeamComponent, messageView, saveTeam, splitTeamName, when } from "../js/shared"
 import { dataPlayerNameActiveValidator, dataTeamNameYearActiveValidator, queryTeamPlayerValidator, queryTeamValidator } from "../js/validators"
 import { addPlayer, addPlayerForm } from "../js/_AddPayer.html"
 
@@ -127,16 +127,6 @@ ${addPlayerForm({ name: undefined, playersExist: true, posted, action, message }
     `
 }
 
-const head = `
-<style>
-    .form {
-        border: 1px solid black;
-        margin: 5px 0;
-        padding: 1em;
-    }
-</style>
-`
-
 const postHandlers: PostHandlers = {
     editPlayer: async ({data: d, query: q}: RoutePostArgsWithType<{name: string, active: string}, {team: string, player: string}>) => {
         let query = await validateObject(q, queryTeamPlayerValidator)
@@ -171,10 +161,7 @@ const postHandlers: PostHandlers = {
 
         let queryTeam = splitTeamName(query_.team)
 
-        let [team, teams] = await Promise.all([
-            requiredAsync(get<Team>(query_.team), `Could not find team "${queryTeam.name} - ${queryTeam.year}"!`),
-            requiredAsync(get("teams"), `Could not find teams!`)
-        ]) 
+        let teams = await requiredAsync(get("teams"), `Could not find teams!`)
         let aggregateTeamIndex = teams.findIndex(x => x.name === queryTeam.name && x.year === queryTeam.year)
         await assert.isFalse(aggregateTeamIndex === -1, `Could not find the aggregate team "${queryTeam}"`)
         // Check for duplicates
@@ -182,21 +169,20 @@ const postHandlers: PostHandlers = {
             queryTeam.name !== newTeamName && !!findTeamSingle(teams, {name: newTeamName, year}),
             `The team "${newTeamName}" already exists!`)
 
-        let newTeam : Team = {
-            name: newTeamName,
-            year,
-            players: team.players
-        }
+        let team : Team = await getOrCreateTeam(query_.team)
+        team.name = newTeamName
+        team.year = year
 
         let newSingleTeam: TeamSingle = {
             active,
             name: newTeamName,
             year: year,
         }
+
         // @ts-ignore
         teams[aggregateTeamIndex] = newSingleTeam
-        await Promise.all([saveTeam(newTeam), set("teams", teams)])
-        return Response.redirect(`/web/players/edit?team=${getURITeamComponent(newTeam)}`, 303)
+        await Promise.all([saveTeam(team), set("teams", teams)])
+        return Response.redirect(`/web/players/edit?team=${getURITeamComponent(team)}`, 303)
     }
 }
 
@@ -210,10 +196,7 @@ const route : Route = {
             cache.push(x)
         }
         const template = await layout(req)
-        return template({
-            main: render(result),
-            head
-        })
+        return template({ main: render(result) })
     },
     post: handlePost(postHandlers)
 }

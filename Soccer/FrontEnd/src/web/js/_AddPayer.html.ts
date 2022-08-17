@@ -1,7 +1,7 @@
 import { cache, get, Message, Team } from "./db"
 import html from "./html-template-tag"
 import { RoutePostArgsWithType } from "./route"
-import { findTeamSingle, messageView, saveTeam, splitTeamName, when } from "./shared"
+import { createTeam, findTeamSingle, messageView, saveTeam, splitTeamName, when } from "./shared"
 import { assert, required, requiredAsync, validateObject } from "./validation"
 import { dataPlayerNameValidator, queryTeamValidator } from "./validators"
 
@@ -40,11 +40,7 @@ export async function addPlayer({ data, query }: RoutePostArgsWithType<{name: st
     if (!team) {
         let teams = await requiredAsync(get("teams"))
         let team_ = await required(findTeamSingle(teams, splitTeamName(queryTeam)), "Could not find team.")
-        team = {
-            name: team_.name,
-            year: team_.year,
-            players: []
-        }
+        team = createTeam({ name: team_.name, year: team_.year })
     }
 
     await assert.isFalse(!!team.players.find(x => x.name === name), "Player names must be unique!")

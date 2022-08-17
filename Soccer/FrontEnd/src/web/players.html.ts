@@ -90,21 +90,6 @@ function renderMain({ players: o, name, posted, wasFiltered, message }: PlayersV
     `
 }
 
-const head = `
-    <style>
-        .list {
-            list-style-type: none;
-            display: table;
-        }
-        .list > li {
-            display: table-row;
-        }
-        .list > li > * {
-            display: table-cell;
-            padding: 1px 5px;
-        }
-    </style>`
-
 const postHandlers : PostHandlers = {
     post: addPlayer,
 }
@@ -116,7 +101,6 @@ const route : Route = {
         const template = await layout(req)
         return template({
             main: render(result),
-            head,
             nav: [{name: "Edit", url: `/web/players/edit?team=${getURITeamComponent(result.players)}#team`}] })
     },
     post: handlePost(postHandlers),

@@ -41,6 +41,7 @@ ${
                 return html`
                 <li>
                     <a href="/web/players?team=${uriName}">${x.name} - ${x.year}</a>
+                    <a href="/web/games?team=${uriName}">Games</a>
                     <a href="/web/players/edit?team=${uriName}">Edit</a>
                 </li>`
             })}
@@ -64,21 +65,6 @@ ${ wasFiltered ? html`<p><a href="?all">Show all teams.</a></p>` : null }
     <button>Save</button>
 </form>`
 
-const head = `
-    <style>
-        .list {
-            list-style-type: none;
-            display: table;
-        }
-        .list > li {
-            display: table-row;
-        }
-        .list > li > * {
-            display: table-cell;
-            padding: 1px 5px;
-        }
-    </style>`
-
 async function post({ data: d }: RoutePostArgsWithType<{name: string, year: string}>) {
     let data = await validateObject(d, dataTeamNameYearValidator)
     let teams = (await get("teams") ?? [])
@@ -100,7 +86,7 @@ export default {
     route: /\/teams\/$/,
     async get(req: Request) {
         const [result, template] = await Promise.all([start(req), layout(req)])
-        return template({ main: render(result), head })
+        return template({ main: render(result) })
     },
     post: handlePost(postHandlers),
 }

@@ -124,6 +124,12 @@ input,select,textarea{font-size: 1em; color:var(--c4); background: var(--c2); bo
   --c4:#eee;
 }
 
+.form {
+    border: 1px solid black;
+    margin: 5px 0;
+    padding: 1em;
+}
+
 form > div {
   padding: 10px 0;
 }
@@ -287,4 +293,16 @@ h2 {
 
 header {
   padding-bottom: 0;
+}
+
+.list {
+    list-style-type: none;
+    display: table;
+}
+.list > li {
+    display: table-row;
+}
+.list > li > * {
+    display: table-cell;
+    padding: 1px 5px;
 }

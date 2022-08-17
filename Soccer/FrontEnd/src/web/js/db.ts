@@ -66,7 +66,8 @@ export interface Stats {
 
 export interface Game {
     id: number
-    name: string
+    date: string
+    opponent?: string
 }
 
 export interface PlayerGame {
@@ -89,6 +90,7 @@ export interface Team {
     name: string
     year: string
     players: TeamPlayer[]
+    games: Game[]
 }
 
 export interface TeamSingle {
