@@ -3,8 +3,9 @@ import html from "../js/html-template-tag"
 import { handlePost, PostHandlers, Route, RoutePostArgsWithType } from "../js/route"
 import { cleanHtmlId, searchParams } from "../js/utils"
 import layout from "../_layout.html"
-import { assert, createCheckbox, createString25, createString50, required, requiredAsync, validateObject } from "../js/validation"
+import { assert, createCheckbox, createString50, required, requiredAsync, validateObject } from "../js/validation"
 import { createTeam, findTeamSingle, getURITeamComponent, saveTeam, splitTeamName } from "../js/shared"
+import { dataPlayerNameActiveValidator, dataTeamNameYearActiveValidator, queryTeamPlayerValidator, queryTeamValidator } from "../js/validators"
 
 export interface TeamView {
     name: string
@@ -17,12 +18,8 @@ interface PlayersEditView {
     aggregateTeam: TeamSingle
 }
 
-const teamQueryValidator = {
-    team: createString25("Query Team")
-}
-
 async function start(req: Request) : Promise<PlayersEditView | undefined> {
-    let { team: teamName } = await validateObject(searchParams<{team: string | undefined}>(req), teamQueryValidator)
+    let { team: teamName } = await validateObject(searchParams<{team: string | undefined}>(req), queryTeamValidator)
 
     let [team, teams] = await Promise.all([
         get<Team>(teamName),
@@ -63,7 +60,7 @@ function render(o: PlayersEditView | undefined) {
 <h3 id=team>Team Settings</h3>
 <form class=form method=post action="?handler=team&team=${teamUriName}">
     <div class=inline>
-        <label for=team>Team Name:</label><input id=team name=team type=text value="${team.name}">
+        <label for=team>Team Name:</label><input id=team name=name type=text value="${team.name}">
     </div>
     <div class=inline>
         <label for=year>Year:</label> <input id=year name=year type=text value="${aggregateTeam.year}">
@@ -76,18 +73,20 @@ function render(o: PlayersEditView | undefined) {
 
 <h3 id=players>Players Settings</h3>
 ${team.players.length === 0 ? html`<p>No players have been added.</p>` : null }
-${team.players.map(x => {
+${team.players.map((x, i) => {
     let teamPlayerQuery = `team=${teamUriName}&player=${encodeURIComponent(x.name)}`
+    let playerId = `player${i}`
+    let playerActiveId = `player-active${i}`
     return html`
     <p id="${cleanHtmlId(x.name)}"><a href="/web/players?${teamPlayerQuery}">${x.name}</a></p>
     <form method=post class=form action="?handler=player&${teamPlayerQuery}">
         <div>
-            <label for=player>Player Name:</label>
-            <input id=player name=player type=text value="${x.name}">
+            <label for=${playerId}>Player Name:</label>
+            <input id=${playerId} name=name type=text value="${x.name}">
         </div>
         <div>
-            <label for=active>Active</label>
-            <input id=active class=inline name=active type=checkbox $${x.active ? "checked" : null}>
+            <label for=${playerActiveId}>Active</label>
+            <input id=${playerActiveId} class=inline name=active type=checkbox $${x.active ? "checked" : null}>
         </div>
         <button>Save</button>
     </form>
@@ -111,27 +110,10 @@ const head = `
 </style>
 `
 
-const teamStringValueObject = {
-    team: createString50("Team Name")
-}
-const teamSingleValueObject = {
-    ...teamStringValueObject,
-    year: createString50("Year"),
-    active: createCheckbox
-}
-const teamPlayerValueObject = {
-    team: createString50("Query Team Name"),
-    player: createString50("Query Player Name")
-}
-const playerActiveValueObject = {
-    player: createString50("Player Name"),
-    active: createCheckbox
-}
-
 const postHandlers: PostHandlers = {
-    player: async ({data: d, query: q}: RoutePostArgsWithType<{player: string, active: string}, {team: string, player: string}>) => {
-        let query = await validateObject(q, teamPlayerValueObject)
-        let { player: playerName, active } = await validateObject(d, playerActiveValueObject)
+    player: async ({data: d, query: q}: RoutePostArgsWithType<{name: string, active: string}, {team: string, player: string}>) => {
+        let query = await validateObject(q, queryTeamPlayerValidator)
+        let { name: playerName, active } = await validateObject(d, dataPlayerNameActiveValidator)
         let team = await requiredAsync(get<Team>(query.team), `Unknown team "${query.team}"`)
         let player = await required(team.players.find(x => x.name === query.player), `Unknown player "${query.player}"`)
 
@@ -146,9 +128,10 @@ const postHandlers: PostHandlers = {
         await saveTeam(team)
         return
     },
-    team: async({ data, query }: RoutePostArgsWithType<{team: string, year: string, active?: "on"}, {team: string}>) => {
-        let { team: newTeamName, year, active } = await validateObject(data, teamSingleValueObject)
-        let query_ = await validateObject(query, teamStringValueObject)
+
+    team: async({ data, query }: RoutePostArgsWithType<{name: string, year: string, active?: "on"}, {team: string}>) => {
+        let { name: newTeamName, year, active } = await validateObject(data, dataTeamNameYearActiveValidator)
+        let query_ = await validateObject(query, queryTeamValidator)
 
         let queryTeam = splitTeamName(query_.team)
 

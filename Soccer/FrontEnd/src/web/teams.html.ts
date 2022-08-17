@@ -3,8 +3,9 @@ import layout from "./_layout.html"
 import { CacheTeams, get, set, Teams, TeamSingle, TempCache, cache, } from "./js/db"
 import { handlePost, PostHandlers, RoutePostArgsWithType } from "./js/route"
 import { searchParams } from "./js/utils"
-import { assert, createString25, validateObject } from "./js/validation"
+import { assert, validateObject } from "./js/validation"
 import { getURITeamComponent } from "./js/shared"
+import { dataTeamNameYearValidator } from "./js/validators"
 
 interface TeamsView {
     teams: Teams | undefined
@@ -78,13 +79,8 @@ const head = `
         }
     </style>`
 
-const teamValidator = {
-    name: createString25("Team Name"),
-    year: createString25("Team Year"),
-}
-
 async function post({ data: d }: RoutePostArgsWithType<{name: string, year: string}>) {
-    let data = await validateObject(d, teamValidator)
+    let data = await validateObject(d, dataTeamNameYearValidator)
     let teams = (await get("teams") ?? [])
     await assert.isFalse(!!teams.find(x => x.name === data.name), "Team name must be unique!")
     ?.catch(x => Promise.reject({ ...x, teams: {name: data.name, year: data.year, posted: true} } as TempCache))

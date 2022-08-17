@@ -3,8 +3,9 @@ import layout from "./_layout.html"
 import { cache, get, Team, TeamPlayer, TeamSingle } from "./js/db"
 import { cleanHtmlId, searchParams } from "./js/utils"
 import { handlePost, PostHandlers, Route, RoutePostArgsWithType } from "./js/route"
-import { assert, createString25, createString50, required, requiredAsync, validateObject } from "./js/validation"
+import { assert, required, requiredAsync, validateObject } from "./js/validation"
 import { findTeamSingle, getURITeamComponent, saveTeam, splitTeamName } from "./js/shared"
+import { dataPlayerNameValidator, queryTeamValidator } from "./js/validators"
 
 export interface TeamView {
     name: string
@@ -44,18 +45,11 @@ async function start(req: Request) : Promise<PlayersView> {
     }
 }
 
-const playerCreateValidator = {
-    name: createString25("Player Name")
-}
-const queryTeamValidator = {
-    team: createString50("Query Team Name")
-}
-
 async function post({ data, query }: RoutePostArgsWithType<{name: string}, {team: string}>) {
     let { team: queryTeam } = await validateObject(query, queryTeamValidator)
     let team = await get<Team>(queryTeam)
 
-    let { name } = await validateObject(data, playerCreateValidator)
+    let { name } = await validateObject(data, dataPlayerNameValidator)
 
     if (!team) {
         let teams = await requiredAsync(get("teams"))
@@ -150,7 +144,7 @@ const route : Route = {
         return template({
             main: render(result),
             head,
-            nav: [{name: "Edit", url: `/web/players/edit?team=${getURITeamComponent(result.players)}`}] })
+            nav: [{name: "Edit", url: `/web/players/edit?team=${getURITeamComponent(result.players)}#team`}] })
     },
     post: handlePost(postHandlers),
 }
