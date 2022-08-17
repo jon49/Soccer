@@ -139,33 +139,24 @@ const head = `
 
 const postHandlers: PostHandlers = {
     editPlayer: async ({data: d, query: q}: RoutePostArgsWithType<{name: string, active: string}, {team: string, player: string}>) => {
-        try {
-            let query = await validateObject(q, queryTeamPlayerValidator)
-            let { name: playerName, active } = await validateObject(d, dataPlayerNameActiveValidator)
-            let team = await requiredAsync(get<Team>(query.team), `Unknown team "${query.team}"`)
+        let query = await validateObject(q, queryTeamPlayerValidator)
+        let { name: playerName, active } = await validateObject(d, dataPlayerNameActiveValidator)
+        let team = await requiredAsync(get<Team>(query.team), `Unknown team "${query.team}"`)
 
-            let playerIndex = team.players.findIndex(x => x.name === query.player)
-            await assert.isFalse(playerIndex === -1, `Unknown player "${query.player}"`)
-            await cache.push({posted: `edit-player${playerIndex}`})
-            let player = team.players[playerIndex]
+        let playerIndex = team.players.findIndex(x => x.name === query.player)
+        await assert.isFalse(playerIndex === -1, `Unknown player "${query.player}"`)
+        await cache.push({posted: `edit-player${playerIndex}`})
+        let player = team.players[playerIndex]
 
-            // Check for duplicates
-            await assert.isFalse(
-                player.name !== playerName && !!team.players.find(x => x.name === playerName),
-                `The player name "${playerName}" has already been chosen.`)
+        // Check for duplicates
+        await assert.isFalse(
+            player.name !== playerName && !!team.players.find(x => x.name === playerName),
+            `The player name "${playerName}" has already been chosen.`)
 
-            player.name = playerName
-            player.active = active
-            // Player name will also need to be updated for the individual player when implemented!
-            await saveTeam(team)
-        } catch(e) {
-            let message = getProperty(e, "message")
-            if (message && typeof message === "string" || Array.isArray(message)) {
-                await cache.push({ message })
-            } else {
-                throw e
-            }
-        }
+        player.name = playerName
+        player.active = active
+        // Player name will also need to be updated for the individual player when implemented!
+        await saveTeam(team)
         return
     },
 
