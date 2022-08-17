@@ -66,12 +66,11 @@ const getSyncCount = async () => (await db.get("updated"))?.size ?? 0
 export default
     async function layout(req: Request) {
         let [theme, syncCount, error] = await Promise.all([db.get("settings"), getSyncCount(), db.cache.pop("message")])
-        if (error && typeof error === "string") {
-            error = [error]
-        } else if(error && !Array.isArray(error)) {
-            error = void 0
-        }
-        return render({theme: theme?.theme, error, syncCount, url: req.url})
+        let e = <string[] | undefined>
+            (error && typeof error === "string"
+                ? [error]
+            : error)
+        return render({theme: theme?.theme, error: e, syncCount, url: req.url})
     }
 
 export type Layout = typeof layout

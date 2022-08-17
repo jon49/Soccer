@@ -1,7 +1,7 @@
-import { cache, get, Team } from "./db"
+import { cache, get, Message, Team } from "./db"
 import html from "./html-template-tag"
 import { RoutePostArgsWithType } from "./route"
-import { findTeamSingle, saveTeam, splitTeamName } from "./shared"
+import { findTeamSingle, messageView, saveTeam, splitTeamName, when } from "./shared"
 import { assert, required, requiredAsync, validateObject } from "./validation"
 import { dataPlayerNameValidator, queryTeamValidator } from "./validators"
 
@@ -12,15 +12,18 @@ interface AddPlayerViewArgs {
     posted: string | undefined
     playersExist: boolean
     action?: string
+    message: Message
 }
 
-export function addPlayerForm({name, posted, playersExist, action}: AddPlayerViewArgs) {
+export function addPlayerForm({name, posted, playersExist, action, message}: AddPlayerViewArgs) {
     let action_ = action ? html`action="${action}"` : null
+    let playerAdded = posted === formId
     return html`
-<form method=post ${action_} onchange="this.submit()">
+${when(playerAdded && !!message, messageView(message))}
+<form class=form method=post ${action_} onchange="this.submit()">
     <div>
         <label for=name>Player Name</label>
-        <input id=name name=name type=text value="${name}" $${posted === formId || !playersExist ? "autofocus" : null} required>
+        <input id=name name=name type=text value="${name}" $${when(playerAdded || !playersExist, "autofocus")} required>
     </div>
     <button>Save</button>
 </form>`

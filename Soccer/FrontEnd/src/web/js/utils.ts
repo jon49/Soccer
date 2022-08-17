@@ -19,3 +19,12 @@ export function searchParams<TReturn>(req: Request) : TReturn & {_url: URL} {
 export function cleanHtmlId(s: string) {
   return s.replace(/[\W_-]/g,'-');
 }
+
+export function getProperty<X extends unknown>(obj: X, prop: string) {
+  // @ts-ignore
+  if (typeof obj === "object" && prop in obj) {
+    // @ts-ignore
+    return obj[prop]
+  }
+  return
+}

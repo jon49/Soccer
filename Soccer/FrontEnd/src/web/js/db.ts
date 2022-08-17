@@ -108,8 +108,10 @@ export interface CachePlayers {
     name?: string
 }
 
+export type Message = string | string[] | undefined
+
 export interface TempCache {
-    message?: any
+    message?: Message
     posted?: string
     teams?: CacheTeams
     players: CachePlayers

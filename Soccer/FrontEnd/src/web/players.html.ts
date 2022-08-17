@@ -80,7 +80,7 @@ function renderMain({ players: o, name, posted, wasFiltered }: PlayersView) {
 
     <h3>Add a player</h3>
 
-    ${addPlayerForm({name, posted, playersExist})}
+    ${addPlayerForm({name, posted, playersExist, message: void 0})}
     `
 }
 

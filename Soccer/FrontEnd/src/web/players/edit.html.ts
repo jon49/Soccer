@@ -1,10 +1,10 @@
-import { cache, get, set, Team, TeamPlayer, TeamSingle } from "../js/db"
+import { cache, get, Message, set, Team, TeamPlayer, TeamSingle } from "../js/db"
 import html from "../js/html-template-tag"
 import { handlePost, PostHandlers, Route, RoutePostArgsWithType } from "../js/route"
-import { cleanHtmlId, searchParams } from "../js/utils"
+import { cleanHtmlId, getProperty, searchParams } from "../js/utils"
 import layout from "../_layout.html"
 import { assert, required, requiredAsync, validateObject } from "../js/validation"
-import { createTeam, findTeamSingle, getURITeamComponent, saveTeam, splitTeamName } from "../js/shared"
+import { createTeam, findTeamSingle, getURITeamComponent, messageView, saveTeam, splitTeamName, when } from "../js/shared"
 import { dataPlayerNameActiveValidator, dataTeamNameYearActiveValidator, queryTeamPlayerValidator, queryTeamValidator } from "../js/validators"
 import { addPlayer, addPlayerForm } from "../js/_AddPayer.html"
 
@@ -19,6 +19,7 @@ interface PlayersEditView {
     aggregateTeam: TeamSingle
     posted?: string
     action: string
+    message: Message
 }
 
 async function start(req: Request) : Promise<PlayersEditView | undefined> {
@@ -26,6 +27,10 @@ async function start(req: Request) : Promise<PlayersEditView | undefined> {
     let { team: teamName } = await validateObject({ team: query.team }, queryTeamValidator)
 
     let posted = await cache.pop("posted")
+    let message : Message
+    if (posted) {
+        message = await cache.pop("message")
+    }
 
     let [team, teams] = await Promise.all([
         get<Team>(teamName),
@@ -43,7 +48,8 @@ async function start(req: Request) : Promise<PlayersEditView | undefined> {
         team,
         aggregateTeam,
         posted,
-        action: query._url.toString()
+        action: query._url.toString(),
+        message,
     }
 }
 
@@ -52,8 +58,10 @@ function render(o: PlayersEditView | undefined) {
         return html``
     }
 
-    let { team, aggregateTeam, posted } = o
+    let { team, aggregateTeam, posted, message, action } = o
     let teamUriName = getURITeamComponent(team)
+
+    let teamEdited = posted === "edit-team"
 
     return html`
 <h2>Team ${ o?.team.name ??  "Unknown"}</h2>
@@ -68,9 +76,10 @@ function render(o: PlayersEditView | undefined) {
 </nav>
 
 <h3 id=team>Team Settings</h3>
-<form class=form method=post action="?handler=team&team=${teamUriName}">
+${teamEdited ? messageView(message) : null}
+<form class=form method=post action="?handler=editTeam&team=${teamUriName}">
     <div class=inline>
-        <label for=team>Team Name:</label><input id=team name=name type=text value="${team.name}">
+        <label for=team>Team Name:</label><input id=team name=name type=text value="${team.name}" $${when(teamEdited, "autofocus")}>
     </div>
     <div class=inline>
         <label for=year>Year:</label> <input id=year name=year type=text value="${aggregateTeam.year}">
@@ -84,25 +93,31 @@ function render(o: PlayersEditView | undefined) {
 <h3 id=players>Players Settings</h3>
 ${team.players.length === 0 ? html`<p>No players have been added.</p>` : null }
 ${team.players.map((x, i) => {
+
     let teamPlayerQuery = `team=${teamUriName}&player=${encodeURIComponent(x.name)}`
-    let playerId = `player${i}`
+    let playerId = `edit-player${i}`
     let playerActiveId : string = `player-active${i}`
+    let playerWasEdited = posted === playerId
+
     return html`
     <p id="${cleanHtmlId(x.name)}"><a href="/web/players?${teamPlayerQuery}">${x.name}</a></p>
-    <form method=post class=form action="?handler=player&${teamPlayerQuery}">
+    ${playerWasEdited ? messageView(message) : null}
+    <form method=post class=form action="?handler=editPlayer&${teamPlayerQuery}">
         <div>
             <label for=${playerId}>Player Name:</label>
-            <input id=${playerId} name=name type=text value="${x.name}">
+            <input id=${playerId} name=name type=text value="${x.name}" $${when(playerWasEdited, "autofocus")}>
         </div>
         <div>
             <label for=${playerActiveId}>Active</label>
-            <input id=${playerActiveId} class=inline name=active type=checkbox $${x.active ? "checked" : null}>
+            <input id=${playerActiveId} class=inline name=active type=checkbox $${when(x.active, "checked")}>
         </div>
         <button>Save</button>
     </form>
 `})}
 
-${addPlayerForm({ name: undefined, playersExist: true, posted, action: o.action })}
+<p>Add a new player.</p>
+
+${addPlayerForm({ name: undefined, playersExist: true, posted, action, message })}
 
 <h3 id=positions>Positions Settings</h3>
 <p>This is a placeholder for default settings for team play positions. E.g., 1 Keeper, 3 Defenders, 2 Midfielders, 2 Strikers</p>
@@ -123,29 +138,45 @@ const head = `
 `
 
 const postHandlers: PostHandlers = {
-    player: async ({data: d, query: q}: RoutePostArgsWithType<{name: string, active: string}, {team: string, player: string}>) => {
-        let query = await validateObject(q, queryTeamPlayerValidator)
-        let { name: playerName, active } = await validateObject(d, dataPlayerNameActiveValidator)
-        let team = await requiredAsync(get<Team>(query.team), `Unknown team "${query.team}"`)
-        let player = await required(team.players.find(x => x.name === query.player), `Unknown player "${query.player}"`)
+    editPlayer: async ({data: d, query: q}: RoutePostArgsWithType<{name: string, active: string}, {team: string, player: string}>) => {
+        try {
+            let query = await validateObject(q, queryTeamPlayerValidator)
+            let { name: playerName, active } = await validateObject(d, dataPlayerNameActiveValidator)
+            let team = await requiredAsync(get<Team>(query.team), `Unknown team "${query.team}"`)
 
-        // Check for duplicates
-        await assert.isFalse(
-            player.name !== playerName && !!team.players.find(x => x.name === playerName),
-            `The player name "${playerName}" has already been chosen.`)
+            let playerIndex = team.players.findIndex(x => x.name === query.player)
+            await assert.isFalse(playerIndex === -1, `Unknown player "${query.player}"`)
+            await cache.push({posted: `edit-player${playerIndex}`})
+            let player = team.players[playerIndex]
 
-        player.name = playerName
-        player.active = active
-        // Player name will also need to be updated for the individual player when implemented!
-        await saveTeam(team)
+            // Check for duplicates
+            await assert.isFalse(
+                player.name !== playerName && !!team.players.find(x => x.name === playerName),
+                `The player name "${playerName}" has already been chosen.`)
+
+            player.name = playerName
+            player.active = active
+            // Player name will also need to be updated for the individual player when implemented!
+            await saveTeam(team)
+        } catch(e) {
+            let message = getProperty(e, "message")
+            if (message && typeof message === "string" || Array.isArray(message)) {
+                await cache.push({ message })
+            } else {
+                throw e
+            }
+        }
         return
     },
 
     addPlayer,
 
-    team: async({ data, query }: RoutePostArgsWithType<{name: string, year: string, active?: "on"}, {team: string}>) => {
-        let { name: newTeamName, year, active } = await validateObject(data, dataTeamNameYearActiveValidator)
-        let query_ = await validateObject(query, queryTeamValidator)
+    editTeam: async({ data, query }: RoutePostArgsWithType<{name: string, year: string, active?: "on"}, {team: string}>) => {
+        let [,{ name: newTeamName, year, active }, query_] = await Promise.all([
+            cache.push({posted: "edit-team"}),
+            validateObject(data, dataTeamNameYearActiveValidator),
+            validateObject(query, queryTeamValidator),
+        ])
 
         let queryTeam = splitTeamName(query_.team)
 
