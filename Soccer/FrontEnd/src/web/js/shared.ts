@@ -21,8 +21,6 @@ export function splitTeamName(value: string) {
     }
 }
 
-export const unexpectedErrorMessage = "Oops! Something happened which shouldn't have!"
-
 export async function saveTeam(team: Team) {
     return set(getNormalizedTeamName(team), team)
 }
