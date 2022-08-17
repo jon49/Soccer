@@ -2,10 +2,9 @@ import html from "./js/html-template-tag"
 import layout from "./_layout.html"
 import { cache, get, Team, TeamPlayer, TeamSingle } from "./js/db"
 import { cleanHtmlId, searchParams } from "./js/utils"
-import { handlePost, PostHandlers, Route, RoutePostArgsWithType } from "./js/route"
-import { assert, required, requiredAsync, validateObject } from "./js/validation"
-import { findTeamSingle, getURITeamComponent, saveTeam, splitTeamName } from "./js/shared"
-import { dataPlayerNameValidator, queryTeamValidator } from "./js/validators"
+import { handlePost, PostHandlers, Route } from "./js/route"
+import { findTeamSingle, getURITeamComponent, splitTeamName } from "./js/shared"
+import { addPlayer, addPlayerForm } from "./js/_AddPayer.html"
 
 export interface TeamView {
     name: string
@@ -16,14 +15,15 @@ export interface TeamView {
 interface PlayersView {
     players: TeamView
     teamExists: boolean
-    playerCache: { posted?: boolean, name?: string } | undefined
+    name?: string
+    posted?: string
     wasFiltered: boolean
 }
 
 async function start(req: Request) : Promise<PlayersView> {
     let query = searchParams<{team: string, all: string | null}>(req)
     let queryTeam = splitTeamName(query.team)
-    let [players, playerCache] = await Promise.all([get<Team>(query.team), cache.pop("players")])
+    let [players, cached, posted] = await Promise.all([get<Team>(query.team), cache.pop("players"), cache.pop("posted")])
     let team : TeamSingle | undefined
     let wasFiltered = false
     if (!players) {
@@ -40,38 +40,10 @@ async function start(req: Request) : Promise<PlayersView> {
     return {
         players: teamExists && players || { name: queryTeam.name, year: queryTeam.year, players: [] },
         teamExists,
-        playerCache,
+        name: cached?.name,
+        posted,
         wasFiltered,
     }
-}
-
-async function post({ data, query }: RoutePostArgsWithType<{name: string}, {team: string}>) {
-    let { team: queryTeam } = await validateObject(query, queryTeamValidator)
-    let team = await get<Team>(queryTeam)
-
-    let { name } = await validateObject(data, dataPlayerNameValidator)
-
-    if (!team) {
-        let teams = await requiredAsync(get("teams"))
-        let team_ = await required(findTeamSingle(teams, splitTeamName(queryTeam)), "Could not find team.")
-        team = {
-            name: team_.name,
-            year: team_.year,
-            players: []
-        }
-    }
-
-    await assert.isFalse(!!team.players.find(x => x.name === name), "Player names must be unique!")
-        ?.catch(x => Promise.reject({...x, players: { name, posted: true }}))
-
-    team.players.push({
-        active: true,
-        name,
-    })
-
-    await Promise.all([saveTeam(team), cache.push({players: { posted: true }})])
-
-    return
 }
 
 function render(view: PlayersView) {
@@ -82,8 +54,7 @@ function render(view: PlayersView) {
         : renderMain(view) }`
 }
 
-function renderMain({ players: o, playerCache, wasFiltered }: PlayersView) {
-    let { name, posted } = playerCache ?? {}
+function renderMain({ players: o, name, posted, wasFiltered }: PlayersView) {
     let teamUriName = getURITeamComponent(o)
     let playersExist = o.players.length > 0
     return html`
@@ -109,13 +80,8 @@ function renderMain({ players: o, playerCache, wasFiltered }: PlayersView) {
 
     <h3>Add a player</h3>
 
-    <form method=post onchange="this.submit()">
-        <div>
-            <label for=name>Player Name</label>
-            <input id=name name=name type=text value="${name}" $${posted || !playersExist ? "autofocus" : null} required>
-        </div>
-        <button>Save</button>
-    </form>`
+    ${addPlayerForm({name, posted, playersExist})}
+    `
 }
 
 const head = `
@@ -134,7 +100,7 @@ const head = `
     </style>`
 
 const postHandlers : PostHandlers = {
-    post,
+    post: addPlayer,
 }
 
 const route : Route = {

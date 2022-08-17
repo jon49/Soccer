@@ -4,11 +4,14 @@ export const isSelected =
 
 const searchParamsHandler = {
   get(obj: any, prop: string) {
+    if (prop === "_url") {
+      return obj
+    }
     return obj.searchParams.get(prop)
   }
 }
 
-export function searchParams<TReturn>(req: Request) : TReturn {
+export function searchParams<TReturn>(req: Request) : TReturn & {_url: URL} {
   let url = new URL(req.url)
   return new Proxy(url, searchParamsHandler)
 }

@@ -106,11 +106,11 @@ export interface CacheTeams {
 
 export interface CachePlayers {
     name?: string
-    posted?: boolean
 }
 
 export interface TempCache {
     message?: any
+    posted?: string
     teams?: CacheTeams
     players: CachePlayers
 }
