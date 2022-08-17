@@ -28,17 +28,17 @@ export interface IDType<T extends TableType> extends Value<number> {
 //     }
 // }
 
-const notFalsey = (error: string, val: string | undefined) =>
-    !val ? Promise.reject([error]) : Promise.resolve(val)
+const notFalsey = async (error: string, val: string | undefined) =>
+    !val ? Promise.reject([error]) : val
 
-const maxLength = (error: string, val: string, maxLength: number) =>
+const maxLength = async (error: string, val: string, maxLength: number) =>
     (val.length > maxLength)
         ? Promise.reject([error])
-    : Promise.resolve(val)
+    : val
 
 const createString = async (name: string, maxLength_: number, val?: string | undefined) => {
     const trimmed = await notFalsey(`"${name}" is required.`, val?.trim())
-    const s = await maxLength(`'${name}' must be less than ${maxLength} characters.`, trimmed, maxLength_)
+    const s = await maxLength(`'${name}' must be less than ${maxLength_} characters.`, trimmed, maxLength_)
     return s
 }
 

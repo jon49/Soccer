@@ -19,7 +19,7 @@ export function addPlayerForm({name, posted, playersExist, action, message}: Add
     let action_ = action ? html`action="${action}"` : null
     let playerAdded = posted === formId
     return html`
-${when(playerAdded && !!message, messageView(message))}
+${when(!!message, messageView(message))}
 <form class=form method=post ${action_} onchange="this.submit()">
     <div>
         <label for=name>Player Name</label>
@@ -30,7 +30,9 @@ ${when(playerAdded && !!message, messageView(message))}
 }
 
 export async function addPlayer({ data, query }: RoutePostArgsWithType<{name: string}, {team: string}>) {
-    let { team: queryTeam } = await validateObject(query, queryTeamValidator)
+    let [{ team: queryTeam }] = await Promise.all([
+        validateObject(query, queryTeamValidator),
+        cache.push({posted: formId})])
     let team = await get<Team>(queryTeam)
 
     let { name } = await validateObject(data, dataPlayerNameValidator)
@@ -46,7 +48,7 @@ export async function addPlayer({ data, query }: RoutePostArgsWithType<{name: st
     }
 
     await assert.isFalse(!!team.players.find(x => x.name === name), "Player names must be unique!")
-        ?.catch(x => Promise.reject({...x, players: { name }, posted: formId}))
+        ?.catch(x => Promise.reject({...x, players: { name }}))
 
     team.players.push({
         active: true,

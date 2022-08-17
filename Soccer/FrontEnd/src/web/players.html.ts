@@ -1,6 +1,6 @@
 import html from "./js/html-template-tag"
 import layout from "./_layout.html"
-import { cache, get, Team, TeamPlayer, TeamSingle } from "./js/db"
+import { cache, get, Message, Team, TeamPlayer, TeamSingle } from "./js/db"
 import { cleanHtmlId, searchParams } from "./js/utils"
 import { handlePost, PostHandlers, Route } from "./js/route"
 import { findTeamSingle, getURITeamComponent, splitTeamName } from "./js/shared"
@@ -18,12 +18,17 @@ interface PlayersView {
     name?: string
     posted?: string
     wasFiltered: boolean
+    message: Message
 }
 
 async function start(req: Request) : Promise<PlayersView> {
     let query = searchParams<{team: string, all: string | null}>(req)
     let queryTeam = splitTeamName(query.team)
-    let [players, cached, posted] = await Promise.all([get<Team>(query.team), cache.pop("players"), cache.pop("posted")])
+    let [players, cached, posted, message] = await Promise.all([
+        get<Team>(query.team),
+        cache.pop("players"),
+        cache.pop("posted"),
+        cache.pop("message")])
     let team : TeamSingle | undefined
     let wasFiltered = false
     if (!players) {
@@ -43,6 +48,7 @@ async function start(req: Request) : Promise<PlayersView> {
         name: cached?.name,
         posted,
         wasFiltered,
+        message,
     }
 }
 
@@ -54,7 +60,7 @@ function render(view: PlayersView) {
         : renderMain(view) }`
 }
 
-function renderMain({ players: o, name, posted, wasFiltered }: PlayersView) {
+function renderMain({ players: o, name, posted, wasFiltered, message }: PlayersView) {
     let teamUriName = getURITeamComponent(o)
     let playersExist = o.players.length > 0
     return html`
@@ -80,7 +86,7 @@ function renderMain({ players: o, name, posted, wasFiltered }: PlayersView) {
 
     <h3>Add a player</h3>
 
-    ${addPlayerForm({name, posted, playersExist, message: void 0})}
+    ${addPlayerForm({name, posted, playersExist, message})}
     `
 }
 
@@ -106,7 +112,8 @@ const postHandlers : PostHandlers = {
 const route : Route = {
     route: /\/players\/$/,
     async get(req: Request) {
-        const [result, template] = await Promise.all([start(req), layout(req)])
+        const result = await start(req)
+        const template = await layout(req)
         return template({
             main: render(result),
             head,
