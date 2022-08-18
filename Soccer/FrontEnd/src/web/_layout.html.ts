@@ -1,6 +1,7 @@
 import html from "./js/html-template-tag.js"
-import * as db from "./js/db.js"
+import { cache, get, Message } from "./js/db.js"
 import { version } from "./settings.js"
+import { messageView, when } from "./js/shared.js"
 
 interface Nav {
     name: string
@@ -9,7 +10,7 @@ interface Nav {
 
 interface Render {
     theme: string | undefined
-    error: string[] | undefined
+    error: Message
     syncCount: number
     url: string
 }
@@ -47,7 +48,7 @@ const render = ({theme, error, syncCount, url}: Render) => (o: LayoutTemplateArg
         </nav>
     </header>
     <main>
-        ${error && error.map((x: string) => html`<p class=error>${x}</p>`)}
+        ${messageView(error)}
         ${main}
     </main>
     <footer><p>${version}</p></footer>
@@ -61,16 +62,12 @@ const render = ({theme, error, syncCount, url}: Render) => (o: LayoutTemplateArg
 </html>`
 }
 
-const getSyncCount = async () => (await db.get("updated"))?.size ?? 0
+const getSyncCount = async () => (await get("updated"))?.size ?? 0
 
 export default
     async function layout(req: Request) {
-        let [theme, syncCount, error] = await Promise.all([db.get("settings"), getSyncCount(), db.cache.pop("message")])
-        let e = <string[] | undefined>
-            (error && typeof error === "string"
-                ? [error]
-            : error)
-        return render({theme: theme?.theme, error: e, syncCount, url: req.url})
+        let [theme, syncCount, error] = await Promise.all([get("settings"), getSyncCount(), cache.pop("message")])
+        return render({theme: theme?.theme, error, syncCount, url: req.url})
     }
 
 export type Layout = typeof layout
