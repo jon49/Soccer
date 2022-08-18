@@ -1,5 +1,6 @@
-import { get, Message, set, Team, Teams } from "./db";
+import { get, getMany, Message, set, Team, Teams, TeamSingle } from "./db";
 import html from "./html-template-tag";
+import { getProperty } from "./utils";
 import { required, requiredAsync } from "./validation";
 
 export function getNormalizedTeamName(team: {name: string, year: string}) {
@@ -41,7 +42,17 @@ export function messageView(message: Message) {
 }
 
 export function when<T>(b: any, s: T) {
-    return b ? s : void 0
+    return b
+        ? s
+    : typeof s === "string"
+        ? ""
+    : null
+}
+
+export function whenF<T extends any>(b: T | undefined, f: (b: T) => any) {
+    return b
+        ? f(b)
+    : null
 }
 
 export async function getOrCreateTeam(teamQueryName: string) {
@@ -55,3 +66,14 @@ export async function getOrCreateTeam(teamQueryName: string) {
     }
     return team
 }
+
+export async function getOrCreateTeamMany(teamSingles: TeamSingle[] | undefined) {
+    if (!teamSingles) return []
+    let teams = await getMany<Team>(teamSingles.map(getNormalizedTeamName))
+    return teams.map((x, i) =>
+        !x
+            ? createTeam(teamSingles[i])
+        : x
+    )
+}
+    
