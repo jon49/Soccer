@@ -20,7 +20,7 @@ export function cleanHtmlId(s: string) {
   return s.replace(/[\W_-]/g,'-');
 }
 
-export function getProperty<X extends unknown>(obj: X, prop: string) {
+export function getProperty<T>(obj: any, prop: string) : T | undefined {
   // @ts-ignore
   if (typeof obj === "object" && prop in obj) {
     // @ts-ignore
