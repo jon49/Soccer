@@ -1,20 +1,21 @@
 import html from "./js/html-template-tag"
 import layout from "./_layout.html"
-import { CacheTeams, get, set, Teams, TeamSingle, TempCache, cache, } from "./js/db"
+import { CacheTeams, get, set, TeamSingle, TempCache, cache, Team, Message, } from "./js/db"
 import { handlePost, PostHandlers, RoutePostArgsWithType } from "./js/route"
 import { searchParams } from "./js/utils"
 import { assert, validateObject } from "./js/validation"
-import { getURITeamComponent } from "./js/shared"
+import { getOrCreateTeamMany, getURITeamComponent, messageView, whenF } from "./js/shared"
 import { dataTeamNameYearValidator } from "./js/validators"
 
 interface TeamsView {
-    teams: Teams | undefined
+    teams: Team[] | undefined
     wasFiltered: boolean
     cache?: CacheTeams
+    message: Message
 }
 
 async function start(req: Request) : Promise<TeamsView> {
-    const [data, teamsCache] = await Promise.all([get("teams"), cache.pop("teams")])
+    const [message, data, teamsCache] = await Promise.all([cache.pop("message"), get("teams"), cache.pop("teams")])
     const query = searchParams<{all: string}>(req)
     const showAll = query.all !== null
     let teams =
@@ -24,12 +25,12 @@ async function start(req: Request) : Promise<TeamsView> {
     teams?.sort((a, b) =>
         a.year !== b.year
             ? b.year.localeCompare(a.year)
-        : a.name.localeCompare(b.name)
-    )
-    return { teams, wasFiltered: !!data && !!teams && data.length !== teams.length, cache: teamsCache }
+        : a.name.localeCompare(b.name))
+    let teamFull = await getOrCreateTeamMany(teams)
+    return { teams: teamFull, wasFiltered: !!data && !!teams && data.length !== teams.length, cache: teamsCache, message }
 }
 
-const render = ({ teams, wasFiltered, cache }: TeamsView) => 
+const render = ({ teams, wasFiltered, cache, message }: TeamsView) => 
     html`
 <h2>Teams</h2>
 
@@ -42,6 +43,12 @@ ${
                 <li>
                     <a href="/web/players?team=${uriName}">${x.name} - ${x.year}</a>
                     <a href="/web/games?team=${uriName}">Games</a>
+                    ${whenF(
+                        x.games
+                        .sort((a, b) => a.date.localeCompare(b.date))
+                        .find(x => x.date),
+                        x => html`<a href="/web/games?team=${uriName}&game=${x.id}">${x.date}</a>`
+                    ) ?? html`<span>&nbsp;</span>`}
                     <a href="/web/players/edit?team=${uriName}">Edit</a>
                 </li>`
             })}
@@ -53,7 +60,9 @@ ${ wasFiltered ? html`<p><a href="?all">Show all teams.</a></p>` : null }
 
 <h3>Add a team</h3>
 
-<form method=post>
+${messageView(message)}
+
+<form class=form method=post>
     <div>
         <label for=name>Team Name</label>
         <input id=name name=name type=text value="${cache?.name ?? ""}" $${cache?.posted || !teams ? "autofocus" : null} required>
@@ -85,7 +94,8 @@ const postHandlers: PostHandlers = {
 export default {
     route: /\/teams\/$/,
     async get(req: Request) {
-        const [result, template] = await Promise.all([start(req), layout(req)])
+        const result = await start(req)
+        const template = await layout(req)
         return template({ main: render(result) })
     },
     post: handlePost(postHandlers),

@@ -20,7 +20,9 @@ async function start(req: Request): Promise<GameView> {
     return {team, message, posted}
 }
 
-function render({ team, posted, message }: GameView) {
+function render(view: GameView | undefined) {
+    if (!view) return
+    let { team, posted, message } = view
     let teamUriName = getURITeamComponent(team)
     let hasGames = team.games.length > 0
     let gameAdded = posted === "add-game"
@@ -90,7 +92,8 @@ const postHandlers = {
 export default {
     route: /\/games\/$/,
     async get(req: Request) {
-        const [result, template] = await Promise.all([start(req), layout(req)])
+        const result = await cache.try(start(req))
+        const template = await layout(req)
         return template({ main: render(result) })
     },
     post: handlePost(postHandlers),

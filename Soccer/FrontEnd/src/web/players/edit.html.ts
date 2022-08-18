@@ -92,28 +92,33 @@ ${teamEdited ? messageView(message) : null}
 
 <h3 id=players>Players Settings</h3>
 ${team.players.length === 0 ? html`<p>No players have been added.</p>` : null }
-${team.players.map((x, i) => {
 
-    let teamPlayerQuery = `team=${teamUriName}&player=${encodeURIComponent(x.name)}`
-    let playerId = `edit-player${i}`
-    let playerActiveId : string = `player-active${i}`
-    let playerWasEdited = posted === playerId
+<div class=cards>
+    ${team.players.map((x, i) => {
 
-    return html`
-    <p id="${cleanHtmlId(x.name)}"><a href="/web/players?${teamPlayerQuery}">${x.name}</a></p>
-    ${playerWasEdited ? messageView(message) : null}
-    <form method=post class=form action="?handler=editPlayer&${teamPlayerQuery}">
-        <div>
-            <label for=${playerId}>Player Name:</label>
-            <input id=${playerId} name=name type=text value="${x.name}" $${when(playerWasEdited, "autofocus")}>
-        </div>
-        <div>
-            <label for=${playerActiveId}>Active</label>
-            <input id=${playerActiveId} class=inline name=active type=checkbox $${when(x.active, "checked")}>
-        </div>
-        <button>Save</button>
-    </form>
-`})}
+        let teamPlayerQuery = `team=${teamUriName}&player=${encodeURIComponent(x.name)}`
+        let playerId = `edit-player${i}`
+        let playerActiveId : string = `player-active${i}`
+        let playerWasEdited = posted === playerId
+
+        return html`
+    <div>
+        <p id="${cleanHtmlId(x.name)}"><a href="/web/players?${teamPlayerQuery}">${x.name}</a></p>
+        ${playerWasEdited ? messageView(message) : null}
+        <form method=post class=form action="?handler=editPlayer&${teamPlayerQuery}">
+            <div>
+                <label for=${playerId}>Player Name:</label>
+                <input id=${playerId} name=name type=text value="${x.name}" $${when(playerWasEdited, "autofocus")}>
+            </div>
+            <div>
+                <label for=${playerActiveId}>Active</label>
+                <input id=${playerActiveId} class=inline name=active type=checkbox $${when(x.active, "checked")}>
+            </div>
+            <button>Save</button>
+        </form>
+    </div>
+    `})}
+</div>
 
 <p>Add a new player.</p>
 
