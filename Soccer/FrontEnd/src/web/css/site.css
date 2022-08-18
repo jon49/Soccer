@@ -149,16 +149,20 @@ input, select, textarea {
 .cards {
   display: flex;
   flex-wrap: wrap;
-  justify-content: space-between;
+  justify-content: space-evenly;
 }
 
 .cards > * {
-  background: var(--c2);
+  background: rgba(0, 0, 0, 0.05);
   border-radius: var(--rc);
   padding: 1em;
   box-shadow: 0px 1px 0px rgba(0,0,0,0.3);
   flex: 0 1 calc(25% - var(--m1));
   margin-top: var(--m1);
+}
+
+.cards input {
+    background-color: rgba(0, 0, 0, 0.1);
 }
 
 /**
@@ -304,5 +308,5 @@ header {
 }
 .list > li > * {
     display: table-cell;
-    padding: 1px 5px;
+    padding: 5px 10px;
 }
