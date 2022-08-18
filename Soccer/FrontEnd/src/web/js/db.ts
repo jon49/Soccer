@@ -34,9 +34,11 @@ async function update(key: string, f: (v: any) => any, sync = { sync: true }) {
 }
 
 class TempCache1 {
-    async push(value: Partial<TempCache>) {
-        if (value instanceof Object && !Array.isArray(value))
+    async push(value: Partial<TempCache>) : Promise<undefined> {
+        if (value instanceof Object && !Array.isArray(value)) {
             await update1("temp-cache", x => x ? { ...x, ...value as {}} : value as {})
+        }
+        return
     }
     async pop<K extends keyof TempCache>(key: K): Promise<TempCache[K] | undefined> {
         let result = await get("temp-cache")
@@ -48,6 +50,9 @@ class TempCache1 {
             return x
         })
         return result ? result[key] : undefined
+    }
+    async try<T>(p: Promise<T>) {
+        return p.catch(x => this.push(x))
     }
 }
 
