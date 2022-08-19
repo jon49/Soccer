@@ -3,7 +3,7 @@ import layout from "./_layout.html"
 import { cache, get, Message, Team, TeamPlayer, TeamSingle } from "./js/db"
 import { cleanHtmlId, searchParams } from "./js/utils"
 import { handlePost, PostHandlers, Route } from "./js/route"
-import { findTeamSingle, getURITeamComponent, splitTeamName } from "./js/shared"
+import { findTeamSingle, getURITeamComponent, splitTeamName, when } from "./js/shared"
 import { addPlayer, addPlayerForm } from "./js/_AddPayer.html"
 
 export interface TeamView {
@@ -101,7 +101,7 @@ const route : Route = {
         const template = await layout(req)
         return template({
             main: render(result),
-            nav: [{name: "Edit", url: `/web/players/edit?team=${getURITeamComponent(result.players)}#team`}] })
+            nav: when(result, r => [{name: "Edit", url: `/web/players/edit?team=${getURITeamComponent(r.players)}#team`}]) })
     },
     post: handlePost(postHandlers),
 }

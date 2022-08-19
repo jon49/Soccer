@@ -1,7 +1,7 @@
 import html from "./js/html-template-tag.js"
 import { cache, get, Message } from "./js/db.js"
 import { version } from "./settings.js"
-import { messageView, when } from "./js/shared.js"
+import { messageView } from "./js/shared.js"
 
 interface Nav {
     name: string

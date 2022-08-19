@@ -6,6 +6,8 @@ import playersHandler from "./players.html"
 import gamesHandler from "./games.html"
 import playersEditHandler from "./players/edit.html"
 import { cache } from "./js/db"
+import { messageView } from "./js/shared"
+import html from "./js/html-template-tag"
 
 addRoutes([
     indexHandler,
@@ -71,8 +73,20 @@ async function get(url: string, req: Request, event: FetchEvent) : Promise<Respo
     if (!url.endsWith("/") || isFile(url)) return cacheResponse(url, event)
     let handler = <(req: Request) => Promise<Generator<any, void, unknown>>|null>findRoute(url, req.method.toLowerCase())
     if (handler) {
-        let result = await handler(req)
-        if (result) {
+        let result =
+            await handler(req)
+            ?.catch(async () => {
+                let message = await cache.pop("message")
+                let view = messageView(message)
+                if (view) {
+                    return streamResponse(url, html`<div>${view}</div>`)
+                }
+                return
+            })
+
+        if (result instanceof Response) {
+            return result
+        } else if (result) {
             return streamResponse(url, result)
         }
     }

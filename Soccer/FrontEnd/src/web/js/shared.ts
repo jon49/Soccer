@@ -41,12 +41,14 @@ export function messageView(message: Message) {
     return m?.map(x => html`<p class=error>${x}</p>`)
 }
 
-export function when<T>(b: any, s: T) {
+export function when<S, T>(b: S | undefined, s: (a: S) => T): T | undefined
+export function when<T>(b: any, s: T): T | undefined
+export function when(b: any, s: any) {
     return b
-        ? s
+        ? (s instanceof Function ? s(b) : b)
     : typeof s === "string"
         ? ""
-    : null
+    : undefined
 }
 
 export function whenF<T extends any>(b: T | undefined, f: (b: T) => any) {

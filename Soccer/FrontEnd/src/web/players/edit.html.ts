@@ -22,7 +22,7 @@ interface PlayersEditView {
     message: Message
 }
 
-async function start(req: Request) : Promise<PlayersEditView | undefined> {
+async function start(req: Request) : Promise<PlayersEditView> {
     let query = searchParams<{team: string | undefined}>(req)
     let { team: teamName } = await validateObject({ team: query.team }, queryTeamValidator)
 
@@ -53,11 +53,7 @@ async function start(req: Request) : Promise<PlayersEditView | undefined> {
     }
 }
 
-function render(o: PlayersEditView | undefined) {
-    if (!o?.team) {
-        return html``
-    }
-
+function render(o: PlayersEditView) {
     let { team, aggregateTeam, posted, message, action } = o
     let teamUriName = getURITeamComponent(team)
 
@@ -194,12 +190,7 @@ const postHandlers: PostHandlers = {
 const route : Route = {
     route: /\/players\/edit\/$/,
     async get(req: Request) {
-        let result
-        try {
-            result = await start(req)
-        } catch(x: any) {
-            cache.push(x)
-        }
+        let result = await start(req)
         const template = await layout(req)
         return template({ main: render(result) })
     },
