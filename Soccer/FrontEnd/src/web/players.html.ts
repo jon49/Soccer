@@ -1,20 +1,14 @@
 import html from "./js/html-template-tag"
 import layout from "./_layout.html"
-import { cache, get, Message, Team, TeamPlayer, TeamSingle } from "./js/db"
+import { cache, Message, Team } from "./js/db"
 import { cleanHtmlId, searchParams } from "./js/utils"
 import { handlePost, PostHandlers, Route } from "./js/route"
-import { findTeamSingle, getURITeamComponent, splitTeamName, when } from "./js/shared"
-import { addPlayer, addPlayerForm } from "./js/_AddPayer.html"
-
-export interface TeamView {
-    name: string
-    year: string
-    players: TeamPlayer[]
-}
+import { when, whenF } from "./js/shared"
+import { addPlayer, addPlayerForm } from "./js/_AddPlayer.html"
+import { teamGet } from "./js/repo-team"
 
 interface PlayersView {
-    players: TeamView
-    teamExists: boolean
+    team: Team
     name?: string
     posted?: string
     wasFiltered: boolean
@@ -23,28 +17,19 @@ interface PlayersView {
 
 async function start(req: Request) : Promise<PlayersView> {
     let query = searchParams<{team: string, all: string | null}>(req)
-    let queryTeam = splitTeamName(query.team)
-    let [players, cached, posted, message] = await Promise.all([
-        get<Team>(query.team),
+    let team = await teamGet(query.team)
+    let [cached, posted, message] = await Promise.all([
         cache.pop("players"),
         cache.pop("posted"),
         cache.pop("message")])
-    let team : TeamSingle | undefined
     let wasFiltered = false
-    if (!players) {
-        let teams = await get("teams")
-        if (teams) {
-            team = findTeamSingle(teams, queryTeam)
-        }
-    } else if (query.all === null) {
-        let filtered = players.players.filter(x => x.active)
-        wasFiltered = filtered.length !== players.players.length
-        players.players = filtered
+    if (query.all === null) {
+        let filtered = team.players.filter(x => x.active)
+        wasFiltered = filtered.length !== team.players.length
+        team.players = filtered
     }
-    let teamExists = !!(players || team)
     return {
-        players: teamExists && players || { name: queryTeam.name, year: queryTeam.year, players: [] },
-        teamExists,
+        team,
         name: cached?.name,
         posted,
         wasFiltered,
@@ -52,42 +37,36 @@ async function start(req: Request) : Promise<PlayersView> {
     }
 }
 
-function render(view: PlayersView) {
-    return html`
-    <h2>Team ${view.players?.name ?? "Unknown"}</h2>
-    ${  !view.teamExists
-            ? html`<p>Could not find the team "${view.players?.name ?? ""}"!</p>`
-        : renderMain(view) }`
-}
+function render({ team, message, wasFiltered, name, posted }: PlayersView) {
+    let playersExist = team.players.length > 0
 
-function renderMain({ players: o, name, posted, wasFiltered, message }: PlayersView) {
-    let teamUriName = getURITeamComponent(o)
-    let playersExist = o.players.length > 0
     return html`
+    <h2>Team ${team.name}</h2>
     ${ playersExist
         ? html`
     <ul class=list>
-        ${o.players.map(x => {
+        ${team.players.map(x => {
             let uriName = encodeURIComponent(x.name);
             return html`
             <li>
-                <a href="?player=${uriName}&team=${teamUriName}">${x.name}</a>
-                <a href="/web/players/edit?team=${teamUriName}#${cleanHtmlId(x.name)}">Edit</a>
+                <a href="?player=${uriName}&team=${team.id}">${x.name}</a>
+                <a href="/web/players/edit?team=${team.id}#${cleanHtmlId(x.name)}">Edit</a>
             </li>`
         })}
     </ul>`
        : html`<p>No players found. Please add one!</p>` }
 
-    ${ wasFiltered
-        ? html`<p><a href="?all&team=${teamUriName}">Show all players.</a></p>`
-    : playersExist && o.players.find(x => !x.active)
-        ? html`<p><a href="?team=${teamUriName}">Hide archived players.</a></p>`
-    : null }
+    ${when(wasFiltered,
+        html`<p><a href="?all&team=${team.id}">Show all players.</a></p>`)}
+    ${whenF(playersExist && team.players.find(x => !x.active),
+        () => html`<p><a href="?team=${team.id}">Hide archived players.</a></p>`)}
 
     <h3>Add a player</h3>
 
     ${addPlayerForm({name, posted, playersExist, message})}
     `
+
+
 }
 
 const postHandlers : PostHandlers = {
@@ -101,7 +80,7 @@ const route : Route = {
         const template = await layout(req)
         return template({
             main: render(result),
-            nav: when(result, r => [{name: "Edit", url: `/web/players/edit?team=${getURITeamComponent(r.players)}#team`}]) })
+            nav: [{name: "Edit", url: `/web/players/edit?team=${result.team.id}#team`}] })
     },
     post: handlePost(postHandlers),
 }

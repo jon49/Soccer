@@ -1,7 +1,8 @@
 import { cache, Message, Team } from "./js/db"
 import html from "./js/html-template-tag"
+import { teamGet, teamSave } from "./js/repo-team"
 import { handlePost, RoutePostArgsWithType } from "./js/route"
-import { getOrCreateTeam, getURITeamComponent, messageView, saveTeam, when } from "./js/shared"
+import { messageView, when } from "./js/shared"
 import { searchParams } from "./js/utils"
 import { assert, createString25, optional, validate, validateObject } from "./js/validation"
 import { queryTeamValidator } from "./js/validators"
@@ -15,14 +16,13 @@ interface GameView {
 
 async function start(req: Request): Promise<GameView> {
     let [message, posted] = await Promise.all([cache.pop("message"), cache.pop("posted")])
-    let query = searchParams<{team: string}>(req)
-    let team = await getOrCreateTeam(query.team)
+    let query = await validateObject(<{team: string}>searchParams<{team: string}>(req), queryTeamValidator)
+    let team = await teamGet(query.team)
     return {team, message, posted}
 }
 
 function render(view: GameView) {
     let { team, posted, message } = view
-    let teamUriName = getURITeamComponent(team)
     let hasGames = team.games.length > 0
     let gameAdded = posted === "add-game"
     return html`
@@ -36,8 +36,8 @@ ${when(hasGames, html`
     ${team.games.map(x => {
         return html`
         <li>
-            <a href="?team=${teamUriName}&game=${x.id}">${x.date}${when(x.opponent, " - " + x.opponent) }</a>
-            <a href="/web/games/edit?team=${teamUriName}&game=${x.id}">Edit</a>
+            <a href="?team=${team.id}&game=${x.id}">${x.date}${when(x.opponent, " - " + x.opponent) }</a>
+            <a href="/web/games/edit?team=${team.id}&game=${x.id}">Edit</a>
         </li>`
     })}
 </ul>`)}
@@ -68,11 +68,11 @@ let addGameValidator = {
 const postHandlers = {
     post: async function({ data, query }: RoutePostArgsWithType<{date: string, opponent?: string}, {team: string}>) {
         await cache.push({posted: "add-game"})
-        let [{ date, opponent }, {team: teamQuery}] = await validate([
+        let [{ date, opponent }, {team: teamId}] = await validate([
             validateObject(data, addGameValidator),
             validateObject(query, queryTeamValidator)])
 
-        let team = await getOrCreateTeam(teamQuery)
+        let team = await teamGet(teamId)
         await assert.isFalse(
             !!team.games.find(x => x.date === date && x.opponent === opponent),
             `The game "${date}${when(opponent, " - " + opponent)}" already exists!`)
@@ -83,7 +83,7 @@ const postHandlers = {
             opponent,
         })
 
-        await saveTeam(team)
+        await teamSave(team)
         return
     }
 }

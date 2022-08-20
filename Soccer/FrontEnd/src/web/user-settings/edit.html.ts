@@ -3,7 +3,7 @@ import layout from "../_layout.html.js"
 import * as db from "../js/db.js"
 import { Settings } from "../js/db.js"
 import { RoutePostArgs } from "../js/route.js"
-import { isSelected } from "../js/utils.js"
+import { isSelected, redirect } from "../js/utils.js"
 
 const themes = ["dark", "light", "none"] as const
 export type Theme = typeof themes[number]
@@ -63,6 +63,6 @@ export default {
         if (handlerType && (handle = handler[<any>handlerType])) {
             await handle(data)
         }
-        return Response.redirect(req.referrer, 303)
+        return redirect(req)
     }
 }

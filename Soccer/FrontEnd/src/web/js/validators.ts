@@ -20,7 +20,7 @@ export const dataPlayerNameActiveValidator = {
 }
 
 export const queryTeamValidator = {
-    team: createString50("Query Team Name")
+    team: createString25("Query Team ID")
 }
 
 export const queryTeamPlayerValidator = {

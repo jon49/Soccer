@@ -1,6 +1,7 @@
 import { cache } from "./db"
 import { HTMLReturnType } from "./html-template-tag"
-import { searchParams } from "./utils"
+import { reject } from "./repo"
+import { redirect, searchParams } from "./utils"
 
 let routes : Route[] = []
 
@@ -45,7 +46,7 @@ export function handlePost(handlers: PostHandlers) {
             ? handlers[query.handler](extendedArgs)
         : handlers["post"]
             ? handlers["post"](extendedArgs)
-        : Promise.reject({message: "I'm sorry, I didn't understand where to route your request."})
+        : reject("I'm sorry, I didn't understand where to route your request.")
 
         let result = await resultTask
         if (result instanceof Promise) {
@@ -53,7 +54,7 @@ export function handlePost(handlers: PostHandlers) {
         }
 
         return !(result instanceof Response)
-                ? Response.redirect(args.req.referrer, 303)
+                ? redirect(args.req)
             : result
     }
 }

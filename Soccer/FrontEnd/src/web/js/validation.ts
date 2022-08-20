@@ -1,3 +1,5 @@
+import { reject } from "./repo"
+
 interface Value<T> {
     value: T
 }
@@ -27,11 +29,11 @@ export interface IDType<T extends TableType> extends Value<number> {
 // }
 
 const notFalsey = async (error: string, val: string | undefined) =>
-    !val ? Promise.reject([error]) : val
+    !val ? reject(error) : val
 
 const maxLength = async (error: string, val: string, maxLength: number) =>
     (val.length > maxLength)
-        ? Promise.reject([error])
+        ? reject(error)
     : val
 
 const createString = async (name: string, maxLength_: number, val?: string | undefined) => {
@@ -70,7 +72,7 @@ export function createCheckbox(val: string | undefined) {
 
 type Nullable<T> = T | undefined | null
 export async function required<T>(o: Nullable<T>, message: string): Promise<T> {
-    if (!o) return Promise.reject(message)
+    if (!o) return reject(message)
     return o
 }
 
@@ -85,7 +87,7 @@ export function optional<T>(validator: (val: T | undefined) => Promise<T>) {
 
 class Assert {
     isFalse(value: boolean, message: string) {
-        return !value ? void 0 : Promise.reject({message})
+        return !value ? void 0 : reject(message)
     }
     // isNil(value: any, message: string) {
     //     return value === null || value === undefined ? void 0 : Promise.reject({message})
@@ -109,7 +111,7 @@ export async function validate<T extends readonly unknown[] | readonly [unknown]
     for (const item of result) {
         if (item.status === "rejected") failed.push(item.reason)
     }
-    if (failed.length > 0) return Promise.reject({message: failed})
+    if (failed.length > 0) return reject(failed)
     return <any>result.map(x => {
         if (x.status === "fulfilled") {
             return x.value

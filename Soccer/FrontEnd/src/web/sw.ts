@@ -8,6 +8,7 @@ import playersEditHandler from "./players/edit.html"
 import { cache } from "./js/db"
 import { messageView } from "./js/shared"
 import html from "./js/html-template-tag"
+import { redirect } from "./js/utils"
 
 addRoutes([
     indexHandler,
@@ -108,11 +109,12 @@ async function post(url: string, req: Request) : Promise<Response> {
             }
             // return new Response("<meta http-equiv='refresh' content='0'>", { headers: htmlHeader()})
         } catch (error) {
-            if (error && error instanceof Object && !Array.isArray(error) && error.hasOwnProperty("message")) {
-                await cache.push(error)
-                return Response.redirect(req.referrer, 303)
+            let message = await cache.peek("message")
+            if (!error && message) {
+                return redirect(req)
             } else {
                 console.error("Unknown error during post.", error)
+                return new Response(`Unknown error "${JSON.stringify(error)}".`)
             }
         }
     }

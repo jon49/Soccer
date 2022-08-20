@@ -1,22 +1,16 @@
-import { cache, get, Message, set, Team, TeamPlayer, TeamSingle } from "../js/db"
+import { cache, get, Message, set, Team, TeamSingle } from "../js/db"
 import html from "../js/html-template-tag"
 import { handlePost, PostHandlers, Route, RoutePostArgsWithType } from "../js/route"
 import { cleanHtmlId, searchParams } from "../js/utils"
 import layout from "../_layout.html"
-import { assert, required, requiredAsync, validateObject } from "../js/validation"
-import { createTeam, findTeamSingle, getOrCreateTeam, getURITeamComponent, messageView, saveTeam, splitTeamName, when } from "../js/shared"
+import { assert, validateObject } from "../js/validation"
+import { messageView, when } from "../js/shared"
 import { dataPlayerNameActiveValidator, dataTeamNameYearActiveValidator, queryTeamPlayerValidator, queryTeamValidator } from "../js/validators"
-import { addPlayer, addPlayerForm } from "../js/_AddPayer.html"
-
-export interface TeamView {
-    name: string
-    year: string
-    players: TeamPlayer[]
-}
+import { addPlayer, addPlayerForm } from "../js/_AddPlayer.html"
+import { teamGet, teamGetWithActive, teamSave, TeamWithActive } from "../js/repo-team"
 
 interface PlayersEditView {
-    team: TeamView
-    aggregateTeam: TeamSingle
+    team: TeamWithActive
     posted?: string
     action: string
     message: Message
@@ -24,39 +18,24 @@ interface PlayersEditView {
 
 async function start(req: Request) : Promise<PlayersEditView> {
     let query = searchParams<{team: string | undefined}>(req)
-    let { team: teamName } = await validateObject({ team: query.team }, queryTeamValidator)
+    let { team: teamId } = await validateObject({ team: query.team }, queryTeamValidator)
 
-    let posted = await cache.pop("posted")
-    let message : Message
-    if (posted) {
-        message = await cache.pop("message")
-    }
+    let [posted, message] = await Promise.all([cache.pop("posted"), cache.pop("message")])
 
-    let [team, teams] = await Promise.all([
-        get<Team>(teamName),
-        requiredAsync(get("teams"))])
-
-    let aggregateTeam = await required(findTeamSingle(teams, splitTeamName(teamName)), "Could not find the aggregate team!")
-
-    if (!team) {
-        team = createTeam(aggregateTeam)
-    }
+    let team = await teamGetWithActive(teamId)
 
     query._url.searchParams.append("handler", "addPlayer")
 
     return {
         team,
-        aggregateTeam,
         posted,
-        action: query._url.toString(),
+        action: query._url.search,
         message,
     }
 }
 
 function render(o: PlayersEditView) {
-    let { team, aggregateTeam, posted, message, action } = o
-    let teamUriName = getURITeamComponent(team)
-
+    let { team, posted, message, action } = o
     let teamEdited = posted === "edit-team"
 
     return html`
@@ -73,15 +52,15 @@ function render(o: PlayersEditView) {
 
 <h3 id=team>Team Settings</h3>
 ${teamEdited ? messageView(message) : null}
-<form class=form method=post action="?handler=editTeam&team=${teamUriName}">
+<form class=form method=post action="?handler=editTeam&team=${team.id}">
     <div class=inline>
         <label for=team>Team Name:</label><input id=team name=name type=text value="${team.name}" $${when(teamEdited, "autofocus")}>
     </div>
     <div class=inline>
-        <label for=year>Year:</label> <input id=year name=year type=text value="${aggregateTeam.year}">
+        <label for=year>Year:</label> <input id=year name=year type=text value="${team.year}">
     </div>
     <div>
-        <label for=active>Active</label> <input id=active class=inline name=active type=checkbox $${aggregateTeam.active ? "checked" : null}>
+        <label for=active>Active</label> <input id=active class=inline name=active type=checkbox $${team.active ? "checked" : null}>
     </div>
     <button>Save</button>
 </form>
@@ -92,7 +71,7 @@ ${team.players.length === 0 ? html`<p>No players have been added.</p>` : null }
 <div class=cards>
     ${team.players.map((x, i) => {
 
-        let teamPlayerQuery = `team=${teamUriName}&player=${encodeURIComponent(x.name)}`
+        let teamPlayerQuery = `team=${team.id}&player=${encodeURIComponent(x.name)}`
         let playerId = `edit-player${i}`
         let playerActiveId : string = `player-active${i}`
         let playerWasEdited = posted === playerId
@@ -130,9 +109,11 @@ ${addPlayerForm({ name: undefined, playersExist: true, posted, action, message }
 
 const postHandlers: PostHandlers = {
     editPlayer: async ({data: d, query: q}: RoutePostArgsWithType<{name: string, active: string}, {team: string, player: string}>) => {
-        let query = await validateObject(q, queryTeamPlayerValidator)
-        let { name: playerName, active } = await validateObject(d, dataPlayerNameActiveValidator)
-        let team = await requiredAsync(get<Team>(query.team), `Unknown team "${query.team}"`)
+        let [query, { name: playerName, active }] = await Promise.all([
+            validateObject(q, queryTeamPlayerValidator),
+            validateObject(d, dataPlayerNameActiveValidator)
+        ])
+        let team = await teamGet(query.team)
 
         let playerIndex = team.players.findIndex(x => x.name === query.player)
         await assert.isFalse(playerIndex === -1, `Unknown player "${query.player}"`)
@@ -147,7 +128,7 @@ const postHandlers: PostHandlers = {
         player.name = playerName
         player.active = active
         // Player name will also need to be updated for the individual player when implemented!
-        await saveTeam(team)
+        await teamSave(team)
         return
     },
 
@@ -160,30 +141,11 @@ const postHandlers: PostHandlers = {
             validateObject(query, queryTeamValidator),
         ])
 
-        let queryTeam = splitTeamName(query_.team)
-
-        let teams = await requiredAsync(get("teams"), `Could not find teams!`)
-        let aggregateTeamIndex = teams.findIndex(x => x.name === queryTeam.name && x.year === queryTeam.year)
-        await assert.isFalse(aggregateTeamIndex === -1, `Could not find the aggregate team "${queryTeam}"`)
-        // Check for duplicates
-        await assert.isFalse(
-            queryTeam.name !== newTeamName && !!findTeamSingle(teams, {name: newTeamName, year}),
-            `The team "${newTeamName}" already exists!`)
-
-        let team : Team = await getOrCreateTeam(query_.team)
-        team.name = newTeamName
+        let team = await teamGetWithActive(query.team)
+        team.active = active
         team.year = year
-
-        let newSingleTeam: TeamSingle = {
-            active,
-            name: newTeamName,
-            year: year,
-        }
-
-        // @ts-ignore
-        teams[aggregateTeamIndex] = newSingleTeam
-        await Promise.all([saveTeam(team), set("teams", teams)])
-        return Response.redirect(`/web/players/edit?team=${getURITeamComponent(team)}`, 303)
+        team.name = newTeamName
+        await teamSave(team)
     }
 }
 

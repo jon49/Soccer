@@ -1,8 +1,10 @@
-import { cache, get, Message, Team } from "./db"
+import { cache, Message } from "./db"
 import html from "./html-template-tag"
+import { reject } from "./repo"
+import { teamGet, teamSave } from "./repo-team"
 import { RoutePostArgsWithType } from "./route"
-import { createTeam, findTeamSingle, messageView, saveTeam, splitTeamName, when } from "./shared"
-import { assert, required, requiredAsync, validateObject } from "./validation"
+import { messageView, when } from "./shared"
+import { assert, validateObject } from "./validation"
 import { dataPlayerNameValidator, queryTeamValidator } from "./validators"
 
 const formId = "add-player"
@@ -30,28 +32,23 @@ ${when(!!message, messageView(message))}
 }
 
 export async function addPlayer({ data, query }: RoutePostArgsWithType<{name: string}, {team: string}>) {
-    let [{ team: queryTeam }] = await Promise.all([
+    let [{ team: teamId }, , { name }] = await Promise.all([
         validateObject(query, queryTeamValidator),
-        cache.push({posted: formId})])
-    let team = await get<Team>(queryTeam)
+        cache.push({posted: formId}),
+        validateObject(data, dataPlayerNameValidator)
+    ])
 
-    let { name } = await validateObject(data, dataPlayerNameValidator)
-
-    if (!team) {
-        let teams = await requiredAsync(get("teams"))
-        let team_ = await required(findTeamSingle(teams, splitTeamName(queryTeam)), "Could not find team.")
-        team = createTeam({ name: team_.name, year: team_.year })
-    }
+    let team = await teamGet(teamId)
 
     await assert.isFalse(!!team.players.find(x => x.name === name), "Player names must be unique!")
-        ?.catch(x => Promise.reject({...x, players: { name }}))
+        ?.catch(_ => reject({ players: { name } }))
 
     team.players.push({
         active: true,
         name,
     })
 
-    await Promise.all([saveTeam(team), cache.push({ posted: formId })])
+    await Promise.all([teamSave(team), cache.push({ posted: formId })])
 
     return
 }

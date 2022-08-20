@@ -28,3 +28,7 @@ export function getProperty<T>(obj: any, prop: string) : T | undefined {
   }
   return
 }
+
+export function redirect(req: Request) {
+  return Response.redirect(req.referrer, 303)
+}

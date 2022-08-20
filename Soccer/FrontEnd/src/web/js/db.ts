@@ -40,6 +40,12 @@ class TempCache1 {
         }
         return
     }
+
+    async peek<K extends keyof TempCache>(key: K): Promise<TempCache[K] | undefined> {
+        let result = await get("temp-cache")
+        return result ? result[key] : void 0
+    }
+
     async pop<K extends keyof TempCache>(key: K): Promise<TempCache[K] | undefined> {
         let result = await get("temp-cache")
         await update1("temp-cache", x => {
@@ -49,8 +55,9 @@ class TempCache1 {
             }
             return x
         })
-        return result ? result[key] : undefined
+        return result ? result[key] : void 0
     }
+
     async try<T>(p: Promise<T>) {
         return p.catch(x => this.push(x))
     }
@@ -92,6 +99,7 @@ export interface TeamPlayer {
 }
 
 export interface Team {
+    id: number
     name: string
     year: string
     players: TeamPlayer[]
@@ -99,8 +107,7 @@ export interface Team {
 }
 
 export interface TeamSingle {
-    name: string
-    year: string
+    id: number
     active: boolean
 }
 export type Teams = TeamSingle[]
@@ -108,14 +115,13 @@ export type Teams = TeamSingle[]
 export interface CacheTeams {
     name?: string
     year?: string
-    posted?: boolean
 }
 
 export interface CachePlayers {
     name?: string
 }
 
-export type Message = string | string[] | undefined
+export type Message = string[] | undefined
 
 export interface TempCache {
     message?: Message
