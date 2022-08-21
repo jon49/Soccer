@@ -1,4 +1,4 @@
-import { createCheckbox, createString25, createString50 } from "./validation";
+import { createCheckbox, createString25 } from "./validation";
 
 export const dataTeamNameYearValidator = {
     name: createString25("Team Name"),
