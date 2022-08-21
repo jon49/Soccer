@@ -47,6 +47,7 @@ export async function teamSave(o: Team | TeamWithActive) {
         id: o.id,
         name: o.name,
         players: o.players,
+        positions: o.positions,
         year: o.year,
     }
     await set<Team>(o.id.toString(), teamToSave)
@@ -73,7 +74,8 @@ export function teamNew(o: TeamNew & {id: number}): Team {
     return {
         ...o,
         players: [],
-        games: []
+        games: [],
+        positions: [],
     }
 }
 

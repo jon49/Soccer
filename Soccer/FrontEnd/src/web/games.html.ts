@@ -81,6 +81,8 @@ const postHandlers = {
             id: +new Date(),
             date,
             opponent,
+            points: 0,
+            opponentPoints: 0,
         })
 
         await teamSave(team)

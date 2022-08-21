@@ -76,21 +76,41 @@ export interface Stats {
     name: string
 }
 
+export interface Position {
+    id: number
+    name: string
+}
+
+export interface Activity {
+    id: number
+    name: string
+}
+
 export interface Game {
     id: number
     date: string
     opponent?: string
+    status?: "play" | "paused"
+    points: number
+    opponentPoints: number
+}
+
+export interface GameTime {
+    start: number | undefined
+    end: number | undefined
+    position: number 
 }
 
 export interface PlayerGame {
+    name: string
     gameId: number
     stats: {statId: number, count: number}[]
-    gameTime: { start: number, end?: number }[]
+    gameTime: GameTime[]
+    status?: { player: string, _: "onDeck" } | { _: "inPlay" } | { _: "out" }
 }
 
 export interface Player {
     name: string
-    games: PlayerGame[]
 }
 
 export interface TeamPlayer {
@@ -104,6 +124,7 @@ export interface Team {
     year: string
     players: TeamPlayer[]
     games: Game[]
+    positions: Position[]
 }
 
 export interface TeamSingle {

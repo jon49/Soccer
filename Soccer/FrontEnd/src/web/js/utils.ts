@@ -32,3 +32,7 @@ export function getProperty<T>(obj: any, prop: string) : T | undefined {
 export function redirect(req: Request) {
   return Response.redirect(req.referrer, 303)
 }
+
+export function equals(a: string, b: string) {
+  return a.localeCompare(b, void 0, {sensitivity: "base"}) === 0
+}

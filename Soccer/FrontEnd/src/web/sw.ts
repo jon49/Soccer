@@ -4,6 +4,7 @@ import { version } from "./settings"
 import teamsHandler from "./teams.html"
 import playersHandler from "./players.html"
 import gamesHandler from "./games.html"
+import gamesPlayHandler from "./games/game-play.html"
 import playersEditHandler from "./players/edit.html"
 import { cache } from "./js/db"
 import { messageView } from "./js/shared"
@@ -15,6 +16,7 @@ addRoutes([
     teamsHandler,
     playersHandler,
     playersEditHandler,
+    gamesPlayHandler,
     gamesHandler,
 ])
 
