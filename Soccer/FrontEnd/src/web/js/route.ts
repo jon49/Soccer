@@ -21,11 +21,13 @@ function isMethod(method: unknown) {
     return null
 }
 
-export function findRoute(route: string, method: unknown) {
+export function findRoute(url: URL, method: unknown) {
     let validMethod : MethodTypes = isMethod(method)
     if (validMethod) {
         for (const r of routes) {
-            if (r[validMethod] && r.route.test(route)) {
+            if (r[validMethod]
+                && (r.route instanceof RegExp && r.route.test(url.pathname)
+                    || (r.route instanceof Function && r.route(url)))) {
                 return r[validMethod]
             }
         }
@@ -77,7 +79,7 @@ export interface RoutePost {
     (options: RoutePostArgs): Promise<HTMLReturnType>|Promise<Response>
 }
 export interface Route {
-    route: RegExp
+    route: RegExp | ((a: URL) => boolean)
     get?: RouteGet
     post?: RoutePost
 }

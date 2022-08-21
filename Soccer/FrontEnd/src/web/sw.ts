@@ -61,7 +61,7 @@ async function getResponse(event: FetchEvent): Promise<Response>  {
     try {
         const req : Request = event.request
         const url = normalizeUrl(req.url)
-        if (url.endsWith("sw.js") || !url.startsWith("/web/")) return fetch(req)
+        if (url.pathname.endsWith("sw.js") || !url.pathname.startsWith("/web/")) return fetch(req)
         if (req.method === "POST") return post(url, req)
         return get(url, req, event)
     } catch(error) {
@@ -70,8 +70,8 @@ async function getResponse(event: FetchEvent): Promise<Response>  {
     }
 }
 
-async function get(url: string, req: Request, event: FetchEvent) : Promise<Response> {
-    if (!url.endsWith("/") || isFile(url)) return cacheResponse(url, event)
+async function get(url: URL, req: Request, event: FetchEvent) : Promise<Response> {
+    if (!url.pathname.endsWith("/")) return cacheResponse(url.pathname, event)
     let handler = <(req: Request) => Promise<Generator<any, void, unknown>>|null>findRoute(url, req.method.toLowerCase())
     if (handler) {
         let result =
@@ -80,21 +80,21 @@ async function get(url: string, req: Request, event: FetchEvent) : Promise<Respo
                 let message = await cache.pop("message")
                 let view = messageView(message)
                 if (view) {
-                    return streamResponse(url, html`<div>${view}</div>`)
+                    return streamResponse(url.pathname, html`<div>${view}</div>`)
                 }
-                return
+                return new Response("Oops! Something happened which shouldn't have!")
             })
 
         if (result instanceof Response) {
             return result
         } else if (result) {
-            return streamResponse(url, result)
+            return streamResponse(url.pathname, result)
         }
     }
     return new Response("Not Found!")
 }
 
-async function post(url: string, req: Request) : Promise<Response> {
+async function post(url: URL, req: Request) : Promise<Response> {
     let handler = <RoutePost|null>findRoute(url, req.method.toLowerCase())
     // @ts-ignore
     if (handler) {
@@ -105,7 +105,7 @@ async function post(url: string, req: Request) : Promise<Response> {
                 return result
             }
             if (result) {
-                return streamResponse(url, result)
+                return streamResponse(url.pathname, result)
             }
             // return new Response("<meta http-equiv='refresh' content='0'>", { headers: htmlHeader()})
         } catch (error) {
@@ -163,10 +163,11 @@ function streamResponse(url: string, gen: Generator) : Response {
 *  /my/url -> /my/url/
 *  /my/script.js -> /my/script.js
 */
-function normalizeUrl(url: string) : string {
-    let path = new URL(url).pathname
-    !path.endsWith("/") && (path = isFile(path) ? path : path+"/")
-    return path
+function normalizeUrl(url: string) : URL {
+    let uri = new URL(url)
+    let path = uri.pathname
+    !uri.pathname.endsWith("/") && (uri.pathname = isFile(path) ? path : path+"/")
+    return uri
 }
 
 function isFile(s: string) {
