@@ -1,6 +1,5 @@
-import html from "../web/js/html-template-tag"
-import { Route } from "../web/js/route"
-import layout from "../web/_layout.html"
+import { Route } from "../js/route"
+import layout from "../_layout.html"
 
 const route : Route = {
     route: (url: URL) => url.pathname.endsWith("/games/") && url.searchParams.has("game") && url.searchParams.has("team"),
@@ -13,3 +12,5 @@ const route : Route = {
     },
     // post: handlePost(postHandlers),
 }
+
+export default route
