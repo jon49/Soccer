@@ -55,7 +55,7 @@ export function handlePost(handlers: PostHandlers) {
             await result.catch(x => cache.push(x))
         }
 
-        return !(result instanceof Response)
+        return result === undefined
                 ? redirect(args.req)
             : result
     }
