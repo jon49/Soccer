@@ -3,12 +3,12 @@ import { update } from "./lib/db.min"
 import { reject } from "./repo"
 import { required, requiredAsync } from "./validation"
 
-export function teamGet(id: number | string) {
+export function teamGet(id: number) {
     return requiredAsync(get<Team>(id.toString()), `Could not find team with id: "${id}".`)
 }
 
 export type TeamWithActive = TeamSingle & Team
-export async function teamGetWithActive(id: number | string) : Promise<TeamWithActive> {
+export async function teamGetWithActive(id: number) : Promise<TeamWithActive> {
     let teams = await requiredAsync(get("teams"), "Could not retrieve teams.")
     let team = await teamGet(id)
     let teamsAggregate = required(teams.find(x => x.id = team.id), `Could not find the aggregate team with id: "${id}".`)

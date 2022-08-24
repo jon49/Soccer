@@ -1,7 +1,7 @@
 import html from "./js/html-template-tag"
 import layout from "./_layout.html"
 import { CacheTeams, cache, Team, Message, } from "./js/db"
-import { handlePost, PostHandlers, RoutePostArgsWithType } from "./js/route"
+import { handlePost, PostHandlers } from "./js/route"
 import { searchParams } from "./js/utils"
 import { validateObject } from "./js/validation"
 import { messageView, when, whenF } from "./js/shared"
@@ -74,18 +74,17 @@ ${messageView(message)}
     <button>Save</button>
 </form>`
 
-async function post({ data: d }: RoutePostArgsWithType<{name: string, year: string}>) {
-    let data = await validateObject(d, dataTeamNameYearValidator)
-    await teamsCreate(data)
-    ?.catch(_ => reject({ posted: "add-team", teams: {name: data.name, year: data.year} }))
-
-    await cache.push({posted: "add-team"})
-
-    return
-}
 
 const postHandlers: PostHandlers = {
-    post,
+    post: async function post({ data }) {
+        let d = await validateObject(data, dataTeamNameYearValidator)
+        await teamsCreate(d)
+        ?.catch(_ => reject({ posted: "add-team", teams: {name: d.name, year: d.year} }))
+
+        await cache.push({posted: "add-team"})
+
+        return
+    },
 }
 
 export default {

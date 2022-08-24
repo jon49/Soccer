@@ -22,9 +22,11 @@ async function start(req : Request) : Promise<PlayerGameView> {
     let gameId = +gameId_
     let team = await teamGet(teamId)
     let game = await required(team.games.find(x => x.id === gameId), "Could not find game ID!")
-    let playersGame = await playerGameAllGet(+gameId, team.players.map(x => x.name))
-    let positions = await positionGetAll(+teamId)
-    let activities = await activityGetAll(+teamId)
+    let [playersGame, positions, activities] = await Promise.all([
+        playerGameAllGet(gameId, team.players.map(x => x.name)),
+        positionGetAll(teamId),
+        activityGetAll(teamId),
+    ])
 
     return {
         team,
@@ -180,9 +182,8 @@ ${when(!out, html`<p>No players are currently out.</p>`)}
 function setPoints(f: (game: Game) => number) {
     return async ({ query } : { query: any }) => {
         let q = await validateObject(query, queryTeamGameValidator)
-        let gameId = +q.game
         let team = await teamGet(q.team)
-        let game = await required(team.games.find(x => x.id === gameId), "Could not find game!")
+        let game = await required(team.games.find(x => x.id === q.game), "Could not find game!")
         let points = f(game)
         if (points >= 0) {
             await teamSave(team)

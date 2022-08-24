@@ -7,26 +7,10 @@ interface String_ extends Value<string> {
 }
 export interface String100 extends String_ {}
 export interface String50 extends String_ {}
-export interface PositiveWholeNumber extends Value<number> {}
-export interface IdNumber extends Value<number> {}
 export type TableType = string
 export interface IDType<T extends TableType> extends Value<number> { 
     _id: T
 }
-
-// class PositiveWholeNumber_ {
-//     readonly value: number
-//     constructor (value: number) {
-//         this.value = value
-//     }
-// }
-
-// class IdNumber_ {
-//     readonly value: number
-//     constructor (value: number) {
-//         this.value = value
-//     }
-// }
 
 const notFalsey = async (error: string, val: string | undefined) =>
     !val ? reject(error) : val
@@ -42,19 +26,37 @@ const createString = async (name: string, maxLength_: number, val?: string | und
     return s
 }
 
-// const isInteger = (val: number) => val === (val|0)
+function isInteger(val: number) {
+    try {
+        BigInt(val)
+        return true
+    } catch(e) {
+        return false
+    }
+}
 
-// export const createPositiveWholeNumber = (name: string, val: number) : Promise<PositiveWholeNumber>  => {
-//     if (val < 0) return Promise.reject([`'${name}' must be 0 or greater. But was given '${val}'.`])
-//     if (!isInteger(val)) return Promise.reject([`${name} must be a whole number. But was given '${val}' and was expecting '${val|0}'.`])
-//     return Promise.resolve(new PositiveWholeNumber_(val))
-// }
+export async function createNumber(name: string, val: number | string) : Promise<number> {
+    let num = +val
+    if (isNaN(num)) {
+        return reject(`'${name}' was expecting a number but was given ${val}`)
+    }
+    return num
+}
 
-// export const createIdNumber = (name: string, val: number) : Promise<IdNumber> => {
-//     if (!isInteger(val)) return Promise.reject([`${name} must be a whole number. But was given '${val}' and was expecting '${val|0}'.`])
-//     if (val < 1) return Promise.reject([`'${name}' must be 1 or greater. But was given '${val}'.`])
-//     return Promise.resolve(new IdNumber_(val))
-// }
+export async function createPositiveWholeNumber(name: string, val: number | string) : Promise<number> {
+    let num = await createNumber(name, val)
+    if (num < 0) return reject(`'${name}' must be 0 or greater. But was given '${val}'.`)
+    if (!isInteger(num)) return reject(`${name} must be a whole number. But was given '${num}' and was expecting '${num|0}'.`)
+    return num
+}
+
+export function createIdNumber(name: string) : (val: number | string) => Promise<number> {
+    return async (val: number | string) => {
+        let wholeNumber = await createPositiveWholeNumber(name, val)
+        if (wholeNumber < 1) return reject(`'${name}' must be 1 or greater. But was given '${val}'.`)
+        return wholeNumber
+    }
+}
 
 export const createString25 =
     (name: string) =>

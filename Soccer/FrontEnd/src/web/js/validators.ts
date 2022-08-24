@@ -1,4 +1,4 @@
-import { createCheckbox, createString25 } from "./validation";
+import { createCheckbox, createIdNumber, createString25 } from "./validation";
 
 export const dataTeamNameYearValidator = {
     name: createString25("Team Name"),
@@ -20,11 +20,11 @@ export const dataPlayerNameActiveValidator = {
 }
 
 export interface QueryTeam {
-    team: string
+    team: number
 }
 
 export const queryTeamValidator = {
-    team: createString25("Query Team ID")
+    team: createIdNumber("Query Team ID")
 }
 
 export const queryTeamPlayerValidator = {
@@ -34,9 +34,9 @@ export const queryTeamPlayerValidator = {
 
 export const queryTeamGameValidator = {
     ...queryTeamValidator,
-    game: createString25("Query Game ID")
+    game: createIdNumber("Query Game ID")
 }
 
 export interface QueryTeamGame extends QueryTeam {
-    game: string
+    game: number
 }

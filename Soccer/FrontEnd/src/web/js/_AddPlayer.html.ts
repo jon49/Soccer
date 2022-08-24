@@ -2,9 +2,9 @@ import { cache, Message } from "./db"
 import html from "./html-template-tag"
 import { reject } from "./repo"
 import { teamGet, teamSave } from "./repo-team"
-import { RoutePostArgsWithType } from "./route"
+import { RoutePostArgsWithQuery } from "./route"
 import { messageView, when } from "./shared"
-import { assert, validateObject } from "./validation"
+import { assert, validate, validateObject } from "./validation"
 import { dataPlayerNameValidator, queryTeamValidator } from "./validators"
 
 const formId = "add-player"
@@ -31,10 +31,10 @@ ${when(!!message, messageView(message))}
 </form>`
 }
 
-export async function addPlayer({ data, query }: RoutePostArgsWithType<{name: string}, {team: string}>) {
-    let [{ team: teamId }, , { name }] = await Promise.all([
+export async function addPlayer({ data, query }: RoutePostArgsWithQuery) {
+    await cache.push({posted: formId})
+    let [{ team: teamId }, { name }] = await validate([
         validateObject(query, queryTeamValidator),
-        cache.push({posted: formId}),
         validateObject(data, dataPlayerNameValidator)
     ])
 

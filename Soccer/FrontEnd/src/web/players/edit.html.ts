@@ -1,9 +1,9 @@
-import { cache, get, Message, set, Team, TeamSingle } from "../js/db"
+import { cache, Message } from "../js/db"
 import html from "../js/html-template-tag"
-import { handlePost, PostHandlers, Route, RoutePostArgsWithType } from "../js/route"
+import { handlePost, PostHandlers, Route } from "../js/route"
 import { cleanHtmlId, searchParams } from "../js/utils"
 import layout from "../_layout.html"
-import { assert, validateObject } from "../js/validation"
+import { assert, validate, validateObject } from "../js/validation"
 import { messageView, when } from "../js/shared"
 import { dataPlayerNameActiveValidator, dataTeamNameYearActiveValidator, queryTeamPlayerValidator, queryTeamValidator } from "../js/validators"
 import { addPlayer, addPlayerForm } from "../js/_AddPlayer.html"
@@ -17,8 +17,8 @@ interface PlayersEditView {
 }
 
 async function start(req: Request) : Promise<PlayersEditView> {
-    let query = searchParams<{team: string | undefined}>(req)
-    let { team: teamId } = await validateObject({ team: query.team }, queryTeamValidator)
+    let query = searchParams(req)
+    let { team: teamId } = await validateObject(query, queryTeamValidator)
 
     let [posted, message] = await Promise.all([cache.pop("posted"), cache.pop("message")])
 
@@ -108,8 +108,8 @@ ${addPlayerForm({ name: undefined, playersExist: true, posted, action, message }
 }
 
 const postHandlers: PostHandlers = {
-    editPlayer: async ({data: d, query: q}: RoutePostArgsWithType<{name: string, active: string}, {team: string, player: string}>) => {
-        let [query, { name: playerName, active }] = await Promise.all([
+    editPlayer: async ({data: d, query: q}) => {
+        let [query, { name: playerName, active }] = await validate([
             validateObject(q, queryTeamPlayerValidator),
             validateObject(d, dataPlayerNameActiveValidator)
         ])
@@ -134,14 +134,14 @@ const postHandlers: PostHandlers = {
 
     addPlayer,
 
-    editTeam: async({ data, query }: RoutePostArgsWithType<{name: string, year: string, active?: "on"}, {team: string}>) => {
-        let [,{ name: newTeamName, year, active }, query_] = await Promise.all([
-            cache.push({posted: "edit-team"}),
+    editTeam: async({ data, query }) => {
+        await cache.push({posted: "edit-team"})
+        let [{ name: newTeamName, year, active }, { team: teamId }] = await validate([
             validateObject(data, dataTeamNameYearActiveValidator),
             validateObject(query, queryTeamValidator),
         ])
 
-        let team = await teamGetWithActive(query.team)
+        let team = await teamGetWithActive(teamId)
         team.active = active
         team.year = year
         team.name = newTeamName

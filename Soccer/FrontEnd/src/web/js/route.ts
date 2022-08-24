@@ -35,7 +35,7 @@ export function findRoute(url: URL, method: unknown) {
     return null
 }
 
-interface RoutePostArgsWithQuery extends RoutePostArgs {
+export interface RoutePostArgsWithQuery extends RoutePostArgs {
     query: any
 }
 
@@ -63,12 +63,6 @@ export function handlePost(handlers: PostHandlers) {
 
 interface RouteGet {
     (req: Request): Promise<HTMLReturnType>
-}
-
-export interface RoutePostArgsWithType<TData, TQuery = any> {
-    data: TData
-    req: Request
-    query: TQuery
 }
 
 export interface RoutePostArgs {

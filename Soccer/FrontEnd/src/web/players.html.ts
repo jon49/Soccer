@@ -6,6 +6,9 @@ import { handlePost, PostHandlers, Route } from "./js/route"
 import { when, whenF } from "./js/shared"
 import { addPlayer, addPlayerForm } from "./js/_AddPlayer.html"
 import { teamGet } from "./js/repo-team"
+import { validateObject } from "./js/validation"
+import { queryTeamValidator } from "./js/validators"
+import { reject } from "./js/repo"
 
 interface PlayersView {
     team: Team
@@ -15,8 +18,16 @@ interface PlayersView {
     message: Message
 }
 
+let queryTeamAllValidator = {
+    ...queryTeamValidator,
+    all: async (val: any) : Promise<null | ""> => {
+        if (val === null || val === "") return val
+        return reject(`The value "${val}" must be 'null' or and empty string.`)
+    }
+}
+
 async function start(req: Request) : Promise<PlayersView> {
-    let query = searchParams<{team: string, all: string | null}>(req)
+    let query = await validateObject(searchParams<{team: string, all: string | null}>(req), queryTeamAllValidator)
     let team = await teamGet(query.team)
     let [cached, posted, message] = await Promise.all([
         cache.pop("players"),
@@ -65,8 +76,6 @@ function render({ team, message, wasFiltered, name, posted }: PlayersView) {
 
     ${addPlayerForm({name, posted, playersExist, message})}
     `
-
-
 }
 
 const postHandlers : PostHandlers = {

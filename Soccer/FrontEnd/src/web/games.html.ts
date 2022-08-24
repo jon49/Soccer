@@ -1,7 +1,7 @@
 import { cache, Message, Team } from "./js/db"
 import html from "./js/html-template-tag"
 import { teamGet, teamSave } from "./js/repo-team"
-import { handlePost, RoutePostArgsWithType } from "./js/route"
+import { handlePost, PostHandlers } from "./js/route"
 import { messageView, when } from "./js/shared"
 import { searchParams } from "./js/utils"
 import { assert, createString25, optional, validate, validateObject } from "./js/validation"
@@ -16,7 +16,7 @@ interface GameView {
 
 async function start(req: Request): Promise<GameView> {
     let [message, posted] = await Promise.all([cache.pop("message"), cache.pop("posted")])
-    let query = await validateObject(<{team: string}>searchParams<{team: string}>(req), queryTeamValidator)
+    let query = await validateObject(searchParams(req), queryTeamValidator)
     let team = await teamGet(query.team)
     return {team, message, posted}
 }
@@ -65,8 +65,8 @@ let addGameValidator = {
     opponent: optional(createString25("Game Opponent"))
 }
 
-const postHandlers = {
-    post: async function({ data, query }: RoutePostArgsWithType<{date: string, opponent?: string}, {team: string}>) {
+const postHandlers : PostHandlers = {
+    post: async function({ data, query }) {
         await cache.push({posted: "add-game"})
         let [{ date, opponent }, {team: teamId}] = await validate([
             validateObject(data, addGameValidator),
