@@ -126,7 +126,7 @@ type Unwrap<T> =
 	T extends (...args: any) => infer U ? U :
 	T
 
-export async function validateObject<T extends any, S extends { [Key in keyof T]: (value: T[Key] | undefined) => Promise<any> }>(original: T, validator: S) {
+export async function validateObject<T extends { [Key in keyof T]: (value: any | undefined) => Promise<any> }>(original: any, validator: T) {
     let validatorKeys = Object.keys(validator)
     let validations = new Array(validatorKeys.length)
     let i = 0
@@ -140,5 +140,5 @@ export async function validateObject<T extends any, S extends { [Key in keyof T]
     for (let validatorKey of validatorKeys) {
         o[validatorKey] = xs[i++]
     }
-    return <{ [Key in keyof S]: Unwrap<S[Key]> }>o
+    return <{ [Key in keyof T]: Unwrap<T[Key]> }>o
 }
