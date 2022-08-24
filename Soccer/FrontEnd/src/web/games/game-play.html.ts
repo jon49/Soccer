@@ -1,8 +1,8 @@
 import { Activity, Game, GameTime, PlayerGame, Position, Team } from "../js/db"
 import html from "../js/html-template-tag"
 import { activityGetAll, playerGameAllGet, positionGetAll } from "../js/repo-player-game"
-import { teamGet } from "../js/repo-team"
-import { Route } from "../js/route"
+import { teamGet, teamSave } from "../js/repo-team"
+import { Route, PostHandlers, handlePost } from "../js/route"
 import { when } from "../js/shared"
 import { searchParams } from "../js/utils"
 import { required, validateObject } from "../js/validation"
@@ -40,7 +40,7 @@ function getPositionName(positions: Position[], gameTime: GameTime[]) {
 }
 
 function render({ team, playersGame, game, positions, activities }: PlayerGameView) {
-    let queryTeamGame = html`team=${team.id}&game=${game.id}`
+    let queryTeamGame = `team=${team.id}&game=${game.id}`
     let inPlayPlayers = playersGame.filter(x => x.status?._ === "inPlay")
     let inPlay = inPlayPlayers.length > 0
     let onDeck = playersGame.filter(x => x.status?._ === "onDeck").length > 0
@@ -48,20 +48,20 @@ function render({ team, playersGame, game, positions, activities }: PlayerGameVi
     return html`
 <h2>Game ${game.date} ${when(game.opponent, x => ` - ${x}`)}</h2>
 <div>
-    <form class=inline method=post action="?${queryTeamGame}&handler=${game.status === "play" ? "pauseGame" : "startGame"}">
+    <form class=inline method=post action="?$${queryTeamGame}&handler=${game.status === "play" ? "pauseGame" : "startGame"}">
         <button>${game.status === "play" ? "Pause" : "Start"}</button>
     </form>
     <span>Points</span>
     <form class=inline method=post>
-        <button formaction="?${queryTeamGame}&handler=pointsDec" target="#points">-</button>
-        <span id=points>&nbsp;${game.points || "0"}&nbsp;</span>
-        <button formaction="?${queryTeamGame}&handler=pointsInc" target="#points">+</button>
+        <button formaction="?$${queryTeamGame}&handler=pointsDec" target="#points">-</button>
+        <span id=points>&nbsp;${getPointsView(game.points)}&nbsp;</span>
+        <button formaction="?$${queryTeamGame}&handler=pointsInc" target="#points">+</button>
     </form>
     <span>Opponent</span>
     <form class=inline method=post>
-        <button formaction="?${queryTeamGame}&handler=oPointsDec" target="#o-points">-</button>
-        <span id=o-points>&nbsp;${game.opponentPoints || "0"}&nbsp;</span>
-        <button formaction="?${queryTeamGame}&handler=oPointsInc" target="#o-points">+</button>
+        <button formaction="?$${queryTeamGame}&handler=oPointsDec" target="#o-points">-</button>
+        <span id=o-points>&nbsp;${getPointsView(game.opponentPoints)}&nbsp;</span>
+        <button formaction="?$${queryTeamGame}&handler=oPointsInc" target="#o-points">+</button>
     </form>
 </div>
 
@@ -71,7 +71,7 @@ ${when(!inPlay, html`<p>No players are in play.</p>`)}
     ${playersGame.filter(x => x.status?._ === "inPlay").map((x, i) => html`
     <li>
         <span>${x.name}</span>
-        <form method=post action="?${queryTeamGame}&player=${encodeURIComponent(x.name)}&handler=positionChange">
+        <form method=post action="?$${queryTeamGame}&player=${encodeURIComponent(x.name)}&handler=positionChange">
             <input
                 type=search
                 name=position
@@ -84,7 +84,7 @@ ${when(!inPlay, html`<p>No players are in play.</p>`)}
         </form>
         <form
             method=post
-            action="?${queryTeamGame}&player=${encodeURIComponent(x.name)}&handler=activityMarker"
+            action="?$${queryTeamGame}&player=${encodeURIComponent(x.name)}&handler=activityMarker"
             target="in-play-activity-${i}"
             >
             <input
@@ -118,10 +118,10 @@ ${when(!onDeck, html`<p>No players are on deck.</p>`)}
        let position = playersGame.find(x => x.name === inPlayName)
        return html`
     <li>
-        <form method=post action"?${queryTeamGame}&player=${playerEnc}&handler=swap">
+        <form method=post action"?$${queryTeamGame}&player=${playerEnc}&handler=swap">
             <button>Swap</button>
         </form>
-        <form method=post action="?${queryTeamGame}&player=${playerEnc}&handler=cancelOnDeck">
+        <form method=post action="?$${queryTeamGame}&player=${playerEnc}&handler=cancelOnDeck">
             <button class=danger>X</button>
         </form>
         <span>${x.name} (${inPlayName} ${when(position?.gameTime?.find(x => !x.end)?.position, x => `- ${x}`)})</span>
@@ -129,7 +129,7 @@ ${when(!onDeck, html`<p>No players are on deck.</p>`)}
     `})}
 </ul>
 
-<form method=post action="?${queryTeamGame}&handler=swapAll">
+<form method=post action="?$${queryTeamGame}&handler=swapAll">
     <button>Swap All</button>
 </form>
 
@@ -142,11 +142,11 @@ ${when(!out, html`<p>No players are currently out.</p>`)}
        let playerEnc = encodeURIComponent(x.name)
         return html`
     <li>
-        <form method=post action="?${queryTeamGame}&player=${playerEnc}&handler=noShow">
+        <form method=post action="?$${queryTeamGame}&player=${playerEnc}&handler=noShow">
             <button>X</button>
         </form>
         <p>${x.name}</p>
-        <form method=post action="?${queryTeamGame}&player=${playerEnc}&handler=addPlayerPosition">
+        <form method=post action="?$${queryTeamGame}&player=${playerEnc}&handler=addPlayerPosition">
             <input
                 type=search
                 name=position
@@ -157,7 +157,7 @@ ${when(!out, html`<p>No players are currently out.</p>`)}
         </form>
         ${when(inPlay, _ =>
             html`
-        <form method=post action="?${queryTeamGame}&player=${playerEnc}&handler=onDeckWith">
+        <form method=post action="?$${queryTeamGame}&player=${playerEnc}&handler=onDeckWith">
             <select>
                 ${inPlayPlayers.map(x => html`
                     <option>${x.name}</option>`) }
@@ -177,6 +177,33 @@ ${when(!out, html`<p>No players are currently out.</p>`)}
     `
 }
 
+function setPoints(f: (game: Game) => number) {
+    return async ({ query } : { query: any }) => {
+        let q = await validateObject(query, queryTeamGameValidator)
+        let gameId = +q.game
+        let team = await teamGet(q.team)
+        let game = await required(team.games.find(x => x.id === gameId), "Could not find game!")
+        let points = f(game)
+        if (points >= 0) {
+            await teamSave(team)
+        } else {
+            points = 0
+        }
+        return getPointsView(points)
+    }
+}
+
+function getPointsView(points: number) {
+    return html`&nbsp;${points || "0"}&nbsp;`
+}
+
+const postHandlers : PostHandlers = {
+    pointsInc: setPoints(game => ++game.points),
+    pointsDec: setPoints(game => --game.points),
+    oPointsDec: setPoints(game => --game.opponentPoints),
+    oPointsInc: setPoints(game => ++game.opponentPoints),
+}
+
 const route : Route = {
     route: (url: URL) => url.pathname.endsWith("/games/") && url.searchParams.has("game") && url.searchParams.has("team"),
     async get(req: Request) {
@@ -184,7 +211,7 @@ const route : Route = {
         const template = await layout(req)
         return template({ main: render(result), script: "/web/js/lib/htmf-all.min.js" })
     },
-    // post: handlePost(postHandlers),
+    post: handlePost(postHandlers),
 }
 
 export default route
