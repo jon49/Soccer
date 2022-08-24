@@ -38,6 +38,7 @@ ${
     teams ? html`
         <ul class=list>
             ${teams?.map(x => {
+                let teamId = x.id
                 return html`
                 <li>
                     <a href="/web/players?team=${x.id}">${x.name} - ${x.year}</a>
@@ -46,7 +47,7 @@ ${
                         x.games
                         .sort((a, b) => a.date.localeCompare(b.date))
                         .find(x => x.date),
-                        x => html`<a href="/web/games?team=${x.id}&game=${x.id}">${x.date}</a>`
+                        x => html`<a href="/web/games?team=${teamId}&game=${x.id}">${x.date}</a>`
                     ) ?? html`<span>&nbsp;</span>`}
                     <a href="/web/players/edit?team=${x.id}">Edit</a>
                 </li>`
