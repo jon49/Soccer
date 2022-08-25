@@ -96,9 +96,9 @@ export interface Game {
 }
 
 export interface GameTime {
-    start: number | undefined
-    end: number | undefined
-    position: number 
+    start?: number
+    end?: number
+    positionId: number 
 }
 
 export interface PlayerGame {
@@ -106,7 +106,7 @@ export interface PlayerGame {
     gameId: number
     stats: {statId: number, count: number}[]
     gameTime: GameTime[]
-    status?: { player: string, _: "onDeck" } | { _: "inPlay" } | { _: "out" }
+    status?: { player?: string, _: "onDeck" } | { _: "inPlay" } | { _: "out" }
 }
 
 export interface Player {

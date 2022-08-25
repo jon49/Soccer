@@ -43,16 +43,18 @@ export async function createNumber(name: string, val: number | string) : Promise
     return num
 }
 
-export async function createPositiveWholeNumber(name: string, val: number | string) : Promise<number> {
-    let num = await createNumber(name, val)
-    if (num < 0) return reject(`'${name}' must be 0 or greater. But was given '${val}'.`)
-    if (!isInteger(num)) return reject(`${name} must be a whole number. But was given '${num}' and was expecting '${num|0}'.`)
-    return num
+export function createPositiveWholeNumber(name: string) : (val: number | string) => Promise<number> {
+    return async (val: number | string) => {
+        let num = await createNumber(name, val)
+        if (num < 0) return reject(`'${name}' must be 0 or greater. But was given '${val}'.`)
+        if (!isInteger(num)) return reject(`${name} must be a whole number. But was given '${num}' and was expecting '${num|0}'.`)
+        return num
+    }
 }
 
 export function createIdNumber(name: string) : (val: number | string) => Promise<number> {
     return async (val: number | string) => {
-        let wholeNumber = await createPositiveWholeNumber(name, val)
+        let wholeNumber = await createPositiveWholeNumber(name)(val)
         if (wholeNumber < 1) return reject(`'${name}' must be 1 or greater. But was given '${val}'.`)
         return wholeNumber
     }

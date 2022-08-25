@@ -1,11 +1,11 @@
 import { Activity, Game, GameTime, PlayerGame, Position, Team } from "../js/db"
 import html from "../js/html-template-tag"
-import { activityGetAll, playerGameAllGet, positionGetAll } from "../js/repo-player-game"
+import { activityGetAll, playerGameAllGet, playerGameSave, positionCreateOrGet, positionGetAll } from "../js/repo-player-game"
 import { teamGet, teamSave } from "../js/repo-team"
 import { Route, PostHandlers, handlePost } from "../js/route"
 import { when } from "../js/shared"
 import { searchParams } from "../js/utils"
-import { required, validateObject } from "../js/validation"
+import { createString25, required, validate, validateObject } from "../js/validation"
 import { QueryTeam, queryTeamGameValidator } from "../js/validators"
 import layout from "../_layout.html"
 
@@ -38,7 +38,7 @@ async function start(req : Request) : Promise<PlayerGameView> {
 }
 
 function getPositionName(positions: Position[], gameTime: GameTime[]) {
-    return positions.find(y => y.id === gameTime.find(x => !x.end)?.position)?.name
+    return positions.find(y => y.id === gameTime.find(x => !x.end)?.positionId)?.name
 }
 
 function render({ team, playersGame, game, positions, activities }: PlayerGameView) {
@@ -114,19 +114,19 @@ ${when(!inPlay, html`<p>No players are in play.</p>`)}
 ${when(!onDeck, html`<p>No players are on deck.</p>`)}
 
 <ul class=list>
-    ${playersGame.filter(x => x.status?._ === "onDeck").map((x, i) => {
+    ${playersGame.filter(x => x.status?._ === "onDeck").map(x => {
        let playerEnc = encodeURIComponent(x.name)
        let inPlayName = <string>(x.status?._ === "onDeck" ? x.status.player : null)
        let position = playersGame.find(x => x.name === inPlayName)
        return html`
     <li>
-        <form method=post action"?$${queryTeamGame}&player=${playerEnc}&handler=swap">
+        <form method=post action"?$${queryTeamGame}&player=$${playerEnc}&handler=swap">
             <button>Swap</button>
         </form>
-        <form method=post action="?$${queryTeamGame}&player=${playerEnc}&handler=cancelOnDeck">
+        <form method=post action="?$${queryTeamGame}&player=$${playerEnc}&handler=cancelOnDeck">
             <button class=danger>X</button>
         </form>
-        <span>${x.name} (${inPlayName} ${when(position?.gameTime?.find(x => !x.end)?.position, x => `- ${x}`)})</span>
+        <span>${x.name} (${inPlayName} ${when(position?.gameTime?.find(x => !x.end)?.positionId, x => `- ${x}`)})</span>
     </li>
     `})}
 </ul>
@@ -144,22 +144,22 @@ ${when(!out, html`<p>No players are currently out.</p>`)}
        let playerEnc = encodeURIComponent(x.name)
         return html`
     <li>
-        <form method=post action="?$${queryTeamGame}&player=${playerEnc}&handler=noShow">
+        <form method=post action="?$${queryTeamGame}&player=$${playerEnc}&handler=notPlaying">
             <button>X</button>
         </form>
         <p>${x.name}</p>
-        <form method=post action="?$${queryTeamGame}&player=${playerEnc}&handler=addPlayerPosition">
+        <form method=post action="?$${queryTeamGame}&player=$${playerEnc}&handler=addPlayerPosition">
             <input
                 type=search
-                name=position
+                name=positionId
                 list=positions
                 autocomplete=off
-                placeholder="Add player to on deck"
+                placeholder="Position"
                 onchange="hf.click(this)" >
         </form>
         ${when(inPlay, _ =>
             html`
-        <form method=post action="?$${queryTeamGame}&player=${playerEnc}&handler=onDeckWith">
+        <form method=post action="?$${queryTeamGame}&player=$${playerEnc}&handler=onDeckWith">
             <select>
                 ${inPlayPlayers.map(x => html`
                     <option>${x.name}</option>`) }
@@ -198,11 +198,37 @@ function getPointsView(points: number) {
     return html`&nbsp;${points || "0"}&nbsp;`
 }
 
+const queryTeamGamePlayerValidator = {
+    ...queryTeamGameValidator,
+    player: createString25("Player")
+}
+
+const dataPositionValidator = {
+    position: createString25("Position")
+}
+
 const postHandlers : PostHandlers = {
     pointsInc: setPoints(game => ++game.points),
     pointsDec: setPoints(game => --game.points),
     oPointsDec: setPoints(game => --game.opponentPoints),
     oPointsInc: setPoints(game => ++game.opponentPoints),
+    addPlayerPosition: async ({ data, query }) => {
+        let [{ position }, { game: gameId, player, team: teamId }] = await validate([
+            validateObject(data, dataPositionValidator),
+            validateObject(query, queryTeamGamePlayerValidator)
+        ])
+        let positionObj = await positionCreateOrGet(teamId, position)
+        let [p] = await playerGameAllGet(gameId, [player])
+        p.status = { _: "onDeck" }
+        let gameTime = p.gameTime[0]
+        if (!gameTime) {
+            gameTime = {
+                positionId: positionObj.id
+            }
+            p.gameTime.push(gameTime)
+        }
+        await playerGameSave(gameId, p, player)
+    }
 }
 
 const route : Route = {
