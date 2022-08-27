@@ -33,7 +33,7 @@ async function start(req : Request) : Promise<View> {
 
     let playersGameView : PlayerGameView[] = playersGame.map(x => ({
         ...x,
-        name: team.players.find(x => x.playerId === x.playerId)?.name ?? ""
+        name: team.players.find(y => x.playerId === y.playerId)?.name ?? ""
     }))
 
     return {
