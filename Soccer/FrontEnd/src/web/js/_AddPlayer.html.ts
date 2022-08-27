@@ -5,7 +5,7 @@ import { playerCreate, teamGet } from "./repo-team"
 import { RoutePostArgsWithQuery } from "./route"
 import { messageView, when } from "./shared"
 import { assert, validate, validateObject } from "./validation"
-import { dataPlayerNameValidator, queryTeamValidator } from "./validators"
+import { dataPlayerNameValidator, queryTeamIdValidator } from "./validators"
 
 const formId = "add-player"
 
@@ -33,8 +33,8 @@ ${when(!!message, messageView(message))}
 
 export async function addPlayer({ data, query }: RoutePostArgsWithQuery) {
     await cache.push({posted: formId})
-    let [{ team: teamId }, { name }] = await validate([
-        validateObject(query, queryTeamValidator),
+    let [{ teamId }, { name }] = await validate([
+        validateObject(query, queryTeamIdValidator),
         validateObject(data, dataPlayerNameValidator)
     ])
 

@@ -1,16 +1,16 @@
 import { Activity, get, getMany, PlayerGame, Position, set } from "./db";
 import { equals, getNewId } from "./utils";
 
-function getPlayerGameKey(gameId: number, player: string) {
-    return `player-game:${gameId}|${player}`
+function getPlayerGameKey(gameId: number, playerId: number) {
+    return `player-game:${playerId}|${gameId}`
 }
 
-export async function playerGameSave(gameId: number, playerGame: PlayerGame, player: string) {
-    await set(getPlayerGameKey(gameId, player), playerGame)
+export async function playerGameSave(gameId: number, playerGame: PlayerGame, playerId: number) {
+    await set(getPlayerGameKey(gameId, playerId), playerGame)
 }
 
 export async function playerGameAllGet(gameId: number, playerIds: number[]) {
-    let playersGame = await getMany<PlayerGame>(playerIds.map(x => `${gameId}|${x}`))
+    let playersGame = await getMany<PlayerGame>(playerIds.map(x => getPlayerGameKey(gameId, x)))
     playersGame = playersGame.filter(x => x)
     let omittedPlayers : PlayerGame[] = []
     for (let playerId of playerIds) {

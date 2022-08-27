@@ -5,7 +5,7 @@ import { handlePost, PostHandlers } from "./js/route"
 import { messageView, when } from "./js/shared"
 import { getNewId, searchParams } from "./js/utils"
 import { assert, createString25, optional, validate, validateObject } from "./js/validation"
-import { queryTeamValidator } from "./js/validators"
+import { queryTeamIdValidator } from "./js/validators"
 import layout from "./_layout.html"
 
 interface GameView {
@@ -16,8 +16,8 @@ interface GameView {
 
 async function start(req: Request): Promise<GameView> {
     let [message, posted] = await Promise.all([cache.pop("message"), cache.pop("posted")])
-    let query = await validateObject(searchParams(req), queryTeamValidator)
-    let team = await teamGet(query.team)
+    let { teamId } = await validateObject(searchParams(req), queryTeamIdValidator)
+    let team = await teamGet(teamId)
     return {team, message, posted}
 }
 
@@ -36,8 +36,8 @@ ${when(hasGames, html`
     ${team.games.map(x => {
         return html`
         <li>
-            <a href="?team=${team.id}&game=${x.id}">${x.date}${when(x.opponent, " - " + x.opponent) }</a>
-            <a href="/web/games/edit?team=${team.id}&game=${x.id}">Edit</a>
+            <a href="?teamId=${team.id}&gameId=${x.id}">${x.date}${when(x.opponent, " - " + x.opponent) }</a>
+            <a href="/web/games/edit?teamId=${team.id}&gameId=${x.id}">Edit</a>
         </li>`
     })}
 </ul>`)}
@@ -68,9 +68,9 @@ let addGameValidator = {
 const postHandlers : PostHandlers = {
     post: async function({ data, query }) {
         await cache.push({posted: "add-game"})
-        let [{ date, opponent }, {team: teamId}] = await validate([
+        let [{ date, opponent }, { teamId }] = await validate([
             validateObject(data, addGameValidator),
-            validateObject(query, queryTeamValidator)])
+            validateObject(query, queryTeamIdValidator)])
 
         let team = await teamGet(teamId)
         await assert.isFalse(

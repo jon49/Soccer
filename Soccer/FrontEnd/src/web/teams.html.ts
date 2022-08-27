@@ -41,15 +41,15 @@ ${
                 let teamId = x.id
                 return html`
                 <li>
-                    <a href="/web/players?team=${x.id}">${x.name} - ${x.year}</a>
-                    <a href="/web/games?team=${x.id}">Games</a>
+                    <a href="/web/players?teamId=${x.id}">${x.name} - ${x.year}</a>
+                    <a href="/web/games?teamId=${x.id}">Games</a>
                     ${whenF(
                         x.games
                         .sort((a, b) => a.date.localeCompare(b.date))
                         .find(x => x.date),
-                        x => html`<a href="/web/games?team=${teamId}&game=${x.id}">${x.date}</a>`
+                        x => html`<a href="/web/games?teamId=${teamId}&gameId=${x.id}">${x.date}</a>`
                     ) ?? html`<span>&nbsp;</span>`}
-                    <a href="/web/players/edit?team=${x.id}">Edit</a>
+                    <a href="/web/players/edit?teamId=${x.id}">Edit</a>
                 </li>`
             })}
         </ul>`

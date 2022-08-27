@@ -1,16 +1,16 @@
 import html from "./js/html-template-tag"
 import layout from "./_layout.html"
-import { cache, Message, TeamView } from "./js/db"
+import { cache, Message, Team } from "./js/db"
 import { cleanHtmlId, searchParams } from "./js/utils"
 import { handlePost, PostHandlers, Route } from "./js/route"
 import { when, whenF } from "./js/shared"
 import { addPlayer, addPlayerForm } from "./js/_AddPlayer.html"
 import { teamGet } from "./js/repo-team"
 import { validateObject } from "./js/validation"
-import { queryAllValidator, queryTeamValidator } from "./js/validators"
+import { queryAllValidator, queryTeamIdValidator } from "./js/validators"
 
 interface PlayersView {
-    team: TeamView
+    team: Team
     name?: string
     posted?: string
     wasFiltered: boolean
@@ -18,19 +18,19 @@ interface PlayersView {
 }
 
 let queryTeamAllValidator = {
-    ...queryTeamValidator,
+    ...queryTeamIdValidator,
     ...queryAllValidator,
 }
 
 async function start(req: Request) : Promise<PlayersView> {
-    let query = await validateObject(searchParams(req), queryTeamAllValidator)
-    let team = await teamGet(query.team)
+    let { all, teamId } = await validateObject(searchParams(req), queryTeamAllValidator)
+    let team = await teamGet(teamId)
     let [cached, posted, message] = await Promise.all([
         cache.pop("players"),
         cache.pop("posted"),
         cache.pop("message")])
     let wasFiltered = false
-    if (query.all === null) {
+    if (all === null) {
         let filtered = team.players.filter(x => x.active)
         wasFiltered = filtered.length !== team.players.length
         team.players = filtered
@@ -55,17 +55,17 @@ function render({ team, message, wasFiltered, name, posted }: PlayersView) {
         ${team.players.map(x =>
             html`
             <li>
-                <a href="?player=${x.id}&team=${team.id}">${x.name}</a>
-                <a href="/web/players/edit?team=${team.id}#${cleanHtmlId(x.name)}">Edit</a>
+                <a href="?playerId=${x.playerId}&teamId=${team.id}">${x.name}</a>
+                <a href="/web/players/edit?teamId=${team.id}#${cleanHtmlId(x.name)}">Edit</a>
             </li>`
         )}
     </ul>`
        : html`<p>No players found. Please add one!</p>` }
 
     ${when(wasFiltered,
-        html`<p><a href="?all&team=${team.id}">Show all players.</a></p>`)}
+        html`<p><a href="?all&teamId=${team.id}">Show all players.</a></p>`)}
     ${whenF(playersExist && team.players.find(x => !x.active),
-        () => html`<p><a href="?team=${team.id}">Hide archived players.</a></p>`)}
+        () => html`<p><a href="?teamId=${team.id}">Hide archived players.</a></p>`)}
 
     <h3>Add a player</h3>
 

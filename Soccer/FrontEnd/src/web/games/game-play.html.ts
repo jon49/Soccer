@@ -5,8 +5,8 @@ import { teamGet, teamSave } from "../js/repo-team"
 import { Route, PostHandlers, handlePost } from "../js/route"
 import { when } from "../js/shared"
 import { searchParams } from "../js/utils"
-import { createString25, required, validate, validateObject } from "../js/validation"
-import { QueryTeam, queryTeamGameValidator } from "../js/validators"
+import { createIdNumber, createString25, required, validate, validateObject } from "../js/validation"
+import { queryTeamIdGameIdValidator } from "../js/validators"
 import layout from "../_layout.html"
 
 interface PlayerGameView extends PlayerGame {
@@ -22,8 +22,7 @@ interface View {
 }
 
 async function start(req : Request) : Promise<View> {
-    let { team: teamId, game: gameId_ } = await validateObject(<QueryTeam>searchParams<QueryTeam>(req), queryTeamGameValidator)
-    let gameId = +gameId_
+    let { teamId, gameId } = await validateObject(searchParams(req), queryTeamIdGameIdValidator)
     let team = await teamGet(teamId)
     let game = await required(team.games.find(x => x.id === gameId), "Could not find game ID!")
     let [playersGame, positions, activities] = await Promise.all([
@@ -50,12 +49,16 @@ function getPositionName(positions: Position[], gameTime: GameTime[]) {
     return positions.find(y => y.id === gameTime.find(x => !x.end)?.positionId)?.name
 }
 
+const filterOutPlayers = (x: PlayerGameView) => !x.status || x.status?._ === "out"
+const filterInPlayPlayers = (x: PlayerGameView) => x.status?._ === "inPlay"
+const filterOnDeckPlayers = (x: PlayerGameView) => x.status?._ === "onDeck"
+
 function render({ team, playersGame, game, positions, activities }: View) {
-    let queryTeamGame = `team=${team.id}&game=${game.id}`
-    let inPlayPlayers = playersGame.filter(x => x.status?._ === "inPlay")
+    let queryTeamGame = `teamId=${team.id}&gameId=${game.id}`
+    let inPlayPlayers = playersGame.filter(filterInPlayPlayers)
     let inPlay = inPlayPlayers.length > 0
-    let onDeck = playersGame.filter(x => x.status?._ === "onDeck").length > 0
-    let out = playersGame.filter(x => x.status?._ === "out").length > 0
+    let onDeck = playersGame.filter(filterOnDeckPlayers).length > 0
+    let out = playersGame.filter(filterOutPlayers).length > 0
     return html`
 <h2>${team.name} - Game ${game.date} ${when(game.opponent, x => ` - ${x}`)}</h2>
 <div>
@@ -79,10 +82,10 @@ function render({ team, playersGame, game, positions, activities }: View) {
 <h3>In-Play</h3>
 ${when(!inPlay, html`<p>No players are in play.</p>`)}
 <ul class=list>
-    ${playersGame.filter(x => x.status?._ === "inPlay").map((x, i) => html`
+    ${playersGame.filter(filterInPlayPlayers).map((x, i) => html`
     <li>
         <span>${x.name}</span>
-        <form method=post action="?$${queryTeamGame}&player=${x.playerId}&handler=positionChange">
+        <form method=post action="?$${queryTeamGame}&playerId=${x.playerId}&handler=positionChange">
             <input
                 type=search
                 name=position
@@ -95,7 +98,7 @@ ${when(!inPlay, html`<p>No players are in play.</p>`)}
         </form>
         <form
             method=post
-            action="?$${queryTeamGame}&player=${encodeURIComponent(x.name)}&handler=activityMarker"
+            action="?$${queryTeamGame}&playerId=${encodeURIComponent(x.name)}&handler=activityMarker"
             target="in-play-activity-${i}"
             >
             <input
@@ -123,16 +126,15 @@ ${when(!inPlay, html`<p>No players are in play.</p>`)}
 ${when(!onDeck, html`<p>No players are on deck.</p>`)}
 
 <ul class=list>
-    ${playersGame.filter(x => x.status?._ === "onDeck").map(x => {
-       let playerEnc = encodeURIComponent(x.name)
+    ${playersGame.filter(filterOnDeckPlayers).map(x => {
        let inPlayName = <string>(x.status?._ === "onDeck" ? x.status.player : null)
        let position = playersGame.find(x => x.name === inPlayName)
        return html`
     <li>
-        <form method=post action"?$${queryTeamGame}&player=$${playerEnc}&handler=swap">
+        <form method=post action"?$${queryTeamGame}&playerId=$${x.playerId}&handler=swap">
             <button>Swap</button>
         </form>
-        <form method=post action="?$${queryTeamGame}&player=$${playerEnc}&handler=cancelOnDeck">
+        <form method=post action="?$${queryTeamGame}&playerId=$${x.playerId}&handler=cancelOnDeck">
             <button class=danger>X</button>
         </form>
         <span>${x.name} (${inPlayName} ${when(position?.gameTime?.find(x => !x.end)?.positionId, x => `- ${x}`)})</span>
@@ -149,15 +151,14 @@ ${when(!onDeck, html`<p>No players are on deck.</p>`)}
 ${when(!out, html`<p>No players are currently out.</p>`)}
 
 <ul class=list>
-    ${playersGame.filter(x => !x.status || x.status._ === "out").map(x => {
-       let playerEnc = encodeURIComponent(x.name)
+    ${playersGame.filter(filterOutPlayers).map(x => {
         return html`
     <li>
-        <form method=post action="?$${queryTeamGame}&player=$${playerEnc}&handler=notPlaying">
+        <form method=post action="?$${queryTeamGame}&playerId=$${x.playerId}&handler=notPlaying">
             <button>X</button>
         </form>
         <p>${x.name}</p>
-        <form method=post action="?$${queryTeamGame}&player=$${playerEnc}&handler=addPlayerPosition">
+        <form method=post action="?$${queryTeamGame}&playerId=$${x.playerId}&handler=addPlayerPosition">
             <input
                 type=search
                 name=positionId
@@ -168,7 +169,7 @@ ${when(!out, html`<p>No players are currently out.</p>`)}
         </form>
         ${when(inPlay, _ =>
             html`
-        <form method=post action="?$${queryTeamGame}&player=$${playerEnc}&handler=onDeckWith">
+        <form method=post action="?$${queryTeamGame}&playerId=$${x.playerId}&handler=onDeckWith">
             <select>
                 ${inPlayPlayers.map(x => html`
                     <option>${x.name}</option>`) }
@@ -190,9 +191,9 @@ ${when(!out, html`<p>No players are currently out.</p>`)}
 
 function setPoints(f: (game: Game) => number) {
     return async ({ query } : { query: any }) => {
-        let q = await validateObject(query, queryTeamGameValidator)
-        let team = await teamGet(q.team)
-        let game = await required(team.games.find(x => x.id === q.game), "Could not find game!")
+        let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
+        let team = await teamGet(teamId)
+        let game = await required(team.games.find(x => x.id === gameId), "Could not find game!")
         let points = f(game)
         if (points >= 0) {
             await teamSave(team)
@@ -208,8 +209,8 @@ function getPointsView(points: number) {
 }
 
 const queryTeamGamePlayerValidator = {
-    ...queryTeamGameValidator,
-    player: createString25("Player")
+    ...queryTeamIdGameIdValidator,
+    playerId: createIdNumber("Query Player Id")
 }
 
 const dataPositionValidator = {
@@ -223,12 +224,12 @@ const postHandlers : PostHandlers = {
     oPointsInc: setPoints(game => ++game.opponentPoints),
     // Not working. Need to do a refactor with the a player ID instead of player name
     addPlayerPosition: async ({ data, query }) => {
-        let [{ position }, { game: gameId, player, team: teamId }] = await validate([
+        let [{ position }, { gameId, playerId, teamId }] = await validate([
             validateObject(data, dataPositionValidator),
             validateObject(query, queryTeamGamePlayerValidator)
         ])
         let positionObj = await positionCreateOrGet(teamId, position)
-        let [p] = await playerGameAllGet(gameId, [+player])
+        let [p] = await playerGameAllGet(gameId, [playerId])
         p.status = { _: "onDeck" }
         let gameTime = p.gameTime[0]
         if (!gameTime) {
@@ -237,12 +238,12 @@ const postHandlers : PostHandlers = {
             }
             p.gameTime.push(gameTime)
         }
-        await playerGameSave(gameId, p, player)
+        await playerGameSave(gameId, p, playerId)
     }
 }
 
 const route : Route = {
-    route: (url: URL) => url.pathname.endsWith("/games/") && url.searchParams.has("game") && url.searchParams.has("team"),
+    route: (url: URL) => url.pathname.endsWith("/games/") && url.searchParams.has("gameId") && url.searchParams.has("teamId"),
     async get(req: Request) {
         const result = await start(req)
         const template = await layout(req)

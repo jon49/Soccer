@@ -5,7 +5,7 @@ import { searchParams } from "../js/utils"
 import layout from "../_layout.html"
 import { assert, validate, validateObject } from "../js/validation"
 import { messageView, when } from "../js/shared"
-import { dataPlayerNameActiveValidator, dataTeamNameYearActiveValidator, queryTeamPlayerValidator, queryTeamValidator } from "../js/validators"
+import { dataPlayerNameActiveValidator, dataTeamNameYearActiveValidator, queryTeamIdPlayerIdValidator, queryTeamIdValidator } from "../js/validators"
 import { addPlayer, addPlayerForm } from "../js/_AddPlayer.html"
 import { teamGet, teamSave } from "../js/repo-team"
 
@@ -18,7 +18,7 @@ interface PlayersEditView {
 
 async function start(req: Request) : Promise<PlayersEditView> {
     let query = searchParams(req)
-    let { team: teamId } = await validateObject(query, queryTeamValidator)
+    let { teamId } = await validateObject(query, queryTeamIdValidator)
 
     let [posted, message] = await Promise.all([cache.pop("posted"), cache.pop("message")])
 
@@ -52,7 +52,7 @@ function render(o: PlayersEditView) {
 
 <h3 id=team>Team Settings</h3>
 ${teamEdited ? messageView(message) : null}
-<form class=form method=post action="?handler=editTeam&team=${team.id}">
+<form class=form method=post action="?handler=editTeam&teamId=${team.id}">
     <div class=inline>
         <label for=team>Team Name:</label><input id=team name=name type=text value="${team.name}" $${when(teamEdited, "autofocus")}>
     </div>
@@ -71,7 +71,7 @@ ${team.players.length === 0 ? html`<p>No players have been added.</p>` : null }
 <div class=cards>
     ${team.players.map((x, i) => {
 
-        let teamPlayerQuery = `team=${team.id}&player=${x.playerId}`
+        let teamPlayerQuery = `teamId=${team.id}&playerId=${x.playerId}`
         let playerId = `edit-player${i}`
         let playerActiveId : string = `player-active${i}`
         let playerWasEdited = posted === playerId
@@ -109,14 +109,14 @@ ${addPlayerForm({ name: undefined, playersExist: true, posted, action, message }
 
 const postHandlers: PostHandlers = {
     editPlayer: async ({data: d, query: q}) => {
-        let [query, { name: playerName, active }] = await validate([
-            validateObject(q, queryTeamPlayerValidator),
+        let [{ teamId, playerId }, { name: playerName, active }] = await validate([
+            validateObject(q, queryTeamIdPlayerIdValidator),
             validateObject(d, dataPlayerNameActiveValidator)
         ])
-        let team = await teamGet(query.team)
+        let team = await teamGet(teamId)
 
-        let playerIndex = team.players.findIndex(x => x.name === query.player)
-        await assert.isFalse(playerIndex === -1, `Unknown player "${query.player}"`)
+        let playerIndex = team.players.findIndex(x => x.playerId === playerId)
+        await assert.isFalse(playerIndex === -1, `Unknown player "${playerId}"`)
         await cache.push({posted: `edit-player${playerIndex}`})
         let player = team.players[playerIndex]
 
@@ -136,9 +136,9 @@ const postHandlers: PostHandlers = {
 
     editTeam: async({ data, query }) => {
         await cache.push({posted: "edit-team"})
-        let [{ name: newTeamName, year, active }, { team: teamId }] = await validate([
+        let [{ name: newTeamName, year, active }, { teamId }] = await validate([
             validateObject(data, dataTeamNameYearActiveValidator),
-            validateObject(query, queryTeamValidator),
+            validateObject(query, queryTeamIdValidator),
         ])
 
         let team = await teamGet(teamId)
