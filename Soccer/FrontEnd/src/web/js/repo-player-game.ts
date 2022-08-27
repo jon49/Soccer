@@ -1,26 +1,24 @@
 import { Activity, get, getMany, PlayerGame, Position, set } from "./db";
-import { equals } from "./utils";
-import { assert } from "./validation";
+import { equals, getNewId } from "./utils";
 
 function getPlayerGameKey(gameId: number, player: string) {
-    return `${gameId}|${player}`
+    return `player-game:${gameId}|${player}`
 }
 
 export async function playerGameSave(gameId: number, playerGame: PlayerGame, player: string) {
-    assert.isFalse(!playerGame, "Player game is required to save!")
     await set(getPlayerGameKey(gameId, player), playerGame)
 }
 
-export async function playerGameAllGet(gameId: number, playerNames: string[]) {
-    let playersGame = await getMany<PlayerGame>(playerNames.map(x => `${gameId}|${x}`))
+export async function playerGameAllGet(gameId: number, playerIds: number[]) {
+    let playersGame = await getMany<PlayerGame>(playerIds.map(x => `${gameId}|${x}`))
     playersGame = playersGame.filter(x => x)
     let omittedPlayers : PlayerGame[] = []
-    for (let player of playerNames) {
-        if (playersGame.find(x => x.name === player)) continue
+    for (let playerId of playerIds) {
+        if (playersGame.find(x => x.playerId === playerId)) continue
         omittedPlayers.push({
             gameId,
             gameTime: [],
-            name: player,
+            playerId,
             stats: [],
         })
     }
@@ -28,25 +26,21 @@ export async function playerGameAllGet(gameId: number, playerNames: string[]) {
 }
 
 function getPositionsId(teamId: number) {
-    return `${teamId}|positions`
+    return `positions:${teamId}`
 }
 
 export async function positionGetAll(teamId: number) : Promise<Position[]> {
     return (await get<Position[]>(getPositionsId(teamId))) ?? []
 }
 
-function createPosition(position: string) : Position {
-    return {
-        id: +new Date(),
-        name: position,
-    }
-}
-
 export async function positionCreateOrGet(teamId: number, position: string) : Promise<Position> {
     let positions = await positionGetAll(teamId)
     let positionObj = positions.find(x => equals(x.name, position))
     if (!positionObj) {
-        positionObj = createPosition(position)
+        positionObj = {
+            id: getNewId(positions.map(x => x.id)),
+            name: position,
+        }
         await positionSave(teamId, positionObj)
     }
     return positionObj

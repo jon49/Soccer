@@ -102,7 +102,7 @@ export interface GameTime {
 }
 
 export interface PlayerGame {
-    name: string
+    playerId: number
     gameId: number
     stats: {statId: number, count: number}[]
     gameTime: GameTime[]
@@ -111,16 +111,20 @@ export interface PlayerGame {
 
 export interface Player {
     name: string
+    id: number
+    active: boolean
 }
 
 export interface TeamPlayer {
-    name: string
+    playerId: number
     active: boolean
+    name: string
 }
 
 export interface Team {
     id: number
     name: string
+    active: boolean
     year: string
     players: TeamPlayer[]
     games: Game[]
@@ -130,6 +134,8 @@ export interface Team {
 export interface TeamSingle {
     id: number
     active: boolean
+    name: string
+    year: string
 }
 export type Teams = TeamSingle[]
 

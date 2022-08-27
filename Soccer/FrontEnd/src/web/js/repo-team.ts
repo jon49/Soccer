@@ -1,18 +1,11 @@
-import { get, getMany, set, Team, Teams, TeamSingle } from "./db"
+import { get, getMany, Player, set, Team, Teams, TeamSingle } from "./db"
 import { update } from "./lib/db.min"
 import { reject } from "./repo"
-import { required, requiredAsync } from "./validation"
+import { equals, getNewId } from "./utils"
+import { requiredAsync } from "./validation"
 
-export function teamGet(id: number) {
-    return requiredAsync(get<Team>(id.toString()), `Could not find team with id: "${id}".`)
-}
-
-export type TeamWithActive = TeamSingle & Team
-export async function teamGetWithActive(id: number) : Promise<TeamWithActive> {
-    let teams = await requiredAsync(get("teams"), "Could not retrieve teams.")
-    let team = await teamGet(id)
-    let teamsAggregate = required(teams.find(x => x.id = team.id), `Could not find the aggregate team with id: "${id}".`)
-    return <TeamWithActive><any>{ ...teamsAggregate, ...team }
+export function teamGet(teamId: number) : Promise<Team> {
+    return requiredAsync(get<Team>(getTeamDbId(teamId)), `Could not find team with id: "${teamId}".`)
 }
 
 export interface WasFiltered {
@@ -22,7 +15,7 @@ export interface WasFiltered {
 export async function teamGetAll(all: boolean, wasFiltered?: WasFiltered) : Promise<Team[]> {
     let data = await get("teams")
     if (!data) return []
-    let teamsMaybe = await getMany(data?.filter(x => all || x.active).map(x => x.id.toString()) ?? [])
+    let teamsMaybe = await getMany(data?.filter(x => all || x.active).map(x => getTeamDbId(x.id)) ?? [])
     let teams = <Team[]>teamsMaybe.filter(x => x)
 
     if (wasFiltered) {
@@ -36,32 +29,25 @@ export async function teamGetAll(all: boolean, wasFiltered?: WasFiltered) : Prom
     return teams
 }
 
-export async function teamSave(o: Team | TeamWithActive) {
+export async function teamSave(o: Team) {
     let teamsAggregate = await teamGetAll(true)
-    if (teamsAggregate?.find(x => x.id !== o.id && x.name === o.name && x.year === o.year)) {
+    if (teamsAggregate?.find(x => x.id !== o.id && equals(x.name, o.name) && equals(x.year, o.year))) {
         return reject(`The team "${o.name} - ${o.year}" already exists.`)
     }
 
-    let teamToSave : Team = {
-        games: o.games,
-        id: o.id,
-        name: o.name,
-        players: o.players,
-        positions: o.positions,
-        year: o.year,
-    }
-    await set<Team>(o.id.toString(), teamToSave)
+    await set<Team>(getTeamDbId(o.id), o)
 
-    if ("active" in o) {
-        await update<Teams>("teams", teams => {
-                let team =  teams?.find(x => x.id === o.id)
-                if (!team) {
-                    throw new Error(`Could not find team with id: ${o.id}. This should have never happened!`)
-                }
-                team.active = o.active
-                return teams ?? []
-            })
-    }
+    await update<Teams>("teams", teams => {
+            let teamId =  teams?.findIndex(x => x.id === o.id)
+            if (!teams) {
+                throw new Error(`Teams doesn't exist. This should never happen!`)
+            }
+            if (teamId === undefined || teamId === -1) {
+                throw new Error(`Could not find team with id: ${o.id}. This should have never happened!`)
+            }
+            teams[teamId] = o
+            return teams
+        })
     return
 }
 
@@ -70,7 +56,7 @@ interface TeamNew {
     year: string
 }
 
-export function teamNew(o: TeamNew & {id: number}): Team {
+export function teamNew(o: TeamSingle): Team {
     return {
         ...o,
         players: [],
@@ -79,21 +65,20 @@ export function teamNew(o: TeamNew & {id: number}): Team {
     }
 }
 
-export function teamsNew() : TeamSingle {
-    return {
-        active: true,
-        id: +new Date()
-    }
-}
-
 export async function teamsCreate(o: TeamNew) : Promise<number> {
     let teamsAggregate = await teamGetAll(true)
-    if (teamsAggregate?.find(x => x.name === o.name && x.year === o.year)) {
+    if (teamsAggregate?.find(x => equals(x.name, o.name) && equals(x.year, o.year))) {
         return reject(`The team "${o.name} - ${o.year}" already exists.`)
     }
-    let teamSingle = teamsNew()
-    let id = teamSingle.id
-    let team = teamNew({ ...o, id })
+
+    let id = getNewId(teamsAggregate.map(x => x.id))
+
+    let teamSingle : TeamSingle = {
+        ...o,
+        id,
+        active: true,
+    }
+    let team = teamNew(teamSingle)
 
     await Promise.all([
         update<Teams>("teams", o => {
@@ -104,7 +89,43 @@ export async function teamsCreate(o: TeamNew) : Promise<number> {
             }
             return o
         }),
-        set(id.toString(), team)
+        set(getTeamDbId(team.id), team)
     ])
     return id
+}
+
+export async function playerGetAll(ids: number[]) {
+    return (await getMany<Player>(ids))?.filter(x => x) ?? []
+}
+
+export async function playerCreate(teamId: number, name: string) : Promise<number> {
+    let team = await teamGet(teamId)
+    let id = getNewId(team.players.map(x => x.playerId))
+    let active = true
+
+    let player : Player = {
+        active,
+        id,
+        name
+    }
+    team.players.push({
+        active: true,
+        name,
+        playerId: player.id,
+    })
+
+    await Promise.all([
+        teamSave(team),
+        set(getPlayerDbId(teamId, id), player)
+    ])
+
+    return player.id
+}
+
+function getPlayerDbId(teamId: number, playerId: number) {
+    return `player:${teamId}|${playerId}`
+}
+
+function getTeamDbId(teamId: number) {
+    return `team:${teamId}`
 }

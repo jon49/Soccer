@@ -36,3 +36,7 @@ export function redirect(req: Request) {
 export function equals(a: string, b: string) {
   return a.localeCompare(b, void 0, {sensitivity: "base"}) === 0
 }
+
+export function getNewId(ids: number[]) {
+    return Math.max(0, ...ids) + 1
+}

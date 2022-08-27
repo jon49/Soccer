@@ -1,17 +1,16 @@
 import html from "./js/html-template-tag"
 import layout from "./_layout.html"
-import { cache, Message, Team } from "./js/db"
+import { cache, Message, TeamView } from "./js/db"
 import { cleanHtmlId, searchParams } from "./js/utils"
 import { handlePost, PostHandlers, Route } from "./js/route"
 import { when, whenF } from "./js/shared"
 import { addPlayer, addPlayerForm } from "./js/_AddPlayer.html"
 import { teamGet } from "./js/repo-team"
 import { validateObject } from "./js/validation"
-import { queryTeamValidator } from "./js/validators"
-import { reject } from "./js/repo"
+import { queryAllValidator, queryTeamValidator } from "./js/validators"
 
 interface PlayersView {
-    team: Team
+    team: TeamView
     name?: string
     posted?: string
     wasFiltered: boolean
@@ -20,14 +19,11 @@ interface PlayersView {
 
 let queryTeamAllValidator = {
     ...queryTeamValidator,
-    all: async (val: any) : Promise<null | ""> => {
-        if (val === null || val === "") return val
-        return reject(`The value "${val}" must be 'null' or and empty string.`)
-    }
+    ...queryAllValidator,
 }
 
 async function start(req: Request) : Promise<PlayersView> {
-    let query = await validateObject(searchParams<{team: string, all: string | null}>(req), queryTeamAllValidator)
+    let query = await validateObject(searchParams(req), queryTeamAllValidator)
     let team = await teamGet(query.team)
     let [cached, posted, message] = await Promise.all([
         cache.pop("players"),
@@ -56,14 +52,13 @@ function render({ team, message, wasFiltered, name, posted }: PlayersView) {
     ${ playersExist
         ? html`
     <ul class=list>
-        ${team.players.map(x => {
-            let uriName = encodeURIComponent(x.name);
-            return html`
+        ${team.players.map(x =>
+            html`
             <li>
-                <a href="?player=${uriName}&team=${team.id}">${x.name}</a>
+                <a href="?player=${x.id}&team=${team.id}">${x.name}</a>
                 <a href="/web/players/edit?team=${team.id}#${cleanHtmlId(x.name)}">Edit</a>
             </li>`
-        })}
+        )}
     </ul>`
        : html`<p>No players found. Please add one!</p>` }
 

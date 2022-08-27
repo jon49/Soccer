@@ -3,7 +3,7 @@ import html from "./js/html-template-tag"
 import { teamGet, teamSave } from "./js/repo-team"
 import { handlePost, PostHandlers } from "./js/route"
 import { messageView, when } from "./js/shared"
-import { searchParams } from "./js/utils"
+import { getNewId, searchParams } from "./js/utils"
 import { assert, createString25, optional, validate, validateObject } from "./js/validation"
 import { queryTeamValidator } from "./js/validators"
 import layout from "./_layout.html"
@@ -77,8 +77,10 @@ const postHandlers : PostHandlers = {
             !!team.games.find(x => x.date === date && x.opponent === opponent),
             `The game "${date}${when(opponent, " - " + opponent)}" already exists!`)
 
+        let gameId = getNewId(team.games.map(x => x.id))
+
         team.games.push({
-            id: +new Date(),
+            id: gameId,
             date,
             opponent,
             points: 0,

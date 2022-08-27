@@ -1,16 +1,16 @@
-import { cache, Message } from "../js/db"
+import { cache, Message, Team } from "../js/db"
 import html from "../js/html-template-tag"
 import { handlePost, PostHandlers, Route } from "../js/route"
-import { cleanHtmlId, searchParams } from "../js/utils"
+import { searchParams } from "../js/utils"
 import layout from "../_layout.html"
 import { assert, validate, validateObject } from "../js/validation"
 import { messageView, when } from "../js/shared"
 import { dataPlayerNameActiveValidator, dataTeamNameYearActiveValidator, queryTeamPlayerValidator, queryTeamValidator } from "../js/validators"
 import { addPlayer, addPlayerForm } from "../js/_AddPlayer.html"
-import { teamGet, teamGetWithActive, teamSave, TeamWithActive } from "../js/repo-team"
+import { teamGet, teamSave } from "../js/repo-team"
 
 interface PlayersEditView {
-    team: TeamWithActive
+    team: Team
     posted?: string
     action: string
     message: Message
@@ -22,7 +22,7 @@ async function start(req: Request) : Promise<PlayersEditView> {
 
     let [posted, message] = await Promise.all([cache.pop("posted"), cache.pop("message")])
 
-    let team = await teamGetWithActive(teamId)
+    let team = await teamGet(teamId)
 
     query._url.searchParams.append("handler", "addPlayer")
 
@@ -71,14 +71,14 @@ ${team.players.length === 0 ? html`<p>No players have been added.</p>` : null }
 <div class=cards>
     ${team.players.map((x, i) => {
 
-        let teamPlayerQuery = `team=${team.id}&player=${encodeURIComponent(x.name)}`
+        let teamPlayerQuery = `team=${team.id}&player=${x.playerId}`
         let playerId = `edit-player${i}`
         let playerActiveId : string = `player-active${i}`
         let playerWasEdited = posted === playerId
 
         return html`
     <div>
-        <p id="${cleanHtmlId(x.name)}"><a href="/web/players?${teamPlayerQuery}">${x.name}</a></p>
+        <p id="${x.playerId}"><a href="/web/players?${teamPlayerQuery}">${x.name}</a></p>
         ${playerWasEdited ? messageView(message) : null}
         <form method=post class=form action="?handler=editPlayer&${teamPlayerQuery}">
             <div>
@@ -141,7 +141,7 @@ const postHandlers: PostHandlers = {
             validateObject(query, queryTeamValidator),
         ])
 
-        let team = await teamGetWithActive(teamId)
+        let team = await teamGet(teamId)
         team.active = active
         team.year = year
         team.name = newTeamName

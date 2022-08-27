@@ -1,7 +1,7 @@
 import { cache, Message } from "./db"
 import html from "./html-template-tag"
 import { reject } from "./repo"
-import { teamGet, teamSave } from "./repo-team"
+import { playerCreate, teamGet } from "./repo-team"
 import { RoutePostArgsWithQuery } from "./route"
 import { messageView, when } from "./shared"
 import { assert, validate, validateObject } from "./validation"
@@ -43,12 +43,7 @@ export async function addPlayer({ data, query }: RoutePostArgsWithQuery) {
     await assert.isFalse(!!team.players.find(x => x.name === name), "Player names must be unique!")
         ?.catch(_ => reject({ players: { name } }))
 
-    team.players.push({
-        active: true,
-        name,
-    })
-
-    await Promise.all([teamSave(team), cache.push({ posted: formId })])
+    await Promise.all([playerCreate(teamId, name), cache.push({ posted: formId })])
 
     return
 }
