@@ -1,9 +1,9 @@
-import { Activity, Game, GameTime, PlayerGame, Position, Team } from "../js/db"
+import { Activity, cache, Game, GameTime, Message, PlayerGame, Position, Team } from "../js/db"
 import html from "../js/html-template-tag"
 import { activityGetAll, playerGameAllGet, playerGameSave, positionCreateOrGet, positionGetAll } from "../js/repo-player-game"
 import { teamGet, teamSave } from "../js/repo-team"
 import { Route, PostHandlers, handlePost } from "../js/route"
-import { when } from "../js/shared"
+import { messageView, when } from "../js/shared"
 import { searchParams } from "../js/utils"
 import { createIdNumber, createString25, required, validate, validateObject } from "../js/validation"
 import { queryTeamIdGameIdValidator } from "../js/validators"
@@ -19,11 +19,17 @@ interface View {
     game: Game
     positions: Position[]
     activities: Activity[]
+    posted: string | undefined
+    message: Message
 }
 
 async function start(req : Request) : Promise<View> {
     let { teamId, gameId } = await validateObject(searchParams(req), queryTeamIdGameIdValidator)
-    let team = await teamGet(teamId)
+    let [team, posted, message] = await Promise.all([
+        teamGet(teamId),
+        cache.pop("posted"),
+        cache.pop("message")
+    ])
     let game = await required(team.games.find(x => x.id === gameId), "Could not find game ID!")
     let [playersGame, positions, activities] = await Promise.all([
         playerGameAllGet(gameId, team.players.map(x => x.playerId)),
@@ -42,6 +48,8 @@ async function start(req : Request) : Promise<View> {
         game,
         positions,
         activities,
+        posted,
+        message,
     }
 }
 
@@ -53,7 +61,7 @@ const filterOutPlayers = (x: PlayerGameView) => !x.status || x.status?._ === "ou
 const filterInPlayPlayers = (x: PlayerGameView) => x.status?._ === "inPlay"
 const filterOnDeckPlayers = (x: PlayerGameView) => x.status?._ === "onDeck"
 
-function render({ team, playersGame, game, positions, activities }: View) {
+function render({ team, playersGame, game, positions, activities, posted, message }: View) {
     let queryTeamGame = `teamId=${team.id}&gameId=${game.id}`
     let inPlayPlayers = playersGame.filter(filterInPlayPlayers)
     let inPlay = inPlayPlayers.length > 0
@@ -153,6 +161,7 @@ ${when(!out, html`<p>No players are currently out.</p>`)}
 <ul class=list>
     ${playersGame.filter(filterOutPlayers).map(x => {
         return html`
+        ${when(posted === `player:${x.playerId}`, () => messageView(message))}
     <li>
         <form method=post action="?$${queryTeamGame}&playerId=$${x.playerId}&handler=notPlaying">
             <button>X</button>
@@ -161,7 +170,7 @@ ${when(!out, html`<p>No players are currently out.</p>`)}
         <form method=post action="?$${queryTeamGame}&playerId=$${x.playerId}&handler=addPlayerPosition">
             <input
                 type=search
-                name=positionId
+                name=position
                 list=positions
                 autocomplete=off
                 placeholder="Position"
@@ -222,12 +231,10 @@ const postHandlers : PostHandlers = {
     pointsDec: setPoints(game => --game.points),
     oPointsDec: setPoints(game => --game.opponentPoints),
     oPointsInc: setPoints(game => ++game.opponentPoints),
-    // Not working. Need to do a refactor with the a player ID instead of player name
     addPlayerPosition: async ({ data, query }) => {
-        let [{ position }, { gameId, playerId, teamId }] = await validate([
-            validateObject(data, dataPositionValidator),
-            validateObject(query, queryTeamGamePlayerValidator)
-        ])
+        let { teamId, playerId, gameId } = await validateObject(query, queryTeamGamePlayerValidator)
+        await cache.push({ posted: `player:${playerId}` })
+        let { position } = await validateObject(data, dataPositionValidator)
         let positionObj = await positionCreateOrGet(teamId, position)
         let [p] = await playerGameAllGet(gameId, [playerId])
         p.status = { _: "onDeck" }
