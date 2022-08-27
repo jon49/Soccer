@@ -57,7 +57,7 @@ function render({ team, playersGame, game, positions, activities }: View) {
     let onDeck = playersGame.filter(x => x.status?._ === "onDeck").length > 0
     let out = playersGame.filter(x => x.status?._ === "out").length > 0
     return html`
-<h2>Game ${game.date} ${when(game.opponent, x => ` - ${x}`)}</h2>
+<h2>${team.name} - Game ${game.date} ${when(game.opponent, x => ` - ${x}`)}</h2>
 <div>
     <form class=inline method=post action="?$${queryTeamGame}&handler=${game.status === "play" ? "pauseGame" : "startGame"}">
         <button>${game.status === "play" ? "Pause" : "Start"}</button>
