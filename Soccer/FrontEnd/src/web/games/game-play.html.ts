@@ -5,7 +5,7 @@ import { teamGet, teamSave } from "../js/repo-team"
 import { Route, PostHandlers, handlePost } from "../js/route"
 import { messageView, when } from "../js/shared"
 import { searchParams } from "../js/utils"
-import { createIdNumber, createString25, required, validateObject } from "../js/validation"
+import { createIdNumber, createString25, required, requiredAsync, validateObject } from "../js/validation"
 import { queryTeamIdGameIdValidator } from "../js/validators"
 import layout from "../_layout.html"
 
@@ -232,12 +232,11 @@ const dataPositionValidator = {
     position: createString25("Position")
 }
 
-async function swap({ teamId, playerIds, gameId } : { teamId : number, playerIds: number[], gameId: number }) {
+async function swap({ teamId, playerIds, gameId, timestamp } : { teamId : number, playerIds: number[], gameId: number, timestamp: number }) {
     let [team, players] = await Promise.all([teamGet(teamId), playerGameAllGet(teamId, gameId, playerIds)])
     let game = await required(team.games.find(x => x.id === gameId), "Could not find game ID!")
     for (let player of players) {
         let [gameTime] = player.gameTime.slice(-1)
-        let timestamp = +new Date()
         if (player.status?._ === "onDeck" && player.status.playerId) {
             let [swapPlayer] = await playerGameAllGet(teamId, gameId, [player.status.playerId])
             let swapGameTime = swapPlayer.gameTime.slice(-1)[0]
@@ -277,7 +276,7 @@ const postHandlers : PostHandlers = {
     swap: async ({ query }) => {
         let { gameId, playerId, teamId } = await validateObject(query, queryTeamGamePlayerValidator)
         await cache.push({ posted: `player:${playerId}` })
-        await swap({ gameId, teamId, playerIds: [playerId] })
+        await swap({ gameId, teamId, playerIds: [playerId], timestamp: +new Date() })
     },
     playerNowOut: async ({ query }) => {
         let { teamId, playerId, gameId } = await validateObject(query, queryTeamGamePlayerValidator)
@@ -305,11 +304,32 @@ const postHandlers : PostHandlers = {
     },
     swapAll: async ({ query }) => {
         let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
-        await cache.push({ posted: "swapAll" })
+        await cache.push({ posted: "swap-all" })
         let team = await teamGet(teamId)
         let players = await playerGameAllGet(teamId, gameId, team.players.map(x => x.playerId))
         let onDeckPlayers = players.filter(x => x.status?._ === "onDeck")
-        await swap({ gameId, teamId, playerIds: onDeckPlayers.map(x => x.playerId) })
+        await swap({ gameId, teamId, playerIds: onDeckPlayers.map(x => x.playerId), timestamp: +new Date() })
+    },
+    startGame: async ({ query }) => {
+        let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
+        await cache.push({ posted: "start-game" })
+        let timestamp = +new Date()
+        let team = await teamGet(teamId)
+
+        let game = await required(team.games.find(x => x.id === gameId), `Could not find game! ${gameId}`)
+        game.status = "play"
+        game.gameTime.push({
+            start: timestamp
+        })
+        await teamSave(team)
+
+        let players = await playerGameAllGet(teamId, gameId, team.players.map(x => x.playerId))
+        let inPlayPlayers = players.filter(x => x.status?._ === "inPlay")
+        for (let player of inPlayPlayers) {
+            let gameTime = player.gameTime[0]
+            gameTime.start = timestamp
+            await playerGameSave(teamId, player)
+        }
     },
 }
 

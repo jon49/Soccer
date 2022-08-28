@@ -93,6 +93,7 @@ export interface Game {
     status?: "play" | "paused"
     points: number
     opponentPoints: number
+    gameTime: { start: number, end?: number }[]
 }
 
 export interface GameTime {
