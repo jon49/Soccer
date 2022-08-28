@@ -196,10 +196,10 @@ ${when(!out, html`<p>No players are currently out.</p>`)}
 </ul>
 
 <datalist id=activities>
-    ${activities.map(x => html`<option value=${x.name}`)}
+    ${activities.map(x => html`<option value="${x.name}"`)}
 </datalist>
 <datalist id=positions>
-    ${positions.map(x => html`<option value=${x.name}>`)}
+    ${positions.map(x => html`<option value="${x.name}">`)}
 </datalist>
     `
 }
