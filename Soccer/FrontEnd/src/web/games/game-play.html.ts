@@ -326,9 +326,40 @@ const postHandlers : PostHandlers = {
         let players = await playerGameAllGet(teamId, gameId, team.players.map(x => x.playerId))
         let inPlayPlayers = players.filter(x => x.status?._ === "inPlay")
         for (let player of inPlayPlayers) {
-            let gameTime = player.gameTime[0]
-            gameTime.start = timestamp
+            let gameTime = player.gameTime.find(x => !x.start)
+            if (gameTime) {
+                gameTime.start = timestamp
+            } else {
+                player.gameTime.push({
+                    positionId: player.gameTime.slice(-1)[0].positionId,
+                    start: timestamp
+                })
+            }
             await playerGameSave(teamId, player)
+        }
+    },
+    pauseGame: async ({ query }) => {
+        let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
+        await cache.push({ posted: "pause-game" })
+        let timestamp = +new Date()
+        let team = await teamGet(teamId)
+
+        let game = await required(team.games.find(x => x.id === gameId), `Could not find game! ${gameId}`)
+        game.status = "paused"
+        let time = game.gameTime.find(x => !x.end)
+        if (time) {
+            time.end = timestamp
+        }
+        await teamSave(team)
+
+        let players = await playerGameAllGet(teamId, gameId, team.players.map(x => x.playerId))
+        let inPlayPlayers = players.filter(x => x.status?._ === "inPlay")
+        for (let player of inPlayPlayers) {
+            let gameTime = player.gameTime.find(x => !x.end)
+            if (gameTime) {
+                gameTime.end = timestamp
+                await playerGameSave(teamId, player)
+            }
         }
     },
 }
