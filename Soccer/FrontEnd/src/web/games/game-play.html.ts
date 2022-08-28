@@ -70,6 +70,12 @@ function getAggregateGameTime(times: { start?: number, end?: number }[]) {
     return { start, total }
 }
 
+function formatTime(time: number) {
+    let d = new Date(time)
+    let hours = time/1e3/60/60|0
+    return `${ hours ? ""+hours+":" : "" }${(""+d.getMinutes()).padStart(2, "0")}:${(""+d.getSeconds()).padStart(2, "0")}`
+}
+
 function render({ team, playersGame, game, positions, activities, posted, message }: View) {
     let queryTeamGame = `teamId=${team.id}&gameId=${game.id}`
     let inPlayPlayers_ = playersGame.filter(filterInPlayPlayers)
@@ -79,7 +85,7 @@ function render({ team, playersGame, game, positions, activities, posted, messag
         let calcTotal = total + (start ? currentTime - start : 0)
         return { calcTotal, start, total, ...x }
     })
-    inPlayPlayers.sort((a, b) => b.calcTotal - a.calcTotal)
+    inPlayPlayers.sort((a, b) => a.calcTotal - b.calcTotal)
     let inPlay = inPlayPlayers.length > 0
     let onDeckPlayers = playersGame.filter(filterOnDeckPlayers)
     let onDeck = onDeckPlayers.length > 0
@@ -87,6 +93,13 @@ function render({ team, playersGame, game, positions, activities, posted, messag
     let { start, total } = getAggregateGameTime(game.gameTime)
     let availablePlayersToSwap = inPlayPlayers
         .filter(x => !onDeckPlayers.find((y: any) => y.status.playerId === x.playerId))
+    let outPlayers =
+        playersGame.filter(filterOutPlayers)
+        .map(x => {
+            let { total } = getAggregateGameTime(x.gameTime)
+            return { ...x, total }
+        })
+        .sort((a, b) => a.total - b.total)
     return html`
 <h2>${team.name} - Game ${game.date} ${when(game.opponent, x => ` - ${x}`)}</h2>
 <div>
@@ -185,7 +198,7 @@ ${when(!onDeck, html`<p>No players are on deck.</p>`)}
 ${when(!out, html`<p>No players are currently out.</p>`)}
 
 <ul class=list>
-    ${playersGame.filter(filterOutPlayers).map(x => {
+    ${outPlayers.map(x => {
         return html`
         ${when(posted === `player:${x.playerId}`, () => messageView(message))}
     <li>
@@ -209,6 +222,7 @@ ${when(!out, html`<p>No players are currently out.</p>`)}
                 ${availablePlayersToSwap.map(x => html`<option value="${x.playerId}">${x.name}</option>`) }
             </select>
         </form>`)}
+        <p>${formatTime(x.total)}</p>
     </li>
         `
     })}
@@ -391,6 +405,15 @@ const postHandlers : PostHandlers = {
             }
             await playerGameSave(teamId, player)
         }
+    },
+
+    cancelOnDeck:  async ({ query }) => {
+        let { teamId, playerId, gameId } = await validateObject(query, queryTeamGamePlayerValidator)
+        await cache.push({ posted: `player:${playerId}` })
+        let [player] = await playerGameAllGet(teamId, gameId, [playerId])
+        player.status = { _: "out" }
+        player.gameTime.pop()
+        await playerGameSave(teamId, player)
     },
 
 }
