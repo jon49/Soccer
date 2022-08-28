@@ -3,7 +3,7 @@ import layout from "./_layout.html"
 import { cache, Message, Team } from "./js/db"
 import { cleanHtmlId, searchParams } from "./js/utils"
 import { handlePost, PostHandlers, Route } from "./js/route"
-import { when, whenF } from "./js/shared"
+import { when } from "./js/shared"
 import { addPlayer, addPlayerForm } from "./js/_AddPlayer.html"
 import { teamGet } from "./js/repo-team"
 import { validateObject } from "./js/validation"
@@ -64,7 +64,7 @@ function render({ team, message, wasFiltered, name, posted }: PlayersView) {
 
     ${when(wasFiltered,
         html`<p><a href="?all&teamId=${team.id}">Show all players.</a></p>`)}
-    ${whenF(playersExist && team.players.find(x => !x.active),
+    ${when(playersExist && team.players.find(x => !x.active),
         () => html`<p><a href="?teamId=${team.id}">Hide archived players.</a></p>`)}
 
     <h3>Add a player</h3>

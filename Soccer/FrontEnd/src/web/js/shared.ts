@@ -15,9 +15,3 @@ export function when(b: any, s: any) {
         ? ""
     : undefined
 }
-
-export function whenF<T extends any>(b: T | undefined, f: (b: T) => any) {
-    return b
-        ? f(b)
-    : null
-}

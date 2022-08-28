@@ -4,7 +4,7 @@ import { CacheTeams, cache, Team, Message, } from "./js/db"
 import { handlePost, PostHandlers } from "./js/route"
 import { searchParams } from "./js/utils"
 import { validateObject } from "./js/validation"
-import { messageView, when, whenF } from "./js/shared"
+import { messageView, when } from "./js/shared"
 import { dataTeamNameYearValidator } from "./js/validators"
 import { teamGetAll, teamsCreate, WasFiltered } from "./js/repo-team"
 import { reject } from "./js/repo"
@@ -43,7 +43,7 @@ ${
                 <li>
                     <a href="/web/players?teamId=${x.id}">${x.name} - ${x.year}</a>
                     <a href="/web/games?teamId=${x.id}">Games</a>
-                    ${whenF(
+                    ${when(
                         x.games
                         .sort((a, b) => a.date.localeCompare(b.date))
                         .find(x => x.date),
