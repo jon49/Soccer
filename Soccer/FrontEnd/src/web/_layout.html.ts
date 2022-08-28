@@ -16,7 +16,7 @@ interface Render {
 }
 
 const render = ({theme, error, syncCount, url}: Render) => (o: LayoutTemplateArguments) => {
-    const { main, head, script, nav } = o
+    const { main, head, scripts, nav } = o
     return html`
 <!DOCTYPE html>
 <html>
@@ -53,9 +53,7 @@ const render = ({theme, error, syncCount, url}: Render) => (o: LayoutTemplateArg
     </main>
     <footer><p>${version}</p></footer>
     <div id=messages></div>
-    ${ script
-         ? html`<script src="${script}" type=module></script>`
-       : null }
+    ${(scripts ?? []).map(x => html`<script src="${x}" type=module></script>`)}
     <script src="/web/js/snack-bar.js"></script>
     <script src="/web/js/service-worker-loader.js"></script>
 </body>
@@ -75,6 +73,6 @@ export type Layout = typeof layout
 export interface LayoutTemplateArguments {
     head?: string
     main?: Generator|string
-    script?: string
+    scripts?: string[]
     nav?: Nav[]
 }

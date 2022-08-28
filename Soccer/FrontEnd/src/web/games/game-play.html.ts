@@ -61,13 +61,30 @@ const filterOutPlayers = (x: PlayerGameView) => !x.status || x.status?._ === "ou
 const filterInPlayPlayers = (x: PlayerGameView) => x.status?._ === "inPlay"
 const filterOnDeckPlayers = (x: PlayerGameView) => x.status?._ === "onDeck"
 
+function getAggregateGameTime(times: { start?: number, end?: number }[]) {
+    let start = times.find(x => !x.end)?.start
+    let total =
+        times.reduce((acc, { end, start }) =>
+            end && start ? acc + (end - start) : acc
+        , 0)
+    return { start, total }
+}
+
 function render({ team, playersGame, game, positions, activities, posted, message }: View) {
     let queryTeamGame = `teamId=${team.id}&gameId=${game.id}`
-    let inPlayPlayers = playersGame.filter(filterInPlayPlayers)
+    let inPlayPlayers_ = playersGame.filter(filterInPlayPlayers)
+    let currentTime = +new Date()
+    let inPlayPlayers = inPlayPlayers_.map(x => {
+        let { start, total } = getAggregateGameTime(x.gameTime)
+        let calcTotal = total + (start ? currentTime - start : 0)
+        return { calcTotal, start, total, ...x }
+    })
+    inPlayPlayers.sort((a, b) => b.calcTotal - a.calcTotal)
     let inPlay = inPlayPlayers.length > 0
     let onDeckPlayers = playersGame.filter(filterOnDeckPlayers)
     let onDeck = onDeckPlayers.length > 0
     let out = playersGame.filter(filterOutPlayers).length > 0
+    let { start, total } = getAggregateGameTime(game.gameTime)
     let availablePlayersToSwap = inPlayPlayers
         .filter(x => !onDeckPlayers.find((y: any) => y.status.playerId === x.playerId))
     return html`
@@ -76,6 +93,7 @@ function render({ team, playersGame, game, positions, activities, posted, messag
     <form class=inline method=post action="?$${queryTeamGame}&handler=${game.status === "play" ? "pauseGame" : "startGame"}">
         <button>${game.status === "play" ? "Pause" : "Start"}</button>
     </form>
+    <game-timer data-timer-start=${start} data-timer-total=${total}></game-timer>
     <span>Points</span>
     <form class=inline method=post>
         <button formaction="?$${queryTeamGame}&handler=pointsDec" target="#points">-</button>
@@ -93,25 +111,26 @@ function render({ team, playersGame, game, positions, activities, posted, messag
 <h3>In-Play</h3>
 ${when(!inPlay, html`<p>No players are in play.</p>`)}
 <ul class=list>
-    ${playersGame.filter(filterInPlayPlayers).map((x, i) => html`
+    ${inPlayPlayers.map((x, i) => {
+        let baseQuery = html`$${queryTeamGame}&playerId=${x.playerId}`
+        return html`
     <li>
-        <form method=post action="?$${queryTeamGame}&playerId=${x.playerId}&handler=playerNowOut" >
+        <form method=post action="?${baseQuery}&handler=playerNowOut" >
             <button>X</button>
         </form>
         <span>${x.name}</span>
-        <form method=post action="?$${queryTeamGame}&playerId=${x.playerId}&handler=positionChange">
+        <form method=post action="?${baseQuery}&handler=positionChange">
             <input
                 type=search
                 name=position
                 list=positions
                 autocomplete=off
                 ${when(getPositionName(positions, x.gameTime), x => html`value="${x}"`)}
-                placeholder="Add a position"
                 onchange="hf.click(this)" >
         </form>
         <form
             method=post
-            action="?$${queryTeamGame}&playerId=${encodeURIComponent(x.name)}&handler=activityMarker"
+            action="?${baseQuery}&handler=activityMarker"
             target="in-play-activity-${i}"
             >
             <input
@@ -123,13 +142,13 @@ ${when(!inPlay, html`<p>No players are in play.</p>`)}
                 placeholder="Mark an activity"
                 onchange="hf.click(this)" >
         </form>
-        <p
-            data-action-timer=${x.gameTime.find(x => !x.end)?.start}
-            data-action-timer-start=${x.gameTime.reduce((acc, { end, start }) =>
-                end && start ? acc + (end - start) : acc
-                , 0)}></p>
+        ${when(game.status === "play", html`
+        <game-timer
+            data-timer-start=${x.start}
+            data-timer-total=${x.total}></game-timer>
+        `)}
     </li>
-    `)}
+    `})}
 </ul>
 
 <h3>On Deck</h3>
@@ -381,7 +400,7 @@ const route : Route = {
     async get(req: Request) {
         const result = await start(req)
         const template = await layout(req)
-        return template({ main: render(result), script: "/web/js/lib/htmf-all.min.js" })
+        return template({ main: render(result), head: `<script src= "/web/js/game-timer.js"></script>`, scripts: ["/web/js/lib/htmf-all.min.js"] })
     },
     post: handlePost(postHandlers),
 }
