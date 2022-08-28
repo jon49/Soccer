@@ -5,7 +5,7 @@ import { teamGet, teamSave } from "../js/repo-team"
 import { Route, PostHandlers, handlePost } from "../js/route"
 import { messageView, when } from "../js/shared"
 import { searchParams } from "../js/utils"
-import { createIdNumber, createString25, required, validate, validateObject } from "../js/validation"
+import { createIdNumber, createString25, required, validateObject } from "../js/validation"
 import { queryTeamIdGameIdValidator } from "../js/validators"
 import layout from "../_layout.html"
 
@@ -32,7 +32,7 @@ async function start(req : Request) : Promise<View> {
     ])
     let game = await required(team.games.find(x => x.id === gameId), "Could not find game ID!")
     let [playersGame, positions, activities] = await Promise.all([
-        playerGameAllGet(gameId, team.players.map(x => x.playerId)),
+        playerGameAllGet(teamId, gameId, team.players.map(x => x.playerId)),
         positionGetAll(teamId),
         activityGetAll(teamId),
     ])
@@ -65,8 +65,11 @@ function render({ team, playersGame, game, positions, activities, posted, messag
     let queryTeamGame = `teamId=${team.id}&gameId=${game.id}`
     let inPlayPlayers = playersGame.filter(filterInPlayPlayers)
     let inPlay = inPlayPlayers.length > 0
-    let onDeck = playersGame.filter(filterOnDeckPlayers).length > 0
+    let onDeckPlayers = playersGame.filter(filterOnDeckPlayers)
+    let onDeck = onDeckPlayers.length > 0
     let out = playersGame.filter(filterOutPlayers).length > 0
+    let availablePlayersToSwap = inPlayPlayers
+        .filter(x => !onDeckPlayers.find((y: any) => y.status.playerId === x.playerId))
     return html`
 <h2>${team.name} - Game ${game.date} ${when(game.opponent, x => ` - ${x}`)}</h2>
 <div>
@@ -92,6 +95,9 @@ ${when(!inPlay, html`<p>No players are in play.</p>`)}
 <ul class=list>
     ${playersGame.filter(filterInPlayPlayers).map((x, i) => html`
     <li>
+        <form method=post action="?$${queryTeamGame}&playerId=${x.playerId}&handler=playerNowOut" >
+            <button>X</button>
+        </form>
         <span>${x.name}</span>
         <form method=post action="?$${queryTeamGame}&playerId=${x.playerId}&handler=positionChange">
             <input
@@ -99,10 +105,9 @@ ${when(!inPlay, html`<p>No players are in play.</p>`)}
                 name=position
                 list=positions
                 autocomplete=off
-                ${when(getPositionName(positions, x.gameTime), x => html`value=${x}`)}
+                ${when(getPositionName(positions, x.gameTime), x => html`value="${x}"`)}
                 placeholder="Add a position"
                 onchange="hf.click(this)" >
-            <button hidden></button>
         </form>
         <form
             method=post
@@ -116,9 +121,7 @@ ${when(!inPlay, html`<p>No players are in play.</p>`)}
                 list=activities
                 autocomplete=off
                 placeholder="Mark an activity"
-                onchange="hf.click(this)"
-                >
-            <button hidden></button>
+                onchange="hf.click(this)" >
         </form>
         <p
             data-action-timer=${x.gameTime.find(x => !x.end)?.start}
@@ -135,17 +138,21 @@ ${when(!onDeck, html`<p>No players are on deck.</p>`)}
 
 <ul class=list>
     ${playersGame.filter(filterOnDeckPlayers).map(x => {
-       let inPlayName = <string>(x.status?._ === "onDeck" ? x.status.player : null)
-       let position = playersGame.find(x => x.name === inPlayName)
-       return html`
+        let inPlayId = x.status?._ === "onDeck" ? x.status.playerId : null
+        let inPlayName : string | undefined
+        if (inPlayId) {
+            inPlayName = inPlayPlayers.find(x => x.playerId === inPlayId)?.name
+        }
+        let position = getPositionName(positions, x.gameTime)
+        return html`
     <li>
-        <form method=post action"?$${queryTeamGame}&playerId=$${x.playerId}&handler=swap">
+        <form method=post action="?$${queryTeamGame}&playerId=$${x.playerId}&handler=swap">
             <button>Swap</button>
         </form>
         <form method=post action="?$${queryTeamGame}&playerId=$${x.playerId}&handler=cancelOnDeck">
             <button class=danger>X</button>
         </form>
-        <span>${x.name} (${inPlayName} ${when(position?.gameTime?.find(x => !x.end)?.positionId, x => `- ${x}`)})</span>
+        <span>${x.name}${when(inPlayName, x => html` for ${x}`)} ${when(position, x => html` - ${x}`)}</span>
     </li>
     `})}
 </ul>
@@ -167,21 +174,20 @@ ${when(!out, html`<p>No players are currently out.</p>`)}
             <button>X</button>
         </form>
         <p>${x.name}</p>
-        <form method=post action="?$${queryTeamGame}&playerId=$${x.playerId}&handler=addPlayerPosition">
+        <form method=post action="?$${queryTeamGame}&playerId=$${x.playerId}&handler=addPlayerPosition" onchange="this.submit()">
             <input
                 type=search
                 name=position
                 list=positions
                 autocomplete=off
-                placeholder="Position"
-                onchange="hf.click(this)" >
+                placeholder="Position" >
         </form>
-        ${when(inPlay, _ =>
+        ${when(availablePlayersToSwap.length > 0, _ =>
             html`
-        <form method=post action="?$${queryTeamGame}&playerId=$${x.playerId}&handler=onDeckWith">
-            <select>
-                ${inPlayPlayers.map(x => html`
-                    <option>${x.name}</option>`) }
+        <form method=post action="?$${queryTeamGame}&playerId=$${x.playerId}&handler=onDeckWith" onchange="this.submit()">
+            <select name="swapPlayerId">
+                <option selected></option>
+                ${availablePlayersToSwap.map(x => html`<option value="${x.playerId}">${x.name}</option>`) }
             </select>
         </form>`)}
     </li>
@@ -226,6 +232,27 @@ const dataPositionValidator = {
     position: createString25("Position")
 }
 
+async function swap({ teamId, playerIds, gameId } : { teamId : number, playerIds: number[], gameId: number }) {
+    let [team, players] = await Promise.all([teamGet(teamId), playerGameAllGet(teamId, gameId, playerIds)])
+    let game = await required(team.games.find(x => x.id === gameId), "Could not find game ID!")
+    for (let player of players) {
+        let [gameTime] = player.gameTime.slice(-1)
+        let timestamp = +new Date()
+        if (player.status?._ === "onDeck" && player.status.playerId) {
+            let [swapPlayer] = await playerGameAllGet(teamId, gameId, [player.status.playerId])
+            let swapGameTime = swapPlayer.gameTime.slice(-1)[0]
+            swapGameTime.end = timestamp
+            swapPlayer.status = { _: "out" }
+            await playerGameSave(teamId, swapPlayer)
+        }
+        if (game.status === "play") {
+            gameTime.start = timestamp
+        }
+        player.status = { _: "inPlay" }
+        await playerGameSave(teamId, player)
+    }
+}
+
 const postHandlers : PostHandlers = {
     pointsInc: setPoints(game => ++game.points),
     pointsDec: setPoints(game => --game.points),
@@ -236,17 +263,54 @@ const postHandlers : PostHandlers = {
         await cache.push({ posted: `player:${playerId}` })
         let { position } = await validateObject(data, dataPositionValidator)
         let positionObj = await positionCreateOrGet(teamId, position)
-        let [p] = await playerGameAllGet(gameId, [playerId])
+        let [p] = await playerGameAllGet(teamId, gameId, [playerId])
         p.status = { _: "onDeck" }
-        let gameTime = p.gameTime[0]
+        let gameTime = p.gameTime.find(x => !x.end)
         if (!gameTime) {
             gameTime = {
                 positionId: positionObj.id
             }
             p.gameTime.push(gameTime)
         }
-        await playerGameSave(gameId, p, playerId)
-    }
+        await playerGameSave(teamId, p)
+    },
+    swap: async ({ query }) => {
+        let { gameId, playerId, teamId } = await validateObject(query, queryTeamGamePlayerValidator)
+        await cache.push({ posted: `player:${playerId}` })
+        await swap({ gameId, teamId, playerIds: [playerId] })
+    },
+    playerNowOut: async ({ query }) => {
+        let { teamId, playerId, gameId } = await validateObject(query, queryTeamGamePlayerValidator)
+        await cache.push({ posted: `player:${playerId}` })
+        let [p] = await playerGameAllGet(teamId, gameId, [playerId])
+        p.status = {_: "out"}
+        await playerGameSave(teamId, p)
+    },
+    onDeckWith: async ({ query, data }) => {
+        let { teamId, playerId, gameId } = await validateObject(query, queryTeamGamePlayerValidator)
+        let { swapPlayerId } = await validateObject(data, { swapPlayerId: createIdNumber("Swap Player Id") })
+        await cache.push({ posted: `player:${playerId}` })
+        let [player, swapPlayer] = await playerGameAllGet(teamId, gameId, [playerId, swapPlayerId])
+        player.status = { _: "onDeck", playerId: swapPlayer.playerId }
+        let gameTime = player.gameTime.slice(-1)[0]
+        if (!gameTime || gameTime.end) {
+            gameTime = {
+                positionId: swapPlayer.gameTime.slice(-1)[0].positionId
+            }
+            player.gameTime.push(gameTime)
+        } else {
+            gameTime.positionId = swapPlayer.gameTime.slice(-1)[0].positionId
+        }
+        await playerGameSave(teamId, player)
+    },
+    swapAll: async ({ query }) => {
+        let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
+        await cache.push({ posted: "swapAll" })
+        let team = await teamGet(teamId)
+        let players = await playerGameAllGet(teamId, gameId, team.players.map(x => x.playerId))
+        let onDeckPlayers = players.filter(x => x.status?._ === "onDeck")
+        await swap({ gameId, teamId, playerIds: onDeckPlayers.map(x => x.playerId) })
+    },
 }
 
 const route : Route = {

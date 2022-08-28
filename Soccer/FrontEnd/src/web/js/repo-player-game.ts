@@ -1,28 +1,27 @@
 import { Activity, get, getMany, PlayerGame, Position, set } from "./db";
 import { equals, getNewId } from "./utils";
 
-function getPlayerGameKey(gameId: number, playerId: number) {
-    return `player-game:${playerId}|${gameId}`
+function getPlayerGameKey(teamId: number, gameId: number, playerId: number) {
+    return `player-game:${teamId}|${playerId}|${gameId}`
 }
 
-export async function playerGameSave(gameId: number, playerGame: PlayerGame, playerId: number) {
-    await set(getPlayerGameKey(gameId, playerId), playerGame)
+export async function playerGameSave(teamId: number, playerGame: PlayerGame) {
+    await set(getPlayerGameKey(teamId, playerGame.gameId, playerGame.playerId), playerGame)
 }
 
-export async function playerGameAllGet(gameId: number, playerIds: number[]) {
-    let playersGame = await getMany<PlayerGame>(playerIds.map(x => getPlayerGameKey(gameId, x)))
-    playersGame = playersGame.filter(x => x)
-    let omittedPlayers : PlayerGame[] = []
-    for (let playerId of playerIds) {
-        if (playersGame.find(x => x.playerId === playerId)) continue
-        omittedPlayers.push({
-            gameId,
-            gameTime: [],
-            playerId,
-            stats: [],
-        })
+export async function playerGameAllGet(teamId: number, gameId: number, playerIds: number[]) {
+    let playersGame = await getMany<PlayerGame>(playerIds.map(x => getPlayerGameKey(teamId, gameId, x)))
+    for (let i = 0; i < playersGame.length; i++) {
+        if (!playersGame[i]) {
+            playersGame[i] = {
+                gameId,
+                gameTime: [],
+                playerId: playerIds[i],
+                stats: [],
+            }
+        }
     }
-    return playersGame.concat(omittedPlayers)
+    return playersGame
 }
 
 function getPositionsId(teamId: number) {

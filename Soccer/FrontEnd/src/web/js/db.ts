@@ -106,7 +106,7 @@ export interface PlayerGame {
     gameId: number
     stats: {statId: number, count: number}[]
     gameTime: GameTime[]
-    status?: { player?: string, _: "onDeck" } | { _: "inPlay" } | { _: "out" }
+    status?: { playerId?: number, _: "onDeck" } | { _: "inPlay" } | { _: "out" }
 }
 
 export interface Player {
