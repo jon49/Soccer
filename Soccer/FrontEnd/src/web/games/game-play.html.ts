@@ -60,6 +60,7 @@ function getPositionName(positions: Position[], gameTime: GameTime[]) {
 const filterOutPlayers = (x: PlayerGameView) => !x.status || x.status?._ === "out"
 const filterInPlayPlayers = (x: PlayerGameView) => x.status?._ === "inPlay"
 const filterOnDeckPlayers = (x: PlayerGameView) => x.status?._ === "onDeck"
+const filterNotPlayingPlayers = (x: PlayerGameView) => x.status?._ === "notPlaying"
 
 function getAggregateGameTime(times: { start?: number, end?: number }[]) {
     let start = times.find(x => !x.end)?.start
@@ -100,6 +101,8 @@ function render({ team, playersGame, game, positions, activities, posted, messag
             return { ...x, total }
         })
         .sort((a, b) => a.total - b.total)
+    let notPlayingPlayers = playersGame.filter(filterNotPlayingPlayers)
+    let notPlaying = notPlayingPlayers.length > 0
     return html`
 <h2>${team.name} - Game ${game.date} ${when(game.opponent, x => ` - ${x}`)}</h2>
 <div>
@@ -227,6 +230,22 @@ ${when(!out, html`<p>No players are currently out.</p>`)}
         `
     })}
 </ul>
+
+<h3>Not Playing</h3>
+
+${when(!notPlaying, html`<p>All players will be playing the game!</p>`)}
+
+<ul class=list>
+    ${notPlayingPlayers.map(x => html`
+    <li>
+        <p>${x.name}</p>
+        <form method=post action="?${queryTeamGame}&playerId=${x.playerId}&handler=backIn">
+            <button>Back in</button>
+        </form>
+    </li>
+    `)}
+</ul>
+
 
 <datalist id=activities>
     ${activities.map(x => html`<option value="${x.name}"`)}
@@ -407,7 +426,7 @@ const postHandlers : PostHandlers = {
         }
     },
 
-    cancelOnDeck:  async ({ query }) => {
+    cancelOnDeck: async ({ query }) => {
         let { teamId, playerId, gameId } = await validateObject(query, queryTeamGamePlayerValidator)
         await cache.push({ posted: `player:${playerId}` })
         let [player] = await playerGameAllGet(teamId, gameId, [playerId])
@@ -415,6 +434,22 @@ const postHandlers : PostHandlers = {
         player.gameTime.pop()
         await playerGameSave(teamId, player)
     },
+
+    notPlaying: async ({ query }) => {
+        let { teamId, playerId, gameId } = await validateObject(query, queryTeamGamePlayerValidator)
+        await cache.push({ posted: `player:${playerId}` })
+        let [player] = await playerGameAllGet(teamId, gameId, [playerId])
+        player.status = { _: "notPlaying" }
+        await playerGameSave(teamId, player)
+    },
+
+    backIn: async ({ query }) => {
+        let { teamId, playerId, gameId } = await validateObject(query, queryTeamGamePlayerValidator)
+        await cache.push({ posted: `player:${playerId}` })
+        let [player] = await playerGameAllGet(teamId, gameId, [playerId])
+        player.status = { _: "out" }
+        await playerGameSave(teamId, player)
+    }
 
 }
 
