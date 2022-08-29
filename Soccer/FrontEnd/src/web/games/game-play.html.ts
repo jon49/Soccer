@@ -4,7 +4,7 @@ import { activityGetAll, playerGameAllGet, playerGameSave, positionCreateOrGet, 
 import { teamGet, teamSave } from "../js/repo-team"
 import { Route, PostHandlers, handlePost } from "../js/route"
 import { messageView, when } from "../js/shared"
-import { searchParams } from "../js/utils"
+import { searchParams, sort } from "../js/utils"
 import { createIdNumber, createString25, required, validateObject } from "../js/validation"
 import { queryTeamIdGameIdValidator } from "../js/validators"
 import layout from "../_layout.html"
@@ -36,6 +36,9 @@ async function start(req : Request) : Promise<View> {
         positionGetAll(teamId),
         activityGetAll(teamId),
     ])
+
+    sort(positions, x => x.name)
+    sort(activities, x => x.name)
 
     let playersGameView : PlayerGameView[] = playersGame.map(x => ({
         ...x,
