@@ -128,25 +128,23 @@ function render({ team, playersGame, game, positions, activities, posted, messag
 ${when(!inPlay, html`<p>No players are in play.</p>`)}
 <ul class=list>
     ${inPlayPlayers.map((x, i) => {
-        let baseQuery = html`$${queryTeamGame}&playerId=${x.playerId}`
+        let baseQuery = `${queryTeamGame}&playerId=${x.playerId}`
         return html`
     <li>
-        <form method=post action="?${baseQuery}&handler=playerNowOut" >
+        <form method=post action="?$${baseQuery}&handler=playerNowOut" >
             <button>X</button>
         </form>
         <span>${x.name}</span>
-        <form method=post action="?${baseQuery}&handler=positionChange">
-            <input
-                type=search
-                name=position
-                list=positions
-                autocomplete=off
-                ${when(getPositionName(positions, x.gameTime), x => html`value="${x}"`)}
-                onchange="hf.click(this)" >
+        <form method=post action="?$${baseQuery}&handler=positionChange">
+            <select name=positionId onchange="hf.click(this)">
+                ${positions.map(position => html`
+                <option value="${position.id}" ${when(position.id === x.gameTime.slice(-1)[0].positionId, "selected")}>${position.name}</option>`)}
+            </select>
+            <button class=hidden></button>
         </form>
         <form
             method=post
-            action="?${baseQuery}&handler=activityMarker"
+            action="?$${baseQuery}&handler=activityMarker"
             target="in-play-activity-${i}"
             >
             <input
@@ -282,6 +280,10 @@ const queryTeamGamePlayerValidator = {
 
 const dataPositionValidator = {
     position: createString25("Position")
+}
+
+const dataPositionIdValidator = {
+    positionId: createIdNumber("Position")
 }
 
 async function swap({ teamId, playerIds, gameId, timestamp } : { teamId : number, playerIds: number[], gameId: number, timestamp: number }) {
@@ -449,7 +451,22 @@ const postHandlers : PostHandlers = {
         let [player] = await playerGameAllGet(teamId, gameId, [playerId])
         player.status = { _: "out" }
         await playerGameSave(teamId, player)
-    }
+    },
+
+    positionChange: async ({ query, data }) => {
+        let { teamId, playerId, gameId } = await validateObject(query, queryTeamGamePlayerValidator)
+        let { positionId } = await validateObject(data, dataPositionIdValidator)
+        await cache.push({ posted: `player:${playerId}` })
+        let [player] = await playerGameAllGet(teamId, gameId, [playerId])
+        let timestamp = +new Date()
+        player.gameTime.slice(-1)[0].end = timestamp
+        player.gameTime.push({
+            positionId,
+            start: timestamp,
+        })
+        await playerGameSave(teamId, player)
+        return html``
+    },
 
 }
 
