@@ -1,4 +1,4 @@
-import { cache, Message, Team } from "../js/db"
+import { cache, Message, Team, TeamPlayer } from "../js/db"
 import html from "../js/html-template-tag"
 import { handlePost, PostHandlers, Route } from "../js/route"
 import { searchParams } from "../js/utils"
@@ -66,36 +66,13 @@ ${teamEdited ? messageView(message) : null}
 <h3 id=players>Players Settings</h3>
 ${team.players.length === 0 ? html`<p>No players have been added.</p>` : null }
 
-<div class=cards>
-    ${team.players.map((x, i) => {
-
-        let teamPlayerQuery = `teamId=${team.id}&playerId=${x.playerId}`
-        let playerId : string = `edit-player${i}`
-        let playerActiveId : string = `player-active${i}`
-        let playerWasEdited = posted === playerId
-
-        return html`
-    <div>
-        <p id="_${x.playerId}"><a href="/web/players?${teamPlayerQuery}">${x.name}</a></p>
-        ${playerWasEdited ? messageView(message) : null}
-        <form method=post class=form action="?handler=editPlayer&${teamPlayerQuery}" target="#_${x.playerId} > a">
-            <div>
-                <label for=${playerId}>Player Name:</label>
-                <input id=${playerId} name=name type=text value="${x.name}" $${when(playerWasEdited, "autofocus")}>
-            </div>
-            <div>
-                <label for=${playerActiveId}>Active</label>
-                <input id=${playerActiveId} class=inline name=active type=checkbox $${when(x.active, "checked")}>
-            </div>
-            <button class=hidden></button>
-        </form>
-    </div>
-    `})}
+<div id=player-cards class=cards>
+    ${team.players.map(x => playerView(team, x.playerId))}
 </div>
 
 <p>Add a new player.</p>
 
-${addPlayerForm({ name: undefined, playersExist: true, posted, action, message })}
+${addPlayerForm({ name: undefined, playersExist: true, posted, action, message, target: "target=#player-cards hf-swap=append" })}
 
 <script>
     document.addEventListener("change", e => {
@@ -103,6 +80,30 @@ ${addPlayerForm({ name: undefined, playersExist: true, posted, action, message }
     })
 </script>
     `
+}
+
+function playerView(team: Team, playerId: number) {
+    let player = team.players.find(x => x.playerId === playerId)
+    if (!player) return html`<p>Could not find player "${playerId}"</p>`
+    let teamPlayerQuery = `teamId=${team.id}&playerId=${playerId}`
+    let playerId_ : string = `edit-player${playerId}`
+    let playerActiveId : string = `player-active${playerId}`
+
+    return html`
+<div>
+    <p id="_${playerId}"><a href="/web/players?$${teamPlayerQuery}">${player.name}</a></p>
+    <form method=post class=form action="?handler=editPlayer&$${teamPlayerQuery}" target="#_${playerId} > a">
+        <div>
+            <label for=${playerId_}>Player Name:</label>
+            <input id=${playerId_} name=name type=text value="${player.name}">
+        </div>
+        <div>
+            <label for=${playerActiveId}>Active</label>
+            <input id=${playerActiveId} class=inline name=active type=checkbox $${when(player.active, "checked")}>
+        </div>
+        <button class=hidden></button>
+    </form>
+</div>`
 }
 
 const postHandlers: PostHandlers = {
@@ -130,7 +131,11 @@ const postHandlers: PostHandlers = {
         return html`${playerName}`
     },
 
-    addPlayer,
+    addPlayer: async (o) => {
+        await addPlayer(o)
+        let team = await teamGet(+o.query.teamId)
+        return playerView(team, team.players.slice(-1)[0].playerId)
+    },
 
     editTeam: async({ data, query }) => {
         await cache.push({posted: "edit-team"})
