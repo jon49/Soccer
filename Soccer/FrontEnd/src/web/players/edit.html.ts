@@ -39,20 +39,18 @@ function render(o: PlayersEditView) {
     let teamEdited = posted === "edit-team"
 
     return html`
-<h2>Team ${ o?.team.name ??  "Unknown"}</h2>
+<h2 id=subheading>${ o?.team.name ??  "Unknown"} (${o?.team.year})</h2>
 
 <nav>
     <ul>
         <li><a href="#team">Team</a></li>
         <li><a href="#players">Players</a></li>
-        <li><a href="#positions">Positions</a></li>
-        <li><a href="#activities">Activities</a></li>
     </ul>
 </nav>
 
 <h3 id=team>Team Settings</h3>
 ${teamEdited ? messageView(message) : null}
-<form class=form method=post action="?handler=editTeam&teamId=${team.id}">
+<form class=form method=post action="?handler=editTeam&teamId=${team.id}" target="#subheading">
     <div class=inline>
         <label for=team>Team Name:</label><input id=team name=name type=text value="${team.name}" $${when(teamEdited, "autofocus")}>
     </div>
@@ -62,7 +60,7 @@ ${teamEdited ? messageView(message) : null}
     <div>
         <label for=active>Active</label> <input id=active class=inline name=active type=checkbox $${team.active ? "checked" : null}>
     </div>
-    <button>Save</button>
+    <button class=hidden></button>
 </form>
 
 <h3 id=players>Players Settings</h3>
@@ -72,15 +70,15 @@ ${team.players.length === 0 ? html`<p>No players have been added.</p>` : null }
     ${team.players.map((x, i) => {
 
         let teamPlayerQuery = `teamId=${team.id}&playerId=${x.playerId}`
-        let playerId = `edit-player${i}`
+        let playerId : string = `edit-player${i}`
         let playerActiveId : string = `player-active${i}`
         let playerWasEdited = posted === playerId
 
         return html`
     <div>
-        <p id="${x.playerId}"><a href="/web/players?${teamPlayerQuery}">${x.name}</a></p>
+        <p id="_${x.playerId}"><a href="/web/players?${teamPlayerQuery}">${x.name}</a></p>
         ${playerWasEdited ? messageView(message) : null}
-        <form method=post class=form action="?handler=editPlayer&${teamPlayerQuery}">
+        <form method=post class=form action="?handler=editPlayer&${teamPlayerQuery}" target="#_${x.playerId} > a">
             <div>
                 <label for=${playerId}>Player Name:</label>
                 <input id=${playerId} name=name type=text value="${x.name}" $${when(playerWasEdited, "autofocus")}>
@@ -89,7 +87,7 @@ ${team.players.length === 0 ? html`<p>No players have been added.</p>` : null }
                 <label for=${playerActiveId}>Active</label>
                 <input id=${playerActiveId} class=inline name=active type=checkbox $${when(x.active, "checked")}>
             </div>
-            <button>Save</button>
+            <button class=hidden></button>
         </form>
     </div>
     `})}
@@ -99,11 +97,11 @@ ${team.players.length === 0 ? html`<p>No players have been added.</p>` : null }
 
 ${addPlayerForm({ name: undefined, playersExist: true, posted, action, message })}
 
-<h3 id=positions>Positions Settings</h3>
-<p>This is a placeholder for default settings for team play positions. E.g., 1 Keeper, 3 Defenders, 2 Midfielders, 2 Strikers</p>
-
-<h3 id=activities>Activities Settings</h3>
-<p>This is a placeholder for activities associated with a player. E.g., the number of goals, number of assists, number of goal saves.</p>
+<script>
+    document.addEventListener("change", e => {
+        hf.click(e.target)
+    })
+</script>
     `
 }
 
@@ -129,7 +127,7 @@ const postHandlers: PostHandlers = {
         player.active = active
         // Player name will also need to be updated for the individual player when implemented!
         await teamSave(team)
-        return
+        return html`${playerName}`
     },
 
     addPlayer,
@@ -146,6 +144,7 @@ const postHandlers: PostHandlers = {
         team.year = year
         team.name = newTeamName
         await teamSave(team)
+        return html`${newTeamName} (${year})`
     }
 }
 
@@ -154,7 +153,7 @@ const route : Route = {
     async get(req: Request) {
         let result = await start(req)
         const template = await layout(req)
-        return template({ main: render(result) })
+        return template({ main: render(result), scripts: ["/web/js/lib/htmf-all.min.js"] })
     },
     post: handlePost(postHandlers)
 }

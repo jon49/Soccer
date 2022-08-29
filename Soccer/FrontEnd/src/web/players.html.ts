@@ -1,7 +1,7 @@
 import html from "./js/html-template-tag"
 import layout from "./_layout.html"
 import { cache, Message, Team } from "./js/db"
-import { cleanHtmlId, searchParams } from "./js/utils"
+import { searchParams } from "./js/utils"
 import { handlePost, PostHandlers, Route } from "./js/route"
 import { when } from "./js/shared"
 import { addPlayer, addPlayerForm } from "./js/_AddPlayer.html"
@@ -56,7 +56,7 @@ function render({ team, message, wasFiltered, name, posted }: PlayersView) {
             html`
             <li>
                 <a href="?playerId=${x.playerId}&teamId=${team.id}">${x.name}</a>
-                <a href="/web/players/edit?teamId=${team.id}#${cleanHtmlId(x.name)}">Edit</a>
+                <a href="/web/players/edit?teamId=${team.id}#_${x.playerId}">Edit</a>
             </li>`
         )}
     </ul>`
