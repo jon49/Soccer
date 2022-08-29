@@ -26,7 +26,7 @@ function render(view: GameView) {
     let hasGames = team.games.length > 0
     let gameAdded = posted === "add-game"
     return html`
-<h2>Games</h2>
+<h2>${team.name} - Games</h2>
 
 ${when(!gameAdded, messageView(message))}
 ${when(!hasGames, html`<p>No games found.</p>`)}
