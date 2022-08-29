@@ -210,14 +210,6 @@ ${when(!out, html`<p>No players are currently out.</p>`)}
             <button>X</button>
         </form>
         <p>${x.name}</p>
-        <form method=post action="?$${queryTeamGame}&playerId=$${x.playerId}&handler=addPlayerPosition" onchange="this.submit()">
-            <input
-                type=search
-                name=position
-                list=positions
-                autocomplete=off
-                placeholder="Position" >
-        </form>
         ${when(availablePlayersToSwap.length > 0, _ =>
             html`
         <form method=post action="?$${queryTeamGame}&playerId=$${x.playerId}&handler=onDeckWith" onchange="this.submit()">
@@ -226,6 +218,14 @@ ${when(!out, html`<p>No players are currently out.</p>`)}
                 ${availablePlayersToSwap.map(x => html`<option value="${x.playerId}">${x.name}</option>`) }
             </select>
         </form>`)}
+        <form method=post action="?$${queryTeamGame}&playerId=$${x.playerId}&handler=addPlayerPosition" onchange="this.submit()">
+            <input
+                type=search
+                name=position
+                list=positions
+                autocomplete=off
+                placeholder="Position" >
+        </form>
         <p>${formatTime(x.total)}</p>
     </li>
         `
