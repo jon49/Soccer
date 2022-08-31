@@ -60,7 +60,6 @@ ${teamEdited ? messageView(message) : null}
     <div>
         <label for=active>Active</label> <input id=active class=inline name=active type=checkbox $${team.active ? "checked" : null}>
     </div>
-    <button class=hidden></button>
 </form>
 
 <h3 id=players>Players Settings</h3>
@@ -76,7 +75,10 @@ ${addPlayerForm({ name: undefined, playersExist: true, posted, action, message, 
 
 <script>
     document.addEventListener("change", e => {
-        hf.click(e.target)
+        let form = e.target?.form
+        if (form instanceof HTMLFormElement) {
+            form.requestSubmit()
+        }
     })
 </script>
     `
@@ -101,7 +103,6 @@ function playerView(team: Team, playerId: number) {
             <label for=${playerActiveId}>Active</label>
             <input id=${playerActiveId} class=inline name=active type=checkbox $${when(player.active, "checked")}>
         </div>
-        <button class=hidden></button>
     </form>
 </div>`
 }
@@ -158,7 +159,7 @@ const route : Route = {
     async get(req: Request) {
         let result = await start(req)
         const template = await layout(req)
-        return template({ main: render(result), scripts: ["/web/js/lib/htmf-all.min.js"] })
+        return template({ main: render(result), scripts: ["/web/js/lib/request-submit.js", "/web/js/lib/htmf.js"] })
     },
     post: handlePost(postHandlers)
 }

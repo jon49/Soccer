@@ -138,17 +138,20 @@ ${when(!inPlay, html`<p>No players are in play.</p>`)}
             <button>X</button>
         </form>
         <span>${x.name}</span>
-        <form method=post action="?$${baseQuery}&handler=positionChange">
-            <select name=positionId onchange="hf.click(this)">
+        <form
+            method=post
+            action="?$${baseQuery}&handler=positionChange"
+            onchange="this.requestSubmit()">
+            <select name=positionId>
                 ${positions.map(position => html`
                 <option value="${position.id}" ${when(position.id === x.gameTime.slice(-1)[0].positionId, "selected")}>${position.name}</option>`)}
             </select>
-            <button class=hidden></button>
         </form>
         <form
             method=post
             action="?$${baseQuery}&handler=activityMarker"
             target="in-play-activity-${i}"
+            onchange="this.requestSubmit()"
             >
             <input
                 id=in-play-activity-${i}
@@ -156,8 +159,7 @@ ${when(!inPlay, html`<p>No players are in play.</p>`)}
                 name=activity
                 list=activities
                 autocomplete=off
-                placeholder="Mark an activity"
-                onchange="hf.click(this)" >
+                placeholder="Mark an activity" >
         </form>
         ${when(game.status === "play", html`
         <game-timer
@@ -478,7 +480,7 @@ const route : Route = {
     async get(req: Request) {
         const result = await start(req)
         const template = await layout(req)
-        return template({ main: render(result), head: `<script src= "/web/js/game-timer.js"></script>`, scripts: ["/web/js/lib/htmf-all.min.js"] })
+        return template({ main: render(result), head: `<script src= "/web/js/game-timer.js"></script>`, scripts: ["/web/js/lib/request-submit.js", "/web/js/lib/htmf.js"] })
     },
     post: handlePost(postHandlers),
 }
