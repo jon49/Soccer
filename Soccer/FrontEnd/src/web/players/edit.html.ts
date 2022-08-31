@@ -72,15 +72,6 @@ ${team.players.length === 0 ? html`<p>No players have been added.</p>` : null }
 <p>Add a new player.</p>
 
 ${addPlayerForm({ name: undefined, playersExist: true, posted, action, message, target: "target=#player-cards hf-swap=append" })}
-
-<script>
-    document.addEventListener("change", e => {
-        let form = e.target?.form
-        if (form instanceof HTMLFormElement) {
-            form.requestSubmit()
-        }
-    })
-</script>
     `
 }
 
@@ -135,7 +126,12 @@ const postHandlers: PostHandlers = {
     addPlayer: async (o) => {
         await addPlayer(o)
         let team = await teamGet(+o.query.teamId)
-        return playerView(team, team.players.slice(-1)[0].playerId)
+        return {
+            body: playerView(team, team.players.slice(-1)[0].playerId),
+            headers: {
+                "hf-events": JSON.stringify({ "reset-form": "" })
+            }
+        }
     },
 
     editTeam: async({ data, query }) => {
@@ -159,7 +155,7 @@ const route : Route = {
     async get(req: Request) {
         let result = await start(req)
         const template = await layout(req)
-        return template({ main: render(result), scripts: ["/web/js/lib/request-submit.js", "/web/js/lib/htmf.js"] })
+        return template({ main: render(result), scripts: ["/web/js/lib/request-submit.js", "/web/js/lib/htmf.js", "/web/js/players-edit.js"] })
     },
     post: handlePost(postHandlers)
 }
