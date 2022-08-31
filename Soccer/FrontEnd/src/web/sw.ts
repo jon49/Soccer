@@ -146,11 +146,12 @@ async function cacheResponse(url: string, event: { request: string | Request } |
 }
 
 const encoder = new TextEncoder()
-function streamResponse(url: string, gen: Generator) : Response {
+function streamResponse(url: string, generator: Generator | { body: Generator, headers?: any }) : Response {
     console.log(`Loading ${url}`)
+    let { body, headers } = "body" in generator ? generator : { body: generator, headers: {} }
     const stream = new ReadableStream({
         start(controller : ReadableStreamDefaultController<any>) {
-            for (let x of gen) {
+            for (let x of body) {
                 if (typeof x === "string")
                     controller.enqueue(encoder.encode(x))
             }
@@ -158,7 +159,7 @@ function streamResponse(url: string, gen: Generator) : Response {
         }
     })
 
-    return new Response(stream, { headers: htmlHeader()})
+    return new Response(stream, { headers: { ...htmlHeader(), ...headers }})
 }
 
 /**
