@@ -84,7 +84,7 @@ const route : Route = {
         const template = await layout(req)
         return template({
             main: render(result),
-            nav: [{name: "Edit", url: `/web/players/edit?team=${result.team.id}#team`}] })
+            nav: [{name: "Edit", url: `/web/players/edit?teamId=${result.team.id}#team`}] })
     },
     post: handlePost(postHandlers),
 }
