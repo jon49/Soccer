@@ -42,7 +42,7 @@ export async function addPlayer({ data, query }: RoutePostArgsWithQuery) {
     let team = await teamGet(teamId)
 
     await assert.isFalse(!!team.players.find(x => x.name === name), "Player names must be unique!")
-        ?.catch(_ => reject({ players: { name } }))
+        ?.catch(() => reject({ players: { name } }))
 
     await Promise.all([playerCreate(teamId, name), cache.push({ posted: formId })])
 

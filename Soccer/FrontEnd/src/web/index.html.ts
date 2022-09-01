@@ -1,4 +1,4 @@
-import html from "./js/html-template-tag.js"
+import html from "./server/html-template-tag.js"
 import layout from "./_layout.html.js"
 
 export default {

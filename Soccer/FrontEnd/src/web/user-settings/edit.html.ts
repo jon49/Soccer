@@ -1,9 +1,9 @@
-import html from "../js/html-template-tag.js"
+import html from "../server/html-template-tag.js"
 import layout from "../_layout.html.js"
-import * as db from "../js/db.js"
-import { Settings } from "../js/db.js"
-import { RoutePostArgs } from "../js/route.js"
-import { isSelected, redirect } from "../js/utils.js"
+import * as db from "../server/db.js"
+import { Settings } from "../server/db.js"
+import { RoutePostArgs } from "../server/route.js"
+import { isSelected, redirect } from "../server/utils.js"
 
 const themes = ["dark", "light", "none"] as const
 export type Theme = typeof themes[number]

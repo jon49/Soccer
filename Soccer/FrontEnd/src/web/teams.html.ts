@@ -1,13 +1,13 @@
-import html from "./js/html-template-tag"
+import html from "./server/html-template-tag"
 import layout from "./_layout.html"
-import { CacheTeams, cache, Team, Message, } from "./js/db"
-import { handlePost, PostHandlers } from "./js/route"
-import { searchParams } from "./js/utils"
-import { validateObject } from "./js/validation"
-import { messageView, when } from "./js/shared"
-import { dataTeamNameYearValidator } from "./js/validators"
-import { teamGetAll, teamsCreate, WasFiltered } from "./js/repo-team"
-import { reject } from "./js/repo"
+import { CacheTeams, cache, Team, Message, } from "./server/db"
+import { handlePost, PostHandlers } from "./server/route"
+import { searchParams } from "./server/utils"
+import { validateObject } from "./server/validation"
+import { messageView, when } from "./server/shared"
+import { dataTeamNameYearValidator } from "./server/validators"
+import { teamGetAll, teamsCreate, WasFiltered } from "./server/repo-team"
+import { reject } from "./server/repo"
 
 interface TeamsView {
     teams: Team[] | undefined

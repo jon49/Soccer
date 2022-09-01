@@ -1,13 +1,13 @@
-import { cache, Message, Team } from "../js/db"
-import html from "../js/html-template-tag"
-import { handlePost, PostHandlers, Route } from "../js/route"
-import { searchParams } from "../js/utils"
+import { cache, Message, Team } from "../server/db"
+import html from "../server/html-template-tag"
+import { handlePost, PostHandlers, Route } from "../server/route"
+import { searchParams } from "../server/utils"
 import layout from "../_layout.html"
-import { assert, validate, validateObject } from "../js/validation"
-import { messageView, when } from "../js/shared"
-import { dataPlayerNameActiveValidator, dataTeamNameYearActiveValidator, queryTeamIdPlayerIdValidator, queryTeamIdValidator } from "../js/validators"
-import { addPlayer, addPlayerForm } from "../js/_AddPlayer.html"
-import { teamGet, teamSave } from "../js/repo-team"
+import { assert, validate, validateObject } from "../server/validation"
+import { messageView, when } from "../server/shared"
+import { dataPlayerNameActiveValidator, dataTeamNameYearActiveValidator, queryTeamIdPlayerIdValidator, queryTeamIdValidator } from "../server/validators"
+import { addPlayer, addPlayerForm } from "../server/_AddPlayer.html"
+import { teamGet, teamSave } from "../server/repo-team"
 
 interface PlayersEditView {
     team: Team

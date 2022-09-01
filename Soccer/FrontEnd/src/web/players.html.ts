@@ -1,13 +1,13 @@
-import html from "./js/html-template-tag"
+import html from "./server/html-template-tag"
 import layout from "./_layout.html"
-import { cache, Message, Team } from "./js/db"
-import { searchParams } from "./js/utils"
-import { handlePost, PostHandlers, Route } from "./js/route"
-import { when } from "./js/shared"
-import { addPlayer, addPlayerForm } from "./js/_AddPlayer.html"
-import { teamGet } from "./js/repo-team"
-import { validateObject } from "./js/validation"
-import { queryAllValidator, queryTeamIdValidator } from "./js/validators"
+import { cache, Message, Team } from "./server/db"
+import { searchParams } from "./server/utils"
+import { handlePost, PostHandlers, Route } from "./server/route"
+import { when } from "./server/shared"
+import { addPlayer, addPlayerForm } from "./server/_AddPlayer.html"
+import { teamGet } from "./server/repo-team"
+import { validateObject } from "./server/validation"
+import { queryAllValidator, queryTeamIdValidator } from "./server/validators"
 
 interface PlayersView {
     team: Team

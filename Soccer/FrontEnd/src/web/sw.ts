@@ -1,4 +1,4 @@
-import { addRoutes, findRoute, RoutePost } from "./js/route"
+import { addRoutes, findRoute, RoutePost } from "./server/route"
 import indexHandler from "./index.html.js"
 import { version } from "./settings"
 import teamsHandler from "./teams.html"
@@ -6,10 +6,10 @@ import playersHandler from "./players.html"
 import gamesHandler from "./games.html"
 import gamesPlayHandler from "./games/game-play.html"
 import playersEditHandler from "./players/edit.html"
-import { cache } from "./js/db"
-import { messageView } from "./js/shared"
-import html from "./js/html-template-tag"
-import { redirect } from "./js/utils"
+import { cache } from "./server/db"
+import { messageView } from "./server/shared"
+import html from "./server/html-template-tag"
+import { redirect } from "./server/utils"
 
 addRoutes([
     indexHandler,
