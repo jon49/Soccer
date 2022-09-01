@@ -4,6 +4,7 @@ import { reject } from "./repo"
 import { playerCreate, teamGet } from "./repo-team"
 import { RoutePostArgsWithQuery } from "./route"
 import { messageView, when } from "./shared"
+import { equals } from "./utils"
 import { assert, validate, validateObject } from "./validation"
 import { dataPlayerNameValidator, queryTeamIdValidator } from "./validators"
 
@@ -41,7 +42,8 @@ export async function addPlayer({ data, query }: RoutePostArgsWithQuery) {
 
     let team = await teamGet(teamId)
 
-    await assert.isFalse(!!team.players.find(x => x.name === name), "Player names must be unique!")
+    let existingPlayer = team.players.find(x => equals(x.name, name))
+    await assert.isFalse(!!existingPlayer, `The player name "${existingPlayer?.name}" has already been chosen.`)
         ?.catch(() => reject({ players: { name } }))
 
     await Promise.all([playerCreate(teamId, name), cache.push({ posted: formId })])

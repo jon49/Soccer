@@ -1,7 +1,7 @@
 import { cache, Message, Team } from "../server/db"
 import html from "../server/html-template-tag"
 import { handlePost, PostHandlers, Route } from "../server/route"
-import { searchParams } from "../server/utils"
+import { equals, searchParams } from "../server/utils"
 import layout from "../_layout.html"
 import { assert, validate, validateObject } from "../server/validation"
 import { messageView, when } from "../server/shared"
@@ -112,9 +112,10 @@ const postHandlers: PostHandlers = {
         let player = team.players[playerIndex]
 
         // Check for duplicates
+        let existingPlayer = team.players.find(x => equals(x.name, playerName))
         await assert.isFalse(
-            player.name !== playerName && !!team.players.find(x => x.name === playerName),
-            `The player name "${playerName}" has already been chosen.`)
+            !equals(player.name, playerName) && !!existingPlayer,
+            `The player name "${existingPlayer?.name}" has already been chosen.`)
 
         player.name = playerName
         player.active = active
