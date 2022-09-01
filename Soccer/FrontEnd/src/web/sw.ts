@@ -113,6 +113,10 @@ async function post(url: URL, req: Request) : Promise<Response> {
         } catch (error) {
             let message = await cache.peek("message")
             if (!error && message) {
+                if (req.headers.has("hf-request")) {
+                    message = await cache.pop("message")
+                    return new Response(null, { headers: { ...htmlHeader(), "hf-events": JSON.stringify({ "s:error": { message } }) } })
+                }
                 return redirect(req)
             } else {
                 console.error("Unknown error during post.", error)

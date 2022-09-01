@@ -56,6 +56,7 @@ const render = ({theme, error, syncCount, url}: Render) => (o: LayoutTemplateArg
     ${(scripts ?? []).map(x => html`<script src="${x}" type=module></script>`)}
     <script src="/web/js/snack-bar.js"></script>
     <script src="/web/js/service-worker-loader.js"></script>
+    <script src="/web/js/main.js"></script>
 </body>
 </html>`
 }
