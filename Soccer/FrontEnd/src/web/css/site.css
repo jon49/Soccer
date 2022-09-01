@@ -206,7 +206,7 @@ aside {
 :root {
   --snack-bar-duration: 2;
 }
-#error-message {
+.error {
  min-width: 250px;
  margin-left: -125px;
  position: fixed;
@@ -214,7 +214,7 @@ aside {
  bottom: 0.5em;
  z-index: 1;
 }
-#error-message p {
+.error p {
   background-color: grey;
   color: #eee;
   padding: 1em;
@@ -252,11 +252,13 @@ a.external {
 }
 
 #messages {
-    padding-top: 0.25em;
     position: sticky;
-    top: 0;
-    border-width: 0px;
-    height: 0;
+    bottom: .5em;
+}
+
+#messages > * {
+  display: flex;
+  margin-top: 1em;
 }
 
 p.error {

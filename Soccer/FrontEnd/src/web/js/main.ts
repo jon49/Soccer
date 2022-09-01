@@ -74,9 +74,7 @@
         for (let m of message) {
             fragment.appendChild(createHtml(
             `<snack-bar style="--snack-bar-duration: 3;">
-                <div class="snack-bar error">
-                    <p>${m}</p>
-                </div>
+                <p>${m}</p>
             </snack-bar>`))
         }
         $popUp.append(fragment)
