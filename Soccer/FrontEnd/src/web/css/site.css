@@ -206,22 +206,6 @@ aside {
 :root {
   --snack-bar-duration: 2;
 }
-.error {
- min-width: 250px;
- margin-left: -125px;
- position: fixed;
- left: 50%;
- bottom: 0.5em;
- z-index: 1;
-}
-.error p {
-  background-color: grey;
-  color: #eee;
-  padding: 1em;
-  margin: 0;
-  border-radius: 0.5em;
-  margin-top: 0.125em;
-}
 
 .inline {
     display: inline-block;
@@ -254,11 +238,6 @@ a.external {
 #messages {
     position: sticky;
     bottom: .5em;
-}
-
-#messages > * {
-  display: flex;
-  margin-top: 1em;
 }
 
 p.error {

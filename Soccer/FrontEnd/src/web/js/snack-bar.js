@@ -13,6 +13,8 @@
         margin: .5em auto;
         border-radius: 10px;
         animation: fadeInOut var(--snack-bar-duration)s linear 1 forwards;
+        display: flex;
+        color: #fff;
     }
     @keyframes fadeInOut {
         0%,100% { opacity: 0; }
