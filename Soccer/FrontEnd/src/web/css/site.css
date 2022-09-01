@@ -284,10 +284,29 @@ header {
     list-style-type: none;
     display: table;
 }
+
 .list > li {
     display: table-row;
 }
+
 .list > li > * {
     display: table-cell;
     padding: 5px 10px;
+}
+
+/** Fancy Checkbox **/
+
+.toggle > [type="checkbox"],
+.on,
+input:checked ~ .off {
+  display: none;
+}
+
+.off {
+  background-color: firebrick;
+}
+
+input:checked ~ .on {
+  display: inline-block;
+  background-color: green;
 }

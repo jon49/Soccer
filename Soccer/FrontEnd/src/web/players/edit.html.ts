@@ -58,7 +58,11 @@ ${teamEdited ? messageView(message) : null}
         <label for=year>Year:</label> <input id=year name=year type=text value="${team.year}">
     </div>
     <div>
-        <label for=active>Active</label> <input id=active class=inline name=active type=checkbox $${team.active ? "checked" : null}>
+        <label class=toggle>
+            <input name=active type=checkbox $${team.active ? "checked" : null}>
+            <span class="off button">Inactive</span>
+            <span class="on button">Active</span>
+        </label>
     </div>
 </form>
 
@@ -80,7 +84,6 @@ function playerView(team: Team, playerId: number) {
     if (!player) return html`<p>Could not find player "${playerId}"</p>`
     let teamPlayerQuery = `teamId=${team.id}&playerId=${playerId}`
     let playerId_ : string = `edit-player${playerId}`
-    let playerActiveId : string = `player-active${playerId}`
 
     return html`
 <div>
@@ -91,8 +94,11 @@ function playerView(team: Team, playerId: number) {
             <input id=${playerId_} name=name type=text value="${player.name}">
         </div>
         <div>
-            <label for=${playerActiveId}>Active</label>
-            <input id=${playerActiveId} class=inline name=active type=checkbox $${when(player.active, "checked")}>
+            <label class=toggle>
+                <input name=active type=checkbox $${player.active ? "checked" : null}>
+                <span class="off button">Inactive</span>
+                <span class="on button">Active</span>
+            </label>
         </div>
     </form>
 </div>`
