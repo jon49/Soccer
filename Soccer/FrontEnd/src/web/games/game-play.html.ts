@@ -195,9 +195,10 @@ ${when(!onDeck, html`<p>No players are on deck.</p>`)}
     `})}
 </ul>
 
+${when(onDeck, () => html`
 <form method=post action="?$${queryTeamGame}&handler=swapAll">
     <button>Swap All</button>
-</form>
+</form>`)}
 
 <h3>Out</h3>
 
