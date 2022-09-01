@@ -115,7 +115,7 @@ async function post(url: URL, req: Request) : Promise<Response> {
             if (!error && message) {
                 if (req.headers.has("hf-request")) {
                     message = await cache.pop("message")
-                    return new Response(null, { headers: { "hf-events": JSON.stringify({ "s:error": { message } }) } })
+                    return new Response(null, { status: 400, headers: { "hf-events": JSON.stringify({ "s:error": { message } }) } })
                 }
                 return redirect(req)
             } else {
