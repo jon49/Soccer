@@ -1,4 +1,4 @@
-import { cache, Message, Team, TeamPlayer } from "../js/db"
+import { cache, Message, Team } from "../js/db"
 import html from "../js/html-template-tag"
 import { handlePost, PostHandlers, Route } from "../js/route"
 import { searchParams } from "../js/utils"

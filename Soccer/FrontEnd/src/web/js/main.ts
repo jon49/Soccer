@@ -1,19 +1,21 @@
-(function() {
+/** @ts-check */
+
+(() => {
+
+    const $popUp = <HTMLElement>document.getElementById('messages')
+
     // https://deanhume.com/displaying-a-new-version-available-progressive-web-app/
     function shouldUpdateServiceWorker(this: ServiceWorker) {
         if (this.state === 'installed' && navigator.serviceWorker.controller) {
             console.log("State installed, initiate ask user.")
-            const messages = document.getElementById('messages')
-            if (!messages) return
-            const template = document.createElement("template")
-            template.innerHTML = `
+            listenToUserResponse(this)
+            $popUp.appendChild(createHtml(`
                 <snack-bar style="--snack-bar-duration: 20;">
                     <div class="snack-bar">
                     <p>A new version the app has been loaded. <button data-action=refresh-service-worker>Refresh</button></p>
                     </div>
                 </snack-bar>`
-            listenToUserResponse(this)
-            messages.appendChild(template.content.children[0])
+            ))
 
             return true
         } else if (this.state === "activated") {
@@ -64,4 +66,26 @@
         })
     }
 
-})()
+    document.addEventListener("s:error", e => {
+        // @ts-ignore
+        let message: string[] | undefined = e.detail.message
+        if (!message) return
+        let fragment = document.createDocumentFragment()
+        for (let m of message) {
+            fragment.appendChild(createHtml(
+            `<snack-bar style="--snack-bar-duration: 3;">
+                <div class="snack-bar error">
+                    <p>${m}</p>
+                </div>
+            </snack-bar>`))
+        }
+        $popUp.append(fragment)
+    })
+
+    function createHtml(s: string) {
+        let template = document.createElement("template")
+        template.innerHTML = s
+        return template.content.children[0]
+    }
+
+})();
