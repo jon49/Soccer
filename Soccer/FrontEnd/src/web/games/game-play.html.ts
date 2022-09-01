@@ -30,6 +30,7 @@ async function start(req : Request) : Promise<View> {
         cache.pop("posted"),
         cache.pop("message")
     ])
+    team.players = team.players.filter(x => x.active)
     let game = await required(team.games.find(x => x.id === gameId), "Could not find game ID!")
     let [playersGame, positions, activities] = await Promise.all([
         playerGameAllGet(teamId, gameId, team.players.map(x => x.playerId)),
