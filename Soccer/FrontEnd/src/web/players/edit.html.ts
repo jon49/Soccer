@@ -70,7 +70,7 @@ ${teamEdited ? messageView(message) : null}
 ${team.players.length === 0 ? html`<p>No players have been added.</p>` : null }
 
 <div id=player-cards class=cards>
-    ${team.players.map(x => playerView(team, x.playerId))}
+    ${team.players.map(x => playerView(team, x.id))}
 </div>
 
 <p>Add a new player.</p>
@@ -80,7 +80,7 @@ ${addPlayerForm({ name: undefined, playersExist: true, posted, action, message, 
 }
 
 function playerView(team: Team, playerId: number) {
-    let player = team.players.find(x => x.playerId === playerId)
+    let player = team.players.find(x => x.id === playerId)
     if (!player) return html`<p>Could not find player "${playerId}"</p>`
     let teamPlayerQuery = `teamId=${team.id}&playerId=${playerId}`
     let playerId_ : string = `edit-player${playerId}`
@@ -112,7 +112,7 @@ const postHandlers: PostHandlers = {
         ])
         let team = await teamGet(teamId)
 
-        let playerIndex = team.players.findIndex(x => x.playerId === playerId)
+        let playerIndex = team.players.findIndex(x => x.id === playerId)
         await assert.isFalse(playerIndex === -1, `Unknown player "${playerId}"`)
         await cache.push({posted: `edit-player${playerIndex}`})
         let player = team.players[playerIndex]
@@ -134,7 +134,7 @@ const postHandlers: PostHandlers = {
         await addPlayer(o)
         let team = await teamGet(+o.query.teamId)
         return {
-            body: playerView(team, team.players.slice(-1)[0].playerId),
+            body: playerView(team, team.players.slice(-1)[0].id),
             headers: {
                 "hf-events": JSON.stringify({ "reset-form": "" })
             }

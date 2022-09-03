@@ -1,27 +1,27 @@
 import { Theme } from "../user-settings/edit.html.js"
 import { get as get1, getMany, setMany, set as set1, update as update1 } from "./lib/db.min.js"
+import { reject } from "./repo.js"
 
 const get : DBGet = get1
 
 const _updated =
-    async (key: string) => {
+    async (key: string, revision: number) => {
         await update1("updated", (val?: Map<string, number>) => {
-            if (val instanceof Set) {
-                let temp : Map<string, number> = new Map()
-                Array.from(val).forEach(x => temp.set(x, 0))
-                val = temp
-            }
-            return (val || new Map()).set(key, Date.now())
+            return (val || new Map()).set(key, revision)
         })
     }
 
 function set<K extends keyof DBAccessors>(key: K, value: DBAccessors[K], sync?: boolean): Promise<void>
 function set<T>(key: string, value: T, sync?: boolean): Promise<void>
 async function set(key: string, value: any, sync = true) {
-    await set1(key, value)
-    if (sync) {
-        await _updated(key)
+    if (sync && "_rev" in value) {
+        if ("_rev" in value) {
+            await _updated(key, value._rev)
+        } else {
+            return reject(`Revision number not specified! For "${key}".`)
+        }
     }
+    await set1(key, value)
 }
 
 function update<K extends keyof DBAccessors>(key: K, f: (val: DBAccessors[K]) => DBAccessors[K], sync?: { sync: boolean }): Promise<void>
@@ -29,7 +29,12 @@ function update<T>(key: string, f: (val: T) => T, sync?: { sync: boolean }): Pro
 async function update(key: string, f: (v: any) => any, sync = { sync: true }) {
     await update1(key, f)
     if (sync.sync) {
-        await _updated(key)
+        let o : any = await get(key)
+        if (o && "_rev" in o) {
+            await _updated(key, o._rev)
+        } else {
+            reject(`Revision number not found for "${key}".`)
+        }
     }
 }
 
@@ -71,9 +76,17 @@ export interface Settings {
     theme: Theme
 }
 
-export interface Stats {
+interface Revision {
+    _rev: number
+}
+
+export interface Stat {
     id: number
     name: string
+}
+
+export interface Stats extends Revision {
+    stats: Stat[]
 }
 
 export interface Position {
@@ -81,9 +94,17 @@ export interface Position {
     name: string
 }
 
+export interface Positions extends Revision {
+    positions: Position[]
+}
+
 export interface Activity {
     id: number
     name: string
+}
+
+export interface Activities extends Revision {
+    activities: Activity[]
 }
 
 export interface Game {
@@ -102,7 +123,7 @@ export interface GameTime {
     positionId: number 
 }
 
-export interface PlayerGame {
+export interface PlayerGame extends Revision {
     playerId: number
     gameId: number
     stats: {statId: number, count: number}[]
@@ -110,19 +131,13 @@ export interface PlayerGame {
     status?: { playerId?: number, _: "onDeck" } | { _: "inPlay" } | { _: "out" } | { _: "notPlaying" }
 }
 
-export interface Player {
-    name: string
+export interface TeamPlayer {
     id: number
     active: boolean
-}
-
-export interface TeamPlayer {
-    playerId: number
-    active: boolean
     name: string
 }
 
-export interface Team {
+export interface Team extends Revision {
     id: number
     name: string
     active: boolean
@@ -138,7 +153,10 @@ export interface TeamSingle {
     name: string
     year: string
 }
-export type Teams = TeamSingle[]
+
+export interface Teams extends Revision {
+    teams: TeamSingle[]
+}
 
 export interface CacheTeams {
     name?: string

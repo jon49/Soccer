@@ -33,7 +33,7 @@ async function start(req : Request) : Promise<View> {
     team.players = team.players.filter(x => x.active)
     let game = await required(team.games.find(x => x.id === gameId), "Could not find game ID!")
     let [playersGame, positions, activities] = await Promise.all([
-        playerGameAllGet(teamId, gameId, team.players.map(x => x.playerId)),
+        playerGameAllGet(teamId, gameId, team.players.map(x => x.id)),
         positionGetAll(teamId),
         activityGetAll(teamId),
     ])
@@ -43,7 +43,7 @@ async function start(req : Request) : Promise<View> {
 
     let playersGameView : PlayerGameView[] = playersGame.map(x => ({
         ...x,
-        name: team.players.find(y => x.playerId === y.playerId)?.name ?? ""
+        name: team.players.find(y => x.playerId === y.id)?.name ?? ""
     }))
 
     return {
@@ -132,7 +132,7 @@ function render({ team, playersGame, game, positions, activities, posted, messag
 ${when(!inPlay, html`<p>No players are in play.</p>`)}
 <ul class=list>
     ${inPlayPlayers.map((x, i) => {
-        let baseQuery = `${queryTeamGame}&playerId=${x.playerId}`
+        let baseQuery : string = `${queryTeamGame}&playerId=${x.playerId}`
         return html`
     <li>
         <form method=post action="?$${baseQuery}&handler=playerNowOut" >
@@ -373,7 +373,7 @@ const postHandlers : PostHandlers = {
         let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
         await cache.push({ posted: "swap-all" })
         let team = await teamGet(teamId)
-        let players = await playerGameAllGet(teamId, gameId, team.players.map(x => x.playerId))
+        let players = await playerGameAllGet(teamId, gameId, team.players.map(x => x.id))
         let onDeckPlayers = players.filter(x => x.status?._ === "onDeck")
         await swap({ gameId, teamId, playerIds: onDeckPlayers.map(x => x.playerId), timestamp: +new Date() })
     },
@@ -391,7 +391,7 @@ const postHandlers : PostHandlers = {
         })
         await teamSave(team)
 
-        let players = await playerGameAllGet(teamId, gameId, team.players.map(x => x.playerId))
+        let players = await playerGameAllGet(teamId, gameId, team.players.map(x => x.id))
         let inPlayPlayers = players.filter(x => x.status?._ === "inPlay")
         for (let player of inPlayPlayers) {
             let gameTime = player.gameTime.find(x => !x.start)
@@ -421,7 +421,7 @@ const postHandlers : PostHandlers = {
         }
         await teamSave(team)
 
-        let players = await playerGameAllGet(teamId, gameId, team.players.map(x => x.playerId))
+        let players = await playerGameAllGet(teamId, gameId, team.players.map(x => x.id))
         let inPlayPlayers = players.filter(x => x.status?._ === "inPlay")
         for (let player of inPlayPlayers) {
             let gameTime = player.gameTime.find(x => !x.end)

@@ -1,6 +1,6 @@
 import html from "./server/html-template-tag"
 import layout from "./_layout.html"
-import { CacheTeams, cache, Team, Message, } from "./server/db"
+import { CacheTeams, cache, Message, Team, } from "./server/db"
 import { handlePost, PostHandlers } from "./server/route"
 import { searchParams } from "./server/utils"
 import { validateObject } from "./server/validation"

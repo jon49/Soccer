@@ -18,6 +18,7 @@ export async function playerGameAllGet(teamId: number, gameId: number, playerIds
                 gameTime: [],
                 playerId: playerIds[i],
                 stats: [],
+                _rev: 0,
             }
         }
     }

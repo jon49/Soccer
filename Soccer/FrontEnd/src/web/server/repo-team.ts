@@ -1,5 +1,5 @@
-import { get, getMany, Player, set, Team, Teams, TeamSingle } from "./db"
-import { update } from "./lib/db.min"
+import { get, set, Team, Teams, TeamSingle } from "./db"
+import { getMany, update } from "./lib/db.min"
 import { reject } from "./repo"
 import { equals, getNewId } from "./utils"
 import { requiredAsync } from "./validation"
@@ -15,12 +15,13 @@ export interface WasFiltered {
 export async function teamGetAll(all: boolean, wasFiltered?: WasFiltered) : Promise<Team[]> {
     let data = await get("teams")
     if (!data) return []
-    let teamsMaybe = await getMany(data?.filter(x => all || x.active).map(x => getTeamDbId(x.id)) ?? [])
-    let teams = <Team[]>teamsMaybe.filter(x => x)
+    let teams_ = data.teams.filter(x => all || x.active)
 
     if (wasFiltered) {
-        wasFiltered.filtered = data.length !== teams.length
+        wasFiltered.filtered = data.teams.length !== teams_.length
     }
+
+    let teams = await getMany<Team>(teams_.map(x => getTeamDbId(x.id)))
 
     teams.sort((a, b) =>
         a.year !== b.year
@@ -38,14 +39,14 @@ export async function teamSave(o: Team) {
     await set<Team>(getTeamDbId(o.id), o)
 
     await update<Teams>("teams", teams => {
-            let teamId =  teams?.findIndex(x => x.id === o.id)
             if (!teams) {
                 throw new Error(`Teams doesn't exist. This should never happen!`)
             }
+            let teamId =  teams?.teams.findIndex(x => x.id === o.id)
             if (teamId === undefined || teamId === -1) {
                 throw new Error(`Could not find team with id: ${o.id}. This should have never happened!`)
             }
-            teams[teamId] = o
+            teams.teams[teamId] = o
             return teams
         })
     return
@@ -62,6 +63,7 @@ export function teamNew(o: TeamSingle): Team {
         players: [],
         games: [],
         positions: [],
+        _rev: 0,
     }
 }
 
@@ -83,9 +85,12 @@ export async function teamsCreate(o: TeamNew) : Promise<number> {
     await Promise.all([
         update<Teams>("teams", o => {
             if (o) {
-                o.push(teamSingle)
+                o.teams.push(teamSingle)
             } else {
-                return [teamSingle]
+                return {
+                    _rev: 0,
+                    teams: [teamSingle]
+                }
             }
             return o
         }),
@@ -94,36 +99,19 @@ export async function teamsCreate(o: TeamNew) : Promise<number> {
     return id
 }
 
-export async function playerGetAll(ids: number[]) {
-    return (await getMany<Player>(ids))?.filter(x => x) ?? []
-}
-
 export async function playerCreate(teamId: number, name: string) : Promise<number> {
     let team = await teamGet(teamId)
-    let id = getNewId(team.players.map(x => x.playerId))
-    let active = true
+    let id = getNewId(team.players.map(x => x.id))
 
-    let player : Player = {
-        active,
-        id,
-        name
-    }
     team.players.push({
         active: true,
         name,
-        playerId: player.id,
+        id,
     })
 
-    await Promise.all([
-        teamSave(team),
-        set(getPlayerDbId(teamId, id), player)
-    ])
+    await teamSave(team)
 
-    return player.id
-}
-
-function getPlayerDbId(teamId: number, playerId: number) {
-    return `player:${teamId}|${playerId}`
+    return id
 }
 
 function getTeamDbId(teamId: number) {
