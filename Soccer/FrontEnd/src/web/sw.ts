@@ -6,6 +6,7 @@ import playersHandler from "./players.html"
 import gamesHandler from "./games.html"
 import gamesPlayHandler from "./games/game-play.html"
 import playersEditHandler from "./players/edit.html"
+import syncHandler from "./sync"
 import { cache } from "./server/db"
 import { messageView } from "./server/shared"
 import html from "./server/html-template-tag"
@@ -18,6 +19,7 @@ addRoutes([
     playersEditHandler,
     gamesPlayHandler,
     gamesHandler,
+    syncHandler,
 ])
 
 const links : string[] = [] // File cache

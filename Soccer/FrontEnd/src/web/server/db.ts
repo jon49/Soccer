@@ -22,6 +22,7 @@ async function set(key: string, value: any, sync = true) {
         }
     }
     await set1(key, value)
+    return
 }
 
 function update<K extends keyof DBAccessors>(key: K, f: (val: DBAccessors[K]) => DBAccessors[K], sync?: { sync: boolean }): Promise<void>

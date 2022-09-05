@@ -8,6 +8,7 @@ public
 *.zip
 bin
 wwwroot
+!wwwroot/favicon.ico
 !WeightTracker/src/static/web/node_modules/@types/global.d.ts
 
 # Logs

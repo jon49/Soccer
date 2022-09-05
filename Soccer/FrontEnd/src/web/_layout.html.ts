@@ -12,10 +12,9 @@ interface Render {
     theme: string | undefined
     error: Message
     syncCount: number
-    url: string
 }
 
-const render = ({theme, error, syncCount, url}: Render) => (o: LayoutTemplateArguments) => {
+const render = ({theme, error, syncCount}: Render) => (o: LayoutTemplateArguments) => {
     const { main, head, scripts, nav } = o
     return html`
 <!DOCTYPE html>
@@ -34,7 +33,6 @@ const render = ({theme, error, syncCount, url}: Render) => (o: LayoutTemplateArg
         <div class=sync>
             <h1 class=inline>Soccer</h1>
             <form class=inline method=POST action="/web/sync/">
-                <input type=hidden name=url value="${url}">
                 <button>Sync&nbsp;-&nbsp;${""+syncCount}</button>
             </form>
         </div>
@@ -65,7 +63,7 @@ const getSyncCount = async () => (await get("updated"))?.size ?? 0
 export default
     async function layout(req: Request) {
         let [theme, syncCount, error] = await Promise.all([get("settings"), getSyncCount(), cache.pop("message")])
-        return render({theme: theme?.theme, error, syncCount, url: req.url})
+        return render({ theme: theme?.theme, error, syncCount })
     }
 
 export type Layout = typeof layout
