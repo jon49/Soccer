@@ -70,7 +70,7 @@ export interface RoutePostArgs {
     req: Request 
 }
 export interface RoutePost {
-    (options: RoutePostArgs): Promise<HTMLReturnType>|Promise<Response>
+    (options: RoutePostArgs): Promise<HTMLReturnType> | Promise<Response>
 }
 export interface Route {
     route: RegExp | ((a: URL) => boolean)

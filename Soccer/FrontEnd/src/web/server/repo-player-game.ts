@@ -1,4 +1,4 @@
-import { Activity, get, getMany, PlayerGame, Position, set } from "./db";
+import { Activities, get, getMany, PlayerGame, Position, Positions, set } from "./db";
 import { equals, getNewId } from "./utils";
 
 function getPlayerGameKey(teamId: number, gameId: number, playerId: number) {
@@ -29,12 +29,12 @@ function getPositionsId(teamId: number) {
     return `positions:${teamId}`
 }
 
-export async function positionGetAll(teamId: number) : Promise<Position[]> {
-    return (await get<Position[]>(getPositionsId(teamId))) ?? []
+export async function positionGetAll(teamId: number) : Promise<Positions> {
+    return (await get<Positions>(getPositionsId(teamId))) ?? { _rev: 0, positions: [] }
 }
 
 export async function positionCreateOrGet(teamId: number, position: string) : Promise<Position> {
-    let positions = await positionGetAll(teamId)
+    let { positions } = await positionGetAll(teamId)
     let positionObj = positions.find(x => equals(x.name, position))
     if (!positionObj) {
         positionObj = {
@@ -47,13 +47,13 @@ export async function positionCreateOrGet(teamId: number, position: string) : Pr
 }
 
 async function positionSave(teamId: number, position: Position) {
-    let positions = await positionGetAll(teamId)
+    let { positions, _rev } = await positionGetAll(teamId)
     let existingPosition = positions.find(x => x.id === position.id)
     if (existingPosition) return
     positions.push(position)
-    await set(getPositionsId(teamId), positions)
+    await set(getPositionsId(teamId), { positions, _rev })
 }
 
-export async function activityGetAll(teamId: number) : Promise<Activity[]> {
-    return (await get<Activity[]>(`${teamId}|activities`)) ?? []
+export async function activityGetAll(teamId: number) : Promise<Activities> {
+    return (await get<Activities>(`${teamId}|activities`)) ?? { activities: [], _rev: 0 }
 }

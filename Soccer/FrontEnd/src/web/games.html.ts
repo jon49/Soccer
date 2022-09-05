@@ -97,7 +97,7 @@ export default {
     route: /\/games\/$/,
     async get(req: Request) {
         const result = await start(req)
-        const template = await layout(req)
+        const template = await layout()
         return template({ main: render(result) })
     },
     post: handlePost(postHandlers),

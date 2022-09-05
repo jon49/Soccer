@@ -1,5 +1,4 @@
-import { get, set, Team, Teams, TeamSingle } from "./db"
-import { getMany, update } from "./lib/db.min"
+import { get, set, update, getMany, Team, Teams, TeamSingle } from "./db"
 import { reject } from "./repo"
 import { equals, getNewId } from "./utils"
 import { requiredAsync } from "./validation"

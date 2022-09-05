@@ -32,7 +32,7 @@ async function start(req : Request) : Promise<View> {
     ])
     team.players = team.players.filter(x => x.active)
     let game = await required(team.games.find(x => x.id === gameId), "Could not find game ID!")
-    let [playersGame, positions, activities] = await Promise.all([
+    let [playersGame, { positions }, { activities }] = await Promise.all([
         playerGameAllGet(teamId, gameId, team.players.map(x => x.id)),
         positionGetAll(teamId),
         activityGetAll(teamId),
@@ -481,7 +481,7 @@ const route : Route = {
     route: (url: URL) => url.pathname.endsWith("/games/") && url.searchParams.has("gameId") && url.searchParams.has("teamId"),
     async get(req: Request) {
         const result = await start(req)
-        const template = await layout(req)
+        const template = await layout()
         return template({ main: render(result), head: `<script src= "/web/js/game-timer.js"></script>`, scripts: ["/web/js/lib/request-submit.js", "/web/js/lib/htmf.js"] })
     },
     post: handlePost(postHandlers),

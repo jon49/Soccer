@@ -1,6 +1,7 @@
 import { get, getMany, set, setMany, update, Updated } from "./server/db.js"
 import { reject } from "./server/repo.js"
 import { RoutePostArgs } from "./server/route.js"
+import { redirect } from "./server/utils.js"
 
 async function post({ req }: RoutePostArgs) {
     let updated = await get("updated") ?? new Map
@@ -51,7 +52,7 @@ async function post({ req }: RoutePostArgs) {
         ...updatedRevisionsTask,
         update("settings", val => ({ ...val, lastSyncedId: newData.lastSyncedId }), { sync: false }),
         update("updated", (val: Updated) => (val?.clear(), val), { sync: false })])
-    return
+    return redirect(req)
 }
 
 interface PostData {

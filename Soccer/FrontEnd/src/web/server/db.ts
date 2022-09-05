@@ -25,11 +25,11 @@ async function set(key: string, value: any, sync = true) {
     return
 }
 
-function update<K extends keyof DBAccessors>(key: K, f: (val: DBAccessors[K]) => DBAccessors[K], sync?: { sync: boolean }): Promise<void>
-function update<T>(key: string, f: (val: T) => T, sync?: { sync: boolean }): Promise<void>
-async function update(key: string, f: (v: any) => any, sync = { sync: true }) {
+function update<K extends keyof DBAccessors>(key: K, f: (val: DBAccessors[K]) => DBAccessors[K], options?: { sync: boolean }): Promise<void>
+function update<T>(key: string, f: (val: T) => T, options?: { sync: boolean }): Promise<void>
+async function update(key: string, f: (v: any) => any, options = { sync: true }) {
     await update1(key, f)
-    if (sync.sync) {
+    if (options.sync) {
         let o : any = await get(key)
         if (o && "_rev" in o) {
             await _updated(key, o._rev)

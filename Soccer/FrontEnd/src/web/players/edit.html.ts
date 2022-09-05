@@ -161,7 +161,7 @@ const route : Route = {
     route: /\/players\/edit\/$/,
     async get(req: Request) {
         let result = await start(req)
-        const template = await layout(req)
+        const template = await layout()
         return template({ main: render(result), scripts: ["/web/js/lib/request-submit.js", "/web/js/lib/htmf.js", "/web/js/players-edit.js"] })
     },
     post: handlePost(postHandlers)

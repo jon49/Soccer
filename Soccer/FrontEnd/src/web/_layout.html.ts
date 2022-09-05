@@ -61,7 +61,7 @@ const render = ({theme, error, syncCount}: Render) => (o: LayoutTemplateArgument
 const getSyncCount = async () => (await get("updated"))?.size ?? 0
 
 export default
-    async function layout(req: Request) {
+    async function layout() {
         let [theme, syncCount, error] = await Promise.all([get("settings"), getSyncCount(), cache.pop("message")])
         return render({ theme: theme?.theme, error, syncCount })
     }

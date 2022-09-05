@@ -55,8 +55,8 @@ function render({ team, message, wasFiltered, name, posted }: PlayersView) {
         ${team.players.map(x =>
             html`
             <li>
-                <a href="?playerId=${x.playerId}&teamId=${team.id}">${x.name}</a>
-                <a href="/web/players/edit?teamId=${team.id}#_${x.playerId}">Edit</a>
+                <a href="?playerId=${x.id}&teamId=${team.id}">${x.name}</a>
+                <a href="/web/players/edit?teamId=${team.id}#_${x.id}">Edit</a>
             </li>`
         )}
     </ul>`
@@ -81,7 +81,7 @@ const route : Route = {
     route: /\/players\/$/,
     async get(req: Request) {
         const result = await start(req)
-        const template = await layout(req)
+        const template = await layout()
         return template({
             main: render(result),
             nav: [{name: "Edit", url: `/web/players/edit?teamId=${result.team.id}#team`}] })
