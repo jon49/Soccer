@@ -1,22 +1,29 @@
+// @ts-check
+
 (() => {
 
     const times = new Map
 
-    function timer(time, f, instance) {
+    /**
+     * @param {GameTimer} instance
+     */
+    function timer(instance) {
+        let time = instance.interval
+        /** @type {Set<GameTimer>} */
         let o = times.get(time)
         if (o) {
-            o.set(instance, f)
+            o.add(instance)
         } else {
-            let m = new Map
-            m.set(instance, f)
+            let m = new Set
+            m.add(instance)
             times.set(time, m)
             setInterval(() => {
                 let o = times.get(time)
                 if (o) {
                     let currentTime = +new Date()
                     requestAnimationFrame(() => {
-                        for (let f of o.values()) {
-                            f(currentTime)
+                        for (let instance of o.values()) {
+                            instance.update(currentTime)
                         }
                     })
                 }
@@ -24,30 +31,70 @@
         }
     }
 
-    customElements.define("game-timer", 
-        class GameTimer extends HTMLElement {
-            connectedCallback() {
-                this.start = +this.dataset.timerStart || +new Date()
-                this.total = +this.dataset.timerTotal || 0
-                this.interval = +this.dataset.timerInterval || 1e3
-                let f = (currentTime) => {
-                    let total = this.total + (currentTime - this.start)
-                    let time = new Date(total)
-                    let seconds = (""+time.getSeconds()).padStart(2, "0")
-                    let minutes = (""+time.getMinutes()).padStart(2, "0")
-                    let hours = total/1e3/60/60|0
-                    this.textContent = `${ hours ? ""+hours+":" : "" }${minutes}:${seconds}`
+    class GameTimer extends HTMLElement {
+        constructor() {
+            super()
+
+            this.start = 0
+            this.total = 0
+            this.interval = 0
+            this.flash = false
+            timer(this)
+            this.root = this.attachShadow({ mode: "closed" })
+            this.root.innerHTML = `
+            <style>
+                .flash {
+                    background-color: yellow;
+                    animation: 8s flash infinite;
                 }
-                timer(this.interval, f, this)
-                f(+new Date())
-            }
-            disconnectedCallback() {
-                let t = timer.get(this.interval)
-                if (t) {
-                    t.delete(this)
+                span {
+                    padding: 0.25em;
+                    border-radius: 5px;
                 }
+                @keyframes flash {
+                    0%, 50%, 100% {
+                        opacity: 1;
+                    }
+                    25%, 75% {
+                        opacity: 0;
+                    }
+                }
+            </style>
+            <span id=a></span>
+            `
+            /** @type {HTMLSpanElement} */
+            // @ts-ignore
+            this.a = this.root.getElementById("a")
+        }
+
+        connectedCallback() {
+            this.start = +(this.dataset.timerStart ?? 0) || +new Date()
+            this.total = +(this.dataset.timerTotal ?? 0)
+            this.interval = +(this.dataset.timerInterval ?? 0) || 1e3
+            this.a.classList.add(this.hasAttribute("data-timer-flash") ? "flash" : "")
+            this.update(+new Date())
+        }
+
+        disconnectedCallback() {
+            let t = times.get(this.interval)
+            if (t) {
+                t.delete(this)
             }
         }
-    )
+
+        /**
+         * @param {number} currentTime
+         */
+        update(currentTime) {
+            let total = this.total + (currentTime - this.start)
+            let time = new Date(total)
+            let seconds = (""+time.getSeconds()).padStart(2, "0")
+            let minutes = (""+time.getMinutes()).padStart(2, "0")
+            let hours = total/1e3/60/60|0
+            this.a.textContent = `${ hours ? ""+hours+":" : "" }${minutes}:${seconds}`
+        }
+    }
+
+    customElements.define("game-timer", GameTimer)
 
 })()

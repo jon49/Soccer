@@ -107,13 +107,17 @@ function render({ team, playersGame, game, positions, activities, posted, messag
         .sort((a, b) => a.total - b.total)
     let notPlayingPlayers = playersGame.filter(filterNotPlayingPlayers)
     let notPlaying = notPlayingPlayers.length > 0
+    let timerStarted = game.status === "play"
     return html`
 <h2>${team.name} - Game ${game.date} ${when(game.opponent, x => ` - ${x}`)}</h2>
 <div>
     <form class=inline method=post action="?$${queryTeamGame}&handler=${game.status === "play" ? "pauseGame" : "startGame"}">
         <button>${game.status === "play" ? "Pause" : "Start"}</button>
     </form>
-    <game-timer data-timer-start=${start} data-timer-total=${total}></game-timer>
+    <game-timer
+        $${when(!timerStarted, "data-timer-flash")}
+        $${when(timerStarted, () => `data-timer-start="${start}"`)}
+        $${when(timerStarted, () => `data-timer-total="${total}"`)}></game-timer>
     <span>Points</span>
     <form class=inline method=post>
         <button formaction="?$${queryTeamGame}&handler=pointsDec" target="#points">-</button>
