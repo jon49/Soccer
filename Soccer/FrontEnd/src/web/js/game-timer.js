@@ -36,18 +36,15 @@
             <style>
                 .flash {
                     background-color: yellow;
-                    animation: 8s flash infinite;
+                    animation: 2s flash infinite;
                 }
                 span {
                     padding: 0.25em;
                     border-radius: 5px;
                 }
                 @keyframes flash {
-                    0%, 50%, 100% {
-                        opacity: 1;
-                    }
-                    25%, 75% {
-                        opacity: 0;
+                    50% {
+                        background-color: transparent;
                     }
                 }
             </style>
