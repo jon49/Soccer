@@ -116,20 +116,24 @@ function render({ team, playersGame, game, positions, activities, posted, messag
     </form>
     <game-timer
         $${when(!timerStarted, "data-timer-flash")}
-        $${when(timerStarted, () => `data-timer-start="${start}"`)}
-        $${when(timerStarted, () => `data-timer-total="${total}"`)}></game-timer>
-    <span>Points</span>
-    <form class=inline method=post>
-        <button formaction="?$${queryTeamGame}&handler=pointsDec" target="#points">-</button>
-        <span id=points>&nbsp;${getPointsView(game.points)}&nbsp;</span>
-        <button formaction="?$${queryTeamGame}&handler=pointsInc" target="#points">+</button>
-    </form>
-    <span>Opponent</span>
-    <form class=inline method=post>
-        <button formaction="?$${queryTeamGame}&handler=oPointsDec" target="#o-points">-</button>
-        <span id=o-points>&nbsp;${getPointsView(game.opponentPoints)}&nbsp;</span>
-        <button formaction="?$${queryTeamGame}&handler=oPointsInc" target="#o-points">+</button>
-    </form>
+        $${when(timerStarted, () => `data-timer-start="${start}" data-timer-total="${total}"`)}
+        ></game-timer>
+    <div class=inline>
+        <span>Points</span>
+        <form class=inline method=post>
+            <button formaction="?$${queryTeamGame}&handler=pointsDec" target="#points">-</button>
+            <span id=points>&nbsp;${getPointsView(game.points)}&nbsp;</span>
+            <button formaction="?$${queryTeamGame}&handler=pointsInc" target="#points">+</button>
+        </form>
+    </div>
+    <div class=inline>
+        <span>Opponent</span>
+        <form class=inline method=post>
+            <button formaction="?$${queryTeamGame}&handler=oPointsDec" target="#o-points">-</button>
+            <span id=o-points>&nbsp;${getPointsView(game.opponentPoints)}&nbsp;</span>
+            <button formaction="?$${queryTeamGame}&handler=oPointsInc" target="#o-points">+</button>
+        </form>
+    </div>
 </div>
 
 <h3>In-Play</h3>
@@ -137,47 +141,52 @@ ${when(!inPlay, html`<p>No players are in play.</p>`)}
 <ul class=list>
     ${inPlayPlayers.map((x, i) => {
         let baseQuery : string = `${queryTeamGame}&playerId=${x.playerId}`
+        let positionId = x.gameTime.slice(-1)[0].positionId
+        let position = positions.find(x => x.id = positionId)?.name
         return html`
     <li>
         <form method=post action="?$${baseQuery}&handler=playerNowOut" >
             <button>X</button>
         </form>
-        <span>${x.name}</span>
-        <form
-            method=post
-            action="?$${baseQuery}&handler=positionChange"
-            onchange="this.requestSubmit()">
-            <select name=positionId>
-                ${positions.map(position => html`
-                <option value="${position.id}" ${when(position.id === x.gameTime.slice(-1)[0].positionId, "selected")}>${position.name}</option>`)}
-            </select>
-        </form>
-        <form
-            method=post
-            action="?$${baseQuery}&handler=activityMarker"
-            target="in-play-activity-${i}"
-            onchange="this.requestSubmit()"
-            >
-            <input
-                id=in-play-activity-${i}
-                type=search
-                name=activity
-                list=activities
-                autocomplete=off
-                placeholder="Mark an activity" >
-        </form>
-        ${when(game.status === "play", html`
-        <game-timer
-            data-timer-start=${x.start}
-            data-timer-total=${x.total}></game-timer>
-        `)}
+        <details>
+            <summary>
+                ${x.name} -
+                ${position}
+                ${when(timerStarted, () =>
+                    html`<game-timer data-timer-start=${x.start} data-timer-total=${x.total}></game-timer>`)}
+            </summary>
+
+            <form
+                method=post
+                action="?$${baseQuery}&handler=positionChange"
+                onchange="this.requestSubmit()">
+                <select name=positionId>
+                    ${positions.map(position => html`
+                    <option value="${position.id}" ${when(position.id === x.gameTime.slice(-1)[0].positionId, "selected")}>${position.name}</option>`)}
+                </select>
+            </form>
+
+            <form
+                method=post
+                action="?$${baseQuery}&handler=activityMarker"
+                target="in-play-activity-${i}"
+                onchange="this.requestSubmit()"
+                >
+                <input
+                    id=in-play-activity-${i}
+                    type=search
+                    name=activity
+                    list=activities
+                    autocomplete=off
+                    placeholder="Mark an activity" >
+            </form>
+        </details>
     </li>
     `})}
 </ul>
 
+${when(onDeck, () => html`
 <h3>On Deck</h3>
-
-${when(!onDeck, html`<p>No players are on deck.</p>`)}
 
 <ul class=list>
     ${playersGame.filter(filterOnDeckPlayers).map(x => {
@@ -198,16 +207,15 @@ ${when(!onDeck, html`<p>No players are on deck.</p>`)}
         <span>${x.name}${when(inPlayName, x => html` for ${x}`)} ${when(position, x => html` - ${x}`)}</span>
     </li>
     `})}
-</ul>
+</ul>`)}
 
 ${when(onDeck, () => html`
 <form method=post action="?$${queryTeamGame}&handler=swapAll">
     <button>Swap All</button>
 </form>`)}
 
+${when(out, () => html`
 <h3>Out</h3>
-
-${when(!out, html`<p>No players are currently out.</p>`)}
 
 <ul class=list>
     ${outPlayers.map(x => {
@@ -238,12 +246,10 @@ ${when(!out, html`<p>No players are currently out.</p>`)}
     </li>
         `
     })}
-</ul>
+</ul>`)}
 
+${when(notPlaying, html`
 <h3>Not Playing</h3>
-
-${when(!notPlaying, html`<p>All players will be playing the game!</p>`)}
-
 <ul class=list>
     ${notPlayingPlayers.map(x => html`
     <li>
@@ -254,7 +260,7 @@ ${when(!notPlaying, html`<p>All players will be playing the game!</p>`)}
     </li>
     `)}
 </ul>
-
+`)}
 
 <datalist id=activities>
     ${activities.map(x => html`<option value="${x.name}"`)}
@@ -484,9 +490,21 @@ const postHandlers : PostHandlers = {
 const route : Route = {
     route: (url: URL) => url.pathname.endsWith("/games/") && url.searchParams.has("gameId") && url.searchParams.has("teamId"),
     async get(req: Request) {
-        const result = await start(req)
-        const template = await layout()
-        return template({ main: render(result), head: `<script src= "/web/js/game-timer.js"></script>`, scripts: ["/web/js/lib/request-submit.js", "/web/js/lib/htmf.js"] })
+        let result = await start(req)
+        let template = await layout()
+        let head = `
+            <style>
+                summary {
+                    cursor: pointer;
+                    list-style: none;
+                }
+                summary::before {
+                    content: '\u2699'
+                }
+            </style>
+            <script src= "/web/js/game-timer.js"></script>
+        `
+        return template({ main: render(result), head, scripts: ["/web/js/lib/request-submit.js", "/web/js/lib/htmf.js"] })
     },
     post: handlePost(postHandlers),
 }
