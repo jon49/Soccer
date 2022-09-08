@@ -524,7 +524,7 @@ const route : Route = {
                     cursor: pointer;
                 }
             </style>
-            <script src= "/web/js/game-timer.js"></script>
+            <script src= "/web/js/game-timer.v2.js"></script>
         `
         return template({ main: render(result), head, scripts: ["/web/js/lib/request-submit.js", "/web/js/lib/htmf.js"] })
     },
