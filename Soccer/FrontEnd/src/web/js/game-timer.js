@@ -19,14 +19,13 @@
             times.set(time, m)
             setInterval(() => {
                 let o = times.get(time)
-                if (o) {
-                    let currentTime = +new Date()
-                    requestAnimationFrame(() => {
-                        for (let instance of o.values()) {
-                            instance.update(currentTime)
-                        }
-                    })
-                }
+                if (!o) return
+                let currentTime = +new Date()
+                requestAnimationFrame(() => {
+                    for (let instance of o) {
+                        instance.update(currentTime)
+                    }
+                })
             }, time)
         }
     }
@@ -35,11 +34,8 @@
         constructor() {
             super()
 
-            this.start = 0
-            this.total = 0
-            this.interval = 0
+            this.start = this.total = this.interval = 0
             this.flash = false
-            timer(this)
             this.root = this.attachShadow({ mode: "closed" })
             this.root.innerHTML = `
             <style>
@@ -72,6 +68,7 @@
             this.total = +(this.dataset.timerTotal ?? 0)
             this.interval = +(this.dataset.timerInterval ?? 0) || 1e3
             this.a.setAttribute("class", this.hasAttribute("data-timer-flash") ? "flash" : "")
+            timer(this)
             this.update(+new Date())
         }
 
@@ -91,7 +88,7 @@
             let seconds = (""+time.getSeconds()).padStart(2, "0")
             let minutes = (""+time.getMinutes()).padStart(2, "0")
             let hours = total/1e3/60/60|0
-            this.a.textContent = `${ hours ? ""+hours+":" : "" }${minutes}:${seconds}`
+            this.a.textContent = `${ hours ? `${hours}:` : "" }${minutes}:${seconds}`
         }
     }
 
