@@ -283,6 +283,7 @@ header {
 .list {
     list-style-type: none;
     display: table;
+    padding: 0;
 }
 
 .list > li {
