@@ -9,25 +9,20 @@
      */
     function timer(instance) {
         let time = instance.interval
-        /** @type {Set<GameTimer>} */
-        let o = times.get(time)
-        if (o) {
-            o.add(instance)
-        } else {
-            let m = new Set
-            m.add(instance)
-            times.set(time, m)
-            setInterval(() => {
-                let o = times.get(time)
-                if (!o) return
+        if (times.get(time)?.add(instance)) return
+
+        let m = new Set([instance])
+        times.set(time, m)
+        setInterval(() => {
+            let o = times.get(time)
+            if (!o) return
+            requestAnimationFrame(() => {
                 let currentTime = +new Date()
-                requestAnimationFrame(() => {
-                    for (let instance of o) {
-                        instance.update(currentTime)
-                    }
-                })
-            }, time)
-        }
+                for (let instance of o) {
+                    instance.update(currentTime)
+                }
+            })
+        }, time)
     }
 
     class GameTimer extends HTMLElement {
@@ -56,8 +51,7 @@
                     }
                 }
             </style>
-            <span id=a></span>
-            `
+            <span id=a></span>`
             /** @type {HTMLSpanElement} */
             // @ts-ignore
             this.a = this.root.getElementById("a")
@@ -73,10 +67,7 @@
         }
 
         disconnectedCallback() {
-            let t = times.get(this.interval)
-            if (t) {
-                t.delete(this)
-            }
+            times.get(this.interval)?.delete(this)
         }
 
         /**
