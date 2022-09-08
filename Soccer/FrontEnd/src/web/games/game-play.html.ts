@@ -58,7 +58,8 @@ async function start(req : Request) : Promise<View> {
 }
 
 function getPositionName(positions: Position[], gameTime: GameTime[]) {
-    return positions.find(y => y.id === gameTime.find(x => !x.end)?.positionId)?.name
+    let positionId = gameTime.slice(-1)[0]?.positionId
+    return positions.find(x => x.id === positionId)?.name
 }
 
 const filterOutPlayers = (x: PlayerGameView) => !x.status || x.status?._ === "out"
@@ -142,7 +143,7 @@ ${when(!inPlay, html`<p>No players are in play.</p>`)}
     ${inPlayPlayers.map((x, i) => {
         let baseQuery : string = `${queryTeamGame}&playerId=${x.playerId}`
         let positionId = x.gameTime.slice(-1)[0].positionId
-        let position = positions.find(x => x.id = positionId)?.name
+        let position = positions.find(x => x.id === positionId)?.name
         return html`
     <li>
         <form method=post action="?$${baseQuery}&handler=playerNowOut" >
@@ -228,14 +229,17 @@ ${when(out, () => html`
         <p>${x.name}</p>
         ${when(availablePlayersToSwap.length > 0, _ =>
             html`
-        <form method=post action="?$${queryTeamGame}&playerId=$${x.playerId}&handler=onDeckWith" onchange="this.submit()">
-            <select name="swapPlayerId">
+        <form class=disappearing method=post action="?$${queryTeamGame}&playerId=$${x.playerId}&handler=onDeckWith" onchange="this.submit()">
+            <label class=pointer for=swap-player-id${x.playerId}>🏃</label>
+            <select id=swap-player-id${x.playerId} name="swapPlayerId">
                 <option selected></option>
                 ${availablePlayersToSwap.map(x => html`<option value="${x.playerId}">${x.name}</option>`) }
             </select>
         </form>`)}
-        <form method=post action="?$${queryTeamGame}&playerId=$${x.playerId}&handler=addPlayerPosition" onchange="this.submit()">
+        <form class=disappearing method=post action="?$${queryTeamGame}&playerId=$${x.playerId}&handler=addPlayerPosition" onchange="this.submit()">
+            <label class=pointer for=position-select${x.playerId}>#</label>
             <input
+                id=position-select${x.playerId}
                 type=search
                 name=position
                 list=positions
