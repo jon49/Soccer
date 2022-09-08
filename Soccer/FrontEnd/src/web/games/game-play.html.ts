@@ -499,7 +499,21 @@ const route : Route = {
                     list-style: none;
                 }
                 summary::before {
-                    content: '\u2699'
+                    content: '\u2699';
+                    font-weight: 900;
+                }
+                .disappearing:focus-within > label {
+                    display: none;
+                }
+                .disappearing > select, .disappearing > input {
+                    position: absolute;
+                    left: -1000px;
+                }
+                .disappearing > select:focus, .disappearing > input:focus {
+                    position: inherit;
+                }
+                .pointer {
+                    cursor: pointer;
                 }
             </style>
             <script src= "/web/js/game-timer.js"></script>
