@@ -71,7 +71,7 @@
             this.start = +(this.dataset.timerStart ?? 0) || +new Date()
             this.total = +(this.dataset.timerTotal ?? 0)
             this.interval = +(this.dataset.timerInterval ?? 0) || 1e3
-            this.a.classList.add(this.hasAttribute("data-timer-flash") ? "flash" : "")
+            this.a.setAttribute("class", this.hasAttribute("data-timer-flash") ? "flash" : "")
             this.update(+new Date())
         }
 
