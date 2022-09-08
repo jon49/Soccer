@@ -57,9 +57,13 @@ async function start(req : Request) : Promise<View> {
     }
 }
 
-function getPositionName(positions: Position[], gameTime: GameTime[]) {
-    let positionId = gameTime.slice(-1)[0]?.positionId
+function getPositionName(positions: Position[], gameTimes: GameTime[]) {
+    let positionId = tail(gameTimes)?.positionId
     return positions.find(x => x.id === positionId)?.name
+}
+
+function tail<T>(xs: T[]) : T {
+    return xs.slice(-1)[0]
 }
 
 const filterOutPlayers = (x: PlayerGameView) => !x.status || x.status?._ === "out"
@@ -142,8 +146,9 @@ ${when(!inPlay, html`<p>No players are in play.</p>`)}
 <ul class=list>
     ${inPlayPlayers.map((x, i) => {
         let baseQuery : string = `${queryTeamGame}&playerId=${x.playerId}`
-        let positionId = x.gameTime.slice(-1)[0].positionId
+        let positionId = tail(x.gameTime).positionId
         let position = positions.find(x => x.id === positionId)?.name
+        let playerInfoId = `in-play-${x.playerId}`
         return html`
     <li>
         <form method=post action="?$${baseQuery}&handler=playerNowOut" >
@@ -151,19 +156,19 @@ ${when(!inPlay, html`<p>No players are in play.</p>`)}
         </form>
         <details>
             <summary>
-                ${x.name} -
-                ${position}
+                <span id=${playerInfoId}>${inPlayPlayerInfoView(x.name, position)}</span>
                 ${when(timerStarted, () =>
                     html`<game-timer data-timer-start=${x.start} data-timer-total=${x.total}></game-timer>`)}
             </summary>
 
             <form
+                target=#${playerInfoId}
                 method=post
                 action="?$${baseQuery}&handler=positionChange"
                 onchange="this.requestSubmit()">
                 <select name=positionId>
                     ${positions.map(position => html`
-                    <option value="${position.id}" ${when(position.id === x.gameTime.slice(-1)[0].positionId, "selected")}>${position.name}</option>`)}
+                    <option value="${position.id}" ${when(position.id === tail(x.gameTime).positionId, "selected")}>${position.name}</option>`)}
                 </select>
             </form>
 
@@ -311,10 +316,10 @@ async function swap({ teamId, playerIds, gameId, timestamp } : { teamId : number
     let [team, players] = await Promise.all([teamGet(teamId), playerGameAllGet(teamId, gameId, playerIds)])
     let game = await required(team.games.find(x => x.id === gameId), "Could not find game ID!")
     for (let player of players) {
-        let [gameTime] = player.gameTime.slice(-1)
+        let gameTime = tail(player.gameTime)
         if (player.status?._ === "onDeck" && player.status.playerId) {
             let [swapPlayer] = await playerGameAllGet(teamId, gameId, [player.status.playerId])
-            let swapGameTime = swapPlayer.gameTime.slice(-1)[0]
+            let swapGameTime = tail(swapPlayer.gameTime)
             swapGameTime.end = timestamp
             swapPlayer.status = { _: "out" }
             await playerGameSave(teamId, swapPlayer)
@@ -325,6 +330,10 @@ async function swap({ teamId, playerIds, gameId, timestamp } : { teamId : number
         player.status = { _: "inPlay" }
         await playerGameSave(teamId, player)
     }
+}
+
+function inPlayPlayerInfoView(playerName: string | undefined, positionName: string | undefined) {
+    return html`${playerName} - ${positionName}`
 }
 
 const postHandlers : PostHandlers = {
@@ -361,7 +370,7 @@ const postHandlers : PostHandlers = {
         await cache.push({ posted: `player:${playerId}` })
         let [p] = await playerGameAllGet(teamId, gameId, [playerId])
         p.status = {_: "out"}
-        p.gameTime.slice(-1)[0].end = +new Date()
+        tail(p.gameTime).end = +new Date()
         await playerGameSave(teamId, p)
     },
 
@@ -371,14 +380,14 @@ const postHandlers : PostHandlers = {
         await cache.push({ posted: `player:${playerId}` })
         let [player, swapPlayer] = await playerGameAllGet(teamId, gameId, [playerId, swapPlayerId])
         player.status = { _: "onDeck", playerId: swapPlayer.playerId }
-        let gameTime = player.gameTime.slice(-1)[0]
+        let gameTime = tail(player.gameTime)
         if (!gameTime || gameTime.end) {
             gameTime = {
-                positionId: swapPlayer.gameTime.slice(-1)[0].positionId
+                positionId: tail(swapPlayer.gameTime).positionId
             }
             player.gameTime.push(gameTime)
         } else {
-            gameTime.positionId = swapPlayer.gameTime.slice(-1)[0].positionId
+            gameTime.positionId = tail(swapPlayer.gameTime).positionId
         }
         await playerGameSave(teamId, player)
     },
@@ -408,15 +417,8 @@ const postHandlers : PostHandlers = {
         let players = await playerGameAllGet(teamId, gameId, team.players.map(x => x.id))
         let inPlayPlayers = players.filter(x => x.status?._ === "inPlay")
         for (let player of inPlayPlayers) {
-            let gameTime = player.gameTime.find(x => !x.start)
-            if (gameTime) {
-                gameTime.start = timestamp
-            } else {
-                player.gameTime.push({
-                    positionId: player.gameTime.slice(-1)[0].positionId,
-                    start: timestamp
-                })
-            }
+            let gameTime = tail(player.gameTime)
+            gameTime.start = timestamp
             await playerGameSave(teamId, player)
         }
     },
@@ -429,7 +431,7 @@ const postHandlers : PostHandlers = {
 
         let game = await required(team.games.find(x => x.id === gameId), `Could not find game! ${gameId}`)
         game.status = "paused"
-        let time = game.gameTime.find(x => !x.end)
+        let time = tail(game.gameTime)
         if (time) {
             time.end = timestamp
         }
@@ -438,7 +440,7 @@ const postHandlers : PostHandlers = {
         let players = await playerGameAllGet(teamId, gameId, team.players.map(x => x.id))
         let inPlayPlayers = players.filter(x => x.status?._ === "inPlay")
         for (let player of inPlayPlayers) {
-            let gameTime = player.gameTime.find(x => !x.end)
+            let gameTime = tail(player.gameTime)
             if (gameTime) {
                 gameTime.end = timestamp
                 player.gameTime.push({
@@ -480,13 +482,15 @@ const postHandlers : PostHandlers = {
         await cache.push({ posted: `player:${playerId}` })
         let [player] = await playerGameAllGet(teamId, gameId, [playerId])
         let timestamp = +new Date()
-        player.gameTime.slice(-1)[0].end = timestamp
+        tail(player.gameTime).end = timestamp
         player.gameTime.push({
             positionId,
             start: timestamp,
         })
         await playerGameSave(teamId, player)
-        return html``
+        let [p, positions] = await Promise.all([teamGet(teamId), positionGetAll(teamId)])
+        let position = positions.positions.find(x => x.id === positionId)
+        return inPlayPlayerInfoView(p.players.find(x => x.id === playerId)?.name, position?.name)
     },
 
 }
