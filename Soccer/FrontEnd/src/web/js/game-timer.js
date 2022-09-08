@@ -13,12 +13,15 @@
 
         let m = new Set([instance])
         times.set(time, m)
-        setInterval(() => {
-            let o = times.get(time)
-            if (!o) return
+        let interval = setInterval(() => {
+            if (m.size === 0) {
+                times.delete(time)
+                clearInterval(interval)
+                return
+            }
             requestAnimationFrame(() => {
                 let currentTime = +new Date()
-                for (let instance of o) {
+                for (let instance of m) {
                     instance.update(currentTime)
                 }
             })
