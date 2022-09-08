@@ -120,7 +120,7 @@ function render({ team, playersGame, game, positions, activities, posted, messag
         <button>${game.status === "play" ? "Pause" : "Start"}</button>
     </form>
     <game-timer
-        $${when(!timerStarted, "data-timer-flash")}
+        $${when(!timerStarted, `data-timer-flash data-timer-start="${tail(game.gameTime)?.end}"`)}
         $${when(timerStarted, () => `data-timer-start="${start}" data-timer-total="${total}"`)}
         ></game-timer>
     <div class=inline>
