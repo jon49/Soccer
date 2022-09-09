@@ -91,7 +91,7 @@ export function optional<T>(validator: (val: T | undefined) => Promise<T>) {
 
 class Assert {
     isFalse(value: boolean, message: string) {
-        return !value ? void 0 : reject(message)
+        return !value ? Promise.resolve() : reject(message)
     }
     isTrue(value: boolean, message: string) {
         return this.isFalse(!value, message)

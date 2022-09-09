@@ -7,6 +7,7 @@ import gamesHandler from "./games.html"
 import gamesPlayHandler from "./games/game-play.html"
 import playersEditHandler from "./players/edit.html"
 import positionsHandler from "./positions.html"
+import activitiesHandler from "./activities.html"
 import syncHandler from "./sync"
 import { cache } from "./server/db"
 import { messageView } from "./server/shared"
@@ -21,6 +22,7 @@ addRoutes([
     gamesPlayHandler,
     gamesHandler,
     positionsHandler,
+    activitiesHandler,
     syncHandler,
 ])
 

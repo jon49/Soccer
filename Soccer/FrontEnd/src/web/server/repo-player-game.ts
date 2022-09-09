@@ -1,5 +1,7 @@
-import { Activities, get, getMany, PlayerGame, Position, Positions, set } from "./db";
+import { Activities, Activity, get, getMany, PlayerGame, Position, Positions, set } from "./db";
+import { reject } from "./repo";
 import { equals, getNewId } from "./utils";
+import { assert, required } from "./validation";
 
 function getPlayerGameKey(teamId: number, gameId: number, playerId: number) {
     return `player-game:${teamId}|${playerId}|${gameId}`
@@ -55,9 +57,53 @@ export async function positionSave(teamId: number, position: Position) {
 }
 
 export async function positionsSave(teamId: number, positions: Positions) {
+    await areUnique(positions.positions.map(x => x.name))
     await set(getPositionsId(teamId), positions)
 }
 
+/*** Activities ***/
+
 export async function activityGetAll(teamId: number) : Promise<Activities> {
-    return (await get<Activities>(`${teamId}|activities`)) ?? { activities: [], _rev: 0 }
+    return (await get<Activities>(getActivitiesId(teamId))) ?? { activities: [], _rev: 0 }
+}
+
+export async function activitySaveNew(teamId: number, name: string) {
+    let { activities, _rev } = await activityGetAll(teamId)
+    await checkDuplicates(activities, name)
+    let id = getNewId(activities.map(x => x.id))
+    let newActivity = { id, name }
+    activities.push(newActivity)
+    await set(getActivitiesId(teamId), { activities, _rev })
+    return newActivity
+}
+
+export async function activitySave(teamId: number, activity: Activity) {
+    let { activities, _rev } = await activityGetAll(teamId)
+    await checkDuplicates(activities, activity.name)
+    let oldActivity = await required(activities.find(x => x.id === activity.id), "Could not find old activity!")
+    oldActivity.name = activity.name
+    await set(getActivitiesId(teamId), { activities, _rev })
+}
+
+export async function activitiesSave(teamId: number, {activities, _rev}: Activities) {
+    await areUnique(activities.map(x => x.name))
+    await set(getActivitiesId(teamId), { activities, _rev })
+}
+
+function getActivitiesId(teamId: number) {
+    return `activities:${teamId}`
+}
+
+/*** Utilities ***/
+
+function areUnique(xs: string[]) {
+    return assert.isTrue(xs.length === new Set(xs.map(x => x.toLowerCase())).size, "Must have unique values!")
+}
+
+async function checkDuplicates(xs: {name: string}[], name: string) {
+    let o = xs.find(x => equals(x.name, name))
+    if (o) {
+        return reject(`'${o.name}' already exists.`)
+    }
+    return
 }

@@ -33,7 +33,7 @@ function render({ team, positions }: PositionView) {
 
 <h3>Add Position</h3>
 <form class=form method=post action="?handler=addPosition&teamId=${team.id}" target=#positions hf-swap="append">
-    <input type=text name=position placeholder="A a position.">
+    <input type=text name=position placeholder="E.g., Defender L, Defender C, Attacker, etc.">
     <button>Save</button>
 </form>
 
