@@ -93,6 +93,9 @@ class Assert {
     isFalse(value: boolean, message: string) {
         return !value ? void 0 : reject(message)
     }
+    isTrue(value: boolean, message: string) {
+        return this.isFalse(!value, message)
+    }
     // isNil(value: any, message: string) {
     //     return value === null || value === undefined ? void 0 : Promise.reject({message})
     // }

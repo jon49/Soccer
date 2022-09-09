@@ -40,3 +40,12 @@ export const queryTeamIdGameIdValidator = {
     ...queryTeamIdValidator,
     gameId: createIdNumber("Query Game ID")
 }
+
+export const dataPositionValidator = {
+    position: createString25("Position")
+}
+
+export const queryTeamIdPositionIdValidator = {
+    ...queryTeamIdValidator,
+    positionId: createIdNumber("Position ID")
+}

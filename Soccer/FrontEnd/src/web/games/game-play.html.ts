@@ -5,8 +5,8 @@ import { teamGet, teamSave } from "../server/repo-team"
 import { Route, PostHandlers, handlePost } from "../server/route"
 import { messageView, when } from "../server/shared"
 import { searchParams, sort } from "../server/utils"
-import { createIdNumber, createString25, required, validateObject } from "../server/validation"
-import { queryTeamIdGameIdValidator } from "../server/validators"
+import { createIdNumber, required, validateObject } from "../server/validation"
+import { dataPositionValidator, queryTeamIdGameIdValidator } from "../server/validators"
 import layout from "../_layout.html"
 
 interface PlayerGameView extends PlayerGame {
@@ -302,10 +302,6 @@ function getPointsView(points: number) {
 const queryTeamGamePlayerValidator = {
     ...queryTeamIdGameIdValidator,
     playerId: createIdNumber("Query Player Id")
-}
-
-const dataPositionValidator = {
-    position: createString25("Position")
 }
 
 const dataPositionIdValidator = {

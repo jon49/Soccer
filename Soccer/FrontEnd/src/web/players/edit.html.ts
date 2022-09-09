@@ -162,7 +162,10 @@ const route : Route = {
     async get(req: Request) {
         let result = await start(req)
         const template = await layout()
-        return template({ main: render(result), scripts: ["/web/js/lib/request-submit.js", "/web/js/lib/htmf.js", "/web/js/players-edit.js"] })
+        return template({
+            main: render(result),
+            nav: [{name: "Positions", url: `/web/positions?teamId=${result.team.id}`}],
+            scripts: ["/web/js/lib/request-submit.js", "/web/js/lib/htmf.js", "/web/js/players-edit.js"] })
     },
     post: handlePost(postHandlers)
 }

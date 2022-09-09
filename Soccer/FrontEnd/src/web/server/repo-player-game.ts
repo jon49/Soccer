@@ -46,12 +46,16 @@ export async function positionCreateOrGet(teamId: number, position: string) : Pr
     return positionObj
 }
 
-async function positionSave(teamId: number, position: Position) {
+export async function positionSave(teamId: number, position: Position) {
     let { positions, _rev } = await positionGetAll(teamId)
     let existingPosition = positions.find(x => x.id === position.id)
     if (existingPosition) return
     positions.push(position)
     await set(getPositionsId(teamId), { positions, _rev })
+}
+
+export async function positionsSave(teamId: number, positions: Positions) {
+    await set(getPositionsId(teamId), positions)
 }
 
 export async function activityGetAll(teamId: number) : Promise<Activities> {
