@@ -1,13 +1,12 @@
 import html from "./server/html-template-tag"
 import layout from "./_layout.html"
 import { Position, Team } from "./server/db"
-import { equals, getNewId, searchParams } from "./server/utils"
+import { searchParams } from "./server/utils"
 import { handlePost, PostHandlers, Route } from "./server/route"
 import { teamGet } from "./server/repo-team"
-import { assert, createIdNumber, createString25, validate, validateObject } from "./server/validation"
+import { createIdNumber, createString25, validate, validateObject } from "./server/validation"
 import { dataPositionValidator, queryTeamIdPositionIdValidator, queryTeamIdValidator } from "./server/validators"
-import { positionGetAll, positionSave, positionsSave } from "./server/repo-player-game"
-import { reject } from "./server/repo"
+import { positionGetAll, positionSaveNew, positionsSave } from "./server/repo-player-game"
 
 interface PositionView {
     positions: Position[]
@@ -67,16 +66,7 @@ const postHandlers : PostHandlers = {
             await validate([
                 validateObject(query, queryTeamIdValidator),
                 validateObject(data, dataPositionValidator)])
-        let { positions } = await positionGetAll(teamId)
-        let positionObj = positions.find(x => equals(x.name, position))
-        if (positionObj) {
-            return reject(`The position '${positionObj.name}' already exists.`)
-        }
-        let newPosition : Position = {
-            id: getNewId(positions.map(x => x.id)),
-            name: position,
-        }
-        await positionSave(teamId, newPosition)
+        let newPosition = await positionSaveNew(teamId, position)
         return positionView(newPosition, teamId)
     },
     deletePosition: async ({ query }) => {
@@ -93,7 +83,6 @@ const postHandlers : PostHandlers = {
                 Object.entries(data)
                 .filter(x => x[1])
                 .map(x => validateObject({id: +x[0], name: ""+x[1]}, positionValidator)))
-        await assert.isTrue(new Set(editedPositions.map(x => x.name)).size === editedPositions.length, `Position names must be unique!`)
         let o = await positionGetAll(teamId)
         o.positions = editedPositions
         await positionsSave(teamId, o)

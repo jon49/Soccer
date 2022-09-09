@@ -27,6 +27,8 @@ export async function playerGameAllGet(teamId: number, gameId: number, playerIds
     return playersGame
 }
 
+/*** Positions ***/
+
 function getPositionsId(teamId: number) {
     return `positions:${teamId}`
 }
@@ -48,17 +50,43 @@ export async function positionCreateOrGet(teamId: number, position: string) : Pr
     return positionObj
 }
 
+export async function positionSaveNew(teamId: number, name: string) {
+    let { positions, _rev } = await positionGetAll(teamId)
+    let [newPosition, updatedPositions] = await saveNew(positions, name)
+    await set(getPositionsId(teamId), { positions: updatedPositions, _rev } as Positions)
+    return newPosition
+}
+
 export async function positionSave(teamId: number, position: Position) {
     let { positions, _rev } = await positionGetAll(teamId)
-    let existingPosition = positions.find(x => x.id === position.id)
-    if (existingPosition) return
-    positions.push(position)
-    await set(getPositionsId(teamId), { positions, _rev })
+    await save(positions, position)
+    await set(getPositionsId(teamId), { positions, _rev } as Positions)
 }
 
 export async function positionsSave(teamId: number, positions: Positions) {
     await areUnique(positions.positions.map(x => x.name))
     await set(getPositionsId(teamId), positions)
+}
+
+/*** id/name ***/
+
+interface IdName {
+    name: string
+    id: number
+}
+
+async function saveNew(xs: IdName[], name: string) : Promise<[IdName, IdName[]]> {
+    await checkDuplicates(xs, name)
+    let id = getNewId(xs.map(x => x.id))
+    let newValue = { id, name }
+    xs.push(newValue)
+    return [newValue, xs]
+}
+
+async function save(xs: IdName[], x: IdName) {
+    await checkDuplicates(xs, x.name)
+    let oldValue = await required(xs.find(x => x.id === x.id), "Could not find old value!")
+    oldValue.name = x.name
 }
 
 /*** Activities ***/
@@ -69,25 +97,20 @@ export async function activityGetAll(teamId: number) : Promise<Activities> {
 
 export async function activitySaveNew(teamId: number, name: string) {
     let { activities, _rev } = await activityGetAll(teamId)
-    await checkDuplicates(activities, name)
-    let id = getNewId(activities.map(x => x.id))
-    let newActivity = { id, name }
-    activities.push(newActivity)
-    await set(getActivitiesId(teamId), { activities, _rev })
+    let [newActivity, updatedActivities] = await saveNew(activities, name)
+    await set(getActivitiesId(teamId), { activities: updatedActivities, _rev } as Activities)
     return newActivity
 }
 
 export async function activitySave(teamId: number, activity: Activity) {
     let { activities, _rev } = await activityGetAll(teamId)
-    await checkDuplicates(activities, activity.name)
-    let oldActivity = await required(activities.find(x => x.id === activity.id), "Could not find old activity!")
-    oldActivity.name = activity.name
-    await set(getActivitiesId(teamId), { activities, _rev })
+    await save(activities, activity)
+    await set(getActivitiesId(teamId), { activities, _rev } as Activities)
 }
 
 export async function activitiesSave(teamId: number, {activities, _rev}: Activities) {
     await areUnique(activities.map(x => x.name))
-    await set(getActivitiesId(teamId), { activities, _rev })
+    await set(getActivitiesId(teamId), { activities, _rev } as Activities)
 }
 
 function getActivitiesId(teamId: number) {
