@@ -1,12 +1,12 @@
 import { Activity, cache, Game, GameTime, Message, PlayerGame, Position, Team } from "../server/db"
 import html from "../server/html-template-tag"
-import { activityGetAll, playerGameAllGet, playerGameSave, positionCreateOrGet, positionGetAll } from "../server/repo-player-game"
+import { activityGetAll, playerGameAllGet, playerGameSave, positionGetAll } from "../server/repo-player-game"
 import { teamGet, teamSave } from "../server/repo-team"
 import { Route, PostHandlers, handlePost } from "../server/route"
 import { messageView, when } from "../server/shared"
 import { searchParams, sort } from "../server/utils"
 import { createIdNumber, required, validateObject } from "../server/validation"
-import { dataPositionValidator, queryTeamIdGameIdValidator } from "../server/validators"
+import { queryTeamIdGameIdValidator } from "../server/validators"
 import layout from "../_layout.html"
 
 interface PlayerGameView extends PlayerGame {
@@ -166,7 +166,7 @@ ${when(!inPlay, html`<p>No players are in play.</p>`)}
                 method=post
                 action="?$${baseQuery}&handler=positionChange"
                 onchange="this.requestSubmit()">
-                <select name=positionId>
+                <select name=positionId data-focus-click>
                     ${positions.map(position => html`
                     <option value="${position.id}" ${when(position.id === tail(x.gameTime).positionId, "selected")}>${position.name}</option>`)}
                 </select>
@@ -175,17 +175,17 @@ ${when(!inPlay, html`<p>No players are in play.</p>`)}
             <form
                 method=post
                 action="?$${baseQuery}&handler=activityMarker"
-                target="in-play-activity-${i}"
+                target="#player-activities-${i}"
                 onchange="this.requestSubmit()"
                 >
-                <input
-                    id=in-play-activity-${i}
-                    type=search
-                    name=activity
-                    list=activities
-                    autocomplete=off
-                    placeholder="Mark an activity" >
+                <select name=activityId data-focus-click>
+                    <option></option>
+                    $${activitiesOptionView(activities)}
+                </select>
             </form>
+            <div id=player-activities-${i}>
+                ${statsView(activities, x)}
+            </div>
         </details>
     </li>
     `})}
@@ -215,7 +215,7 @@ ${when(onDeck, () => html`
     `})}
 </ul>`)}
 
-${when(onDeck, () => html`
+${when(onDeckPlayers.length > 1, () => html`
 <form method=post action="?$${queryTeamGame}&handler=swapAll">
     <button>Swap All</button>
 </form>`)}
@@ -235,21 +235,18 @@ ${when(out, () => html`
         ${when(availablePlayersToSwap.length > 0, _ =>
             html`
         <form class=disappearing method=post action="?$${queryTeamGame}&playerId=$${x.playerId}&handler=onDeckWith" onchange="this.submit()">
-            <label class=pointer for=swap-player-id${x.playerId}>🏃</label>
-            <select id=swap-player-id${x.playerId} name="swapPlayerId">
+            <label class=button for=swap-player-id${x.playerId}>🏃</label>
+            <select id=swap-player-id${x.playerId} name="swapPlayerId" data-focus-click>
                 <option selected></option>
                 ${availablePlayersToSwap.map(x => html`<option value="${x.playerId}">${x.name}</option>`) }
             </select>
         </form>`)}
         <form class=disappearing method=post action="?$${queryTeamGame}&playerId=$${x.playerId}&handler=addPlayerPosition" onchange="this.submit()">
-            <label class=pointer for=position-select${x.playerId}>#</label>
-            <input
-                id=position-select${x.playerId}
-                type=search
-                name=position
-                list=positions
-                autocomplete=off
-                placeholder="Position" >
+            <label class=button for=position-select$${x.playerId}>#</label>
+            <select id=position-select$${x.playerId} name=positionId data-focus-click>
+                <option></option>
+                $${positionsSelectView(positions)}
+            </select>
         </form>
         <p>${formatTime(x.total)}</p>
     </li>
@@ -270,14 +267,31 @@ ${when(notPlaying, html`
     `)}
 </ul>
 `)}
+`
+}
 
-<datalist id=activities>
-    ${activities.map(x => html`<option value="${x.name}"`)}
-</datalist>
-<datalist id=positions>
-    ${positions.map(x => html`<option value="${x.name}">`)}
-</datalist>
-    `
+let activitiesView = ""
+function activitiesOptionView(activities: Activity[]) {
+    if (!activitiesView) {
+        activitiesView = activities.map(x => `<option value=${x.id}>${x.name}</option>`).join("")
+    }
+    return activitiesView
+}
+
+let positionsView = ""
+function positionsSelectView(positions: Position[]) {
+    if (!positionsView) {
+        positionsView = positions.map(x => `<option value=${x.id}>${x.name}</option>`).join("")
+    }
+    return positionsView
+}
+
+function statsView(activities: Activity[], player: PlayerGame) {
+    return html`
+    ${player.stats.map(x => {
+        let statName = activities.find(y => y.id === x.statId)?.name
+        return html`<div>${statName} - ${x.count}</div>`
+    })}`
 }
 
 function setPoints(f: (game: Game) => number) {
@@ -302,6 +316,10 @@ function getPointsView(points: number) {
 const queryTeamGamePlayerValidator = {
     ...queryTeamIdGameIdValidator,
     playerId: createIdNumber("Query Player Id")
+}
+
+const dataActivityIdValidator = {
+    activityId: createIdNumber("Activity")
 }
 
 const dataPositionIdValidator = {
@@ -341,8 +359,8 @@ const postHandlers : PostHandlers = {
     addPlayerPosition: async ({ data, query }) => {
         let { teamId, playerId, gameId } = await validateObject(query, queryTeamGamePlayerValidator)
         await cache.push({ posted: `player:${playerId}` })
-        let { position } = await validateObject(data, dataPositionValidator)
-        let positionObj = await positionCreateOrGet(teamId, position)
+        let { positionId } = await validateObject(data, dataPositionIdValidator)
+        let positionObj = await required((await positionGetAll(teamId)).positions.find(x => x.id = positionId), `Could not find position!`)
         let [p] = await playerGameAllGet(teamId, gameId, [playerId])
         p.status = { _: "onDeck" }
         let gameTime = p.gameTime.find(x => !x.end)
@@ -488,7 +506,20 @@ const postHandlers : PostHandlers = {
         let position = positions.positions.find(x => x.id === positionId)
         return inPlayPlayerInfoView(p.players.find(x => x.id === playerId)?.name, position?.name)
     },
-
+    activityMarker: async ({ query, data }) => {
+        let { teamId, gameId, playerId } = await validateObject(query, queryTeamGamePlayerValidator)
+        let { activityId } = await validateObject(data, dataActivityIdValidator)
+        let [player] = await playerGameAllGet(teamId, gameId, [playerId])
+        let stat = player.stats.find(x => x.statId === activityId)
+        if (!stat) {
+            player.stats.push({ count: 1, statId: activityId })
+        } else {
+            stat.count++
+        }
+        await playerGameSave(teamId, player)
+        let { activities } = await activityGetAll(teamId)
+        return statsView(activities, player)
+    }
 }
 
 const route : Route = {
@@ -522,7 +553,13 @@ const route : Route = {
             </style>
             <script src= "/web/js/game-timer.v2.js"></script>
         `
-        return template({ main: render(result), head, scripts: ["/web/js/lib/request-submit.js", "/web/js/lib/htmf.js"] })
+        return template({
+            main: render(result),
+            head,
+            scripts: [
+                "/web/js/lib/request-submit.js",
+                "/web/js/lib/htmf.js",
+                "/web/js/game-play.js"] })
     },
     post: handlePost(postHandlers),
 }
