@@ -113,6 +113,14 @@ function render({ team, playersGame, game, positions, posted, message }: View) {
     let notPlayingPlayers = playersGame.filter(filterNotPlayingPlayers)
     let notPlaying = notPlayingPlayers.length > 0
 
+    let positionsTaken =
+        new Set(
+        playersGame
+        .filter(x => x.status?._ === "inPlay" || x.status?._ === "onDeck")
+        .map(x => tail(x.gameTime).positionId))
+    let availablePositions =
+        positions.filter(x => !positionsTaken.has(x.id))
+
     let isInPlay = false
     let isPaused = false
     let isEnded = false
@@ -247,9 +255,9 @@ ${when(out, () => html`
               action="?$${queryTeamGame}&playerId=$${x.playerId}&handler=addPlayerPosition"
               onchange="this.submit()">
             <label class=button for=position-select$${x.playerId}>#</label>
-            <select id=position-select$${x.playerId} name=positionId size=${positions.length + 1}>
+            <select id=position-select$${x.playerId} name=positionId size=${availablePositions.length + 1}>
                 <option></option>
-                $${positionsSelectView(positions)}
+                ${availablePositions.map(x => html`<option value=${x.id}>${x.name}</option>`)}
             </select>
         </form>
         <p>${formatTime(x.total)}</p>
@@ -272,14 +280,6 @@ ${when(notPlaying, html`
 </ul>
 `)}
 `
-}
-
-let positionsView = ""
-function positionsSelectView(positions: Position[]) {
-    if (!positionsView) {
-        positionsView = positions.map(x => `<option value=${x.id}>${x.name}</option>`).join("")
-    }
-    return positionsView
 }
 
 function statsView(activities: Activity[], player: PlayerGame) {
