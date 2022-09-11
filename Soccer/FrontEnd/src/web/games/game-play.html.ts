@@ -180,7 +180,7 @@ ${when(!inPlay, html`<p>No players are in play.</p>`)}
             action="?$${baseQuery}&handler=positionChange"
             onchange="this.requestSubmit()"
             class=disappearing >
-            <label class=button for=position-select${x.playerId}>#</label>
+            <label class=button for=position-select-${x.playerId}>#</label>
             <select id=position-select-${x.playerId} name=positionId size=${positions.length}>
                 ${positions.map(position => html`
                 <option value="${position.id}" ${when(position.id === tail(x.gameTime).positionId, "selected")}>${position.name}</option>`)}
@@ -234,7 +234,7 @@ ${when(out, () => html`
             html`
         <form class=disappearing method=post action="?$${queryTeamGame}&playerId=$${x.playerId}&handler=onDeckWith" onchange="this.submit()">
             <label class=button for=swap-player-id${x.playerId}>🏃</label>
-            <select id=swap-player-id${x.playerId} name="swapPlayerId" size=${availablePlayersToSwap.length}>
+            <select id=swap-player-id${x.playerId} name="swapPlayerId" size=${availablePlayersToSwap.length + 1}>
                 <option selected></option>
                 ${availablePlayersToSwap.map(x => html`
                 <option value="${x.playerId}">
@@ -247,7 +247,7 @@ ${when(out, () => html`
               action="?$${queryTeamGame}&playerId=$${x.playerId}&handler=addPlayerPosition"
               onchange="this.submit()">
             <label class=button for=position-select$${x.playerId}>#</label>
-            <select id=position-select$${x.playerId} name=positionId size=${positions.length}>
+            <select id=position-select$${x.playerId} name=positionId size=${positions.length + 1}>
                 <option></option>
                 $${positionsSelectView(positions)}
             </select>
