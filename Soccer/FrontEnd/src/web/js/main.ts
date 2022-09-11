@@ -86,4 +86,31 @@
         return template.content.children[0]
     }
 
+    function getCleanUrl() {
+        let url = new URL(document.location.href)
+        url.hash = ""
+        return url.toString()
+    }
+    window.addEventListener('beforeunload', () => {
+        let active = document.activeElement
+        if (!active?.id) {
+            active = null
+        }
+        let y = window.scrollY
+        let height = document.body.scrollHeight
+        localStorage.pageLocation = JSON.stringify({ href: getCleanUrl(), y, height, active })
+    })
+
+    function onLoad() {
+        if (document.querySelector('[autofocus]')) return
+        let location = localStorage.pageLocation
+        if (!location) return
+        let { y, height, href } = JSON.parse(location)
+        if (y && href === getCleanUrl()) {
+            window.scrollTo({ top: y + document.body.scrollHeight - height })
+        }
+    }
+
+    onLoad()
+
 })();
