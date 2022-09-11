@@ -186,12 +186,11 @@ ${when(!inPlay, html`<p>No players are in play.</p>`)}
             target=#${playerInfoId}
             method=post
             action="?$${baseQuery}&handler=positionChange"
-            onchange="this.requestSubmit()"
-            class=disappearing >
-            <label class=button for=position-select-${x.playerId}>#</label>
-            <select id=position-select-${x.playerId} name=positionId size=${positions.length}>
+            onchange="this.requestSubmit()" >
+            <select name=positionId class="auto-select button">
+                <option selected>#</option>
                 ${positions.map(position => html`
-                <option value="${position.id}" ${when(position.id === tail(x.gameTime).positionId, "selected")}>${position.name}</option>`)}
+                <option value="${position.id}">${position.name}</option>`)}
             </select>
         </form>
     </li>`})}
@@ -240,23 +239,20 @@ ${when(out, () => html`
         <p>${x.name}</p>
         ${when(availablePlayersToSwap.length > 0, _ =>
             html`
-        <form class=disappearing method=post action="?$${queryTeamGame}&playerId=$${x.playerId}&handler=onDeckWith" onchange="this.submit()">
-            <label class=button for=swap-player-id${x.playerId}>🏃</label>
-            <select id=swap-player-id${x.playerId} name="swapPlayerId" size=${availablePlayersToSwap.length + 1}>
-                <option selected></option>
+        <form method=post action="?$${queryTeamGame}&playerId=$${x.playerId}&handler=onDeckWith" onchange="this.submit()">
+            <select name="swapPlayerId" class="auto-select button" style="width: 2.5em;">
+                <option selected>🏃</option>
                 ${availablePlayersToSwap.map(x => html`
                 <option value="${x.playerId}">
                     ${x.name} - ${getPositionName(positions, x.gameTime)} - ${formatTime(x.calcTotal)}
                 </option>`) }
             </select>
         </form>`)}
-        <form class=disappearing
-              method=post
+        <form method=post
               action="?$${queryTeamGame}&playerId=$${x.playerId}&handler=addPlayerPosition"
               onchange="this.submit()">
-            <label class=button for=position-select$${x.playerId}>#</label>
-            <select id=position-select$${x.playerId} name=positionId size=${availablePositions.length + 1}>
-                <option></option>
+            <select class="auto-select button" name=positionId>
+                <option selected>#</option>
                 ${availablePositions.map(x => html`<option value=${x.id}>${x.name}</option>`)}
             </select>
         </form>
@@ -560,23 +556,13 @@ const route : Route = {
         let template = await layout()
         let head = `
             <style>
-                summary {
-                    cursor: pointer;
-                    list-style: none;
+                .auto-select {
+                    width: 2em;
+                    appearance: none;
                 }
-                summary::before {
-                    content: '\u2699';
-                    font-weight: 900;
-                }
-                .disappearing:focus-within > label {
-                    display: none;
-                }
-                .disappearing > select, .disappearing > input {
-                    position: absolute;
-                    left: -1000px;
-                }
-                .disappearing > select:focus, .disappearing > input:focus {
-                    position: inherit;
+                .auto-select:focus {
+                    width: auto;
+                    appearance: auto;
                 }
             </style>
             <script src= "/web/js/game-timer.v2.js"></script>
@@ -584,7 +570,7 @@ const route : Route = {
         return template({
             main: render(result),
             head,
-            scripts: [ "/web/js/lib/request-submit.js", "/web/js/lib/htmf.js" ] })
+            scripts: [ "/web/js/lib/request-submit.js", "/web/js/lib/htmf.js", "/web/js/game-play.v2.js" ] })
     },
     post: handlePost(postHandlers),
 }
