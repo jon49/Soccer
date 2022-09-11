@@ -86,7 +86,7 @@ function formatTime(time: number) {
     return `${ hours ? ""+hours+":" : "" }${(""+d.getMinutes()).padStart(2, "0")}:${(""+d.getSeconds()).padStart(2, "0")}`
 }
 
-function render({ team, playersGame, game, positions, activities, posted, message }: View) {
+function render({ team, playersGame, game, positions, posted, message }: View) {
     let queryTeamGame = `teamId=${team.id}&gameId=${game.id}`
     let inPlayPlayers_ = playersGame.filter(filterInPlayPlayers)
     let currentTime = +new Date()
@@ -113,6 +113,15 @@ function render({ team, playersGame, game, positions, activities, posted, messag
     let notPlayingPlayers = playersGame.filter(filterNotPlayingPlayers)
     let notPlaying = notPlayingPlayers.length > 0
     let timerStarted = game.status === "play"
+    let isInPlay = false
+    let isPaused = false
+    let isEnded = false
+    switch (game.status) {
+        case "paused": isPaused = true; break
+        case "play": isInPlay = true; break
+        case "ended": isEnded = true; break
+        default: isPaused = true
+    }
     return html`
 <h2>${team.name} - Game ${game.date} ${when(game.opponent, x => ` - ${x}`)}</h2>
 <div>
@@ -123,7 +132,7 @@ function render({ team, playersGame, game, positions, activities, posted, messag
         $${when(!timerStarted, `data-timer-flash data-timer-start="${tail(game.gameTime)?.end}"`)}
         $${when(timerStarted, () => `data-timer-start="${start}" data-timer-total="${total}"`)}
         ></game-timer>
-    <div class=inline>
+    <div>
         <span>Points</span>
         <form class=inline method=post>
             <button formaction="?$${queryTeamGame}&handler=pointsDec" target="#points">-</button>
@@ -131,7 +140,7 @@ function render({ team, playersGame, game, positions, activities, posted, messag
             <button formaction="?$${queryTeamGame}&handler=pointsInc" target="#points">+</button>
         </form>
     </div>
-    <div class=inline>
+    <div>
         <span>Opponent</span>
         <form class=inline method=post>
             <button formaction="?$${queryTeamGame}&handler=oPointsDec" target="#o-points">-</button>
@@ -144,7 +153,7 @@ function render({ team, playersGame, game, positions, activities, posted, messag
 <h3>In-Play</h3>
 ${when(!inPlay, html`<p>No players are in play.</p>`)}
 <ul class=list>
-    ${inPlayPlayers.map((x, i) => {
+    ${inPlayPlayers.map(x => {
         let baseQuery : string = `${queryTeamGame}&playerId=${x.playerId}`
         let positionId = tail(x.gameTime).positionId
         let position = positions.find(x => x.id === positionId)?.name
@@ -154,41 +163,22 @@ ${when(!inPlay, html`<p>No players are in play.</p>`)}
         <form method=post action="?$${baseQuery}&handler=playerNowOut" >
             <button>X</button>
         </form>
-        <details>
-            <summary>
-                <span id=${playerInfoId}>${inPlayPlayerInfoView(x.name, position)}</span>
-                ${when(timerStarted, () =>
-                    html`<game-timer data-timer-start=${x.start} data-timer-total=${x.total}></game-timer>`)}
-            </summary>
-
-            <form
-                target=#${playerInfoId}
-                method=post
-                action="?$${baseQuery}&handler=positionChange"
-                onchange="this.requestSubmit()">
-                <select name=positionId data-focus-click>
-                    ${positions.map(position => html`
-                    <option value="${position.id}" ${when(position.id === tail(x.gameTime).positionId, "selected")}>${position.name}</option>`)}
-                </select>
-            </form>
-
-            <form
-                method=post
-                action="?$${baseQuery}&handler=activityMarker"
-                target="#player-activities-${i}"
-                onchange="this.requestSubmit()"
-                >
-                <select name=activityId data-focus-click>
-                    <option></option>
-                    $${activitiesOptionView(activities)}
-                </select>
-            </form>
-            <div id=player-activities-${i}>
-                ${statsView(activities, x)}
-            </div>
-        </details>
-    </li>
-    `})}
+        <span id=${playerInfoId}>${inPlayPlayerInfoView(x.name, position)}</span>
+        ${when(timerStarted, () =>
+            html`<game-timer data-timer-start=${x.start} data-timer-total=${x.total}></game-timer>`)}
+        <form
+            target=#${playerInfoId}
+            method=post
+            action="?$${baseQuery}&handler=positionChange"
+            onchange="this.requestSubmit()"
+            class=disappearing >
+            <label class=button for=position-select${x.playerId}>#</label>
+            <select id=position-select-${x.playerId} name=positionId size=${positions.length}>
+                ${positions.map(position => html`
+                <option value="${position.id}" ${when(position.id === tail(x.gameTime).positionId, "selected")}>${position.name}</option>`)}
+            </select>
+        </form>
+    </li>`})}
 </ul>
 
 ${when(onDeck, () => html`
@@ -236,7 +226,7 @@ ${when(out, () => html`
             html`
         <form class=disappearing method=post action="?$${queryTeamGame}&playerId=$${x.playerId}&handler=onDeckWith" onchange="this.submit()">
             <label class=button for=swap-player-id${x.playerId}>🏃</label>
-            <select id=swap-player-id${x.playerId} name="swapPlayerId" data-focus-click>
+            <select id=swap-player-id${x.playerId} name="swapPlayerId" size=${availablePlayersToSwap.length}>
                 <option selected></option>
                 ${availablePlayersToSwap.map(x => html`
                 <option value="${x.playerId}">
@@ -249,7 +239,7 @@ ${when(out, () => html`
               action="?$${queryTeamGame}&playerId=$${x.playerId}&handler=addPlayerPosition"
               onchange="this.submit()">
             <label class=button for=position-select$${x.playerId}>#</label>
-            <select id=position-select$${x.playerId} name=positionId data-focus-click>
+            <select id=position-select$${x.playerId} name=positionId size=${positions.length}>
                 <option></option>
                 $${positionsSelectView(positions)}
             </select>
@@ -553,19 +543,13 @@ const route : Route = {
                 .disappearing > select:focus, .disappearing > input:focus {
                     position: inherit;
                 }
-                .pointer {
-                    cursor: pointer;
-                }
             </style>
             <script src= "/web/js/game-timer.v2.js"></script>
         `
         return template({
             main: render(result),
             head,
-            scripts: [
-                "/web/js/lib/request-submit.js",
-                "/web/js/lib/htmf.js",
-                "/web/js/game-play.js"] })
+            scripts: [ "/web/js/lib/request-submit.js", "/web/js/lib/htmf.js" ] })
     },
     post: handlePost(postHandlers),
 }

@@ -112,7 +112,7 @@ export interface Game {
     id: number
     date: string
     opponent?: string
-    status?: "play" | "paused"
+    status?: "play" | "paused" | "ended"
     points: number
     opponentPoints: number
     gameTime: { start: number, end?: number }[]
