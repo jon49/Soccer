@@ -238,10 +238,16 @@ ${when(out, () => html`
             <label class=button for=swap-player-id${x.playerId}>🏃</label>
             <select id=swap-player-id${x.playerId} name="swapPlayerId" data-focus-click>
                 <option selected></option>
-                ${availablePlayersToSwap.map(x => html`<option value="${x.playerId}">${x.name}</option>`) }
+                ${availablePlayersToSwap.map(x => html`
+                <option value="${x.playerId}">
+                    ${x.name} - ${getPositionName(positions, x.gameTime)} - ${formatTime(x.calcTotal)}
+                </option>`) }
             </select>
         </form>`)}
-        <form class=disappearing method=post action="?$${queryTeamGame}&playerId=$${x.playerId}&handler=addPlayerPosition" onchange="this.submit()">
+        <form class=disappearing
+              method=post
+              action="?$${queryTeamGame}&playerId=$${x.playerId}&handler=addPlayerPosition"
+              onchange="this.submit()">
             <label class=button for=position-select$${x.playerId}>#</label>
             <select id=position-select$${x.playerId} name=positionId data-focus-click>
                 <option></option>
