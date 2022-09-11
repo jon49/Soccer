@@ -112,7 +112,7 @@ function render({ team, playersGame, game, positions, posted, message }: View) {
         .sort((a, b) => a.total - b.total)
     let notPlayingPlayers = playersGame.filter(filterNotPlayingPlayers)
     let notPlaying = notPlayingPlayers.length > 0
-    let timerStarted = game.status === "play"
+
     let isInPlay = false
     let isPaused = false
     let isEnded = false
@@ -122,16 +122,24 @@ function render({ team, playersGame, game, positions, posted, message }: View) {
         case "ended": isEnded = true; break
         default: isPaused = true
     }
+
     return html`
 <h2>${team.name} - Game ${game.date} ${when(game.opponent, x => ` - ${x}`)}</h2>
 <div>
-    <form class=inline method=post action="?$${queryTeamGame}&handler=${game.status === "play" ? "pauseGame" : "startGame"}">
-        <button>${game.status === "play" ? "Pause" : "Start"}</button>
+    ${when(!isEnded, () => html`
+    <form class=inline method=post action="?$${queryTeamGame}&handler=${isInPlay ? "pauseGame" : "startGame"}">
+        <button>${isInPlay ? "Pause" : "Start"}</button>
+    </form>`)}
+    <form class=inline method=post action="?$${queryTeamGame}&handler=${isEnded ? "restartGame" : "endGame"}">
+        <button>${isEnded ? "Restart" : "End"}</button>
     </form>
+    ${when(!isEnded, () => html`
     <game-timer
-        $${when(!timerStarted, `data-timer-flash data-timer-start="${tail(game.gameTime)?.end}"`)}
-        $${when(timerStarted, () => `data-timer-start="${start}" data-timer-total="${total}"`)}
+        $${when(isPaused, () => `data-timer-flash data-timer-start="${tail(game.gameTime)?.end}"`)}
+        $${when(isInPlay, () => `data-timer-start="${start}" data-timer-total="${total}"`)}
         ></game-timer>
+    `)}
+    ${when(isEnded, () => formatTime(total))}
     <div>
         <span>Points</span>
         <form class=inline method=post>
@@ -164,7 +172,7 @@ ${when(!inPlay, html`<p>No players are in play.</p>`)}
             <button>X</button>
         </form>
         <span id=${playerInfoId}>${inPlayPlayerInfoView(x.name, position)}</span>
-        ${when(timerStarted, () =>
+        ${when(isInPlay, () =>
             html`<game-timer data-timer-start=${x.start} data-timer-total=${x.total}></game-timer>`)}
         <form
             target=#${playerInfoId}
@@ -264,14 +272,6 @@ ${when(notPlaying, html`
 </ul>
 `)}
 `
-}
-
-let activitiesView = ""
-function activitiesOptionView(activities: Activity[]) {
-    if (!activitiesView) {
-        activitiesView = activities.map(x => `<option value=${x.id}>${x.name}</option>`).join("")
-    }
-    return activitiesView
 }
 
 let positionsView = ""
@@ -502,6 +502,7 @@ const postHandlers : PostHandlers = {
         let position = positions.positions.find(x => x.id === positionId)
         return inPlayPlayerInfoView(p.players.find(x => x.id === playerId)?.name, position?.name)
     },
+
     activityMarker: async ({ query, data }) => {
         let { teamId, gameId, playerId } = await validateObject(query, queryTeamGamePlayerValidator)
         let { activityId } = await validateObject(data, dataActivityIdValidator)
@@ -515,7 +516,41 @@ const postHandlers : PostHandlers = {
         await playerGameSave(teamId, player)
         let { activities } = await activityGetAll(teamId)
         return statsView(activities, player)
-    }
+    },
+
+    endGame: async ({ query }) => {
+        let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
+        let timestamp = +new Date()
+        let team = await teamGet(teamId)
+
+        let game = await required(team.games.find(x => x.id === gameId), `Could not find game! ${gameId}`)
+        game.status = "ended"
+        let time = tail(game.gameTime)
+        if (time && !time.end) {
+            time.end = timestamp
+        }
+        await teamSave(team)
+
+        let players = await playerGameAllGet(teamId, gameId, team.players.map(x => x.id))
+        for (let player of players) {
+            let gameTime = tail(player.gameTime)
+            if (gameTime && gameTime.start && !gameTime.end) {
+                gameTime.end = timestamp
+            }
+            if (player.status?._ !== "notPlaying") {
+                player.status = { _: "out"}
+            }
+            await playerGameSave(teamId, player)
+        }
+    },
+
+    restartGame: async ({ query }) => {
+        let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
+        let team = await teamGet(teamId)
+        let game = await required(team.games.find(x => x.id === gameId), `Could not find game! ${gameId}`)
+        game.status = "paused"
+        await teamSave(team)
+    },
 }
 
 const route : Route = {
