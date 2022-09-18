@@ -98,6 +98,7 @@ function render({ team, playersGame, game, positions, posted, message }: View) {
     inPlayPlayers.sort((a, b) => a.calcTotal - b.calcTotal)
     let inPlay = inPlayPlayers.length > 0
     let onDeckPlayers = playersGame.filter(filterOnDeckPlayers)
+    let toReplacePlayerIds = new Set(onDeckPlayers.map(x => (x.status as { playerId?: number }).playerId).filter(x => x))
     let onDeck = onDeckPlayers.length > 0
     let out = playersGame.filter(filterOutPlayers).length > 0
     let { start, total } = getAggregateGameTime(game.gameTime)
@@ -176,7 +177,7 @@ ${when(!inPlay, html`<p>No players are in play.</p>`)}
         let position = positions.find(x => x.id === positionId)?.name
         let playerInfoId = `in-play-${x.playerId}`
         return html`
-    <li>
+    <li $${when(toReplacePlayerIds.has(x.playerId), `class="highlight round"`)}>
         <form method=post action="?$${baseQuery}&handler=playerNowOut" >
             <button>X</button>
         </form>
@@ -565,6 +566,15 @@ const route : Route = {
                 .auto-select:focus {
                     width: auto;
                     appearance: auto;
+                }
+                ul.list {
+                    border-collapse: collapse;
+                }
+                .round > *:first-child {
+                    border-radius: var(--rc) 0 0 var(--rc);
+                }
+                .round > *:last-child {
+                    border-radius: 0 var(--rc) var(--rc) 0;
                 }
             </style>
             <script src= "/web/js/game-timer.v2.js"></script>
