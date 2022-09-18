@@ -181,8 +181,9 @@ ${when(!inPlay, html`<p>No players are in play.</p>`)}
             <button>X</button>
         </form>
         <span id=${playerInfoId}>${inPlayPlayerInfoView(x.name, position)}</span>
-        ${when(isInPlay, () =>
-            html`<game-timer data-timer-start=${x.start} data-timer-total=${x.total}></game-timer>`)}
+        ${isInPlay ?
+            html`<game-timer data-timer-start=${x.start} data-timer-total=${x.total}></game-timer>`
+        : html`<p>${formatTime(x.total)}</p>`}
         <form
             target=#${playerInfoId}
             method=post
