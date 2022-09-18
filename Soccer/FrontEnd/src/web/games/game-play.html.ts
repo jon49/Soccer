@@ -138,9 +138,7 @@ function render({ team, playersGame, game, positions, posted, message }: View) {
     <form class=inline method=post action="?$${queryTeamGame}&handler=${isInPlay ? "pauseGame" : "startGame"}">
         <button>${isInPlay ? "Pause" : "Start"}</button>
     </form>`)}
-    <form class=inline method=post action="?$${queryTeamGame}&handler=${isEnded ? "restartGame" : "endGame"}">
-        <button>${isEnded ? "Restart" : "End"}</button>
-    </form>
+
     ${when(!isEnded, () => html`
     <game-timer
         $${when(isPaused, () => `data-timer-flash data-timer-start="${tail(game.gameTime)?.end}"`)}
@@ -148,22 +146,25 @@ function render({ team, playersGame, game, positions, posted, message }: View) {
         ></game-timer>
     `)}
     ${when(isEnded, () => formatTime(total))}
-    <div>
-        <span>Points</span>
-        <form class=inline method=post>
-            <button formaction="?$${queryTeamGame}&handler=pointsDec" target="#points">-</button>
+    <form class=inline method=post action="?$${queryTeamGame}&handler=${isEnded ? "restartGame" : "endGame"}">
+        <button>${isEnded ? "Restart" : "End"}</button>
+    </form>
+    <ul class=list>
+        <li>
+            <span>Points</span>
+            <form id=team-points class=inline method=post hidden></form>
+            <button formaction="?$${queryTeamGame}&handler=pointsDec" target="#points" form=team-points>-</button>
             <span id=points>&nbsp;${getPointsView(game.points)}&nbsp;</span>
-            <button formaction="?$${queryTeamGame}&handler=pointsInc" target="#points">+</button>
-        </form>
-    </div>
-    <div>
-        <span>Opponent</span>
-        <form class=inline method=post>
-            <button formaction="?$${queryTeamGame}&handler=oPointsDec" target="#o-points">-</button>
+            <button formaction="?$${queryTeamGame}&handler=pointsInc" target="#points" form=team-points>+</button>
+        </li>
+        <li>
+            <span>Opponent</span>
+            <form id=opponent-points class=inline method=post hidden></form>
+            <button formaction="?$${queryTeamGame}&handler=oPointsDec" target="#o-points" form=opponent-points>-</button>
             <span id=o-points>&nbsp;${getPointsView(game.opponentPoints)}&nbsp;</span>
-            <button formaction="?$${queryTeamGame}&handler=oPointsInc" target="#o-points">+</button>
-        </form>
-    </div>
+            <button formaction="?$${queryTeamGame}&handler=oPointsInc" target="#o-points" form=opponent-points>+</button>
+        </li>
+    </ul>
 </div>
 
 <h3>In-Play</h3>
