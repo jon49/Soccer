@@ -37,9 +37,9 @@ namespace Soccer.Data.Actors
 
         private async Task SyncUserData(IContext context, SyncData d)
         {
-            var data = await _db!.GetNewDataCommand(userId: d.UserId, lastId: d.LastId);
+            var data = (await _db!.GetNewDataCommand(userId: d.UserId, lastId: d.LastId)) ?? new List<NewUserData>();
             List<IdKeyReturn> saved = new List<IdKeyReturn>();
-            if (d.UploadedData is { })
+            if (d.UploadedData is { } && d.UploadedData.Any())
             {
                 var toSaveData =
                     from x in d.UploadedData
@@ -57,7 +57,10 @@ namespace Soccer.Data.Actors
                      select x)
                     .ToList();
             }
-            var lastSyncedId = data.Select(x => x.Id).Concat(saved.Select(x => x.Id)).Max();
+            var lastSyncedId =
+                data.Any() || saved.Any()
+                    ? data.Select(x => x.Id).Concat(saved.Select(x => x.Id)).Max()
+                : d.LastId;
             context.Respond(new SyncDataReturn(Data: data, LastSyncedId: lastSyncedId, Saved: saved));
         }
 
