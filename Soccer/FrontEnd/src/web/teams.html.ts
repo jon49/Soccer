@@ -43,10 +43,14 @@ ${
                 <li>
                     <a href="/web/players?teamId=${x.id}">${x.name} - ${x.year}</a>
                     <a href="/web/games?teamId=${x.id}">Games</a>
-                    ${when(
-                        x.games
+                    ${when((() => {
+                        let d = new Date()
+                        let currentDate = `${d.getFullYear()}-${(""+(d.getMonth() + 1)).padStart(2, "0")}-${d.getDate()}`
+                        let result = x.games
                         .sort((a, b) => a.date.localeCompare(b.date))
-                        .find(x => x.date),
+                        .find(x => x.date >= currentDate)
+                        return result
+                    })(),
                         x => html`<a href="/web/games?teamId=${teamId}&gameId=${x.id}">${x.date}</a>`
                     ) ?? html`<span>&nbsp;</span>`}
                     <a href="/web/players/edit?teamId=${x.id}">Edit</a>
