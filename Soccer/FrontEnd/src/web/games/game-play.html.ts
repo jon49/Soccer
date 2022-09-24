@@ -80,12 +80,6 @@ function getAggregateGameTime(times: { start?: number, end?: number }[]) {
     return { start, total }
 }
 
-function formatTime(time: number) {
-    let d = new Date(time)
-    let hours = time/1e3/60/60|0
-    return `${ hours ? ""+hours+":" : "" }${(""+d.getMinutes()).padStart(2, "0")}:${(""+d.getSeconds()).padStart(2, "0")}`
-}
-
 function render({ team, playersGame, game, positions, posted, message }: View) {
     let queryTeamGame = `teamId=${team.id}&gameId=${game.id}`
     let inPlayPlayers_ = playersGame.filter(filterInPlayPlayers)
@@ -140,13 +134,13 @@ function render({ team, playersGame, game, positions, posted, message }: View) {
         <button>${isInPlay ? "Pause" : "Start"}</button>
     </form>`)}
 
-    ${when(!isEnded, () => html`
     <game-timer
-        $${when(isPaused, () => `data-timer-flash data-timer-start="${tail(game.gameTime)?.end}"`)}
-        $${when(isInPlay, () => `data-timer-start="${start}" data-timer-total="${total}"`)}
-        ></game-timer>
-    `)}
-    ${when(isEnded, () => formatTime(total))}
+        $${when(isPaused, () => `data-flash data-start="${tail(game.gameTime)?.end}"`)}
+        $${when(isInPlay, () => `data-start="${start}" data-total="${total}"`)}
+        $${when(isEnded, `data-static`)}
+        >
+    </game-timer>
+
     <form class=inline method=post action="?$${queryTeamGame}&handler=${isEnded ? "restartGame" : "endGame"}">
         <button>${isEnded ? "Restart" : "End"}</button>
     </form>
@@ -182,9 +176,7 @@ ${when(!inPlay, html`<p>No players are in play.</p>`)}
             <button>X</button>
         </form>
         <span id=${playerInfoId}>${inPlayPlayerInfoView(x.name, position)}</span>
-        ${isInPlay ?
-            html`<game-timer data-timer-start=${x.start} data-timer-total=${x.total}></game-timer>`
-        : html`<p>${formatTime(x.total)}</p>`}
+        <game-timer data-start=${x.start} data-total="${x.total}" ${when(!isInPlay, "data-static")}></game-timer>
         <form
             target=#${playerInfoId}
             method=post
@@ -246,8 +238,8 @@ ${when(out, () => html`
             <select name="swapPlayerId" class="auto-select button" style="width: 2.5em;">
                 <option selected>🏃</option>
                 ${availablePlayersToSwap.map(x => html`
-                <option value="${x.playerId}">
-                    ${x.name} - ${getPositionName(positions, x.gameTime)} - ${formatTime(x.calcTotal)}
+                <option is=game-timer-is value="${x.playerId}" data-total="${x.calcTotal}">
+                    ${x.name} - ${getPositionName(positions, x.gameTime)} - 
                 </option>`) }
             </select>
         </form>`)}
@@ -259,7 +251,7 @@ ${when(out, () => html`
                 ${availablePositions.map(x => html`<option value=${x.id}>${x.name}</option>`)}
             </select>
         </form>
-        <p>${formatTime(x.total)}</p>
+        <game-timer data-total="${x.total}" data-static></game-timer>
     </li>
         `
     })}
@@ -577,7 +569,7 @@ const route : Route = {
                     border-radius: 0 var(--rc) var(--rc) 0;
                 }
             </style>
-            <script src= "/web/js/game-timer.v2.js"></script>
+            <script src= "/web/js/game-timer.v3.js"></script>
         `
         return template({
             main: render(result),
