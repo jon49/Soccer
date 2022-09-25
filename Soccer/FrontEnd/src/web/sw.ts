@@ -172,6 +172,78 @@ function streamResponse(url: string, generator: Generator | { body: Generator, h
     return new Response(stream, { headers: { ...htmlHeader(), ...headers }})
 }
 
+// interface File {
+    // version: string
+    // path: string
+// }
+// const fileList : Map<string, File> = new Map
+// type FileType = "http" | "js"
+// interface Loaded {
+    // [key: string]: { f: Function, type: FileType }
+// }
+// const loadedFiles : Loaded[] = []
+
+// async function load(urls: URL[]) {
+    // let files =
+        // await Promise.all(
+        // urls
+        // .map(x => fileList.get(x.pathname))
+        // .map(x => x ? cacheResponse(`${x.path}?_=${x.version}`, void 0) : null))
+    // if (files.length === 0) {
+        // return
+    // }
+    // for (let index = 0; index < files.length; index++) {
+        // const x = files[index]
+        // const url = urls[index]
+        // if (!x) return
+        // let text = await x.text()
+        // let type : FileType =
+            // isHttp(url.pathname)
+                // ? (text += ";return Handler", "http")
+            // : (text += ";return defaults", "js")
+        // if (text) {
+            // loadedFiles.push({
+                // [url.pathname]: {
+                    // f: new Function(text),
+                    // type
+                // }
+            // })
+        // } else {
+            // console.error(`Could not parse ${x.url}.`, url)
+        // }
+    // }
+// }
+
+// function isHttp(s: string) {
+    // return s.endsWith(".html.js") || s.endsWith(".http.js")
+// }
+
+// async function loadJavascript(...files : string[]) {
+//     const jsFilesTask = files
+//         .filter(x => !loadedFiles[x])
+//         .map(x => cacheResponse(x))
+//     const jsFiles = await Promise.all(jsFilesTask)
+//     for (const x of jsFiles) {
+//         const jsText = await x.res.text()
+//         if (jsText) {
+//             loadedFiles[x.url] = await eval(jsText)
+//         } else {
+//             console.error(`Could not parse ${x.url}. Text: ${jsText}`)
+//         }
+//     }
+// }
+// 
+// var staticFiles : any = {
+//     DB: "/app/utils/database.js",
+//     html: "/app/utils/html-template-tag.js"
+// }
+// export type Load = typeof load
+// async function load(...files : string[]) {
+//     await loadJavascript(...(files.map(x => staticFiles[x] || x)));
+//     return <any>files.map(x => loadedFiles[staticFiles[x] || x])
+// }
+
+
 /**
 *  /my/url -> /my/url/
 *  /my/script.js -> /my/script.js

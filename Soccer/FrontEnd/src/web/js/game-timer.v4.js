@@ -5,7 +5,7 @@
     const times = new Map
 
     /**
-     * @param {GameTimer|GameTimerIs} instance
+     * @param {GameTimer} instance
      */
     function timer(instance) {
         let time = instance.interval
@@ -29,40 +29,16 @@
     }
 
     class GameTimerIs extends HTMLOptionElement {
-        constructor() {
-            super()
-
-            this.start = this.total = this.interval = 0
-            this.flash = false
-        }
-
         connectedCallback() {
-            this.start = +(this.dataset.start ?? 0) || +new Date()
-            this.total = +(this.dataset.total ?? 0)
-            this.interval = +(this.dataset.interval ?? 0) || 1e3
-            this.static = this.dataset.static === ""
-            if (!this.static) timer(this)
-            this._observer = new MutationObserver(this._init.bind(this));
+            this._observer = new MutationObserver(this.init.bind(this));
             this._observer.observe(this, { childList: true });
         }
 
-        _init() {
+        init() {
             this._observer?.disconnect()
-            this.a = document.createElement('span')
-            this.update(+new Date())
-            this.append(this.a)
-        }
-
-        disconnectedCallback() {
-            times.get(this.interval)?.delete(this)
-        }
-
-        /**
-         * @param {number} currentTime
-         */
-        update(currentTime) {
-            if (this.a)
-                this.a.textContent = formatTime(currentTime, this.start, this.total)
+            let start = +(this.dataset.start ?? 0) || +new Date()
+            let total = +(this.dataset.total ?? 0)
+            this.textContent += formatTime(+new Date(), start, total)
         }
     }
 

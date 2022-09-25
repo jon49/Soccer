@@ -569,7 +569,7 @@ const route : Route = {
                     border-radius: 0 var(--rc) var(--rc) 0;
                 }
             </style>
-            <script src= "/web/js/game-timer.v3.js"></script>
+            <script src= "/web/js/game-timer.v4.js"></script>
         `
         return template({
             main: render(result),
