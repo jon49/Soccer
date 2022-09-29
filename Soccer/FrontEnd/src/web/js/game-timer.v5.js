@@ -30,6 +30,10 @@
 
     class GameTimerIs extends HTMLOptionElement {
         connectedCallback() {
+            if (this.innerHTML) {
+                this.init()
+                return
+            }
             this._observer = new MutationObserver(this.init.bind(this));
             this._observer.observe(this, { childList: true });
         }

@@ -127,7 +127,6 @@ function render({ team, playersGame, game, positions, posted, message }: View) {
     }
 
     return html`
-<h2>${team.name} - Game ${game.date} ${when(game.opponent, x => ` - ${x}`)}</h2>
 <div>
     ${when(!isEnded, () => html`
     <form class=inline method=post action="?$${queryTeamGame}&handler=${isInPlay ? "pauseGame" : "startGame"}">
@@ -149,14 +148,14 @@ function render({ team, playersGame, game, positions, posted, message }: View) {
             <span>Points</span>
             <form id=team-points class=inline method=post hidden></form>
             <button formaction="?$${queryTeamGame}&handler=pointsDec" target="#points" form=team-points>-</button>
-            <span id=points>&nbsp;${getPointsView(game.points)}&nbsp;</span>
+            <span id=points>${getPointsView(game.points)}</span>
             <button formaction="?$${queryTeamGame}&handler=pointsInc" target="#points" form=team-points>+</button>
         </li>
         <li>
             <span>Opponent</span>
             <form id=opponent-points class=inline method=post hidden></form>
             <button formaction="?$${queryTeamGame}&handler=oPointsDec" target="#o-points" form=opponent-points>-</button>
-            <span id=o-points>&nbsp;${getPointsView(game.opponentPoints)}&nbsp;</span>
+            <span id=o-points>${getPointsView(game.opponentPoints)}</span>
             <button formaction="?$${queryTeamGame}&handler=oPointsInc" target="#o-points" form=opponent-points>+</button>
         </li>
     </ul>
@@ -234,7 +233,7 @@ ${when(out, () => html`
         <p>${x.name}</p>
         ${when(availablePlayersToSwap.length > 0, _ =>
             html`
-        <form method=post action="?$${queryTeamGame}&playerId=$${x.playerId}&handler=onDeckWith" onchange="this.submit()">
+        <form method=post action="?$${queryTeamGame}&playerId=$${x.playerId}&handler=onDeckWith" onchange="this.requestSubmit()">
             <select name="swapPlayerId" class="auto-select button" style="width: 2.5em;">
                 <option selected>🏃</option>
                 ${availablePlayersToSwap.map(x => html`
@@ -245,7 +244,7 @@ ${when(out, () => html`
         </form>`)}
         <form method=post
               action="?$${queryTeamGame}&playerId=$${x.playerId}&handler=addPlayerPosition"
-              onchange="this.submit()">
+              onchange="this.requestSubmit()">
             <select class="auto-select button" name=positionId>
                 <option selected>#</option>
                 ${availablePositions.map(x => html`<option value=${x.id}>${x.name}</option>`)}
@@ -489,9 +488,6 @@ const postHandlers : PostHandlers = {
             start: timestamp,
         })
         await playerGameSave(teamId, player)
-        let [p, positions] = await Promise.all([teamGet(teamId), positionGetAll(teamId)])
-        let position = positions.positions.find(x => x.id === positionId)
-        return inPlayPlayerInfoView(p.players.find(x => x.id === playerId)?.name, position?.name)
     },
 
     activityMarker: async ({ query, data }) => {
@@ -542,39 +538,59 @@ const postHandlers : PostHandlers = {
         game.status = "paused"
         await teamSave(team)
     },
+
+}
+
+async function get(req: Request) {
+    let result = await start(req)
+    let template = await layout()
+    let head = `
+        <style>
+            .auto-select {
+                width: 2em;
+                appearance: none;
+            }
+            .auto-select:focus {
+                width: auto;
+                appearance: auto;
+            }
+            ul.list {
+                border-collapse: collapse;
+            }
+            .round > *:first-child {
+                border-radius: var(--rc) 0 0 var(--rc);
+            }
+            .round > *:last-child {
+                border-radius: 0 var(--rc) var(--rc) 0;
+            }
+        </style>
+        <script src="/web/js/game-timer.v5.js"></script>
+    `
+    return template({
+        main: html`
+<h2>${result.team.name} - Game ${result.game.date} ${when(result.game.opponent, x => ` - ${x}`)}</h2>
+<div id=refresh>
+${render(result)}
+</div>
+<form id=refresh-form action="?teamId=${result.team.id}&gameId=${result.game.id}&handler=refresh" target=#refresh hidden>
+</form>`,
+        head,
+        scripts: [ "/web/js/lib/request-submit.js", "/web/js/lib/htmf.v0.8.js", "/web/js/game-play.v3.js" ] })
+}
+
+async function refresh(req: Request) {
+    let result = await start(req)
+    return render(result)
 }
 
 const route : Route = {
-    route: (url: URL) => url.pathname.endsWith("/games/") && url.searchParams.has("gameId") && url.searchParams.has("teamId"),
+    route: (url: URL) => url.pathname.endsWith("/games/") && ["gameId", "teamId"].every(x => url.searchParams.has(x)),
     async get(req: Request) {
-        let result = await start(req)
-        let template = await layout()
-        let head = `
-            <style>
-                .auto-select {
-                    width: 2em;
-                    appearance: none;
-                }
-                .auto-select:focus {
-                    width: auto;
-                    appearance: auto;
-                }
-                ul.list {
-                    border-collapse: collapse;
-                }
-                .round > *:first-child {
-                    border-radius: var(--rc) 0 0 var(--rc);
-                }
-                .round > *:last-child {
-                    border-radius: 0 var(--rc) var(--rc) 0;
-                }
-            </style>
-            <script src= "/web/js/game-timer.v4.js"></script>
-        `
-        return template({
-            main: render(result),
-            head,
-            scripts: [ "/web/js/lib/request-submit.js", "/web/js/lib/htmf.js", "/web/js/game-play.v2.js" ] })
+        let params = searchParams<{ handler?: "refresh" }>(req)
+        if (params.handler === "refresh") {
+            return refresh(req)
+        }
+        return get(req)
     },
     post: handlePost(postHandlers),
 }

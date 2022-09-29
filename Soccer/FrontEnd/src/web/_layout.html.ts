@@ -1,7 +1,7 @@
 import html from "./server/html-template-tag.js"
 import { cache, get, Message } from "./server/db.js"
 import { version } from "./settings.js"
-import { messageView } from "./server/shared.js"
+import { messageView, when } from "./server/shared.js"
 
 interface Nav {
     name: string
@@ -27,14 +27,15 @@ const render = ({theme, error, syncCount}: Render) => (o: LayoutTemplateArgument
     <link href="/web/css/site.v2.css" rel=stylesheet>
     $${head}
 </head>
-<body ${theme ? html`class=${theme}` : null}>
+<body $${when(theme, x => html`class=${x}`)}>
     <a href="/login?handler=logout" style="position: absolute; top: 10px; right: 10px;">Logout</a>
     <header>
         <div class=sync>
             <h1 class=inline>Soccer</h1>
-            <form class=inline method=POST action="/web/sync/">
-                <button>Sync&nbsp;-&nbsp;${""+syncCount}</button>
+            <form id=sync-form class=inline method=POST action="/web/sync/">
+                <button id=sync-count>Sync&nbsp;-&nbsp;${""+syncCount}</button>
             </form>
+            <form id=update-sync-count action="/web/sync/" hidden target=#sync-count></form>
         </div>
         <nav>
             <ul>
@@ -53,7 +54,7 @@ const render = ({theme, error, syncCount}: Render) => (o: LayoutTemplateArgument
     <div id=messages></div>
     ${(scripts ?? []).map(x => html`<script src="${x}" type=module></script>`)}
     <script src="/web/js/snack-bar.js"></script>
-    <script src="/web/js/main.v2.js"></script>
+    <script src="/web/js/main.v3.js"></script>
 </body>
 </html>`
 }

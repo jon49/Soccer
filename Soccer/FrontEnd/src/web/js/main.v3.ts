@@ -113,4 +113,14 @@
 
     onLoad()
 
+    document.addEventListener("hf:completed", e => {
+        // @ts-ignore
+        let detail = e.detail
+        if (detail.method === "post") {
+            let updater = document.getElementById("update-sync-count")
+            if (updater instanceof HTMLFormElement)
+                updater.requestSubmit()
+        }
+    })
+
 })();

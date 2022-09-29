@@ -1,6 +1,7 @@
 import { get, getMany, set, setMany, update, Updated } from "./server/db.js"
+import html from "./server/html-template-tag.js"
 import { reject } from "./server/repo.js"
-import { RoutePostArgs } from "./server/route.js"
+import { Route, RoutePostArgs } from "./server/route.js"
 import { redirect } from "./server/utils.js"
 
 async function post({ req }: RoutePostArgs) {
@@ -61,7 +62,13 @@ interface PostData {
     rev: number
 }
 
-export default {
+let route : Route = {
     route: /\/sync\/$/,
-    post
+    post,
+    get: async () => {
+        const count = (await get("updated"))?.size ?? 0
+        return html`Sync&nbsp;-&nbsp;${""+count}`
+    }
 }
+
+export default route
