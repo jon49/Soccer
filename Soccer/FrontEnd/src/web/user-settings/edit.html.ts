@@ -2,8 +2,8 @@ import html from "../server/html-template-tag.js"
 import layout from "../_layout.html.js"
 import * as db from "../server/db.js"
 import { Settings } from "../server/db.js"
-import { handlePost, PostHandlers, Route, RoutePostArgs } from "../server/route.js"
-import { isSelected, redirect } from "../server/utils.js"
+import { handlePost, PostHandlers, Route } from "../server/route.js"
+import { isSelected } from "../server/utils.js"
 import { createCheckbox, validateObject } from "../server/validation.js"
 
 const themes = ["dark", "light", "none"] as const
