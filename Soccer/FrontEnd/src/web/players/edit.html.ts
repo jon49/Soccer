@@ -59,7 +59,7 @@ ${teamEdited ? messageView(message) : null}
     </div>
     <div>
         <label class=toggle>
-            <input name=active type=checkbox $${team.active ? "checked" : null}>
+            <input name=active type=checkbox $${when(team.active, "checked")}>
             <span class="off button">Inactive</span>
             <span class="on button">Active</span>
         </label>

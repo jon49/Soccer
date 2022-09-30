@@ -2,6 +2,7 @@ import html from "./server/html-template-tag.js"
 import { cache, get, Message } from "./server/db.js"
 import { version } from "./settings.js"
 import { messageView, when } from "./server/shared.js"
+import { Theme } from "./user-settings/edit.html.js"
 
 interface Nav {
     name: string
@@ -9,7 +10,7 @@ interface Nav {
 }
 
 interface Render {
-    theme: string | undefined
+    theme: Theme | undefined
     error: Message
     syncCount: number
 }
@@ -24,11 +25,27 @@ const render = ({theme, error, syncCount}: Render) => (o: LayoutTemplateArgument
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Soccer</title>
-    <link href="/web/css/site.v2.css" rel=stylesheet>
+    <link href="/web/css/site.v3.css" rel=stylesheet>
     $${head}
 </head>
-<body $${when(theme, x => html`class=${x}`)}>
-    <a href="/login?handler=logout" style="position: absolute; top: 10px; right: 10px;">Logout</a>
+<body $${when(theme, x => `class=${x}`)}>
+    <div style="position: absolute; top: 10px; right: 10px;">
+        <form method=post action="/web/user-settings/edit?handler=updateTheme" class=inline>
+            <label class="toggle">
+                <input
+                    id=theme-input
+                    name=light
+                    type=checkbox
+                    $${when(theme === "light", "checked")}
+                    $${when(theme === "none" || theme == null, `indeterminate`)}
+                    onclick="this.form.requestSubmit()">
+                <span class="off button bg">&#127774;</span>
+                <span class="on button bg">&#127762;</span>
+                <span class="none button bg">⛅</span>
+            </label>
+        </form>
+        <a href="/login?handler=logout">Logout</a>
+    </div>
     <header>
         <div class=sync>
             <h1 class=inline>Soccer</h1>
@@ -54,7 +71,7 @@ const render = ({theme, error, syncCount}: Render) => (o: LayoutTemplateArgument
     <div id=messages></div>
     ${(scripts ?? []).map(x => html`<script src="${x}" type=module></script>`)}
     <script src="/web/js/snack-bar.js"></script>
-    <script src="/web/js/main.v3.js"></script>
+    <script src="/web/js/main.v4.js"></script>
 </body>
 </html>`
 }

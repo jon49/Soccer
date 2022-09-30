@@ -2,8 +2,9 @@ import html from "../server/html-template-tag.js"
 import layout from "../_layout.html.js"
 import * as db from "../server/db.js"
 import { Settings } from "../server/db.js"
-import { RoutePostArgs } from "../server/route.js"
+import { handlePost, PostHandlers, Route, RoutePostArgs } from "../server/route.js"
 import { isSelected, redirect } from "../server/utils.js"
+import { createCheckbox, validateObject } from "../server/validation.js"
 
 const themes = ["dark", "light", "none"] as const
 export type Theme = typeof themes[number]
@@ -50,19 +51,31 @@ async function get() {
     return template({ main: render(settings) })
 }
 
-const handler = <any>{
-    settings: handleSetting,
+// const handler = <any>{
+//     settings: handleSetting,
+// }
+
+const dataValidator = {
+    light: createCheckbox
 }
 
-export default {
+const postHandlers : PostHandlers = {
+    updateTheme: async ({ data, req }) => {
+        let { light } = await validateObject(data, dataValidator)
+        let theme : Theme = light ? "light" : "dark"
+        await db.set("settings", { theme }, false)
+        if (req.headers.has("hf-request")) {
+            return new Response(null, { status: 204, headers: { "hf-events": JSON.stringify({ themeUpdated: { theme } }) } })
+        } else {
+            return
+        }
+    },
+}
+
+const route : Route = {
     route: /\/user-settings\/edit\/$/,
     get,
-    async post({data, req}: RoutePostArgs) {
-        let handlerType = new URL(req.url).searchParams.get("handler")
-        let handle
-        if (handlerType && (handle = handler[<any>handlerType])) {
-            await handle(data)
-        }
-        return redirect(req)
-    }
+    post: handlePost(postHandlers)
 }
+
+export default route

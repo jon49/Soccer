@@ -8,6 +8,7 @@ import gamesPlayHandler from "./games/game-play.html"
 import playersEditHandler from "./players/edit.html"
 import positionsHandler from "./positions.html"
 import activitiesHandler from "./activities.html"
+import userSettingsHandler from "./user-settings/edit.html"
 import syncHandler from "./sync.http"
 import { cache } from "./server/db"
 import { messageView } from "./server/shared"
@@ -16,6 +17,7 @@ import { redirect } from "./server/utils"
 
 addRoutes([
     indexHandler,
+    userSettingsHandler,
     teamsHandler,
     playersHandler,
     playersEditHandler,

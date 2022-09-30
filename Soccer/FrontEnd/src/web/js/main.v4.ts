@@ -123,4 +123,23 @@
         }
     })
 
+    document.addEventListener("themeUpdated", e => {
+        // @ts-ignore
+        let theme = e.detail?.theme
+        if (theme) {
+            document.body.className = theme
+        }
+    })
+
+    let themeInput = document.getElementById("theme-input")
+    if (themeInput instanceof HTMLInputElement) {
+        if (themeInput?.hasAttribute("indeterminate")) {
+            if (window.matchMedia('(prefers-color-scheme: dark)').matches && !themeInput.checked) {
+                themeInput.checked = false
+            } else {
+                themeInput.checked = true
+            }
+        }
+    }
+
 })();

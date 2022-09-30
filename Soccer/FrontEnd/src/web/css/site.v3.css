@@ -299,7 +299,9 @@ header {
 
 .toggle > [type="checkbox"],
 .on,
-input:checked ~ .off {
+input:checked ~ .off,
+input:indeterminate ~ .off,
+.none {
   display: none;
 }
 
@@ -310,4 +312,12 @@ input:checked ~ .off {
 input:checked ~ .on {
   display: inline-block;
   background-color: green;
+}
+
+input:indeterminate ~ .none {
+  display: inline-block;
+}
+
+.bg {
+  background-color: var(--c2) !important;
 }
