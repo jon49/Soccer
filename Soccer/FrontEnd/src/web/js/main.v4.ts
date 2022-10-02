@@ -142,4 +142,13 @@
         }
     }
 
+    document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "hidden") {
+            let form = document.getElementById("sync-form")
+            if (form instanceof HTMLFormElement) {
+                form.requestSubmit()
+            }
+        }
+    })
+
 })();
