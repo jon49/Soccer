@@ -21,7 +21,10 @@ async function post({ req }: RoutePostArgs) {
         body: JSON.stringify({ lastSyncedId, data }),
         headers: {
             "Content-Type": "application/json"
-        }
+        },
+        keepalive: true,
+        credentials: "same-origin",
+        mode: "same-origin"
     })
     if (res.status >= 200 && res.status <= 299 && res.headers.get("Content-Type")?.startsWith("application/json")) {
         newData = await res.json()
