@@ -72,7 +72,7 @@ const render = ({theme, error, syncCount}: Render) => (o: LayoutTemplateArgument
     <div id=messages></div>
     ${(scripts ?? []).map(x => html`<script src="${x}"></script>`)}
     <script src="/web/js/snack-bar.js"></script>
-    <script src="/web/js/main.v4.js"></script>
+    <script src="/web/js/main.v5.js"></script>
 </body>
 </html>`
 }
