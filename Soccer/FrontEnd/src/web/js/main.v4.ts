@@ -142,13 +142,22 @@
         }
     }
 
-    document.addEventListener("visibilitychange", () => {
+    const form = document.getElementById("sync-form")
+    document.addEventListener("visibilitychange", sync)
+    function sync() {
+        if (!(form instanceof HTMLFormElement)) return
+        let state : HTMLInputElement = form.state
         if (document.visibilityState === "hidden") {
-            let form = document.getElementById("sync-form")
-            if (form instanceof HTMLFormElement) {
-                form.requestSubmit()
-            }
+            // @ts-ignore
+            state.value = "hidden"
         }
-    })
+        if (document.visibilityState === "visible") {
+            // @ts-ignore
+            state.value = "visible"
+        }
+        form.submit()
+        state.value = ""
+    }
+    setTimeout(sync, 1e3)
 
 })();

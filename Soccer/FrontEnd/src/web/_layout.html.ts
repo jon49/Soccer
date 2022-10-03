@@ -51,6 +51,7 @@ const render = ({theme, error, syncCount}: Render) => (o: LayoutTemplateArgument
             <h1 class=inline>Soccer</h1>
             <form id=sync-form class=inline method=POST action="/web/sync/">
                 <button id=sync-count>Sync&nbsp;-&nbsp;${""+syncCount}</button>
+                <input type=hidden name=state>
             </form>
             <form id=update-sync-count action="/web/sync/" hidden target=#sync-count></form>
         </div>
@@ -69,7 +70,7 @@ const render = ({theme, error, syncCount}: Render) => (o: LayoutTemplateArgument
     </main>
     <footer><p>${version}</p></footer>
     <div id=messages></div>
-    ${(scripts ?? []).map(x => html`<script src="${x}" type=module></script>`)}
+    ${(scripts ?? []).map(x => html`<script src="${x}"></script>`)}
     <script src="/web/js/snack-bar.js"></script>
     <script src="/web/js/main.v4.js"></script>
 </body>

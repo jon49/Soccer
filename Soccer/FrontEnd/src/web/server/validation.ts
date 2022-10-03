@@ -60,6 +60,11 @@ export function createIdNumber(name: string) : (val: number | string) => Promise
     }
 }
 
+export const maybe =
+    <T>(f: (val: T | undefined) => Promise<T>) =>
+    (val: T | undefined) =>
+        !val ? Promise.resolve(val) : f(val)
+
 export const createString25 =
     (name: string) =>
     (val: string | undefined) =>
