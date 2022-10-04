@@ -139,8 +139,7 @@
     }
 
     const form = document.getElementById("sync-form")
-    document.addEventListener("visibilitychange", sync)
-    function sync() {
+    document.addEventListener("visibilitychange", () => {
         if (!(form instanceof HTMLFormElement)) return
         let state : HTMLInputElement = form.state
         if (document.visibilityState === "hidden") {
@@ -151,9 +150,8 @@
             // @ts-ignore
             state.value = "visible"
         }
-        form.submit()
+        form.requestSubmit()
         state.value = ""
-    }
-    setTimeout(sync, 1e3)
+    })
 
 })();
