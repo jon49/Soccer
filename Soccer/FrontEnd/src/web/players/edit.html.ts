@@ -168,7 +168,7 @@ const route : Route = {
                 { name: "Positions", url: `/web/positions?teamId=${result.team.id}` },
                 { name: "Activities", url: `/web/activities?teamId=${result.team.id}` }
             ],
-            scripts: ["/web/js/lib/request-submit.js", "/web/js/lib/htmf.v0.8.js", "/web/js/players-edit.js"] })
+            scripts: ["/web/js/players-edit.js"] })
     },
     post: handlePost(postHandlers)
 }

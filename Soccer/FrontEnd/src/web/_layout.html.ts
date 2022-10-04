@@ -70,6 +70,8 @@ const render = ({theme, error, syncCount}: Render) => (o: LayoutTemplateArgument
     </main>
     <footer><p>${version}</p></footer>
     <div id=messages></div>
+    <script src="/web/js/lib/request-submit.js"></script>
+    <script src="/web/js/lib/htmf.v0.8.js"></script>
     ${(scripts ?? []).map(x => html`<script src="${x}"></script>`)}
     <script src="/web/js/snack-bar.js"></script>
     <script src="/web/js/main.v5.js"></script>

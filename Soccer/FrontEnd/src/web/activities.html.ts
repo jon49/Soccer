@@ -104,7 +104,7 @@ const route : Route = {
     async get(req: Request) {
         const result = await start(req)
         const template = await layout()
-        return template({ main: render(result), scripts: ["/web/js/lib/request-submit.js", "/web/js/lib/htmf.v0.8.js"] })
+        return template({ main: render(result) })
     },
     post: handlePost(postHandlers),
 }
