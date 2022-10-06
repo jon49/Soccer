@@ -35,8 +35,9 @@
       }
       const response = await fetch(url.href, options);
       if (response.redirected) {
-        if (publish($originator, "hf:redirected", eventData)) {
-          location.href = response.url;
+        let url = response.url
+        if (publish($originator, "hf:redirected", { ...eventData, url })) {
+          location.href = url;
         }
         return;
       }

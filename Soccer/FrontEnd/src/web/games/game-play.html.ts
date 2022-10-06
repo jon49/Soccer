@@ -572,10 +572,10 @@ async function get(req: Request) {
 <div id=refresh>
 ${render(result)}
 </div>
-<form id=refresh-form action="?teamId=${result.team.id}&gameId=${result.game.id}&handler=refresh" target=#refresh hidden>
+<form id=reload-form action="?teamId=${result.team.id}&gameId=${result.game.id}&handler=refresh" target=#refresh hidden>
 </form>`,
         head,
-        scripts: [ "/web/js/game-play.v3.js" ] })
+        scripts: [ "/web/js/game-play.v4.js" ] })
 }
 
 async function refresh(req: Request) {

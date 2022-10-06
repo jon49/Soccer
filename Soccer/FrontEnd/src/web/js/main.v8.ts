@@ -167,4 +167,19 @@
         state.value = ""
     })
 
+    document.addEventListener('hf:redirected', e => {
+        // @ts-ignore
+        let form = e.detail?.form
+        let refresh
+        if (form?.method === 'post'
+            && form.id !== 'sync-form'
+            && (refresh = document.getElementById('reload-form'))
+            && refresh instanceof HTMLFormElement
+            // @ts-ignore
+            && getCleanUrl() === e.detail.url) {
+            e.preventDefault()
+            refresh.requestSubmit()
+        }
+    })
+
 })();

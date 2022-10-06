@@ -11,14 +11,4 @@
     document.addEventListener('focus', toggleButtonClass(false), capture)
     document.addEventListener('blur', toggleButtonClass(true), capture)
 
-    document.addEventListener('hf:redirected', e => {
-        // @ts-ignore
-        let form = e.detail?.form
-        if (form?.method === 'post' && form.id !== 'sync-form') {
-            e.preventDefault()
-            let refresh = document.getElementById('refresh-form')
-            if (refresh instanceof HTMLFormElement)
-                refresh.requestSubmit()
-        }
-    })
 })()
