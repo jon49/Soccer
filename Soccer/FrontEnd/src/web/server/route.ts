@@ -61,8 +61,27 @@ export function handlePost(handlers: PostHandlers) {
     }
 }
 
-interface RouteGet {
+export function handleGet(handlers: RouteGetHandler | RouteGet | undefined, req: Request) {
+    if (handlers == null) return
+    if (handlers instanceof Function) {
+        return handlers(req)
+    }
+    let query = searchParams<{handler?: string}>(req)
+    let resultTask =
+        query.handler && handlers[query.handler]
+            ? handlers[query.handler](req)
+        : handlers["get"]
+            ? handlers["get"](req)
+        : reject("I'm sorry, I couldn't find that page.")
+    return resultTask
+}
+
+export interface RouteGet {
     (req: Request): Promise<HTMLReturnType>
+}
+
+export interface RouteGetHandler {
+    [handler: string]: RouteGet
 }
 
 export interface RoutePostArgs {
@@ -74,6 +93,6 @@ export interface RoutePost {
 }
 export interface Route {
     route: RegExp | ((a: URL) => boolean)
-    get?: RouteGet
-    post?: RoutePost
+    get?: RouteGet | RouteGetHandler
+    post?: RoutePost | PostHandlers
 }

@@ -1,4 +1,4 @@
-import { addRoutes, findRoute, RoutePost } from "./server/route"
+import { addRoutes, findRoute, handleGet, RouteGet, RouteGetHandler, RoutePost } from "./server/route"
 import indexHandler from "./index.html.js"
 import { version } from "./settings"
 import teamsHandler from "./teams.html"
@@ -82,11 +82,13 @@ async function getResponse(event: FetchEvent): Promise<Response>  {
 
 async function get(url: URL, req: Request, event: FetchEvent) : Promise<Response> {
     if (!url.pathname.endsWith("/")) return cacheResponse(url.pathname, event)
-    let handler = <(req: Request) => Promise<Generator<any, void, unknown>>|null>findRoute(url, req.method.toLowerCase())
-    if (handler) {
+    let handler = <RouteGet | RouteGetHandler | undefined>findRoute(url, req.method.toLowerCase())
+    let resultTask = handleGet(handler, req)
+    if (resultTask) {
         let result =
-            await handler(req)
-            ?.catch(async () => {
+            await resultTask
+            ?.catch(async error => {
+                console.error("GET page error:", error)
                 let message = await cache.pop("message")
                 let view = messageView(message)
                 if (view) {
@@ -117,7 +119,6 @@ async function post(url: URL, req: Request) : Promise<Response> {
             if (result) {
                 return streamResponse(url.pathname, result)
             }
-            // return new Response("<meta http-equiv='refresh' content='0'>", { headers: htmlHeader()})
         } catch (error) {
             let message = await cache.peek("message")
             if (!error && message) {
