@@ -46,8 +46,8 @@ function getTheme(s: unknown) {
     return themes.find(x => x === s) ?? "none"
 }
 
-async function get() {
-    let [settings, template] = await Promise.all([start(), layout()])
+async function get(req: Request) {
+    let [settings, template] = await Promise.all([start(), layout(req)])
     return template({ main: render(settings) })
 }
 

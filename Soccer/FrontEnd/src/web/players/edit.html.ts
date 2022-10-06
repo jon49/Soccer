@@ -161,7 +161,7 @@ const route : Route = {
     route: /\/players\/edit\/$/,
     async get(req: Request) {
         let result = await start(req)
-        const template = await layout()
+        const template = await layout(req)
         return template({
             main: render(result),
             nav: [

@@ -3,8 +3,8 @@ import layout from "./_layout.html.js"
 
 export default {
     route: /\/web\/?$/,
-    get: async () => {
-        let template = await layout()
+    get: async (req: Request) => {
+        let template = await layout(req)
         return template({ main: html`<p>Welcome to the soccer app!</p>` })
     }
 }

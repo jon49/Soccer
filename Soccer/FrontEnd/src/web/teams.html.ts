@@ -95,7 +95,7 @@ export default {
     route: /\/teams\/$/,
     async get(req: Request) {
         const result = await start(req)
-        const template = await layout()
+        const template = await layout(req)
         return template({ main: render(result) })
     },
     post: handlePost(postHandlers),

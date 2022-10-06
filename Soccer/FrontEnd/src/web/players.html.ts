@@ -81,7 +81,7 @@ const route : Route = {
     route: /\/players\/$/,
     async get(req: Request) {
         const result = await start(req)
-        const template = await layout()
+        const template = await layout(req)
         return template({
             main: render(result),
             nav: [{name: "Edit", url: `/web/players/edit?teamId=${result.team.id}#team`}] })

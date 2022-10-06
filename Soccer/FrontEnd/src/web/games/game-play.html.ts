@@ -543,7 +543,7 @@ const postHandlers : PostHandlers = {
 
 async function get(req: Request) {
     let result = await start(req)
-    let template = await layout()
+    let template = await layout(req)
     let head = `
         <style>
             .auto-select {
@@ -572,13 +572,13 @@ async function get(req: Request) {
 <div id=refresh>
 ${render(result)}
 </div>
-<form id=reload-form action="?teamId=${result.team.id}&gameId=${result.game.id}&handler=refresh" target=#refresh hidden>
+<form id=reload-form action="?teamId=${result.team.id}&gameId=${result.game.id}&handler=reload" target=#refresh hidden>
 </form>`,
         head,
         scripts: [ "/web/js/game-play.v4.js" ] })
 }
 
-async function refresh(req: Request) {
+async function reload(req: Request) {
     let result = await start(req)
     return render(result)
 }
@@ -586,9 +586,9 @@ async function refresh(req: Request) {
 const route : Route = {
     route: (url: URL) => url.pathname.endsWith("/games/") && ["gameId", "teamId"].every(x => url.searchParams.has(x)),
     async get(req: Request) {
-        let params = searchParams<{ handler?: "refresh" }>(req)
-        if (params.handler === "refresh") {
-            return refresh(req)
+        let params = searchParams<{ handler?: "reload" }>(req)
+        if (params.handler === "reload") {
+            return reload(req)
         }
         return get(req)
     },

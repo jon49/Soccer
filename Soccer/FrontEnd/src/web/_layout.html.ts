@@ -13,10 +13,12 @@ interface Render {
     theme: Theme | undefined
     error: Message
     syncCount: number
+    referrer: URL
 }
 
-const render = ({theme, error, syncCount}: Render) => (o: LayoutTemplateArguments) => {
-    const { main, head, scripts, nav } = o
+const render = ({theme, error, syncCount, referrer}: Render) => (o: LayoutTemplateArguments) => {
+    const { main, head, scripts, nav, reload } = o
+    referrer.searchParams.set("handler", "reload")
     return html`
 <!DOCTYPE html>
 <html>
@@ -68,6 +70,7 @@ const render = ({theme, error, syncCount}: Render) => (o: LayoutTemplateArgument
         ${messageView(error)}
         ${main}
     </main>
+    ${reload && html`<form id=reload-form action="${referrer.toString()}" target="${reload.target}" hidden></form>`}
     <footer><p>${version}</p></footer>
     <div id=messages></div>
     <script src="/web/js/lib/request-submit.js"></script>
@@ -82,9 +85,10 @@ const render = ({theme, error, syncCount}: Render) => (o: LayoutTemplateArgument
 const getSyncCount = async () => (await get("updated"))?.size ?? 0
 
 export default
-    async function layout() {
+    async function layout(req: Request) {
+        let referrer = new URL(req.referrer)
         let [theme, syncCount, error] = await Promise.all([get("settings"), getSyncCount(), cache.pop("message")])
-        return render({ theme: theme?.theme, error, syncCount })
+        return render({ theme: theme?.theme, error, syncCount, referrer })
     }
 
 export type Layout = typeof layout
@@ -94,4 +98,7 @@ export interface LayoutTemplateArguments {
     main?: Generator|string
     scripts?: string[]
     nav?: Nav[]
+    reload?: {
+        target: string
+    }
 }
