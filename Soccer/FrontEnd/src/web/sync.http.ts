@@ -18,7 +18,7 @@ async function post({ req, data }: RoutePostArgs) {
     let updated = await get("updated") ?? new Map
     if ((signedOut && (isHidden || isVisible))
        || isHidden && !updated.size
-       || (isVisible && (lastSynced != void 0 && Date.now() - lastSynced < 6e5 /* 10 minutes */ ))) {
+       || (isVisible && (lastSynced != void 0 && Date.now() - lastSynced < 6e6 /* 100 minutes */ ))) {
         return new Response(null, { status: 204 })
     }
     if (isVisible) {
