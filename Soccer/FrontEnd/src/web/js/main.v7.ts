@@ -4,6 +4,8 @@
 
     const $popUp = <HTMLElement>document.getElementById('messages')
 
+    /* SERVICE WORKER UPDATER */
+
     // https://deanhume.com/displaying-a-new-version-available-progressive-web-app/
     function shouldUpdateServiceWorker(this: ServiceWorker) {
         if (this.state === 'installed' && navigator.serviceWorker.controller) {
@@ -66,6 +68,8 @@
         })
     }
 
+    /* POP UP for errors */
+
     document.addEventListener("s:error", e => {
         // @ts-ignore
         let message: string[] | undefined = e.detail.message
@@ -85,6 +89,8 @@
         template.innerHTML = s
         return template.content.children[0]
     }
+
+    /* AUTO SCROLL and FOCUS on page refresh */
 
     function getCleanUrl() {
         let url = new URL(document.location.href)
@@ -107,7 +113,10 @@
             window.scrollTo({ top: y + document.body.scrollHeight - height })
         }
         document.getElementById(active)?.focus()
+        localStorage.pageLocation = null
     })
+
+    /* UPDATE SYNC COUNT */
 
     document.addEventListener("hf:completed", e => {
         // @ts-ignore
@@ -118,6 +127,8 @@
                 updater.requestSubmit()
         }
     })
+
+    /* THEME */
 
     document.addEventListener("themeUpdated", e => {
         // @ts-ignore
@@ -137,6 +148,8 @@
             }
         }
     }
+
+    /* AUTO SYNC */
 
     const form = document.getElementById("sync-form")
     document.addEventListener("visibilitychange", () => {
