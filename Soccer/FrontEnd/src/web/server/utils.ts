@@ -44,3 +44,7 @@ export function sort<T>(array: T[], f: (x: T) => string) {
 export function getNewId(ids: number[]) {
     return Math.max(0, ...ids) + 1
 }
+
+export function tail<T>(xs: T[]) : T {
+    return xs.slice(-1)[0]
+}

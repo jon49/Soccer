@@ -4,7 +4,7 @@ import { activityGetAll, playerGameAllGet, playerGameSave, positionGetAll } from
 import { teamGet, teamSave } from "../server/repo-team"
 import { Route, PostHandlers } from "../server/route"
 import { messageView, when } from "../server/shared"
-import { searchParams, sort } from "../server/utils"
+import { searchParams, sort, tail } from "../server/utils"
 import { createIdNumber, required, validateObject } from "../server/validation"
 import { queryTeamIdGameIdValidator } from "../server/validators"
 import layout from "../_layout.html"
@@ -60,10 +60,6 @@ async function start(req : Request) : Promise<View> {
 function getPositionName(positions: Position[], gameTimes: GameTime[]) {
     let positionId = tail(gameTimes)?.positionId
     return positions.find(x => x.id === positionId)?.name
-}
-
-function tail<T>(xs: T[]) : T {
-    return xs.slice(-1)[0]
 }
 
 const filterOutPlayers = (x: PlayerGameView) => !x.status || x.status?._ === "out"

@@ -6,7 +6,7 @@ import { searchParams } from "./server/utils"
 import { validateObject } from "./server/validation"
 import { messageView, when } from "./server/shared"
 import { dataTeamNameYearValidator } from "./server/validators"
-import { teamGetAll, teamsCreate, WasFiltered } from "./server/repo-team"
+import { teamGet, teamGetAll, teamsCreate, WasFiltered } from "./server/repo-team"
 import { reject } from "./server/repo"
 
 interface TeamsView {
@@ -14,48 +14,28 @@ interface TeamsView {
     wasFiltered: boolean
     cache?: CacheTeams
     message: Message
-    posted: string | undefined
 }
 
 async function start(req: Request) : Promise<TeamsView> {
-    const [message, teamsCache, posted] = await Promise.all([
+    const [message, teamsCache ] = await Promise.all([
         cache.pop("message"),
-        cache.pop("teams"),
-        cache.pop("posted")])
+        cache.pop("teams") ])
     const query = searchParams<{all: string}>(req)
     const showAll = query.all !== null
 
     let wasFiltered : WasFiltered = {}
     let teams = await teamGetAll(showAll, wasFiltered)
-    return { teams, wasFiltered: !!wasFiltered.filtered, cache: teamsCache, message, posted }
+    return { teams, wasFiltered: !!wasFiltered.filtered, cache: teamsCache, message }
 }
 
-const render = ({ teams, wasFiltered, cache, message, posted }: TeamsView) => 
+const render = ({ teams, wasFiltered, cache, message }: TeamsView) => 
     html`
 <h2>Teams</h2>
 
 ${
     teams ? html`
-        <ul class=list>
-            ${teams?.map(x => {
-                let teamId = x.id
-                return html`
-                <li>
-                    <a href="/web/players?teamId=${x.id}">${x.name} - ${x.year}</a>
-                    <a href="/web/games?teamId=${x.id}">Games</a>
-                    ${when((() => {
-                        let d = new Date()
-                        let currentDate = `${d.getFullYear()}-${(""+(d.getMonth() + 1)).padStart(2, "0")}-${d.getDate()}`
-                        let result = x.games
-                        .sort((a, b) => a.date.localeCompare(b.date))
-                        .find(x => x.date >= currentDate)
-                        return result
-                    })(),
-                        x => html`<a href="/web/games?teamId=${teamId}&gameId=${x.id}">${x.date}</a>`
-                    ) ?? html`<span>&nbsp;</span>`}
-                    <a href="/web/players/edit?teamId=${x.id}">Edit</a>
-                </li>`
-            })}
+        <ul id=teams class=list>
+            ${teams?.map(getTeamView)}
         </ul>`
     : html`<p>No teams found. Please add one!</p>`
 }
@@ -66,10 +46,10 @@ ${ wasFiltered ? html`<p><a href="?all">Show all teams.</a></p>` : null }
 
 ${messageView(message)}
 
-<form class=form method=post>
+<form class=form method=post target=#teams hf-swap=append>
     <div>
         <label for=name>Team Name</label>
-        <input id=name name=name type=text value="${cache?.name ?? ""}" $${when(posted || !teams?.length, "autofocus")} required>
+        <input id=name name=name type=text value="${cache?.name ?? ""}" $${when(!teams?.length, "autofocus")} required>
     </div>
     <div>
         <label for=year>Year</label>
@@ -78,16 +58,34 @@ ${messageView(message)}
     <button>Save</button>
 </form>`
 
+function getTeamView(team: Team) {
+    let teamId = team.id
+    return html`
+    <li>
+        <a href="/web/players?teamId=${team.id}">${team.name} - ${team.year}</a>
+        <a href="/web/games?teamId=${team.id}">Games</a>
+        ${when((() => {
+            let d = new Date()
+            let currentDate = `${d.getFullYear()}-${(""+(d.getMonth() + 1)).padStart(2, "0")}-${d.getDate()}`
+            let result = team.games
+            .sort((a, b) => a.date.localeCompare(b.date))
+            .find(x => x.date >= currentDate)
+            return result
+        })(),
+            x => html`<a href="/web/games?teamId=${teamId}&gameId=${x.id}">${x.date}</a>`
+        ) ?? html`<span>&nbsp;</span>`}
+        <a href="/web/players/edit?teamId=${teamId}">Edit</a>
+    </li>`
+}
 
 const postHandlers: PostHandlers = {
     post: async function post({ data }) {
         let d = await validateObject(data, dataTeamNameYearValidator)
-        await teamsCreate(d)
-        ?.catch(_ => reject({ posted: "add-team", teams: {name: d.name, year: d.year} }))
+        let teamId = await teamsCreate(d)
+        ?.catch(_ => reject({ teams: {name: d.name, year: d.year} }))
 
-        await cache.push({posted: "add-team"})
-
-        return
+        let team = await teamGet(teamId)
+        return getTeamView(team)
     },
 }
 

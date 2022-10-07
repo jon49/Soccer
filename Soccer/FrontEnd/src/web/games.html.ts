@@ -1,9 +1,9 @@
-import { cache, Message, Team } from "./server/db"
+import { cache, Game, Message, Team } from "./server/db"
 import html from "./server/html-template-tag"
 import { teamGet, teamSave } from "./server/repo-team"
 import { PostHandlers } from "./server/route"
 import { messageView, when } from "./server/shared"
-import { getNewId, searchParams } from "./server/utils"
+import { getNewId, searchParams, tail } from "./server/utils"
 import { assert, createString25, optional, validate, validateObject } from "./server/validation"
 import { queryTeamIdValidator } from "./server/validators"
 import layout from "./_layout.html"
@@ -32,7 +32,7 @@ ${when(!gameAdded, messageView(message))}
 ${when(!hasGames, html`<p>No games found.</p>`)}
 
 ${when(hasGames, html`
-<ul class=list>
+<ul id=games class=list>
     ${team.games.map(x => {
         return html`
         <li>
@@ -44,7 +44,7 @@ ${when(hasGames, html`
 
 ${when(gameAdded, messageView(message))}
 
-<form class=form method=post>
+<form class=form method=post target=#games hf-swap=append>
     <div class=inline>
         <label for=game-date>Name</label>
         <input id=game-date type=date name=date required value=${new Date().toISOString().slice(0, 10)} ${when(gameAdded || !hasGames, "autofocus")}>
@@ -58,6 +58,15 @@ ${when(gameAdded, messageView(message))}
     </div>
 </form>
 `
+}
+
+function getGameView(teamId: number, game: Game) {
+    return html`
+        <li>
+            <a href="?teamId=${teamId}&gameId=${game.id}">${game.date}${when(game.opponent, " - " + game.opponent) }</a>
+            <a href="/web/games/edit?teamId=${teamId}&gameId=${game.id}">Edit</a>
+        </li>`
+
 }
 
 let addGameValidator = {
@@ -89,7 +98,7 @@ const postHandlers : PostHandlers = {
         })
 
         await teamSave(team)
-        return
+        return getGameView(team.id, tail(team.games))
     }
 }
 
