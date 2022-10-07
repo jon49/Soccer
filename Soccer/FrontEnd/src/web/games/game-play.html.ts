@@ -2,7 +2,7 @@ import { Activity, cache, Game, GameTime, Message, PlayerGame, Position, Team } 
 import html from "../server/html-template-tag"
 import { activityGetAll, playerGameAllGet, playerGameSave, positionGetAll } from "../server/repo-player-game"
 import { teamGet, teamSave } from "../server/repo-team"
-import { Route, PostHandlers, handlePost } from "../server/route"
+import { Route, PostHandlers } from "../server/route"
 import { messageView, when } from "../server/shared"
 import { searchParams, sort } from "../server/utils"
 import { createIdNumber, required, validateObject } from "../server/validation"
@@ -592,7 +592,7 @@ const route : Route = {
         }
         return get(req)
     },
-    post: handlePost(postHandlers),
+    post: postHandlers,
 }
 
 export default route

@@ -1,6 +1,6 @@
 import { cache, Message, Team } from "../server/db"
 import html from "../server/html-template-tag"
-import { handlePost, PostHandlers, Route } from "../server/route"
+import { PostHandlers, Route } from "../server/route"
 import { equals, searchParams } from "../server/utils"
 import layout from "../_layout.html"
 import { assert, validate, validateObject } from "../server/validation"
@@ -170,6 +170,6 @@ const route : Route = {
             ],
             scripts: ["/web/js/players-edit.js"] })
     },
-    post: handlePost(postHandlers)
+    post: postHandlers
 }
 export default route

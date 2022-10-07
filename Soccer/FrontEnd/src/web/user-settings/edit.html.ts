@@ -2,7 +2,7 @@ import html from "../server/html-template-tag.js"
 import layout from "../_layout.html.js"
 import * as db from "../server/db.js"
 import { Settings } from "../server/db.js"
-import { handlePost, PostHandlers, Route } from "../server/route.js"
+import { PostHandlers, Route } from "../server/route.js"
 import { isSelected } from "../server/utils.js"
 import { createCheckbox, validateObject } from "../server/validation.js"
 
@@ -75,7 +75,7 @@ const postHandlers : PostHandlers = {
 const route : Route = {
     route: /\/user-settings\/edit\/$/,
     get,
-    post: handlePost(postHandlers)
+    post: postHandlers
 }
 
 export default route

@@ -13,12 +13,12 @@ interface Render {
     theme: Theme | undefined
     error: Message
     syncCount: number
-    referrer: URL
+    referrer: URL | null
 }
 
 const render = ({theme, error, syncCount, referrer}: Render) => (o: LayoutTemplateArguments) => {
     const { main, head, scripts, nav, reload } = o
-    referrer.searchParams.set("handler", "reload")
+    referrer?.searchParams.set("handler", "reload")
     return html`
 <!DOCTYPE html>
 <html>
@@ -70,7 +70,7 @@ const render = ({theme, error, syncCount, referrer}: Render) => (o: LayoutTempla
         ${messageView(error)}
         ${main}
     </main>
-    ${reload && html`<form id=reload-form action="${referrer.toString()}" target="${reload.target}" hidden></form>`}
+    ${reload && referrer && html`<form id=reload-form action="${referrer.toString()}" target="${reload.target}" hidden></form>`}
     <footer><p>${version}</p></footer>
     <div id=messages></div>
     <script src="/web/js/lib/request-submit.js"></script>
@@ -86,7 +86,7 @@ const getSyncCount = async () => (await get("updated"))?.size ?? 0
 
 export default
     async function layout(req: Request) {
-        let referrer = new URL(req.referrer)
+        let referrer = req.referrer ? new URL(req.referrer) : null
         let [theme, syncCount, error] = await Promise.all([get("settings"), getSyncCount(), cache.pop("message")])
         return render({ theme: theme?.theme, error, syncCount, referrer })
     }

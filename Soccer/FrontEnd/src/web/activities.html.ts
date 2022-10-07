@@ -2,7 +2,7 @@ import html from "./server/html-template-tag"
 import layout from "./_layout.html"
 import { Activity, Team } from "./server/db"
 import { searchParams } from "./server/utils"
-import { handlePost, PostHandlers, Route } from "./server/route"
+import { PostHandlers, Route } from "./server/route"
 import { teamGet } from "./server/repo-team"
 import { createIdNumber, createString25, validate, validateObject } from "./server/validation"
 import { queryTeamIdValidator } from "./server/validators"
@@ -106,7 +106,7 @@ const route : Route = {
         const template = await layout(req)
         return template({ main: render(result) })
     },
-    post: handlePost(postHandlers),
+    post: postHandlers,
 }
 export default route
 

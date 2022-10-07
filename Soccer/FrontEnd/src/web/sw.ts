@@ -1,4 +1,4 @@
-import { addRoutes, findRoute, handleGet, RouteGet, RouteGetHandler, RoutePost } from "./server/route"
+import { addRoutes, findRoute, handleGet, handlePost, PostHandlers, RouteGet, RouteGetHandler, RoutePost } from "./server/route"
 import indexHandler from "./index.html.js"
 import { version } from "./settings"
 import teamsHandler from "./teams.html"
@@ -107,12 +107,16 @@ async function get(url: URL, req: Request, event: FetchEvent) : Promise<Response
 }
 
 async function post(url: URL, req: Request) : Promise<Response> {
-    let handler = <RoutePost|null>findRoute(url, req.method.toLowerCase())
+    let handler = <RoutePost | PostHandlers |null>findRoute(url, req.method.toLowerCase())
     // @ts-ignore
     if (handler) {
         try {
             const data = await getData(req)
-            let result = await handler({ req, data })
+            let result = await
+                (handler instanceof Function
+                    ? handler
+                : handlePost(handler))({ req, data })
+
             if (result instanceof Response) {
                 return result
             }

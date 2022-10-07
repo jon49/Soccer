@@ -2,7 +2,7 @@ import html from "./server/html-template-tag"
 import layout from "./_layout.html"
 import { cache, Message, Team } from "./server/db"
 import { searchParams } from "./server/utils"
-import { handlePost, PostHandlers, Route } from "./server/route"
+import { PostHandlers, Route } from "./server/route"
 import { when } from "./server/shared"
 import { addPlayer, addPlayerForm } from "./server/_AddPlayer.html"
 import { teamGet } from "./server/repo-team"
@@ -86,6 +86,6 @@ const route : Route = {
             main: render(result),
             nav: [{name: "Edit", url: `/web/players/edit?teamId=${result.team.id}#team`}] })
     },
-    post: handlePost(postHandlers),
+    post: postHandlers,
 }
 export default route

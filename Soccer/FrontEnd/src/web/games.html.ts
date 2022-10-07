@@ -1,7 +1,7 @@
 import { cache, Message, Team } from "./server/db"
 import html from "./server/html-template-tag"
 import { teamGet, teamSave } from "./server/repo-team"
-import { handlePost, PostHandlers } from "./server/route"
+import { PostHandlers } from "./server/route"
 import { messageView, when } from "./server/shared"
 import { getNewId, searchParams } from "./server/utils"
 import { assert, createString25, optional, validate, validateObject } from "./server/validation"
@@ -100,5 +100,5 @@ export default {
         const template = await layout(req)
         return template({ main: render(result) })
     },
-    post: handlePost(postHandlers),
+    post: postHandlers,
 }
