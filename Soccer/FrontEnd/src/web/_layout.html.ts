@@ -27,7 +27,7 @@ const render = ({theme, error, syncCount, referrer}: Render) => (o: LayoutTempla
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Soccer</title>
-    <link href="/web/css/site.v3.css" rel=stylesheet>
+    <link href="/web/css/site.v4.css" rel=stylesheet>
     $${head}
 </head>
 <body $${when(theme, x => `class=${x}`)}>

@@ -321,3 +321,15 @@ input:indeterminate ~ .none {
 .bg {
   background-color: var(--c2) !important;
 }
+
+button.anchor {
+    background: none;
+    margin: 0;
+    padding: 0;
+    color: var(--c1);
+    font-family: inherit;
+}
+
+button.anchor:hover {
+  text-decoration: underline;
+}

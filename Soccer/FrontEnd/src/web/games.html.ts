@@ -1,10 +1,11 @@
 import { cache, Game, Message, Team } from "./server/db"
 import html from "./server/html-template-tag"
+import { reject } from "./server/repo"
 import { teamGet, teamSave } from "./server/repo-team"
-import { PostHandlers } from "./server/route"
+import { PostHandlers, Route } from "./server/route"
 import { messageView, when } from "./server/shared"
 import { getNewId, searchParams, tail } from "./server/utils"
-import { assert, createString25, optional, validate, validateObject } from "./server/validation"
+import { assert, createIdNumber, createString25, optional, validate, validateObject } from "./server/validation"
 import { queryTeamIdValidator } from "./server/validators"
 import layout from "./_layout.html"
 
@@ -33,13 +34,7 @@ ${when(!hasGames, html`<p>No games found.</p>`)}
 
 ${when(hasGames, html`
 <ul id=games class=list>
-    ${team.games.map(x => {
-        return html`
-        <li>
-            <a href="?teamId=${team.id}&gameId=${x.id}">${x.date}${when(x.opponent, " - " + x.opponent) }</a>
-            <a href="/web/games/edit?teamId=${team.id}&gameId=${x.id}">Edit</a>
-        </li>`
-    })}
+    ${team.games.map(x => getGameView(team.id, x))}
 </ul>`)}
 
 ${when(gameAdded, messageView(message))}
@@ -61,12 +56,17 @@ ${when(gameAdded, messageView(message))}
 }
 
 function getGameView(teamId: number, game: Game) {
-    return html`
-        <li>
-            <a href="?teamId=${teamId}&gameId=${game.id}">${game.date}${when(game.opponent, " - " + game.opponent) }</a>
-            <a href="/web/games/edit?teamId=${teamId}&gameId=${game.id}">Edit</a>
-        </li>`
+    return html`<li id=game-${game.id}>${getGamePartialView(teamId, game)}</li>`
+}
 
+function getGamePartialView(teamId: number, game: Game) {
+    let teamQuery = `teamId=${teamId}`
+    return html`
+<a href="?$${teamQuery}&gameId=${game.id}">${game.date}${when(game.opponent, " - " + game.opponent) }</a>
+<form action="?$${teamQuery}&handler=edit" target=#game-${game.id}>
+    <input type=hidden name=id value="${game.id}" >
+    <button class=anchor>Edit</button>
+</form>`
 }
 
 let addGameValidator = {
@@ -74,8 +74,18 @@ let addGameValidator = {
     opponent: optional(createString25("Game Opponent"))
 }
 
+let editGameValidator = {
+    ...addGameValidator,
+    gameId: createIdNumber("Game ID")
+}
+
+let queryTeamIdIdValidator = {
+    ...queryTeamIdValidator,
+    id: createIdNumber("Game ID")
+}
+
 const postHandlers : PostHandlers = {
-    post: async function({ data, query }) {
+    async post({ data, query }) {
         await cache.push({posted: "add-game"})
         let [{ date, opponent }, { teamId }] = await validate([
             validateObject(data, addGameValidator),
@@ -99,15 +109,69 @@ const postHandlers : PostHandlers = {
 
         await teamSave(team)
         return getGameView(team.id, tail(team.games))
+    },
+    async edit({ data, query }) {
+        let [{ date, opponent, gameId }, { teamId }] = await validate([
+            validateObject(data, editGameValidator),
+            validateObject(query, queryTeamIdValidator)])
+
+        let team = await teamGet(teamId)
+        await assert.isFalse(
+            !!team.games.find(x => gameId !== x.id && x.date === date && x.opponent === opponent),
+            `The game "${date}${when(opponent, " - " + opponent)}" already exists!`)
+
+        let game = team.games.find(x => gameId === x.id)
+        if (!game) return reject("Could not find game!")
+
+        game.opponent = opponent
+        game.date = date
+
+        await teamSave(team)
+        return getGamePartialView(team.id, tail(team.games))
     }
 }
 
-export default {
-    route: /\/games\/$/,
+const getHandlers = {
     async get(req: Request) {
         const result = await start(req)
         const template = await layout(req)
         return template({ main: render(result) })
     },
+    async edit(req: Request) {
+        let { teamId, id: gameId } = await validateObject(searchParams(req), queryTeamIdIdValidator) 
+        let team = await teamGet(teamId)
+        let game = team.games.find(x => x.id === gameId)
+        if (!game) {
+            return reject("Could not find game.")
+        }
+        return html`
+<form class=form method=post action="/web/games?teamId=${team.id}&handler=edit" target="#game-${game.id}">
+    <input type=hidden name=gameId value="${game.id}">
+    <div class=inline>
+        <label for=game-date>Name</label>
+        <input
+            id=game-date
+            type=date
+            name=date
+            required
+            value="${game.date}"
+            autofocus>
+    </div>
+    <div class=inline>
+        <label for=game-opponent>Opponent</label>
+        <input id=game-opponent type=text name=opponent value="${game.opponent}">
+    </div>
+    <div>
+        <button>Save</button> <button onclick="location.href=location.href">Cancel</button>
+    </div>
+</form>`
+    }
+}
+
+const router : Route = {
+    route: /\/games\/$/,
+    get: getHandlers,
     post: postHandlers,
 }
+
+export default router
