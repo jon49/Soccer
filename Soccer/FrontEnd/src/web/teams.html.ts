@@ -66,7 +66,7 @@ function getTeamView(team: Team) {
         <a href="/web/games?teamId=${team.id}">Games</a>
         ${when((() => {
             let d = new Date()
-            let currentDate = `${d.getFullYear()}-${(""+(d.getMonth() + 1)).padStart(2, "0")}-${d.getDate()}`
+            let currentDate = `${d.getFullYear()}-${(""+(d.getMonth() + 1)).padStart(2, "0")}-${(""+d.getDate()).padStart(2, "0")}`
             let result = team.games
             .sort((a, b) => a.date.localeCompare(b.date))
             .find(x => x.date >= currentDate)
