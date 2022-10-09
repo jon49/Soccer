@@ -113,14 +113,20 @@ const postHandlers : PostHandlers = {
 
         await teamSave(team)
         return getGamePartialView(team.id, game)
-    }
+    },
+    async cancel() { }
 }
 
 const getHandlers = {
     async get(req: Request) {
         const result = await start(req)
         const template = await layout(req)
-        return template({ main: render(result) })
+        return template({ main: render(result), reload: { target: "#games" } })
+    },
+    async reload(req: Request) {
+        let { teamId } = await validateObject(searchParams(req), queryTeamIdValidator)
+        let team = await teamGet(teamId)
+        return html`${team.games.map(x => getGameView(team.id, x))}`
     },
     async edit(req: Request) {
         let { teamId, id: gameId } = await validateObject(searchParams(req), queryTeamIdIdValidator) 
@@ -129,8 +135,9 @@ const getHandlers = {
         if (!game) {
             return reject("Could not find game.")
         }
+        let teamQuery = `teamId=${team.id}`
         return html`
-<form class=form method=post action="/web/games?teamId=${team.id}&handler=edit" target="#game-${game.id}">
+<form class=form method=post action="?${teamQuery}&handler=edit" target="#game-${game.id}">
     <input type=hidden name=gameId value="${game.id}">
     <div class=inline>
         <label for=game-date>Name</label>
@@ -147,7 +154,7 @@ const getHandlers = {
         <input id=game-opponent type=text name=opponent value="${game.opponent}">
     </div>
     <div>
-        <button>Save</button> <button onclick="location.href=location.href">Cancel</button>
+        <button>Save</button> <button formaction="?${teamQuery}&handler=cancel">Cancel</button>
     </div>
 </form>`
     }

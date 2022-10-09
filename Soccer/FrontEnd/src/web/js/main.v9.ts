@@ -167,7 +167,7 @@
         state.value = ""
     })
 
-    document.addEventListener('hf:redirected', e => {
+    document.addEventListener("hf:reset-content", e => {
         // @ts-ignore
         let form = e.detail?.form
         let refresh

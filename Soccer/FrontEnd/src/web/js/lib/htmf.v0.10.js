@@ -1,6 +1,6 @@
 (() => {
   self.hf = {};
-  hf.version = "0.9";
+  hf.version = "0.10";
   const has = (attribute) => (el) => el?.hasAttribute(attribute);
   const inFlight = /* @__PURE__ */ new WeakMap();
   function publish(el, eventName, detail) {
@@ -35,8 +35,12 @@
       }
       const response = await fetch(url.href, options);
       if (response.redirected) {
-        let url2 = response.url;
-        if (publish($originator, "hf:redirected", { ...eventData, url: url2 })) {
+        location.href = response.url;
+        return;
+      }
+      if (response.status === 205) {
+        let url2 = response.headers.get("location");
+        if (publish($originator, "hf:reset-content", { ...eventData, url: url2 }) && url2) {
           location.href = url2;
         }
         return;
