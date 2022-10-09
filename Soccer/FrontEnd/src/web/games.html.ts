@@ -5,44 +5,32 @@ import { teamGet, teamSave } from "./server/repo-team"
 import { PostHandlers, Route } from "./server/route"
 import { messageView, when } from "./server/shared"
 import { getNewId, searchParams, tail } from "./server/utils"
-import { assert, createIdNumber, createString25, optional, validate, validateObject } from "./server/validation"
+import { assert, createIdNumber, createString25, optional, required, validate, validateObject } from "./server/validation"
 import { queryTeamIdValidator } from "./server/validators"
 import layout from "./_layout.html"
 
 interface GameView {
     team: Team
-    posted: string | undefined
-    message: Message
 }
 
 async function start(req: Request): Promise<GameView> {
-    let [message, posted] = await Promise.all([cache.pop("message"), cache.pop("posted")])
     let { teamId } = await validateObject(searchParams(req), queryTeamIdValidator)
     let team = await teamGet(teamId)
-    return {team, message, posted}
+    return {team}
 }
 
-function render(view: GameView) {
-    let { team, posted, message } = view
-    let hasGames = team.games.length > 0
-    let gameAdded = posted === "add-game"
+function render({ team }: GameView) {
     return html`
 <h2>${team.name} - Games</h2>
 
-${when(!gameAdded, messageView(message))}
-${when(!hasGames, html`<p>No games found.</p>`)}
-
-${when(hasGames, html`
 <ul id=games class=list>
     ${team.games.map(x => getGameView(team.id, x))}
-</ul>`)}
-
-${when(gameAdded, messageView(message))}
+</ul>
 
 <form class=form method=post target=#games hf-swap=append>
     <div class=inline>
         <label for=game-date>Name</label>
-        <input id=game-date type=date name=date required value=${new Date().toISOString().slice(0, 10)} ${when(gameAdded || !hasGames, "autofocus")}>
+        <input id=game-date type=date name=date required value=${new Date().toISOString().slice(0, 10)} ${when(team.games.length === 0, "autofocus")}>
     </div>
     <div class=inline>
         <label for=game-opponent>Opponent</label>
@@ -86,7 +74,6 @@ let queryTeamIdIdValidator = {
 
 const postHandlers : PostHandlers = {
     async post({ data, query }) {
-        await cache.push({posted: "add-game"})
         let [{ date, opponent }, { teamId }] = await validate([
             validateObject(data, addGameValidator),
             validateObject(query, queryTeamIdValidator)])
@@ -120,14 +107,12 @@ const postHandlers : PostHandlers = {
             !!team.games.find(x => gameId !== x.id && x.date === date && x.opponent === opponent),
             `The game "${date}${when(opponent, " - " + opponent)}" already exists!`)
 
-        let game = team.games.find(x => gameId === x.id)
-        if (!game) return reject("Could not find game!")
-
+        let game = await required(team.games.find(x => gameId === x.id), "Could not find game!")
         game.opponent = opponent
         game.date = date
 
         await teamSave(team)
-        return getGamePartialView(team.id, tail(team.games))
+        return getGamePartialView(team.id, game)
     }
 }
 
