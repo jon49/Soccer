@@ -85,15 +85,6 @@ export async function required<T>(o: Nullable<T>, message: string): Promise<T> {
     return o
 }
 
-export function optional<T>(validator: (val: T | undefined) => Promise<T>) {
-    return async (val: T | undefined) => {
-        if (val) {
-            return validator(val)
-        }
-        return void 0
-    }
-}
-
 class Assert {
     isFalse(value: boolean, message: string) {
         return !value ? Promise.resolve() : reject(message)

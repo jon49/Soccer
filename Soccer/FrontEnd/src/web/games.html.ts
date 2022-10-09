@@ -1,11 +1,11 @@
-import { cache, Game, Message, Team } from "./server/db"
+import { Game, Team } from "./server/db"
 import html from "./server/html-template-tag"
 import { reject } from "./server/repo"
 import { teamGet, teamSave } from "./server/repo-team"
 import { PostHandlers, Route } from "./server/route"
-import { messageView, when } from "./server/shared"
+import { when } from "./server/shared"
 import { getNewId, searchParams, tail } from "./server/utils"
-import { assert, createIdNumber, createString25, optional, required, validate, validateObject } from "./server/validation"
+import { assert, createIdNumber, createString25, maybe, required, validate, validateObject } from "./server/validation"
 import { queryTeamIdValidator } from "./server/validators"
 import layout from "./_layout.html"
 
@@ -59,7 +59,7 @@ function getGamePartialView(teamId: number, game: Game) {
 
 let addGameValidator = {
     date: createString25("Game Date"),
-    opponent: optional(createString25("Game Opponent"))
+    opponent: maybe(createString25("Game Opponent"))
 }
 
 let editGameValidator = {
