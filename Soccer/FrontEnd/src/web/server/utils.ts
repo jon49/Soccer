@@ -30,6 +30,15 @@ export function getProperty<T>(obj: any, prop: string) : T | undefined {
 }
 
 export function redirect(req: Request) {
+  if (req.headers.get("HF-Request")) {
+    let res = new Response(null, {
+      status: 205,
+      headers: {
+        location: req.referrer,
+      },
+    })
+    return res
+  }
   return Response.redirect(req.referrer, 303)
 }
 
