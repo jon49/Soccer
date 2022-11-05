@@ -121,12 +121,7 @@ const getHandlers = {
     async get(req: Request) {
         const result = await start(req)
         const template = await layout(req)
-        return template({ main: render(result), reload: { target: "#games" } })
-    },
-    async reload(req: Request) {
-        let { teamId } = await validateObject(searchParams(req), queryTeamIdValidator)
-        let team = await teamGet(teamId)
-        return html`${team.games.map(x => getGameView(team.id, x))}`
+        return template({ main: render(result) })
     },
     async edit(req: Request) {
         let { teamId, id: gameId } = await validateObject(searchParams(req), queryTeamIdIdValidator) 
