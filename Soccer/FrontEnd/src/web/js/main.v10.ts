@@ -122,9 +122,7 @@
         // @ts-ignore
         let detail = e.detail
         if (detail.method === "post") {
-            let updater = document.getElementById("update-sync-count")
-            if (updater instanceof HTMLFormElement)
-                updater.requestSubmit()
+            updateSyncCount()
         }
     })
 
@@ -170,16 +168,24 @@
     document.addEventListener("hf:reset-content", e => {
         // @ts-ignore
         let form = e.detail?.form
-        let refresh
         if (form?.method === 'post'
-            && form.id !== 'sync-form'
-            && (refresh = document.getElementById('reload-form'))
-            && refresh instanceof HTMLFormElement
             // @ts-ignore
             && getCleanUrl() === e.detail.url) {
             e.preventDefault()
-            refresh.requestSubmit()
+            let refresh = document.getElementById('reload-form')
+            if (refresh instanceof HTMLFormElement) {
+                refresh.requestSubmit()
+            }
+            if (form.id === 'sync-form') {
+                updateSyncCount()
+            }
         }
     })
+
+    function updateSyncCount() {
+        let updater = document.getElementById("update-sync-count")
+        if (updater instanceof HTMLFormElement)
+            updater.requestSubmit()
+    }
 
 })();

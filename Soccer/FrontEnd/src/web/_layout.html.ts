@@ -77,7 +77,7 @@ const render = ({theme, error, syncCount, referrer}: Render) => (o: LayoutTempla
     <script src="/web/js/lib/htmf.v0.10.js"></script>
     ${(scripts ?? []).map(x => html`<script src="${x}"></script>`)}
     <script src="/web/js/snack-bar.js"></script>
-    <script src="/web/js/main.v9.js"></script>
+    <script src="/web/js/main.v10.js"></script>
 </body>
 </html>`
 }
