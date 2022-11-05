@@ -1,4 +1,12 @@
-import { addRoutes, findRoute, handleGet, handlePost, PostHandlers, RouteGet, RouteGetHandler, RoutePost } from "./server/route"
+import {
+  addRoutes,
+  findRoute,
+  handleGet,
+  handlePost,
+  PostHandlers,
+  RouteGet,
+  RouteGetHandler,
+  RoutePost } from "./server/route"
 import indexHandler from "./index.html.js"
 import { version } from "./settings"
 import teamsHandler from "./teams.html"
@@ -14,6 +22,15 @@ import { cache } from "./server/db"
 import { messageView } from "./server/shared"
 import html from "./server/html-template-tag"
 import { redirect } from "./server/utils"
+
+// check in here for service worker updates
+// fetch('/web/sw.js', { cache: 'no-cache', method: 'HEAD' })
+// .then(x => console.log(x.headers.get('etag')))
+// compare new and old service worker. Keep the old etag value in-memory
+// and check for an update every 10 minutes or so with just the head call.
+// Maybe if it is localhost check all the time? Or have a button to check for updates.
+// See:
+// https://github.com/richardanaya/wasm-service/pull/3/files
 
 addRoutes([
     indexHandler,
