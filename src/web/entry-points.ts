@@ -1,7 +1,11 @@
 export default [
   {
-    "url": "/web/css/pico.min.css",
-    "file": "/web/css/pico.min.8d6742a9.css"
+    "url": "/web/css/app.css",
+    "file": "/web/css/app.671845a4.css"
+  },
+  {
+    "url": "/web/css/index.css",
+    "file": "/web/css/index.ec1d3d7f.css"
   },
   {
     "url": "/web/js/app-loader.js",
@@ -25,6 +29,6 @@ export default [
   },
   {
     "url": "/web/js/snack-bar.js",
-    "file": "/web/js/snack-bar.EBCYZDWC.js"
+    "file": "/web/js/snack-bar.QJ3DJEOY.js"
   }
 ]

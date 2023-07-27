@@ -44,7 +44,7 @@ def main [build: bool = false] {
 
     let js = (
         ls **/src/**/js/**/*
-        | where type == "file"
+        | where type == "file" and name !~ '\.bundle\.'
         | $in.name
     )
 
@@ -62,6 +62,27 @@ def main [build: bool = false] {
     ))
 
     ^npx esbuild $e
+
+    # let bundles = (
+    #     ls **/src/**/js/**/*bundle.ts
+    #     | where type == "file"
+    #     | $in.name
+    # )
+
+    # let eBundle = ($bundles | append [
+    #     $"--outdir=($targetDir)",
+    #     '--outbase=src',
+    #     '--format=iife',
+    #     '--bundle',
+    #     '--entry-names=[dir]/[name].[hash]',
+    # ]
+    # | append (
+    #     if $build {
+    #         [ '--minify' ]
+    #     } else { [] }
+    # ))
+
+    # ^npx esbuild $eBundle
 
     # write static files to entry-points file
     let files = (

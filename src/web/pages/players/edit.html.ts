@@ -69,7 +69,7 @@ ${teamEdited ? messageView(message) : null}
 <h3 id=players>Players Settings</h3>
 ${team.players.length === 0 ? html`<p>No players have been added.</p>` : null }
 
-<div id=player-cards class=cards>
+<div id=player-cards  class=cards>
     ${team.players.map(x => playerView(team, x.id))}
 </div>
 
@@ -89,15 +89,15 @@ function playerView(team: Team, playerId: number) {
 <div>
     <p id="_${playerId}"><a href="/web/players?$${teamPlayerQuery}">${player.name}</a></p>
     <form method=post class=form action="?handler=editPlayer&$${teamPlayerQuery}" target="#_${playerId} > a">
+    <form method=post action="?handler=editPlayer&$${teamPlayerQuery}" target="#_${playerId} > a">
         <div>
-            <label for=${playerId_}>Player Name:</label>
-            <input id=${playerId_} name=name type=text value="${player.name}">
+            <input id=${playerId_} class=editable name=name type=text value="${player.name}">
+            <label for=${playerId_}><a href="/web/players?$${teamPlayerQuery}">${player.name}</a> <span class=editable-pencil>&#9998;</span></label>
         </div>
         <div>
-            <label class=toggle>
-                <input name=active type=checkbox $${player.active ? "checked" : null}>
-                <span class="off button">Inactive</span>
-                <span class="on button">Active</span>
+            <label>
+                <input id="active-${playerId_}" name=active class=inline type=checkbox $${player.active ? "checked" : null}>
+                $${ player.active ? "Active" : "Inactive" }
             </label>
         </div>
     </form>
@@ -153,6 +153,7 @@ const route : Route = {
     async get(req: Request) {
         let result = await start(req)
         return layout(req, {
+            head: "<style>.player-card { min-width: 200px; }</style>",
             main: render(result),
             nav: [
                 { name: "Positions", url: `/web/positions?teamId=${result.team.id}` },

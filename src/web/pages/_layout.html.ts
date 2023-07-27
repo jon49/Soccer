@@ -12,11 +12,10 @@ interface Nav {
 interface Render {
     theme: Theme | undefined
     error: Message
-    syncCount: number
     referrer: URL | null
 }
 
-const render = ({theme, error, syncCount}: Render, o: LayoutTemplateArguments) => {
+const render = ({theme, error}: Render, o: LayoutTemplateArguments) => {
     const { main, head, scripts, nav } = o
     return html`
 <!DOCTYPE html>
@@ -26,7 +25,8 @@ const render = ({theme, error, syncCount}: Render, o: LayoutTemplateArguments) =
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Soccer</title>
-    <link href="/web/css/pico.min.css" rel=stylesheet>
+    <link href="/web/css/index.css" rel=stylesheet>
+    <link href="/web/css/app.css" rel=stylesheet>
     $${head}
 </head>
 <body $${when(theme, x => `class=${x}`)}>
@@ -73,13 +73,11 @@ const render = ({theme, error, syncCount}: Render, o: LayoutTemplateArguments) =
 </html>`
 }
 
-const getSyncCount = async () => (await get("updated"))?.size ?? 0
-
 export default
     async function layout(req: Request, o: LayoutTemplateArguments) {
         let referrer = req.referrer ? new URL(req.referrer) : null
-        let [theme, syncCount, error] = await Promise.all([get("settings"), getSyncCount(), cache.pop("message")])
-        return render({ theme: theme?.theme, error, syncCount, referrer }, o)
+        let [theme, error] = await Promise.all([get("settings"), cache.pop("message")])
+        return render({ theme: theme?.theme, error, referrer }, o)
     }
 
 export type Layout = typeof layout

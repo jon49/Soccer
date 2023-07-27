@@ -1,53 +1,59 @@
 // @ts-check
 
 (function() {
-    // See https://www.w3schools.com/howto/howto_js_snackbar.asp
-    let style = `<style>
-    root {
-        --snack-bar-duration: 3s;
-    }
-    :host {
-        background-color: rgba(0, 0, 0, 0.4);
-        padding: 1em;
-        max-width: 600px;
-        margin: .5em auto;
-        border-radius: 10px;
-        animation: fadeInOut var(--snack-bar-duration)s linear 1 forwards;
-        display: flex;
-        color: #fff;
-    }
-    @keyframes fadeInOut {
-        0%,100% { opacity: 0; }
-        25%,50% { opacity: 1; }
-    }
-    </style>`
+// See https://www.w3schools.com/howto/howto_js_snackbar.asp
+let style = `<style>
+root {
+    --snack-bar-duration: 3s;
+}
+:host {
+    background-color: rgba(0, 0, 0, 0.4);
+    padding: 1em;
+    max-width: 600px;
+    margin: .5em auto;
+    border-radius: 10px;
+    animation: fadeInOut var(--snack-bar-duration)s linear 1 forwards;
+    display: flex;
+    color: #fff;
+}
+@keyframes fadeInOut {
+    0%,100% { opacity: 0; }
+    25%,50% { opacity: 1; }
+}
+</style>`
 
-    /**
-     * @param {HTMLElement} el 
-     * @returns number
-     */
-    function getSnackBarDuration(el) {
-        return +getComputedStyle(el).getPropertyValue('--snack-bar-duration')
-    }
+/**
+ * @param {HTMLElement} el 
+ * @returns number
+ */
+function getSnackBarDuration(el) {
+    return +getComputedStyle(el).getPropertyValue('--snack-bar-duration')
+}
 
-    // Also known as "Toast" and "Snackbar"
-    customElements.define("snack-bar", 
-        class Snackbar extends HTMLElement {
-            constructor() {
-                super()
-                this.attachShadow({ mode: "open" })
-                let root = this.shadowRoot
-                if (!root) return
-                root.innerHTML = `${style}<slot></slot>`
-            }
-
-            connectedCallback() {
-                const timeout = (getSnackBarDuration(this) || getSnackBarDuration(document.documentElement) || 3) + 0.1
-                setTimeout(() => {
-                    this.remove()
-                } , timeout * 1e3)
-            }
+// Also known as "Toast" and "Snackbar"
+customElements.define("snack-bar", 
+    class Snackbar extends HTMLElement {
+        constructor() {
+            super()
+            this.attachShadow({ mode: "open" })
+            let root = this.shadowRoot
+            if (!root) return
+            root.innerHTML = `${style}<slot></slot>`
         }
-    )
+
+        connectedCallback() {
+            if (this.hasAttribute("closable")) return
+
+            const timeout = (
+                +(this.getAttribute("duration") || 0)
+                || getSnackBarDuration(this)
+                || getSnackBarDuration(document.documentElement)
+                || 3) + 0.1
+            setTimeout(() => {
+                this.remove()
+            } , timeout * 1e3)
+        }
+    }
+)
 
 })()
