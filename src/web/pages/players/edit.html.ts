@@ -87,8 +87,6 @@ function playerView(team: Team, playerId: number) {
 
     return html`
 <div>
-    <p id="_${playerId}"><a href="/web/players?$${teamPlayerQuery}">${player.name}</a></p>
-    <form method=post class=form action="?handler=editPlayer&$${teamPlayerQuery}" target="#_${playerId} > a">
     <form method=post action="?handler=editPlayer&$${teamPlayerQuery}" target="#_${playerId} > a">
         <div>
             <input id=${playerId_} class=editable name=name type=text value="${player.name}">
