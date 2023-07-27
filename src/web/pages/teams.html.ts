@@ -1,13 +1,13 @@
-import html from "./server/html-template-tag"
-import layout from "./_layout.html"
-import { CacheTeams, cache, Message, Team, } from "./server/db"
-import { PostHandlers } from "./server/route"
-import { searchParams } from "./server/utils"
-import { validateObject } from "./server/validation"
-import { messageView, when } from "./server/shared"
-import { dataTeamNameYearValidator } from "./server/validators"
-import { teamGet, teamGetAll, teamsCreate, WasFiltered } from "./server/repo-team"
-import { reject } from "./server/repo"
+import html from "../server/html.js"
+import layout from "./_layout.html.js"
+import { CacheTeams, cache, Message, Team, } from "../server/db.js"
+import { PostHandlers, Route } from "../server/route.js"
+import { searchParams } from "../server/utils.js"
+import { validateObject } from "../server/validation.js"
+import { messageView, when } from "../server/shared.js"
+import { dataTeamNameYearValidator } from "../server/validators.js"
+import { teamGet, teamGetAll, teamsCreate, WasFiltered } from "../server/repo-team.js"
+import { reject } from "../server/repo.js"
 
 interface TeamsView {
     teams: Team[] | undefined
@@ -81,21 +81,19 @@ function getTeamView(team: Team) {
 const postHandlers: PostHandlers = {
     post: async function post({ data }) {
         let d = await validateObject(data, dataTeamNameYearValidator)
-        let teamId = await teamsCreate(d)
-        ?.catch(_ => reject({ teams: {name: d.name, year: d.year} }))
-
-        let team = await teamGet(teamId)
-        return getTeamView(team)
+        await teamsCreate(d)
+            ?.catch(_ => reject({ teams: {name: d.name, year: d.year} }))
     },
 }
 
-export default {
+const route : Route = {
     route: /\/teams\/$/,
     async get(req: Request) {
         const result = await start(req)
-        const template = await layout(req)
-        return template({ main: render(result) })
+        return layout(req, { main: render(result) })
     },
     post: postHandlers,
 }
+
+export default route
 

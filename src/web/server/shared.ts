@@ -1,5 +1,5 @@
-import { Message } from "./db";
-import html from "./html-template-tag";
+import { Message } from "./db.js"
+import html from "./html.js"
 
 export function messageView(message: Message) {
     let m = <string[] | undefined>(message && typeof message === "string" ? [message] : message)
@@ -15,3 +15,4 @@ export function when(b: any, s: any) {
         ? ""
     : undefined
 }
+

@@ -1,12 +1,12 @@
-import { cache, Message } from "./db"
-import html from "./html-template-tag"
-import { reject } from "./repo"
-import { playerCreate, teamGet } from "./repo-team"
-import { RoutePostArgsWithQuery } from "./route"
-import { messageView, when } from "./shared"
-import { equals } from "./utils"
-import { assert, validate, validateObject } from "./validation"
-import { dataPlayerNameValidator, queryTeamIdValidator } from "./validators"
+import { cache, Message } from "../server/db.js"
+import html from "../server/html.js"
+import { reject } from "../server/repo.js"
+import { playerCreate, teamGet } from "../server/repo-team.js"
+import { RoutePostArgsWithQuery } from "../server/route.js"
+import { messageView, when } from "../server/shared.js"
+import { equals } from "../server/utils.js"
+import { assert, validate, validateObject } from "../server/validation.js"
+import { dataPlayerNameValidator, queryTeamIdValidator } from "../server/validators.js"
 
 const formId = "add-player"
 
@@ -47,6 +47,4 @@ export async function addPlayer({ data, query }: RoutePostArgsWithQuery) {
         ?.catch(() => reject({ players: { name } }))
 
     await Promise.all([playerCreate(teamId, name), cache.push({ posted: formId })])
-
-    return
 }

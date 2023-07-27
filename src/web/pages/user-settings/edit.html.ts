@@ -1,10 +1,10 @@
-import html from "../server/html-template-tag.js"
+import html from "../../server/html.js"
 import layout from "../_layout.html.js"
-import * as db from "../server/db.js"
-import { Settings } from "../server/db.js"
-import { PostHandlers, Route } from "../server/route.js"
-import { isSelected } from "../server/utils.js"
-import { createCheckbox, validateObject } from "../server/validation.js"
+import * as db from "../../server/db.js"
+import { Settings } from "../../server/db.js"
+import { PostHandlers, Route } from "../../server/route.js"
+import { isSelected } from "../../server/utils.js"
+import { createCheckbox, validateObject } from "../../server/validation.js"
 
 const themes = ["dark", "light", "none"] as const
 export type Theme = typeof themes[number]
@@ -32,43 +32,24 @@ const render = (o: { theme: Theme }) => {
 </form>`
 }
 
-function handleSetting(data: Settings) {
-    return db.update("settings", x => {
-        let theme = { theme: getTheme(data.theme) }
-        if (!x) {
-            return theme
-        }
-        return { ...x, ...theme }
-    }, { sync: false })
-}
-
 function getTheme(s: unknown) {
     return themes.find(x => x === s) ?? "none"
 }
 
 async function get(req: Request) {
-    let [settings, template] = await Promise.all([start(), layout(req)])
-    return template({ main: render(settings) })
+    let settings = await start()
+    return layout(req, { main: render(settings) })
 }
-
-// const handler = <any>{
-//     settings: handleSetting,
-// }
 
 const dataValidator = {
     light: createCheckbox
 }
 
 const postHandlers : PostHandlers = {
-    updateTheme: async ({ data, req }) => {
+    updateTheme: async ({ data }) => {
         let { light } = await validateObject(data, dataValidator)
         let theme : Theme = light ? "light" : "dark"
         await db.set("settings", { theme }, false)
-        if (req.headers.has("hf-request")) {
-            return new Response(null, { status: 204, headers: { "hf-events": JSON.stringify({ themeUpdated: { theme } }) } })
-        } else {
-            return
-        }
     },
 }
 

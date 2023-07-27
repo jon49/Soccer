@@ -1,13 +1,13 @@
-import { Activity, cache, Game, GameTime, Message, PlayerGame, Position, Team } from "../server/db"
-import html from "../server/html-template-tag"
-import { activityGetAll, playerGameAllGet, playerGameSave, positionGetAll } from "../server/repo-player-game"
-import { teamGet, teamSave } from "../server/repo-team"
-import { Route, PostHandlers } from "../server/route"
-import { messageView, when } from "../server/shared"
-import { searchParams, sort, tail } from "../server/utils"
-import { createIdNumber, required, validateObject } from "../server/validation"
-import { queryTeamIdGameIdValidator } from "../server/validators"
-import layout from "../_layout.html"
+import { Activity, cache, Game, GameTime, Message, PlayerGame, Position, Team } from "../../server/db.js"
+import html from "../../server/html.js"
+import { activityGetAll, playerGameAllGet, playerGameSave, positionGetAll } from "../../server/repo-player-game.js"
+import { teamGet, teamSave } from "../../server/repo-team.js"
+import { Route, PostHandlers } from "../../server/route.js"
+import { messageView, when } from "../../server/shared.js"
+import { searchParams, sort, tail } from "../../server/utils.js"
+import { createIdNumber, required, validateObject } from "../../server/validation.js"
+import { queryTeamIdGameIdValidator } from "../../server/validators.js"
+import layout from "../_layout.html.js"
 
 interface PlayerGameView extends PlayerGame {
     name: string
@@ -176,7 +176,7 @@ ${when(!inPlay, html`<p>No players are in play.</p>`)}
             target=#${playerInfoId}
             method=post
             action="?$${baseQuery}&handler=positionChange"
-            onchange="this.requestSubmit()" >
+            onchange="this.submit()" >
             <select name=positionId class="auto-select button">
                 <option selected>#</option>
                 ${positions.map(position => html`
@@ -229,7 +229,7 @@ ${when(out, () => html`
         <p>${x.name}</p>
         ${when(availablePlayersToSwap.length > 0, _ =>
             html`
-        <form method=post action="?$${queryTeamGame}&playerId=$${x.playerId}&handler=onDeckWith" onchange="this.requestSubmit()">
+        <form method=post action="?$${queryTeamGame}&playerId=$${x.playerId}&handler=onDeckWith" onchange="this.submit()">
             <select name="swapPlayerId" class="auto-select button" style="width: 2.5em;">
                 <option selected>🏃</option>
                 ${availablePlayersToSwap.map(x => html`
@@ -240,7 +240,7 @@ ${when(out, () => html`
         </form>`)}
         <form method=post
               action="?$${queryTeamGame}&playerId=$${x.playerId}&handler=addPlayerPosition"
-              onchange="this.requestSubmit()">
+              onchange="this.submit()">
             <select class="auto-select button" name=positionId>
                 <option selected>#</option>
                 ${availablePositions.map(x => html`<option value=${x.id}>${x.name}</option>`)}
@@ -268,13 +268,13 @@ ${when(notPlaying, html`
 `
 }
 
-function statsView(activities: Activity[], player: PlayerGame) {
-    return html`
-    ${player.stats.map(x => {
-        let statName = activities.find(y => y.id === x.statId)?.name
-        return html`<div>${statName} - ${x.count}</div>`
-    })}`
-}
+// function statsView(activities: Activity[], player: PlayerGame) {
+//     return html`
+//     ${player.stats.map(x => {
+//         let statName = activities.find(y => y.id === x.statId)?.name
+//         return html`<div>${statName} - ${x.count}</div>`
+//     })}`
+// }
 
 function setPoints(f: (game: Game) => number) {
     return async ({ query } : { query: any }) => {
@@ -287,7 +287,6 @@ function setPoints(f: (game: Game) => number) {
         } else {
             points = 0
         }
-        return getPointsView(points)
     }
 }
 
@@ -497,8 +496,6 @@ const postHandlers : PostHandlers = {
             stat.count++
         }
         await playerGameSave(teamId, player)
-        let { activities } = await activityGetAll(teamId)
-        return statsView(activities, player)
     },
 
     endGame: async ({ query }) => {
@@ -539,7 +536,6 @@ const postHandlers : PostHandlers = {
 
 async function get(req: Request) {
     let result = await start(req)
-    let template = await layout(req)
     let head = `
         <style>
             .auto-select {
@@ -560,9 +556,8 @@ async function get(req: Request) {
                 border-radius: 0 var(--rc) var(--rc) 0;
             }
         </style>
-        <script src="/web/js/game-timer.v5.js"></script>
-    `
-    return template({
+        <script src="/web/js/game-timer.v5.js"></script>`
+    return layout(req, {
         main: html`
 <h2>${result.team.name} - Game ${result.game.date} ${when(result.game.opponent, x => ` - ${x}`)}</h2>
 <div id=refresh>

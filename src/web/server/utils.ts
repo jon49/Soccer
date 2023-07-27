@@ -11,6 +11,11 @@ const searchParamsHandler = {
   }
 }
 
+export const reject = (s: string | string[]) : Promise<any> =>
+        typeof(s) === "string"
+            ? Promise.reject([s])
+        : Promise.reject(s)
+
 export function searchParams<TReturn>(req: Request) : TReturn & {_url: URL} {
   let url = new URL(req.url)
   return new Proxy(url, searchParamsHandler)

@@ -1,12 +1,12 @@
-import html from "./server/html-template-tag"
-import layout from "./_layout.html"
-import { Activity, Team } from "./server/db"
-import { searchParams } from "./server/utils"
-import { PostHandlers, Route } from "./server/route"
-import { teamGet } from "./server/repo-team"
-import { createIdNumber, createString25, validate, validateObject } from "./server/validation"
-import { queryTeamIdValidator } from "./server/validators"
-import { activitiesSave, activityGetAll, activitySaveNew } from "./server/repo-player-game"
+import html from "../server/html.js"
+import layout from "./_layout.html.js"
+import { Activity, Team } from "../server/db.js"
+import { searchParams } from "../server/utils.js"
+import { PostHandlers, Route } from "../server/route.js"
+import { teamGet } from "../server/repo-team.js"
+import { createIdNumber, createString25, validate, validateObject } from "../server/validation.js"
+import { queryTeamIdValidator } from "../server/validators.js"
+import { activitiesSave, activityGetAll, activitySaveNew } from "../server/repo-player-game.js"
 
 interface ActivityView {
     activities: Activity[]
@@ -40,7 +40,7 @@ function render({ team, activities }: ActivityView) {
     document.addEventListener("onchange", e => {
         let target = e.target
         if (target instanceof HTMLInputElement) {
-            target.form.requestSubmit()
+            target.form.submit()
         }
     })
 </script>
@@ -95,7 +95,6 @@ const postHandlers : PostHandlers = {
         let o = await activityGetAll(teamId)
         o.activities = editedActivities
         await activitiesSave(teamId, o)
-        return html`${editedActivities.map(x => activityView(x, teamId))}`
     }
 }
 
@@ -103,8 +102,7 @@ const route : Route = {
     route: /\/activities\/$/,
     async get(req: Request) {
         const result = await start(req)
-        const template = await layout(req)
-        return template({ main: render(result) })
+        return layout(req, { main: render(result) })
     },
     post: postHandlers,
 }

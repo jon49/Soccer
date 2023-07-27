@@ -1,7 +1,7 @@
-import html from "./server/html-template-tag.js"
-import { cache, get, Message } from "./server/db.js"
-import { version } from "./settings.js"
-import { messageView, when } from "./server/shared.js"
+import html from "../server/html.js"
+import { cache, get, Message } from "../server/db.js"
+import { version } from "../server/settings.js"
+import { messageView, when } from "../server/shared.js"
 import { Theme } from "./user-settings/edit.html.js"
 
 interface Nav {
@@ -16,9 +16,8 @@ interface Render {
     referrer: URL | null
 }
 
-const render = ({theme, error, syncCount, referrer}: Render) => (o: LayoutTemplateArguments) => {
-    const { main, head, scripts, nav, reload } = o
-    referrer?.searchParams.set("handler", "reload")
+const render = ({theme, error, syncCount}: Render, o: LayoutTemplateArguments) => {
+    const { main, head, scripts, nav } = o
     return html`
 <!DOCTYPE html>
 <html>
@@ -27,7 +26,7 @@ const render = ({theme, error, syncCount, referrer}: Render) => (o: LayoutTempla
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Soccer</title>
-    <link href="/web/css/site.v4.css" rel=stylesheet>
+    <link href="/web/css/pico.min.css" rel=stylesheet>
     $${head}
 </head>
 <body $${when(theme, x => `class=${x}`)}>
@@ -40,7 +39,7 @@ const render = ({theme, error, syncCount, referrer}: Render) => (o: LayoutTempla
                     type=checkbox
                     $${when(theme === "light", "checked")}
                     $${when(theme === "none" || theme == null, `indeterminate`)}
-                    onclick="this.form.requestSubmit()">
+                    onclick="this.form.submit()">
                 <span class="off button bg">&#127774;</span>
                 <span class="on button bg">&#127762;</span>
                 <span class="none button bg">⛅</span>
@@ -51,11 +50,6 @@ const render = ({theme, error, syncCount, referrer}: Render) => (o: LayoutTempla
     <header>
         <div class=sync>
             <h1 class=inline>Soccer</h1>
-            <form id=sync-form class=inline method=POST action="/web/sync/">
-                <button id=sync-count>Sync&nbsp;-&nbsp;${""+syncCount}</button>
-                <input type=hidden name=state>
-            </form>
-            <form id=update-sync-count action="/web/sync/" hidden target=#sync-count></form>
         </div>
         <nav>
             <ul>
@@ -70,14 +64,11 @@ const render = ({theme, error, syncCount, referrer}: Render) => (o: LayoutTempla
         ${messageView(error)}
         ${main}
     </main>
-    ${reload && referrer && html`<form id=reload-form action="${referrer.toString()}" target="${reload.target}" hidden></form>`}
     <footer><p>${version}</p></footer>
     <div id=messages></div>
-    <script src="/web/js/lib/request-submit.js"></script>
-    <script src="/web/js/lib/htmf.v0.10.js"></script>
+    <script src="/web/js/lib/mpa.min.js"></script>
     ${(scripts ?? []).map(x => html`<script src="${x}"></script>`)}
     <script src="/web/js/snack-bar.js"></script>
-    <script src="/web/js/main.v10.js"></script>
 </body>
 </html>`
 }
@@ -85,20 +76,17 @@ const render = ({theme, error, syncCount, referrer}: Render) => (o: LayoutTempla
 const getSyncCount = async () => (await get("updated"))?.size ?? 0
 
 export default
-    async function layout(req: Request) {
+    async function layout(req: Request, o: LayoutTemplateArguments) {
         let referrer = req.referrer ? new URL(req.referrer) : null
         let [theme, syncCount, error] = await Promise.all([get("settings"), getSyncCount(), cache.pop("message")])
-        return render({ theme: theme?.theme, error, syncCount, referrer })
+        return render({ theme: theme?.theme, error, syncCount, referrer }, o)
     }
 
 export type Layout = typeof layout
 
 export interface LayoutTemplateArguments {
     head?: string
-    main?: Generator|string
+    main?: AsyncGenerator<any, void, unknown>
     scripts?: string[]
     nav?: Nav[]
-    reload?: {
-        target: string
-    }
 }

@@ -6,7 +6,7 @@
         // @ts-ignore
         let form = e.target?.form
         if (form instanceof HTMLFormElement)
-            form.requestSubmit()
+            form.submit()
     })
 
     document.addEventListener("reset-form", e => {

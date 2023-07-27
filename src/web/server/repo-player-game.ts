@@ -1,7 +1,7 @@
-import { Activities, Activity, get, getMany, PlayerGame, Position, Positions, set } from "./db";
-import { reject } from "./repo";
-import { equals, getNewId } from "./utils";
-import { assert, required } from "./validation";
+import { Activities, Activity, get, getMany, PlayerGame, Position, Positions, set } from "./db.js"
+import { reject } from "./repo.js"
+import { equals, getNewId } from "./utils.js"
+import { assert, required } from "./validation.js"
 
 function getPlayerGameKey(teamId: number, gameId: number, playerId: number) {
     return `player-game:${teamId}|${playerId}|${gameId}`

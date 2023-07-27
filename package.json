@@ -1,0 +1,17 @@
+{
+  "name": "soccer",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "./tasks/start.nu"
+  },
+  "author": "Jon Nyman",
+  "license": "ISC",
+  "dependencies": {
+    "html-template-tag-stream": "^1.1.2",
+    "idb-keyval": "^6.2.1",
+    "mpa-enhancer": "^1.1.0",
+    "promise-validation": "^4.0.1"
+  }
+}

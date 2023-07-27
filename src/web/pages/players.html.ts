@@ -1,13 +1,13 @@
-import html from "./server/html-template-tag"
-import layout from "./_layout.html"
-import { cache, Message, Team } from "./server/db"
-import { searchParams } from "./server/utils"
-import { PostHandlers, Route } from "./server/route"
-import { when } from "./server/shared"
-import { addPlayer, addPlayerForm } from "./server/_AddPlayer.html"
-import { teamGet } from "./server/repo-team"
-import { validateObject } from "./server/validation"
-import { queryAllValidator, queryTeamIdValidator } from "./server/validators"
+import html from "../server/html.js"
+import layout from "./_layout.html.js"
+import { cache, Message, Team } from "../server/db.js"
+import { searchParams } from "../server/utils.js"
+import { PostHandlers, Route } from "../server/route.js"
+import { when } from "../server/shared.js"
+import { addPlayer, addPlayerForm } from "../pages/_AddPlayer.html.js"
+import { teamGet } from "../server/repo-team.js"
+import { validateObject } from "../server/validation.js"
+import { queryAllValidator, queryTeamIdValidator } from "../server/validators.js"
 
 interface PlayersView {
     team: Team
@@ -81,11 +81,11 @@ const route : Route = {
     route: /\/players\/$/,
     async get(req: Request) {
         const result = await start(req)
-        const template = await layout(req)
-        return template({
+        return layout(req, {
             main: render(result),
             nav: [{name: "Edit", url: `/web/players/edit?teamId=${result.team.id}#team`}] })
     },
     post: postHandlers,
 }
+
 export default route

@@ -1,1 +1,0 @@
-Invoke-Expression ".\commands\clean-journal.ps1 -Path $journalPath"

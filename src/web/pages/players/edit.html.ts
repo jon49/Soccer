@@ -1,13 +1,13 @@
-import { cache, Message, Team } from "../server/db"
-import html from "../server/html-template-tag"
-import { PostHandlers, Route } from "../server/route"
-import { equals, searchParams } from "../server/utils"
-import layout from "../_layout.html"
-import { assert, validate, validateObject } from "../server/validation"
-import { messageView, when } from "../server/shared"
-import { dataPlayerNameActiveValidator, dataTeamNameYearActiveValidator, queryTeamIdPlayerIdValidator, queryTeamIdValidator } from "../server/validators"
-import { addPlayer, addPlayerForm } from "../server/_AddPlayer.html"
-import { teamGet, teamSave } from "../server/repo-team"
+import { cache, Message, Team } from "../../server/db.js"
+import html from "../../server/html.js"
+import { PostHandlers, Route } from "../../server/route.js"
+import { equals, searchParams } from "../../server/utils.js"
+import layout from "../_layout.html.js"
+import { assert, validate, validateObject } from "../../server/validation.js"
+import { messageView, when } from "../../server/shared.js"
+import { dataPlayerNameActiveValidator, dataTeamNameYearActiveValidator, queryTeamIdPlayerIdValidator, queryTeamIdValidator } from "../../server/validators.js"
+import { addPlayer, addPlayerForm } from "../_AddPlayer.html.js"
+import { teamGet, teamSave } from "../../server/repo-team.js"
 
 interface PlayersEditView {
     team: Team
@@ -127,18 +127,10 @@ const postHandlers: PostHandlers = {
         player.active = active
         // Player name will also need to be updated for the individual player when implemented!
         await teamSave(team)
-        return html`${playerName}`
     },
 
     addPlayer: async (o) => {
         await addPlayer(o)
-        let team = await teamGet(+o.query.teamId)
-        return {
-            body: playerView(team, team.players.slice(-1)[0].id),
-            headers: {
-                "hf-events": JSON.stringify({ "reset-form": "" })
-            }
-        }
     },
 
     editTeam: async({ data, query }) => {
@@ -153,7 +145,6 @@ const postHandlers: PostHandlers = {
         team.year = year
         team.name = newTeamName
         await teamSave(team)
-        return html`${newTeamName} (${year})`
     }
 }
 
@@ -161,8 +152,7 @@ const route : Route = {
     route: /\/players\/edit\/$/,
     async get(req: Request) {
         let result = await start(req)
-        const template = await layout(req)
-        return template({
+        return layout(req, {
             main: render(result),
             nav: [
                 { name: "Positions", url: `/web/positions?teamId=${result.team.id}` },

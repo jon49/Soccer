@@ -1,12 +1,12 @@
-import html from "./server/html-template-tag"
-import layout from "./_layout.html"
-import { Position, Team } from "./server/db"
-import { searchParams } from "./server/utils"
-import { PostHandlers, Route } from "./server/route"
-import { teamGet } from "./server/repo-team"
-import { createIdNumber, createString25, validate, validateObject } from "./server/validation"
-import { dataPositionValidator, queryTeamIdPositionIdValidator, queryTeamIdValidator } from "./server/validators"
-import { positionGetAll, positionSaveNew, positionsSave } from "./server/repo-player-game"
+import html from "../server/html.js"
+import layout from "./_layout.html.js"
+import { Position, Team } from "../server/db.js"
+import { searchParams } from "../server/utils.js"
+import { PostHandlers, Route } from "../server/route.js"
+import { teamGet } from "../server/repo-team.js"
+import { createIdNumber, createString25, validate, validateObject } from "../server/validation.js"
+import { dataPositionValidator, queryTeamIdPositionIdValidator, queryTeamIdValidator } from "../server/validators.js"
+import { positionGetAll, positionSaveNew, positionsSave } from "../server/repo-player-game.js"
 
 interface PositionView {
     positions: Position[]
@@ -40,7 +40,7 @@ function render({ team, positions }: PositionView) {
     document.addEventListener("onchange", e => {
         let target = e.target
         if (target instanceof HTMLInputElement) {
-            target.form.requestSubmit()
+            target.form.submit()
         }
     })
 </script>
@@ -94,10 +94,10 @@ const route : Route = {
     route: /\/positions\/$/,
     async get(req: Request) {
         const result = await start(req)
-        const template = await layout(req)
-        return template({ main: render(result) })
+        return layout(req, { main: render(result) })
     },
     post: postHandlers,
 }
+
 export default route
 

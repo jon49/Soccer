@@ -1,13 +1,13 @@
-import { Game, Team } from "./server/db"
-import html from "./server/html-template-tag"
-import { reject } from "./server/repo"
-import { teamGet, teamSave } from "./server/repo-team"
-import { PostHandlers, Route } from "./server/route"
-import { when } from "./server/shared"
-import { getNewId, searchParams, tail } from "./server/utils"
-import { assert, createIdNumber, createString25, maybe, required, validate, validateObject } from "./server/validation"
-import { queryTeamIdValidator } from "./server/validators"
-import layout from "./_layout.html"
+import { Game, Team } from "../server/db.js"
+import html from "../server/html.js"
+import { reject } from "../server/repo.js"
+import { teamGet, teamSave } from "../server/repo-team.js"
+import { PostHandlers, Route } from "../server/route.js"
+import { when } from "../server/shared.js"
+import { getNewId, searchParams, tail } from "../server/utils.js"
+import { assert, createIdNumber, createString25, maybe, required, validate, validateObject } from "../server/validation.js"
+import { queryTeamIdValidator } from "../server/validators.js"
+import layout from "./_layout.html.js"
 
 interface GameView {
     team: Team
@@ -120,8 +120,7 @@ const postHandlers : PostHandlers = {
 const getHandlers = {
     async get(req: Request) {
         const result = await start(req)
-        const template = await layout(req)
-        return template({ main: render(result) })
+        return layout(req, { main: render(result) })
     },
     async edit(req: Request) {
         let { teamId, id: gameId } = await validateObject(searchParams(req), queryTeamIdIdValidator) 

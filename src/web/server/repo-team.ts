@@ -1,7 +1,7 @@
-import { get, set, update, getMany, Team, Teams, TeamSingle } from "./db"
-import { reject } from "./repo"
-import { equals, getNewId } from "./utils"
-import { requiredAsync } from "./validation"
+import { get, set, update, getMany, Team, Teams, TeamSingle } from "./db.js"
+import { reject } from "./repo.js"
+import { equals, getNewId } from "./utils.js"
+import { requiredAsync } from "./validation.js"
 
 export function teamGet(teamId: number) : Promise<Team> {
     return requiredAsync(get<Team>(getTeamDbId(teamId)), `Could not find team with id: "${teamId}".`)

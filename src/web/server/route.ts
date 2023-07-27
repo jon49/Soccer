@@ -1,9 +1,23 @@
-import { cache } from "./db"
-import { HTMLReturnType } from "./html-template-tag"
-import { reject } from "./repo"
-import { redirect, searchParams } from "./utils"
+import type html from "./html.js"
+type HTMLReturnType = ReturnType<typeof html>
 
 let routes : Route[] = []
+
+export interface RouteOptions {
+    reject: (s: string | string[]) => Promise<void>
+    redirect: (req: Request) => Response
+    searchParams: <TReturn>(req: Request) => TReturn & { _url: URL }
+}
+
+const notImplemented = () => { throw new Error("Not Implemented") }
+
+export const options : RouteOptions = {
+    reject: notImplemented,
+    redirect: notImplemented,
+    searchParams: notImplemented
+}
+
+const o = options
 
 export function addRoutes(routesList: Route[]) {
     routes = routesList
@@ -42,21 +56,21 @@ export interface RoutePostArgsWithQuery extends RoutePostArgs {
 export type PostHandlers = Record<string, (o: RoutePostArgsWithQuery) => Promise<any>>
 export function handlePost(handlers: PostHandlers) {
     return async (args: RoutePostArgs) => {
-        let query = searchParams<{handler?: string}>(args.req)
+        let query = o.searchParams<{handler?: string}>(args.req)
         let extendedArgs = { ...args, query }
         let resultTask = query.handler && handlers[query.handler]
             ? handlers[query.handler](extendedArgs)
         : handlers["post"]
             ? handlers["post"](extendedArgs)
-        : reject("I'm sorry, I didn't understand where to route your request.")
+        : o.reject("I'm sorry, I didn't understand where to route your request.")
 
         let result = await resultTask
         if (result instanceof Promise) {
-            await result.catch(x => cache.push(x))
+            await result
         }
 
         return result === undefined
-                ? redirect(args.req)
+                ? o.redirect(args.req)
             : result
     }
 }
@@ -66,18 +80,18 @@ export function handleGet(handlers: RouteGetHandler | RouteGet | undefined, req:
     if (handlers instanceof Function) {
         return handlers(req)
     }
-    let query = searchParams<{handler?: string}>(req)
+    let query = o.searchParams<{handler?: string}>(req)
     let resultTask =
         query.handler && handlers[query.handler]
             ? handlers[query.handler](req)
         : handlers["get"]
             ? handlers["get"](req)
-        : reject("I'm sorry, I couldn't find that page.")
+        : o.reject("I'm sorry, I couldn't find that page.")
     return resultTask
 }
 
 export interface RouteGet {
-    (req: Request): Promise<HTMLReturnType>
+    (req: Request): Promise<HTMLReturnType> | HTMLReturnType | Promise<Response>
 }
 
 export interface RouteGetHandler {
@@ -96,3 +110,4 @@ export interface Route {
     get?: RouteGet | RouteGetHandler
     post?: RoutePost | PostHandlers
 }
+
