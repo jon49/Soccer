@@ -66,15 +66,13 @@ const postHandlers : PostHandlers = {
             await validate([
                 validateObject(query, queryTeamIdValidator),
                 validateObject(data, dataPositionValidator)])
-        let newPosition = await positionSaveNew(teamId, position)
-        return positionView(newPosition, teamId)
+        await positionSaveNew(teamId, position)
     },
     deletePosition: async ({ query }) => {
         let { positionId, teamId } = await validateObject(query, queryTeamIdPositionIdValidator)
         let o = await positionGetAll(teamId)
         o.positions = o.positions.filter(x => x.id !== positionId)
         await positionsSave(teamId, o)
-        return html``
     },
     post: async ({ query, data }) => {
         let { teamId } = await validateObject(query, queryTeamIdValidator)
@@ -86,7 +84,6 @@ const postHandlers : PostHandlers = {
         let o = await positionGetAll(teamId)
         o.positions = editedPositions
         await positionsSave(teamId, o)
-        return html`${editedPositions.map(x => positionView(x, teamId))}`
     }
 }
 

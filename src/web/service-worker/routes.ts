@@ -12,8 +12,8 @@ addRoutes([
     index,
     teams,
     players,
-    games,
     gamesPlay,
+    games,
     positions,
     activities,
     userSettings

@@ -95,7 +95,6 @@ const postHandlers : PostHandlers = {
         })
 
         await teamSave(team)
-        return getGameView(team.id, tail(team.games))
     },
     async edit({ data, query }) {
         let [{ date, opponent, gameId }, { teamId }] = await validate([
@@ -112,7 +111,6 @@ const postHandlers : PostHandlers = {
         game.date = date
 
         await teamSave(team)
-        return getGamePartialView(team.id, game)
     },
     async cancel() { }
 }
