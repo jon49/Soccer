@@ -50,7 +50,7 @@ function render(o: PlayersEditView) {
 
 <h3 id=team>Team Settings</h3>
 ${teamEdited ? messageView(message) : null}
-<form class=form method=post action="?handler=editTeam&teamId=${team.id}" target="#subheading">
+<form class=form method=post action="?handler=editTeam&teamId=${team.id}">
     <div class=inline>
         <label for=team>Team Name:</label><input id=team name=name type=text value="${team.name}" $${when(teamEdited, "autofocus")}>
     </div>
@@ -75,7 +75,7 @@ ${team.players.length === 0 ? html`<p>No players have been added.</p>` : null }
 
 <p>Add a new player.</p>
 
-${addPlayerForm({ name: undefined, playersExist: true, posted, action, message, target: "target=#player-cards hf-swap=append" })}
+${addPlayerForm({ name: undefined, playersExist: true, posted, action, message })}
     `
 }
 
@@ -87,7 +87,7 @@ function playerView(team: Team, playerId: number) {
 
     return html`
 <div>
-    <form method=post action="?handler=editPlayer&$${teamPlayerQuery}" target="#_${playerId} > a">
+    <form method=post action="?handler=editPlayer&$${teamPlayerQuery}">
         <div>
             <input id=${playerId_} class=editable name=name type=text value="${player.name}">
             <label for=${playerId_}><a href="/web/players?$${teamPlayerQuery}">${player.name}</a> <span class=editable-pencil>&#9998;</span></label>

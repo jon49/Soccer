@@ -143,16 +143,16 @@ function render({ team, playersGame, game, positions, posted, message }: View) {
         <li>
             <span>Points</span>
             <form id=team-points class=inline method=post hidden></form>
-            <button formaction="?$${queryTeamGame}&handler=pointsDec" target="#points" form=team-points>-</button>
+            <button formaction="?$${queryTeamGame}&handler=pointsDec" form=team-points>-</button>
             <span id=points>${getPointsView(game.points)}</span>
-            <button formaction="?$${queryTeamGame}&handler=pointsInc" target="#points" form=team-points>+</button>
+            <button formaction="?$${queryTeamGame}&handler=pointsInc" form=team-points>+</button>
         </li>
         <li>
             <span>Opponent</span>
             <form id=opponent-points class=inline method=post hidden></form>
-            <button formaction="?$${queryTeamGame}&handler=oPointsDec" target="#o-points" form=opponent-points>-</button>
+            <button formaction="?$${queryTeamGame}&handler=oPointsDec" form=opponent-points>-</button>
             <span id=o-points>${getPointsView(game.opponentPoints)}</span>
-            <button formaction="?$${queryTeamGame}&handler=oPointsInc" target="#o-points" form=opponent-points>+</button>
+            <button formaction="?$${queryTeamGame}&handler=oPointsInc" form=opponent-points>+</button>
         </li>
     </ul>
 </div>
@@ -173,7 +173,6 @@ ${when(!inPlay, html`<p>No players are in play.</p>`)}
         <span id=${playerInfoId}>${inPlayPlayerInfoView(x.name, position)}</span>
         <game-timer data-start=${x.start} data-total="${x.total}" ${when(!isInPlay, "data-static")}></game-timer>
         <form
-            target=#${playerInfoId}
             method=post
             action="?$${baseQuery}&handler=positionChange"
             onchange="this.submit()" >
@@ -563,7 +562,7 @@ async function get(req: Request) {
 <div id=refresh>
 ${render(result)}
 </div>
-<form id=reload-form action="?teamId=${result.team.id}&gameId=${result.game.id}&handler=reload" target=#refresh hidden>
+<form id=reload-form action="?teamId=${result.team.id}&gameId=${result.game.id}&handler=reload" hidden>
 </form>`,
         head,
         scripts: [ "/web/js/game-play.v4.js" ] })

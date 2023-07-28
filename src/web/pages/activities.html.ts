@@ -23,7 +23,7 @@ function render({ team, activities }: ActivityView) {
     return html`
 <h2>${team.name} - Activities</h2>
 
-<form class=form method=post target=#activities>
+<form class=form method=post>
     <div id=activities>
     ${activities.map(x => activityView(x, team.id))}
     </div>
@@ -31,7 +31,7 @@ function render({ team, activities }: ActivityView) {
 </form>
 
 <h3>Add Activity</h3>
-<form class=form method=post action="?handler=addActivity&teamId=${team.id}" target=#activities hf-swap="append">
+<form class=form method=post action="?handler=addActivity&teamId=${team.id}">
     <input type=text name=activity placeholder="E.g., Goal, Block, etc.">
     <button>Save</button>
 </form>
@@ -50,7 +50,7 @@ function render({ team, activities }: ActivityView) {
 function activityView(activity: Activity, teamId: number) {
     return html`
     <div id="_${activity.id}">
-        <button formaction="?handler=deleteActivity&activityId=${activity.id}&teamId=${teamId}" target="#_${activity.id}">X</button>
+        <button formaction="?handler=deleteActivity&activityId=${activity.id}&teamId=${teamId}">X</button>
         <input class=inline name="${activity.id}" value="${activity.name}">
     </div>`
 }

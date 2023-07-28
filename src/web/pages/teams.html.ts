@@ -6,7 +6,7 @@ import { searchParams } from "../server/utils.js"
 import { validateObject } from "../server/validation.js"
 import { messageView, when } from "../server/shared.js"
 import { dataTeamNameYearValidator } from "../server/validators.js"
-import { teamGet, teamGetAll, teamsCreate, WasFiltered } from "../server/repo-team.js"
+import { teamGetAll, teamsCreate, WasFiltered } from "../server/repo-team.js"
 import { reject } from "../server/repo.js"
 
 interface TeamsView {
@@ -46,7 +46,7 @@ ${ wasFiltered ? html`<p><a href="?all">Show all teams.</a></p>` : null }
 
 ${messageView(message)}
 
-<form class=form method=post target=#teams hf-swap=append>
+<form class=form method=post>
     <div>
         <label for=name>Team Name</label>
         <input id=name name=name type=text value="${cache?.name ?? ""}" $${when(!teams?.length, "autofocus")} required>

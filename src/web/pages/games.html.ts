@@ -27,7 +27,7 @@ function render({ team }: GameView) {
     ${team.games.map(x => getGameView(team.id, x))}
 </ul>
 
-<form class=form method=post target=#games hf-swap=append>
+<form class=form method=post>
     <div class=inline>
         <label for=game-date>Name</label>
         <input id=game-date type=date name=date required value=${new Date().toISOString().slice(0, 10)} ${when(team.games.length === 0, "autofocus")}>
@@ -51,7 +51,7 @@ function getGamePartialView(teamId: number, game: Game) {
     let teamQuery = `teamId=${teamId}`
     return html`
 <a href="?$${teamQuery}&gameId=${game.id}">${game.date}${when(game.opponent, " - " + game.opponent) }</a>
-<form action="?$${teamQuery}&handler=edit" target=#game-${game.id}>
+<form action="?$${teamQuery}&handler=edit">
     <input type=hidden name=id value="${game.id}" >
     <button class=anchor>Edit</button>
 </form>`
@@ -131,7 +131,7 @@ const getHandlers = {
         }
         let teamQuery = `teamId=${team.id}`
         return html`
-<form class=form method=post action="?${teamQuery}&handler=edit" target="#game-${game.id}">
+<form class=form method=post action="?${teamQuery}&handler=edit">
     <input type=hidden name=gameId value="${game.id}">
     <div class=inline>
         <label for=game-date>Name</label>

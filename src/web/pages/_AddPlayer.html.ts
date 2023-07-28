@@ -16,15 +16,14 @@ interface AddPlayerViewArgs {
     playersExist: boolean
     action?: string
     message: Message
-    target?: string
 }
 
-export function addPlayerForm({name, posted, playersExist, action, message, target}: AddPlayerViewArgs) {
+export function addPlayerForm({name, posted, playersExist, action, message}: AddPlayerViewArgs) {
     let action_ = action ? html`action="${action}"` : null
     let playerAdded = posted === formId
     return html`
 ${when(!!message, messageView(message))}
-<form class=form method=post ${action_} $${target}>
+<form class=form method=post ${action_}>
     <div>
         <label for=name>Player Name</label>
         <input id=name name=name type=text value="${name}" $${when(playerAdded || !playersExist, "autofocus")} required>

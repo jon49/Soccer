@@ -23,7 +23,7 @@ function render({ team, positions }: PositionView) {
     return html`
 <h2>${team.name} - Positions</h2>
 
-<form class=form method=post target=#positions>
+<form class=form method=post>
     <div id=positions>
     ${positions.map(x => positionView(x, team.id))}
     </div>
@@ -31,7 +31,7 @@ function render({ team, positions }: PositionView) {
 </form>
 
 <h3>Add Position</h3>
-<form class=form method=post action="?handler=addPosition&teamId=${team.id}" target=#positions hf-swap="append">
+<form class=form method=post action="?handler=addPosition&teamId=${team.id}">
     <input type=text name=position placeholder="E.g., Defender L, Defender C, Attacker, etc.">
     <button>Save</button>
 </form>
@@ -50,7 +50,7 @@ function render({ team, positions }: PositionView) {
 function positionView(position: Position, teamId: number) {
     return html`
     <div id="_${position.id}">
-        <button formaction="?handler=deletePosition&positionId=${position.id}&teamId=${teamId}" target="#_${position.id}">X</button>
+        <button formaction="?handler=deletePosition&positionId=${position.id}&teamId=${teamId}">X</button>
         <input class=inline name="${position.id}" value="${position.name}">
     </div>`
 }
