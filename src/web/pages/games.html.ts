@@ -50,11 +50,35 @@ function getGameView(teamId: number, game: Game) {
 function getGamePartialView(teamId: number, game: Game) {
     let teamQuery = `teamId=${teamId}`
     return html`
-<a href="?$${teamQuery}&gameId=${game.id}">${game.date}${when(game.opponent, " - " + game.opponent) }</a>
-<form action="?$${teamQuery}&handler=edit">
-    <input type=hidden name=id value="${game.id}" >
-    <button class=anchor>Edit</button>
-</form>`
+<form method=post action="?${teamQuery}&handler=edit">
+    <input type=hidden name=gameId value="${game.id}">
+    <div class=inline>
+        <input
+            id=game-date
+            class=editable
+            type=date
+            name=date
+            required
+            value="${game.date}">
+        <label for=game-date>
+            <a href="?$${teamQuery}&gameId=${game.id}">${game.date}</a>
+            <span class=editable-pencil>&#9998;</span>
+        </label>
+    </div>
+    <div class=inline>
+        <input
+            id=game-opponent
+            class=editable
+            type=text
+            name=opponent
+            value="${game.opponent}">
+        <label for=game-opponent>
+            <a href="?$${teamQuery}&gameId=${game.id}">${game.opponent || "Unknown"}</a>
+            <span class=editable-pencil>&#9998;</span>
+        </label>
+    </div>
+</form>
+`
 }
 
 let addGameValidator = {
@@ -65,11 +89,6 @@ let addGameValidator = {
 let editGameValidator = {
     ...addGameValidator,
     gameId: createIdNumber("Game ID")
-}
-
-let queryTeamIdIdValidator = {
-    ...queryTeamIdValidator,
-    id: createIdNumber("Game ID")
 }
 
 const postHandlers : PostHandlers = {
@@ -112,49 +131,14 @@ const postHandlers : PostHandlers = {
 
         await teamSave(team)
     },
-    async cancel() { }
-}
-
-const getHandlers = {
-    async get(req: Request) {
-        const result = await start(req)
-        return layout(req, { main: render(result) })
-    },
-    async edit(req: Request) {
-        let { teamId, id: gameId } = await validateObject(searchParams(req), queryTeamIdIdValidator) 
-        let team = await teamGet(teamId)
-        let game = team.games.find(x => x.id === gameId)
-        if (!game) {
-            return reject("Could not find game.")
-        }
-        let teamQuery = `teamId=${team.id}`
-        return html`
-<form class=form method=post action="?${teamQuery}&handler=edit">
-    <input type=hidden name=gameId value="${game.id}">
-    <div class=inline>
-        <label for=game-date>Name</label>
-        <input
-            id=game-date
-            type=date
-            name=date
-            required
-            value="${game.date}"
-            autofocus>
-    </div>
-    <div class=inline>
-        <label for=game-opponent>Opponent</label>
-        <input id=game-opponent type=text name=opponent value="${game.opponent}">
-    </div>
-    <div>
-        <button>Save</button> <button formaction="?${teamQuery}&handler=cancel">Cancel</button>
-    </div>
-</form>`
-    }
 }
 
 const router : Route = {
     route: /\/games\/$/,
-    get: getHandlers,
+    async get(req: Request) {
+        const result = await start(req)
+        return layout(req, { main: render(result) })
+    },
     post: postHandlers,
 }
 
