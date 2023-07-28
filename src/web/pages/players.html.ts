@@ -1,91 +1,166 @@
-import html from "../server/html.js"
-import layout from "./_layout.html.js"
 import { cache, Message, Team } from "../server/db.js"
-import { searchParams } from "../server/utils.js"
+import html from "../server/html.js"
 import { PostHandlers, Route } from "../server/route.js"
-import { when } from "../server/shared.js"
-import { addPlayer, addPlayerForm } from "../pages/_AddPlayer.html.js"
-import { teamGet } from "../server/repo-team.js"
-import { validateObject } from "../server/validation.js"
-import { queryAllValidator, queryTeamIdValidator } from "../server/validators.js"
+import { equals, searchParams } from "../server/utils.js"
+import layout from "./_layout.html.js"
+import { assert, validate, validateObject } from "../server/validation.js"
+import { messageView, when } from "../server/shared.js"
+import { dataPlayerNameActiveValidator, dataTeamNameYearActiveValidator, queryTeamIdPlayerIdValidator, queryTeamIdValidator } from "../server/validators.js"
+import { addPlayer, addPlayerForm } from "./_AddPlayer.html.js"
+import { teamGet, teamSave } from "../server/repo-team.js"
 
-interface PlayersView {
+interface PlayersEditView {
     team: Team
-    name?: string
     posted?: string
-    wasFiltered: boolean
+    action: string
     message: Message
 }
 
-let queryTeamAllValidator = {
-    ...queryTeamIdValidator,
-    ...queryAllValidator,
-}
+async function start(req: Request) : Promise<PlayersEditView> {
+    let query = searchParams(req)
+    let { teamId } = await validateObject(query, queryTeamIdValidator)
 
-async function start(req: Request) : Promise<PlayersView> {
-    let { all, teamId } = await validateObject(searchParams(req), queryTeamAllValidator)
+    let [posted, message] = await Promise.all([cache.pop("posted"), cache.pop("message")])
+
     let team = await teamGet(teamId)
-    let [cached, posted, message] = await Promise.all([
-        cache.pop("players"),
-        cache.pop("posted"),
-        cache.pop("message")])
-    let wasFiltered = false
-    if (all === null) {
-        let filtered = team.players.filter(x => x.active)
-        wasFiltered = filtered.length !== team.players.length
-        team.players = filtered
-    }
+
+    query._url.searchParams.append("handler", "addPlayer")
+
     return {
         team,
-        name: cached?.name,
         posted,
-        wasFiltered,
+        action: query._url.search,
         message,
     }
 }
 
-function render({ team, message, wasFiltered, name, posted }: PlayersView) {
-    let playersExist = team.players.length > 0
+function render(o: PlayersEditView) {
+    let { team, posted, message, action } = o
+    let teamEdited = posted === "edit-team"
 
     return html`
-    <h2>Team ${team.name}</h2>
-    ${ playersExist
-        ? html`
-    <ul class=list>
-        ${team.players.map(x =>
-            html`
-            <li>
-                <a href="?playerId=${x.id}&teamId=${team.id}">${x.name}</a>
-                <a href="/web/players/edit?teamId=${team.id}#_${x.id}">Edit</a>
-            </li>`
-        )}
-    </ul>`
-       : html`<p>No players found. Please add one!</p>` }
+<h2 id=subheading>${ o?.team.name ??  "Unknown"} (${o?.team.year})</h2>
 
-    ${when(wasFiltered,
-        html`<p><a href="?all&teamId=${team.id}">Show all players.</a></p>`)}
-    ${when(playersExist && team.players.find(x => !x.active),
-        () => html`<p><a href="?teamId=${team.id}">Hide archived players.</a></p>`)}
+<nav>
+    <ul>
+        <li><a href="#team">Team</a></li>
+        <li><a href="#players">Players</a></li>
+    </ul>
+</nav>
 
-    <h3>Add a player</h3>
+<h3 id=team>Team Settings</h3>
+${when(teamEdited, () => messageView(message))}
+<form class=form method=post action="?handler=editTeam&teamId=${team.id}">
+    <div class=inline>
+        <label for=team>Team Name:</label><input id=team name=name type=text value="${team.name}">
+    </div>
+    <div class=inline>
+        <label for=year>Year:</label> <input id=year name=year type=text value="${team.year}">
+    </div>
+    <div>
+        <label class=toggle>
+            <input id=team-active name=active type=checkbox $${when(team.active, "checked")}>
+            <span class="off button">Inactive</span>
+            <span class="on button">Active</span>
+        </label>
+    </div>
+</form>
 
-    ${addPlayerForm({name, posted, playersExist, message})}
+<h3 id=players>Players Settings</h3>
+${team.players.length === 0 ? html`<p>No players have been added.</p>` : null }
+
+<div id=player-cards  class=cards>
+    ${team.players.map(x => playerView(team, x.id))}
+</div>
+
+<p>Add a new player.</p>
+
+${addPlayerForm({ name: undefined, playersExist: true, posted, action, message })}
     `
 }
 
-const postHandlers : PostHandlers = {
-    post: addPlayer,
+function playerView(team: Team, playerId: number) {
+    let player = team.players.find(x => x.id === playerId)
+    if (!player) return html`<p>Could not find player "${playerId}"</p>`
+    let teamPlayerQuery = `teamId=${team.id}&playerId=${playerId}`
+    let playerId_ : string = `edit-player${playerId}`
+
+    return html`
+<div>
+    <form method=post action="?handler=editPlayer&$${teamPlayerQuery}">
+        <div>
+            <input id=${playerId_} class=editable name=name type=text value="${player.name}">
+            <label for=${playerId_}><a href="/web/players?$${teamPlayerQuery}">${player.name}</a> <span class=editable-pencil>&#9998;</span></label>
+        </div>
+        <div>
+            <label class=toggle>
+                <input id="active-${playerId_}" name=active type=checkbox $${when(player.active, "checked")}>
+                <span class="off button">Inactive</span>
+                <span class="on button">Active</span>
+            </label>
+        </div>
+    </form>
+</div>`
+}
+
+const postHandlers: PostHandlers = {
+    editPlayer: async ({data: d, query: q}) => {
+        let [{ teamId, playerId }, { name: playerName, active }] = await validate([
+            validateObject(q, queryTeamIdPlayerIdValidator),
+            validateObject(d, dataPlayerNameActiveValidator)
+        ])
+        let team = await teamGet(teamId)
+
+        let playerIndex = team.players.findIndex(x => x.id === playerId)
+        await assert.isFalse(playerIndex === -1, `Unknown player "${playerId}"`)
+        await cache.push({posted: `edit-player${playerIndex}`})
+        let player = team.players[playerIndex]
+
+        // Check for duplicates
+        let existingPlayer = team.players.find(x => equals(x.name, playerName))
+        await assert.isFalse(
+            !equals(player.name, playerName) && !!existingPlayer,
+            `The player name "${existingPlayer?.name}" has already been chosen.`)
+
+        player.name = playerName
+        player.active = active
+        // Player name will also need to be updated for the individual player when implemented!
+        await teamSave(team)
+    },
+
+    addPlayer: async (o) => {
+        await addPlayer(o)
+    },
+
+    editTeam: async({ data, query }) => {
+        await cache.push({posted: "edit-team"})
+        let [{ name: newTeamName, year, active }, { teamId }] = await validate([
+            validateObject(data, dataTeamNameYearActiveValidator),
+            validateObject(query, queryTeamIdValidator),
+        ])
+
+        let team = await teamGet(teamId)
+        team.active = active
+        team.year = year
+        team.name = newTeamName
+        await teamSave(team)
+    }
 }
 
 const route : Route = {
     route: /\/players\/$/,
     async get(req: Request) {
-        const result = await start(req)
+        let result = await start(req)
         return layout(req, {
+            head: "<style>.player-card { min-width: 200px; }</style>",
             main: render(result),
-            nav: [{name: "Edit", url: `/web/players/edit?teamId=${result.team.id}#team`}] })
+            nav: [
+                { name: "Positions", url: `/web/positions?teamId=${result.team.id}` },
+                { name: "Activities", url: `/web/activities?teamId=${result.team.id}` }
+            ],
+            scripts: ["/web/js/players-edit.js"] })
     },
-    post: postHandlers,
+    post: postHandlers
 }
-
 export default route
+
