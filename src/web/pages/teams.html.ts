@@ -74,7 +74,6 @@ function getTeamView(team: Team) {
         })(),
             x => html`<a href="/web/games?teamId=${teamId}&gameId=${x.id}">${x.date}</a>`
         ) ?? html`<span>&nbsp;</span>`}
-        <a href="/web/players/edit?teamId=${teamId}">Edit</a>
     </li>`
 }
 

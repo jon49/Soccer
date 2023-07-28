@@ -6,7 +6,6 @@ import layout from "./_layout.html.js"
 import { assert, validate, validateObject } from "../server/validation.js"
 import { messageView, when } from "../server/shared.js"
 import { dataPlayerNameActiveValidator, dataTeamNameYearActiveValidator, queryTeamIdPlayerIdValidator, queryTeamIdValidator } from "../server/validators.js"
-import { addPlayer, addPlayerForm } from "./_AddPlayer.html.js"
 import { teamGet, teamSave } from "../server/repo-team.js"
 
 interface PlayersEditView {
@@ -103,6 +102,47 @@ function playerView(team: Team, playerId: number) {
 </div>`
 }
 
+const formId = "add-player"
+
+interface AddPlayerViewArgs {
+    name: string | undefined
+    posted: string | undefined
+    playersExist: boolean
+    action?: string
+    message: Message
+}
+
+export function addPlayerForm({name, posted, playersExist, action, message}: AddPlayerViewArgs) {
+    let action_ = action ? html`action="${action}"` : null
+    let playerAdded = posted === formId
+    return html`
+${when(!!message, messageView(message))}
+<form class=form method=post ${action_}>
+    <div>
+        <label for=name>Player Name</label>
+        <input id=name name=name type=text value="${name}" $${when(playerAdded || !playersExist, "autofocus")} required>
+    </div>
+    <button>Save</button>
+</form>`
+}
+
+export async function addPlayer({ data, query }: RoutePostArgsWithQuery) {
+    await cache.push({posted: formId})
+    let [{ teamId }, { name }] = await validate([
+        validateObject(query, queryTeamIdValidator),
+        validateObject(data, dataPlayerNameValidator)
+    ])
+
+    let team = await teamGet(teamId)
+
+    let existingPlayer = team.players.find(x => equals(x.name, name))
+    await assert.isFalse(!!existingPlayer, `The player name "${existingPlayer?.name}" has already been chosen.`)
+        ?.catch(() => reject({ players: { name } }))
+
+    await Promise.all([playerCreate(teamId, name), cache.push({ posted: formId })])
+}
+
+
 const postHandlers: PostHandlers = {
     editPlayer: async ({data: d, query: q}) => {
         let [{ teamId, playerId }, { name: playerName, active }] = await validate([
@@ -162,5 +202,6 @@ const route : Route = {
     },
     post: postHandlers
 }
+
 export default route
 
