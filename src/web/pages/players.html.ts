@@ -1,12 +1,13 @@
 import { cache, Message, Team } from "../server/db.js"
 import html from "../server/html.js"
-import { PostHandlers, Route } from "../server/route.js"
+import { PostHandlers, Route, RoutePostArgsWithQuery } from "../server/route.js"
 import { equals, searchParams } from "../server/utils.js"
 import layout from "./_layout.html.js"
 import { assert, validate, validateObject } from "../server/validation.js"
 import { messageView, when } from "../server/shared.js"
-import { dataPlayerNameActiveValidator, dataTeamNameYearActiveValidator, queryTeamIdPlayerIdValidator, queryTeamIdValidator } from "../server/validators.js"
-import { teamGet, teamSave } from "../server/repo-team.js"
+import { dataPlayerNameActiveValidator, dataPlayerNameValidator, dataTeamNameYearActiveValidator, queryTeamIdPlayerIdValidator, queryTeamIdValidator } from "../server/validators.js"
+import { playerCreate, teamGet, teamSave } from "../server/repo-team.js"
+import { reject } from "../server/repo.js"
 
 interface PlayersEditView {
     team: Team
