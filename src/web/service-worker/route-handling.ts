@@ -1,12 +1,15 @@
 import { findRoute, handleGet, handlePost, PostHandlers, RouteGet, RouteGetHandler, RoutePost } from "../server/route.js"
 import { version } from "../server/settings.js"
 import { options } from "../server/route.js"
-import { reject, searchParams } from "../server/utils.js"
+import { redirect, reject, searchParams } from "../server/utils.js"
 import links from "../entry-points.js"
 
 options.searchParams = searchParams
 options.reject = reject
 options.redirect = (req: Request) => Response.redirect(req.referrer, 303)
+
+export let errors : string[] = []
+export let messages : string[] = []
 
 export async function getResponse(event: FetchEvent): Promise<Response>  {
     try {
@@ -41,7 +44,7 @@ async function get(url: URL, req: Request, event: FetchEvent) : Promise<Response
 
         if (result instanceof Response) {
             return result
-        } else if (result) {
+        } else {
             return streamResponse(url.pathname, result)
         }
     }
@@ -61,6 +64,7 @@ async function post(url: URL, req: Request) : Promise<Response> {
                     ? handler
                 : handlePost(handler))({ req, data })
 
+            messages.push("Saved!")
             if (result instanceof Response) {
                 return result
             }
@@ -69,10 +73,12 @@ async function post(url: URL, req: Request) : Promise<Response> {
             }
         } catch (error) {
             console.error("Post error:", error, "\nURL:", url);
-            return new Response(`Unknown error "${error}".`)
+            errors.push(error?.toString() ?? "Unknown error!")
+            return redirect(req)
         }
     }
-    return new Response("Not Found!")
+    errors.push(`Unknown POST request "${url.pathname}"!`)
+    return redirect(req)
 }
 
 async function getData(req: Request) {

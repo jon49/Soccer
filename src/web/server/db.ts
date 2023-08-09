@@ -1,4 +1,3 @@
-import { Theme } from "../user-settings/edit.html.js"
 import { get as get1, getMany, setMany, set as set1, update as update1 } from "./lib/db.min.js"
 import { reject } from "./repo.js"
 
@@ -39,42 +38,10 @@ async function update(key: string, f: (v: any) => any, options = { sync: true })
     }
 }
 
-class TempCache1 {
-    async push(value: Partial<TempCache>) : Promise<undefined> {
-        if (value instanceof Object && !Array.isArray(value)) {
-            await update1("temp-cache", x => x ? { ...x, ...value as {}} : value as {})
-        }
-        return
-    }
-
-    async peek<K extends keyof TempCache>(key: K): Promise<TempCache[K] | undefined> {
-        let result = await get("temp-cache")
-        return result ? result[key] : void 0
-    }
-
-    async pop<K extends keyof TempCache>(key: K): Promise<TempCache[K] | undefined> {
-        let result = await get("temp-cache")
-        await update1("temp-cache", x => {
-            if (x && x[key]) {
-                delete x[key]
-                return x
-            }
-            return x
-        })
-        return result ? result[key] : void 0
-    }
-
-    async try<T>(p: Promise<T>) {
-        return p.catch(x => this.push(x))
-    }
-}
-
-const cache = new TempCache1()
-export { update, set, get, getMany, setMany, cache }
+export { update, set, get, getMany, setMany }
 
 export interface Settings {
     lastSyncedId?: number | undefined
-    theme: Theme
 }
 
 interface Revision {
@@ -159,39 +126,20 @@ export interface Teams extends Revision {
     teams: TeamSingle[]
 }
 
-export interface CacheTeams {
-    name?: string
-    year?: string
-}
-
-export interface CachePlayers {
-    name?: string
-}
-
-export type Message = string[] | undefined
-
-export interface TempCache {
-    message?: Message
-    posted?: string
-    teams?: CacheTeams
-    players: CachePlayers
-}
-
 export type Updated = Map<IDBValidKey, number>
 
 interface DBAccessors {
     updated: Updated
     settings: Settings
     teams: Teams
-    "temp-cache": TempCache
 }
 
 interface DBGet {
     (key: "updated"): Promise<Updated | undefined>
     (key: "settings"): Promise<Settings | undefined>
     (key: "teams"): Promise<Teams | undefined>
-    (key: "temp-cache"): Promise<TempCache | undefined>
     <T>(key: string): Promise<T | undefined>
 }
 
 export type FormReturn<T> = { [key in keyof T]: string|undefined }
+

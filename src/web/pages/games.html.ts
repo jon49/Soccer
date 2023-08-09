@@ -16,7 +16,7 @@ interface GameView {
 async function start(req: Request): Promise<GameView> {
     let { teamId } = await validateObject(searchParams(req), queryTeamIdValidator)
     let team = await teamGet(teamId)
-    return {team}
+    return { team }
 }
 
 function render({ team }: GameView) {
@@ -91,7 +91,7 @@ let editGameValidator = {
     gameId: createIdNumber("Game ID")
 }
 
-const postHandlers : PostHandlers = {
+const postHandlers: PostHandlers = {
     async post({ data, query }) {
         let [{ date, opponent }, { teamId }] = await validate([
             validateObject(data, addGameValidator),
@@ -133,7 +133,7 @@ const postHandlers : PostHandlers = {
     },
 }
 
-const router : Route = {
+const router: Route = {
     route: /\/games\/$/,
     async get(req: Request) {
         const result = await start(req)

@@ -1,8 +1,8 @@
 import html from "../server/html.js"
-import { cache, get, Message } from "../server/db.js"
 import { version } from "../server/settings.js"
-import { messageView, when } from "../server/shared.js"
+import { when } from "../server/shared.js"
 import { Theme } from "./user-settings/edit.html.js"
+import { errors, messages } from "../service-worker/route-handling.js"
 
 interface Nav {
     name: string
@@ -11,11 +11,10 @@ interface Nav {
 
 interface Render {
     theme: Theme | undefined
-    error: Message
     referrer: URL | null
 }
 
-const render = ({theme, error}: Render, o: LayoutTemplateArguments) => {
+const render = ({theme}: Render, o: LayoutTemplateArguments) => {
     const { main, head, scripts, nav } = o
     return html`
 <!DOCTYPE html>
@@ -61,11 +60,23 @@ const render = ({theme, error}: Render, o: LayoutTemplateArguments) => {
         </nav>
     </header>
     <main>
-        ${messageView(error)}
         ${main}
     </main>
+    <div id=messages>
+        ${function* printErros() {
+            while (errors.length) {
+                const e = errors.shift()
+                if (e) yield html`<p class=error>${e}</p>`
+            }
+        }}
+        ${function* printMessages() {
+            while (messages.length) {
+                const m = messages.shift()
+                if (m) yield html`<p class=message>${m}</p>`
+            }
+        }}
+    </div>
     <footer><p>${version}</p></footer>
-    <div id=messages></div>
     <script src="/web/js/lib/mpa.min.js"></script>
     ${(scripts ?? []).map(x => html`<script src="${x}"></script>`)}
     <script src="/web/js/snack-bar.js"></script>
@@ -76,8 +87,7 @@ const render = ({theme, error}: Render, o: LayoutTemplateArguments) => {
 export default
     async function layout(req: Request, o: LayoutTemplateArguments) {
         let referrer = req.referrer ? new URL(req.referrer) : null
-        let [theme, error] = await Promise.all([get("settings"), cache.pop("message")])
-        return render({ theme: theme?.theme, error, referrer }, o)
+        return render({ referrer, theme: undefined }, o)
     }
 
 export type Layout = typeof layout

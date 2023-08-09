@@ -1,26 +1,21 @@
-import { cache, Message, Team } from "../server/db.js"
+import { Team } from "../server/db.js"
 import html from "../server/html.js"
 import { PostHandlers, Route, RoutePostArgsWithQuery } from "../server/route.js"
 import { equals, searchParams } from "../server/utils.js"
 import layout from "./_layout.html.js"
 import { assert, validate, validateObject } from "../server/validation.js"
-import { messageView, when } from "../server/shared.js"
+import { when } from "../server/shared.js"
 import { dataPlayerNameActiveValidator, dataPlayerNameValidator, dataTeamNameYearActiveValidator, queryTeamIdPlayerIdValidator, queryTeamIdValidator } from "../server/validators.js"
 import { playerCreate, teamGet, teamSave } from "../server/repo-team.js"
-import { reject } from "../server/repo.js"
 
 interface PlayersEditView {
     team: Team
-    posted?: string
     action: string
-    message: Message
 }
 
 async function start(req: Request) : Promise<PlayersEditView> {
     let query = searchParams(req)
     let { teamId } = await validateObject(query, queryTeamIdValidator)
-
-    let [posted, message] = await Promise.all([cache.pop("posted"), cache.pop("message")])
 
     let team = await teamGet(teamId)
 
@@ -28,15 +23,12 @@ async function start(req: Request) : Promise<PlayersEditView> {
 
     return {
         team,
-        posted,
         action: query._url.search,
-        message,
     }
 }
 
 function render(o: PlayersEditView) {
-    let { team, posted, message, action } = o
-    let teamEdited = posted === "edit-team"
+    let { team, action } = o
 
     return html`
 <h2 id=subheading>${ o?.team.name ??  "Unknown"} (${o?.team.year})</h2>
@@ -49,7 +41,6 @@ function render(o: PlayersEditView) {
 </nav>
 
 <h3 id=team>Team Settings</h3>
-${when(teamEdited, () => messageView(message))}
 <form class=form method=post action="?handler=editTeam&teamId=${team.id}">
     <div class=inline>
         <label for=team>Team Name:</label><input id=team name=name type=text value="${team.name}">
@@ -73,9 +64,7 @@ ${team.players.length === 0 ? html`<p>No players have been added.</p>` : null }
     ${team.players.map(x => playerView(team, x.id))}
 </div>
 
-<p>Add a new player.</p>
-
-${addPlayerForm({ name: undefined, playersExist: true, posted, action, message })}
+${addPlayerForm({ name: undefined, action })}
     `
 }
 
@@ -103,32 +92,24 @@ function playerView(team: Team, playerId: number) {
 </div>`
 }
 
-const formId = "add-player"
-
 interface AddPlayerViewArgs {
     name: string | undefined
-    posted: string | undefined
-    playersExist: boolean
     action?: string
-    message: Message
 }
 
-export function addPlayerForm({name, posted, playersExist, action, message}: AddPlayerViewArgs) {
-    let action_ = action ? html`action="${action}"` : null
-    let playerAdded = posted === formId
+export function addPlayerForm({name, action}: AddPlayerViewArgs) {
     return html`
-${when(!!message, messageView(message))}
-<form class=form method=post ${action_}>
+<br>
+<form class=form method=post ${action && html`action="${action}"` || null}>
     <div>
         <label for=name>Player Name</label>
-        <input id=name name=name type=text value="${name}" $${when(playerAdded || !playersExist, "autofocus")} required>
+        <input id=name name=name type=text value="${name}" required>
     </div>
     <button>Save</button>
 </form>`
 }
 
 export async function addPlayer({ data, query }: RoutePostArgsWithQuery) {
-    await cache.push({posted: formId})
     let [{ teamId }, { name }] = await validate([
         validateObject(query, queryTeamIdValidator),
         validateObject(data, dataPlayerNameValidator)
@@ -138,11 +119,9 @@ export async function addPlayer({ data, query }: RoutePostArgsWithQuery) {
 
     let existingPlayer = team.players.find(x => equals(x.name, name))
     await assert.isFalse(!!existingPlayer, `The player name "${existingPlayer?.name}" has already been chosen.`)
-        ?.catch(() => reject({ players: { name } }))
 
-    await Promise.all([playerCreate(teamId, name), cache.push({ posted: formId })])
+    await playerCreate(teamId, name)
 }
-
 
 const postHandlers: PostHandlers = {
     editPlayer: async ({data: d, query: q}) => {
@@ -154,7 +133,6 @@ const postHandlers: PostHandlers = {
 
         let playerIndex = team.players.findIndex(x => x.id === playerId)
         await assert.isFalse(playerIndex === -1, `Unknown player "${playerId}"`)
-        await cache.push({posted: `edit-player${playerIndex}`})
         let player = team.players[playerIndex]
 
         // Check for duplicates
@@ -174,7 +152,6 @@ const postHandlers: PostHandlers = {
     },
 
     editTeam: async({ data, query }) => {
-        await cache.push({posted: "edit-team"})
         let [{ name: newTeamName, year, active }, { teamId }] = await validate([
             validateObject(data, dataTeamNameYearActiveValidator),
             validateObject(query, queryTeamIdValidator),

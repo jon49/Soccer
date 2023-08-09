@@ -1,9 +1,9 @@
-import { Activity, cache, Game, GameTime, Message, PlayerGame, Position, Team } from "../../server/db.js"
+import { Activity, Game, GameTime, PlayerGame, Position, Team } from "../../server/db.js"
 import html from "../../server/html.js"
 import { activityGetAll, playerGameAllGet, playerGameSave, positionGetAll } from "../../server/repo-player-game.js"
 import { teamGet, teamSave } from "../../server/repo-team.js"
 import { Route, PostHandlers } from "../../server/route.js"
-import { messageView, when } from "../../server/shared.js"
+import { when } from "../../server/shared.js"
 import { searchParams, sort, tail } from "../../server/utils.js"
 import { createIdNumber, required, validateObject } from "../../server/validation.js"
 import { queryTeamIdGameIdValidator } from "../../server/validators.js"
@@ -19,17 +19,11 @@ interface View {
     game: Game
     positions: Position[]
     activities: Activity[]
-    posted: string | undefined
-    message: Message
 }
 
 async function start(req : Request) : Promise<View> {
     let { teamId, gameId } = await validateObject(searchParams(req), queryTeamIdGameIdValidator)
-    let [team, posted, message] = await Promise.all([
-        teamGet(teamId),
-        cache.pop("posted"),
-        cache.pop("message")
-    ])
+    let team = await teamGet(teamId)
     team.players = team.players.filter(x => x.active)
     let game = await required(team.games.find(x => x.id === gameId), "Could not find game ID!")
     let [playersGame, { positions }, { activities }] = await Promise.all([
@@ -52,8 +46,6 @@ async function start(req : Request) : Promise<View> {
         game,
         positions,
         activities,
-        posted,
-        message,
     }
 }
 
@@ -76,7 +68,7 @@ function getAggregateGameTime(times: { start?: number, end?: number }[]) {
     return { start, total }
 }
 
-function render({ team, playersGame, game, positions, posted, message }: View) {
+function render({ team, playersGame, game, positions }: View) {
     let queryTeamGame = `teamId=${team.id}&gameId=${game.id}`
     let inPlayPlayers_ = playersGame.filter(filterInPlayPlayers)
     let currentTime = +new Date()
@@ -220,7 +212,6 @@ ${when(out, () => html`
 <ul class=list>
     ${outPlayers.map(x => {
         return html`
-        ${when(posted === `player:${x.playerId}`, () => messageView(message))}
     <li>
         <form method=post action="?$${queryTeamGame}&playerId=$${x.playerId}&handler=notPlaying">
             <button>X</button>
@@ -338,7 +329,6 @@ const postHandlers : PostHandlers = {
 
     addPlayerPosition: async ({ data, query }) => {
         let { teamId, playerId, gameId } = await validateObject(query, queryTeamGamePlayerValidator)
-        await cache.push({ posted: `player:${playerId}` })
         let { positionId } = await validateObject(data, dataPositionIdValidator)
         let positionObj = await required((await positionGetAll(teamId)).positions.find(x => x.id = positionId), `Could not find position!`)
         let [p] = await playerGameAllGet(teamId, gameId, [playerId])
@@ -355,13 +345,11 @@ const postHandlers : PostHandlers = {
 
     swap: async ({ query }) => {
         let { gameId, playerId, teamId } = await validateObject(query, queryTeamGamePlayerValidator)
-        await cache.push({ posted: `player:${playerId}` })
         await swap({ gameId, teamId, playerIds: [playerId], timestamp: +new Date() })
     },
 
     playerNowOut: async ({ query }) => {
         let { teamId, playerId, gameId } = await validateObject(query, queryTeamGamePlayerValidator)
-        await cache.push({ posted: `player:${playerId}` })
         let [p] = await playerGameAllGet(teamId, gameId, [playerId])
         p.status = {_: "out"}
         tail(p.gameTime).end = +new Date()
@@ -371,7 +359,6 @@ const postHandlers : PostHandlers = {
     onDeckWith: async ({ query, data }) => {
         let { teamId, playerId, gameId } = await validateObject(query, queryTeamGamePlayerValidator)
         let { swapPlayerId } = await validateObject(data, { swapPlayerId: createIdNumber("Swap Player Id") })
-        await cache.push({ posted: `player:${playerId}` })
         let [player, swapPlayer] = await playerGameAllGet(teamId, gameId, [playerId, swapPlayerId])
         player.status = { _: "onDeck", playerId: swapPlayer.playerId }
         let gameTime = tail(player.gameTime)
@@ -388,7 +375,6 @@ const postHandlers : PostHandlers = {
 
     swapAll: async ({ query }) => {
         let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
-        await cache.push({ posted: "swap-all" })
         let team = await teamGet(teamId)
         let players = await playerGameAllGet(teamId, gameId, team.players.map(x => x.id))
         let onDeckPlayers = players.filter(x => x.status?._ === "onDeck")
@@ -397,7 +383,6 @@ const postHandlers : PostHandlers = {
 
     startGame: async ({ query }) => {
         let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
-        await cache.push({ posted: "start-game" })
         let timestamp = +new Date()
         let team = await teamGet(teamId)
 
@@ -419,7 +404,6 @@ const postHandlers : PostHandlers = {
 
     pauseGame: async ({ query }) => {
         let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
-        await cache.push({ posted: "pause-game" })
         let timestamp = +new Date()
         let team = await teamGet(teamId)
 
@@ -447,7 +431,6 @@ const postHandlers : PostHandlers = {
 
     cancelOnDeck: async ({ query }) => {
         let { teamId, playerId, gameId } = await validateObject(query, queryTeamGamePlayerValidator)
-        await cache.push({ posted: `player:${playerId}` })
         let [player] = await playerGameAllGet(teamId, gameId, [playerId])
         player.status = { _: "out" }
         player.gameTime.pop()
@@ -456,7 +439,6 @@ const postHandlers : PostHandlers = {
 
     notPlaying: async ({ query }) => {
         let { teamId, playerId, gameId } = await validateObject(query, queryTeamGamePlayerValidator)
-        await cache.push({ posted: `player:${playerId}` })
         let [player] = await playerGameAllGet(teamId, gameId, [playerId])
         player.status = { _: "notPlaying" }
         await playerGameSave(teamId, player)
@@ -464,7 +446,6 @@ const postHandlers : PostHandlers = {
 
     backIn: async ({ query }) => {
         let { teamId, playerId, gameId } = await validateObject(query, queryTeamGamePlayerValidator)
-        await cache.push({ posted: `player:${playerId}` })
         let [player] = await playerGameAllGet(teamId, gameId, [playerId])
         player.status = { _: "out" }
         await playerGameSave(teamId, player)
@@ -473,7 +454,6 @@ const postHandlers : PostHandlers = {
     positionChange: async ({ query, data }) => {
         let { teamId, playerId, gameId } = await validateObject(query, queryTeamGamePlayerValidator)
         let { positionId } = await validateObject(data, dataPositionIdValidator)
-        await cache.push({ posted: `player:${playerId}` })
         let [player] = await playerGameAllGet(teamId, gameId, [playerId])
         let timestamp = +new Date()
         tail(player.gameTime).end = timestamp
