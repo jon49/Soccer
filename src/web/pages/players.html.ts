@@ -1,6 +1,6 @@
 import { Team } from "../server/db.js"
 import html from "../server/html.js"
-import { PostHandlers, Route, RoutePostArgsWithQuery } from "../server/route.js"
+import { PostHandlers, Route } from "../server/route.js"
 import { equals, searchParams } from "../server/utils.js"
 import layout from "./_layout.html.js"
 import { assert, validate, validateObject } from "../server/validation.js"
@@ -10,7 +10,6 @@ import { playerCreate, teamGet, teamSave } from "../server/repo-team.js"
 
 interface PlayersEditView {
     team: Team
-    action: string
 }
 
 async function start(req: Request) : Promise<PlayersEditView> {
@@ -19,16 +18,11 @@ async function start(req: Request) : Promise<PlayersEditView> {
 
     let team = await teamGet(teamId)
 
-    query._url.searchParams.append("handler", "addPlayer")
-
-    return {
-        team,
-        action: query._url.search,
-    }
+    return { team }
 }
 
 function render(o: PlayersEditView) {
-    let { team, action } = o
+    let { team } = o
 
     return html`
 <h2 id=subheading>${ o?.team.name ??  "Unknown"} (${o?.team.year})</h2>
@@ -66,14 +60,13 @@ ${team.players.length === 0 ? html`<p>No players have been added.</p>` : null }
 
 <br>
 
-<form class=form method=post ${action && html`action="${action}"` || null}>
+<form class=form method=post action="?handler=addPlayer&teamId=${team.id}">
     <div>
         <label for=name>Player Name</label>
-        <input id=name name=name type=text required>
+        <input id=name name=name type=text required ${when(!team.players.length, "autofocus")}>
     </div>
     <button>Save</button>
 </form>
-
 `
 }
 
@@ -103,7 +96,7 @@ function playerView(team: Team, playerId: number) {
 
 
 const postHandlers: PostHandlers = {
-    editPlayer: async ({data: d, query: q}) => {
+    async editPlayer({data: d, query: q}) {
         let [{ teamId, playerId }, { name: playerName, active }] = await validate([
             validateObject(q, queryTeamIdPlayerIdValidator),
             validateObject(d, dataPlayerNameActiveValidator)
@@ -126,7 +119,7 @@ const postHandlers: PostHandlers = {
         await teamSave(team)
     },
 
-    addPlayer: async function ({ data, query }) {
+    async addPlayer({ data, query }) {
         let [{ teamId }, { name }] = await validate([
             validateObject(query, queryTeamIdValidator),
             validateObject(data, dataPlayerNameValidator)
@@ -140,7 +133,7 @@ const postHandlers: PostHandlers = {
         await playerCreate(teamId, name)
     },
 
-    editTeam: async({ data, query }) => {
+    async editTeam({ data, query }) {
         let [{ name: newTeamName, year, active }, { teamId }] = await validate([
             validateObject(data, dataTeamNameYearActiveValidator),
             validateObject(query, queryTeamIdValidator),
