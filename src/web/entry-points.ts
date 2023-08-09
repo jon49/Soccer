@@ -1,7 +1,7 @@
 export default [
   {
     "url": "/web/css/app.css",
-    "file": "/web/css/app.e4767a45.css"
+    "file": "/web/css/app.78e65bec.css"
   },
   {
     "url": "/web/css/index.css",
