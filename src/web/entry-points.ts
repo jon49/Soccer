@@ -1,7 +1,7 @@
 export default [
   {
     "url": "/web/css/app.css",
-    "file": "/web/css/app.78e65bec.css"
+    "file": "/web/css/app.16b89a9b.css"
   },
   {
     "url": "/web/css/index.css",
@@ -25,7 +25,7 @@ export default [
   },
   {
     "url": "/web/js/players-edit.js",
-    "file": "/web/js/players-edit.M4RUO7X6.js"
+    "file": "/web/js/players-edit.NPBZKDVR.js"
   },
   {
     "url": "/web/js/snack-bar.js",

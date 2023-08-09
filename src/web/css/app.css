@@ -76,9 +76,10 @@ input, select, textarea {
 /* Cards */
 
 .cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, var(--card-width));
-  grid-gap: 1rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(var(--card-width), 1fr));
+    grid-gap: 0.5em;
+    padding-bottom: 2em;
 }
 
 .cards > * {
@@ -86,12 +87,14 @@ input, select, textarea {
   border-radius: var(--rc);
   padding: 1em;
   box-shadow: 0px 1px 0px rgba(0,0,0,0.3);
-  margin-top: var(--m1);
+}
+
+input {
+    max-width: 100%;
 }
 
 .cards input {
     background-color: rgba(0, 0, 0, 0.1);
-    max-width: 100%;
 }
 
 /**
@@ -260,5 +263,13 @@ button.anchor {
 
 button.anchor:hover {
   text-decoration: underline;
+}
+
+.float-right {
+    float: right;
+}
+
+.full-width {
+    width: 100%;
 }
 

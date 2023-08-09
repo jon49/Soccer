@@ -58,8 +58,6 @@ ${team.players.length === 0 ? html`<p>No players have been added.</p>` : null }
     ${team.players.map(x => playerView(team, x.id))}
 </div>
 
-<br>
-
 <form class=form method=post action="?handler=addPlayer&teamId=${team.id}">
     <div>
         <label for=name>Player Name</label>
@@ -81,13 +79,13 @@ function playerView(team: Team, playerId: number) {
     <form method=post action="?handler=editPlayer&$${teamPlayerQuery}">
         <div>
             <input id=${playerId_} class=editable name=name type=text value="${player.name}">
-            <label for=${playerId_}><a href="/web/players?$${teamPlayerQuery}">${player.name}</a> <span class=editable-pencil>&#9998;</span></label>
+            <label for=${playerId_}><a href="/web/players?$${teamPlayerQuery}">${player.name}</a> <span class="editable-pencil float-right">&#9998;</span></label>
         </div>
         <div>
             <label class=toggle>
                 <input id="active-${playerId_}" name=active type=checkbox $${when(player.active, "checked")}>
-                <span class="off button">Inactive</span>
-                <span class="on button">Active</span>
+                <span class="off button full-width">Inactive</span>
+                <span class="on button full-width">Active</span>
             </label>
         </div>
     </form>
