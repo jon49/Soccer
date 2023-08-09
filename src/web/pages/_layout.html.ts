@@ -66,13 +66,13 @@ const render = ({theme}: Render, o: LayoutTemplateArguments) => {
         ${function* printErros() {
             while (errors.length) {
                 const e = errors.shift()
-                if (e) yield html`<p class=error>${e}</p>`
+                if (e) yield html`<snack-bar><p class=error>${e}</p></snack-bar>`
             }
         }}
         ${function* printMessages() {
             while (messages.length) {
                 const m = messages.shift()
-                if (m) yield html`<p class=message>${m}</p>`
+                if (m) yield html`<snack-bar><p class=message>${m}</p></snack-bar>`
             }
         }}
     </div>
