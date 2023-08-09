@@ -11,7 +11,7 @@
   "dependencies": {
     "html-template-tag-stream": "^2.0.0",
     "idb-keyval": "^6.2.1",
-    "mpa-enhancer": "^1.1.0",
+    "mpa-enhancer": "^2.0.0",
     "promise-validation": "^4.0.1"
   }
 }
