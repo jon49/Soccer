@@ -64,8 +64,17 @@ ${team.players.length === 0 ? html`<p>No players have been added.</p>` : null }
     ${team.players.map(x => playerView(team, x.id))}
 </div>
 
-${addPlayerForm({ name: undefined, action })}
-    `
+<br>
+
+<form class=form method=post ${action && html`action="${action}"` || null}>
+    <div>
+        <label for=name>Player Name</label>
+        <input id=name name=name type=text required>
+    </div>
+    <button>Save</button>
+</form>
+
+`
 }
 
 function playerView(team: Team, playerId: number) {
@@ -92,36 +101,6 @@ function playerView(team: Team, playerId: number) {
 </div>`
 }
 
-interface AddPlayerViewArgs {
-    name: string | undefined
-    action?: string
-}
-
-export function addPlayerForm({name, action}: AddPlayerViewArgs) {
-    return html`
-<br>
-<form class=form method=post ${action && html`action="${action}"` || null}>
-    <div>
-        <label for=name>Player Name</label>
-        <input id=name name=name type=text value="${name}" required>
-    </div>
-    <button>Save</button>
-</form>`
-}
-
-export async function addPlayer({ data, query }: RoutePostArgsWithQuery) {
-    let [{ teamId }, { name }] = await validate([
-        validateObject(query, queryTeamIdValidator),
-        validateObject(data, dataPlayerNameValidator)
-    ])
-
-    let team = await teamGet(teamId)
-
-    let existingPlayer = team.players.find(x => equals(x.name, name))
-    await assert.isFalse(!!existingPlayer, `The player name "${existingPlayer?.name}" has already been chosen.`)
-
-    await playerCreate(teamId, name)
-}
 
 const postHandlers: PostHandlers = {
     editPlayer: async ({data: d, query: q}) => {
@@ -147,8 +126,18 @@ const postHandlers: PostHandlers = {
         await teamSave(team)
     },
 
-    addPlayer: async (o) => {
-        await addPlayer(o)
+    addPlayer: async function ({ data, query }) {
+        let [{ teamId }, { name }] = await validate([
+            validateObject(query, queryTeamIdValidator),
+            validateObject(data, dataPlayerNameValidator)
+        ])
+
+        let team = await teamGet(teamId)
+
+        let existingPlayer = team.players.find(x => equals(x.name, name))
+        await assert.isFalse(!!existingPlayer, `The player name "${existingPlayer?.name}" has already been chosen.`)
+
+        await playerCreate(teamId, name)
     },
 
     editTeam: async({ data, query }) => {
