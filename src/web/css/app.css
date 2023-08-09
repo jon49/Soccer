@@ -1,3 +1,7 @@
+:root {
+  --card-width: 150px;
+}
+
 body {
     max-width: 800px;
     margin: 0 auto;
@@ -72,9 +76,9 @@ input, select, textarea {
 /* Cards */
 
 .cards {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-evenly;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, var(--card-width));
+  grid-gap: 1rem;
 }
 
 .cards > * {
@@ -82,15 +86,13 @@ input, select, textarea {
   border-radius: var(--rc);
   padding: 1em;
   box-shadow: 0px 1px 0px rgba(0,0,0,0.3);
-  flex: 0 1 calc(25% - var(--m1));
   margin-top: var(--m1);
 }
 
 .cards input {
     background-color: rgba(0, 0, 0, 0.1);
+    max-width: 100%;
 }
-
-
 
 /**
 Custom
