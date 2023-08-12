@@ -102,7 +102,10 @@ const route : Route = {
     route: /\/activities\/$/,
     async get(req: Request) {
         const result = await start(req)
-        return layout(req, { main: render(result) })
+        return layout(req, {
+            main: render(result),
+            title: `Activities - ${result.team.name}`,
+        })
     },
     post: postHandlers,
 }

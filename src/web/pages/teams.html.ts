@@ -80,7 +80,10 @@ const route : Route = {
     route: /\/teams\/$/,
     async get(req: Request) {
         const result = await start(req)
-        return layout(req, { main: render(result) })
+        return layout(req, {
+            main: render(result),
+            title: "Teams",
+        })
     },
     post: postHandlers,
 }

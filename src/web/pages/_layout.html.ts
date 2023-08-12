@@ -15,7 +15,7 @@ interface Render {
 }
 
 const render = ({theme}: Render, o: LayoutTemplateArguments) => {
-    const { main, head, scripts, nav } = o
+    const { main, head, scripts, nav, title } = o
     return html`
 <!DOCTYPE html>
 <html>
@@ -23,7 +23,7 @@ const render = ({theme}: Render, o: LayoutTemplateArguments) => {
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Soccer</title>
+    <title>${title} - Soccer</title>
     <link href="/web/css/index.css" rel=stylesheet>
     <link href="/web/css/app.css" rel=stylesheet>
     $${head}
@@ -93,6 +93,7 @@ export default
 export type Layout = typeof layout
 
 export interface LayoutTemplateArguments {
+    title: string
     head?: string
     main?: AsyncGenerator<any, void, unknown>
     scripts?: string[]

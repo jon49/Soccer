@@ -91,7 +91,10 @@ const route : Route = {
     route: /\/positions\/$/,
     async get(req: Request) {
         const result = await start(req)
-        return layout(req, { main: render(result) })
+        return layout(req, {
+            main: render(result),
+            title: `Positions - ${result.team.name} (${result.team.year})`,
+        })
     },
     post: postHandlers,
 }

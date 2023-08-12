@@ -156,7 +156,9 @@ const route : Route = {
                 { name: "Positions", url: `/web/positions?teamId=${result.team.id}` },
                 { name: "Activities", url: `/web/activities?teamId=${result.team.id}` }
             ],
-            scripts: ["/web/js/players-edit.js"] })
+            scripts: ["/web/js/players-edit.js"],
+            title: `Players - ${result.team.name} (${result.team.year})}`
+        })
     },
     post: postHandlers
 }

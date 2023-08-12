@@ -545,7 +545,9 @@ ${render(result)}
 <form id=reload-form action="?teamId=${result.team.id}&gameId=${result.game.id}&handler=reload" hidden>
 </form>`,
         head,
-        scripts: [ "/web/js/game-play.v4.js" ] })
+        scripts: [ "/web/js/game-play.v4.js" ],
+        title: `${result.team.name} - Game ${result.game.date} - ${result.game.opponent}`,
+    })
 }
 
 async function reload(req: Request) {

@@ -143,7 +143,7 @@ const router: Route = {
     route: /\/games\/$/,
     async get(req: Request) {
         const result = await start(req)
-        return layout(req, { main: render(result) })
+        return layout(req, { main: render(result), title: "Games" })
     },
     post: postHandlers,
 }

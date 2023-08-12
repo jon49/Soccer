@@ -38,7 +38,10 @@ function getTheme(s: unknown) {
 
 async function get(req: Request) {
     let settings = await start()
-    return layout(req, { main: render(settings) })
+    return layout(req, {
+        main: render(settings),
+        title: "User Settings"
+    })
 }
 
 const dataValidator = {

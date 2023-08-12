@@ -5,7 +5,10 @@ import layout from "./_layout.html.js"
 const route : Route = {
     route: /\/web\/?$/,
     get: async (req: Request) => {
-        return layout(req, { main: html`<p>Welcome to the soccer app!</p>` })
+        return layout(req, {
+            main: html`<p>Welcome to the soccer app!</p>`,
+            title: "Home",
+        })
     }
 }
 
