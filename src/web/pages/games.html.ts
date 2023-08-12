@@ -1,10 +1,9 @@
 import { Game, Team } from "../server/db.js"
 import html from "../server/html.js"
-import { reject } from "../server/repo.js"
 import { teamGet, teamSave } from "../server/repo-team.js"
 import { PostHandlers, Route } from "../server/route.js"
 import { when } from "../server/shared.js"
-import { getNewId, searchParams, tail } from "../server/utils.js"
+import { equals, getNewId, searchParams } from "../server/utils.js"
 import { assert, createIdNumber, createString25, maybe, required, validate, validateObject } from "../server/validation.js"
 import { queryTeamIdValidator } from "../server/validators.js"
 import layout from "./_layout.html.js"
@@ -50,30 +49,30 @@ function getGameView(teamId: number, game: Game) {
 function getGamePartialView(teamId: number, game: Game) {
     let teamQuery = `teamId=${teamId}`
     return html`
-<form method=post action="?${teamQuery}&handler=edit">
+<form method=post action="?${teamQuery}&handler=edit" onchange="this.submit()">
     <input type=hidden name=gameId value="${game.id}">
     <div class=inline>
         <input
-            id=game-date
+            id="game-date-${game.id}"
             class=editable
             type=date
             name=date
             required
             value="${game.date}">
-        <label for=game-date>
+        <label for="game-date-${game.id}">
             <a href="?$${teamQuery}&gameId=${game.id}">${game.date}</a>
             <span class=editable-pencil>&#9998;</span>
         </label>
     </div>
     <div class=inline>
         <input
-            id=game-opponent
+            id="game-opponent-${game.id}"
             class=editable
             type=text
             name=opponent
             value="${game.opponent}">
-        <label for=game-opponent>
-            <a href="?$${teamQuery}&gameId=${game.id}">${game.opponent || "Unknown"}</a>
+        <label for="game-opponent-${game.id}">
+            <a href="?$${teamQuery}&gameId=${game.id}">${game.opponent}</a>
             <span class=editable-pencil>&#9998;</span>
         </label>
     </div>
@@ -97,10 +96,15 @@ const postHandlers: PostHandlers = {
             validateObject(data, addGameValidator),
             validateObject(query, queryTeamIdValidator)])
 
+        opponent = opponent || "Unknown"
+
         let team = await teamGet(teamId)
+        let existingTeam =
+            team.games
+            .find(x => equals(x.date, date) && equals(x.opponent || "", opponent || ""))
         await assert.isFalse(
-            !!team.games.find(x => x.date === date && x.opponent === opponent),
-            `The game "${date}${when(opponent, " - " + opponent)}" already exists!`)
+            !!team.games.find(x => equals(x.date, date) && equals(x.opponent || "", opponent || "")),
+            `The game "${date}${when(existingTeam?.opponent, " - " + existingTeam?.opponent)}" already exists!`)
 
         let gameId = getNewId(team.games.map(x => x.id))
 
@@ -119,6 +123,8 @@ const postHandlers: PostHandlers = {
         let [{ date, opponent, gameId }, { teamId }] = await validate([
             validateObject(data, editGameValidator),
             validateObject(query, queryTeamIdValidator)])
+
+        opponent = opponent || "Unknown"
 
         let team = await teamGet(teamId)
         await assert.isFalse(
