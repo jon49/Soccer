@@ -4,14 +4,14 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "./tasks/start.nu"
+    "start": "./tasks/start.nu false"
   },
   "author": "Jon Nyman",
   "license": "ISC",
   "dependencies": {
     "html-template-tag-stream": "^2.0.0",
     "idb-keyval": "^6.2.1",
-    "mpa-enhancer": "^2.0.0",
+    "mpa-enhancer": "^2.1.0",
     "promise-validation": "^4.0.1"
   }
 }
