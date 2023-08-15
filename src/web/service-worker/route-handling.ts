@@ -3,6 +3,7 @@ import { version } from "../server/settings.js"
 import { options } from "../server/route.js"
 import { redirect, reject, searchParams } from "../server/utils.js"
 import links from "../entry-points.js"
+import { updated } from "../server/sync.js"
 
 options.searchParams = searchParams
 options.reject = reject
@@ -65,6 +66,7 @@ async function post(url: URL, req: Request) : Promise<Response> {
                 : handlePost(handler))({ req, data })
 
             messages.push("Saved!")
+            updated()
             if (result instanceof Response) {
                 return result
             }

@@ -258,28 +258,6 @@ ${when(notPlaying, html`
 `
 }
 
-// function statsView(activities: Activity[], player: PlayerGame) {
-//     return html`
-//     ${player.stats.map(x => {
-//         let statName = activities.find(y => y.id === x.statId)?.name
-//         return html`<div>${statName} - ${x.count}</div>`
-//     })}`
-// }
-
-function setPoints(f: (game: Game) => number) {
-    return async ({ query } : { query: any }) => {
-        let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
-        let team = await teamGet(teamId)
-        let game = await required(team.games.find(x => x.id === gameId), "Could not find game!")
-        let points = f(game)
-        if (points >= 0) {
-            await teamSave(team)
-        } else {
-            points = 0
-        }
-    }
-}
-
 function getPointsView(points: number) {
     return html`&nbsp;${points || "0"}&nbsp;`
 }
@@ -319,6 +297,20 @@ async function swap({ teamId, playerIds, gameId, timestamp } : { teamId : number
 
 function inPlayPlayerInfoView(playerName: string | undefined, positionName: string | undefined) {
     return html`${playerName} - ${positionName}`
+}
+
+function setPoints(f: (game: Game) => number) {
+    return async ({ query } : { query: any }) => {
+        let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
+        let team = await teamGet(teamId)
+        let game = await required(team.games.find(x => x.id === gameId), "Could not find game!")
+        let points = f(game)
+        if (points >= 0) {
+            await teamSave(team)
+        } else {
+            points = 0
+        }
+    }
 }
 
 const postHandlers : PostHandlers = {

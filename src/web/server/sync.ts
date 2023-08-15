@@ -21,7 +21,7 @@ function clearAndSync() {
         clearTimeout(x)
     }
     updatedTime = []
-    sync()
+    sync().catch(console.error)
 }
 
 async function sync() {
