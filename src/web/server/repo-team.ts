@@ -114,5 +114,5 @@ export async function playerCreate(teamId: number, name: string) : Promise<numbe
 }
 
 function getTeamDbId(teamId: number) {
-    return `team:${teamId}`
+    return ["team", teamId]
 }

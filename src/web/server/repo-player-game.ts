@@ -4,7 +4,7 @@ import { equals, getNewId } from "./utils.js"
 import { assert, required } from "./validation.js"
 
 function getPlayerGameKey(teamId: number, gameId: number, playerId: number) {
-    return `player-game:${teamId}|${playerId}|${gameId}`
+    return ['player-game', teamId, playerId, gameId]
 }
 
 export async function playerGameSave(teamId: number, playerGame: PlayerGame) {
@@ -30,7 +30,7 @@ export async function playerGameAllGet(teamId: number, gameId: number, playerIds
 /*** Positions ***/
 
 function getPositionsId(teamId: number) {
-    return `positions:${teamId}`
+    return ["positions", teamId]
 }
 
 export async function positionGetAll(teamId: number) : Promise<Positions> {
@@ -114,7 +114,7 @@ export async function activitiesSave(teamId: number, {activities, _rev}: Activit
 }
 
 function getActivitiesId(teamId: number) {
-    return `activities:${teamId}`
+    return ["activities", teamId]
 }
 
 /*** Utilities ***/

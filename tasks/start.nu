@@ -31,7 +31,9 @@ def main [build: bool = false] {
         let target = $"($targetDir)/web/js/lib"
         mkdir $target
         let hashName = $"($target)/($x.hashed | path basename)"
-        cp $x.name $hashName
+        cp (if $build {
+                "node_modules/mpa-enhancer/src/*.min.js"
+            } else { "node_modules/mpa-enhancer/src/mpa.js" }) $hashName
     }
 
     # copy css files
