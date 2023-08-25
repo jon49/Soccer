@@ -133,12 +133,6 @@ aside {
  cursor: pointer;
 }
 
-/** Error Snack Bar **/
-
-:root {
-  --snack-bar-duration: 2;
-}
-
 .inline {
     display: inline-block;
 }
@@ -160,20 +154,22 @@ a.external {
 }
 
 .message {
-    color: blue;
     margin: 0;
     padding: 0.25em;
     font-size: 2em;
 }
 
-#messages {
-    position: sticky;
-    bottom: 5.25em;
-    height: 0;
+.error {
+  color: red;
 }
 
-p.error {
-  color: red;
+.toast {
+    background-color: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(5px);
+    max-width: 80vw;
+    border-radius: 1rem;
+    position: fixed;
+    bottom: 1rem;
 }
 
 footer {
@@ -272,4 +268,5 @@ button.anchor:hover {
 .full-width {
     width: 100%;
 }
+
 

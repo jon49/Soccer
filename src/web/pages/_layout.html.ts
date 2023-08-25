@@ -62,24 +62,22 @@ const render = ({theme}: Render, o: LayoutTemplateArguments) => {
     <main>
         ${main}
     </main>
-    <div id=messages>
-        ${function* printErros() {
-            while (errors.length) {
-                const e = errors.shift()
-                if (e) yield html`<snack-bar><p class=error>${e}</p></snack-bar>`
-            }
-        }}
-        ${function* printMessages() {
-            while (messages.length) {
-                const m = messages.shift()
-                if (m) yield html`<snack-bar><p class=message>${m}</p></snack-bar>`
-            }
-        }}
-    </div>
+    ${function* printErros() {
+        while (errors.length) {
+            const e = errors.shift()
+            if (e) yield html`<dialog class=toast open><p class=error>${e}</p></dialog>`
+        }
+    }}
+    ${function* printMessages() {
+        while (messages.length) {
+            const m = messages.shift()
+            if (m) yield html`<dialog class=toast open><p class=message>${m}</p></dialog>`
+        }
+    }}
     <footer><p>${version}</p></footer>
     <script src="/web/js/lib/mpa.min.js"></script>
     ${(scripts ?? []).map(x => html`<script src="${x}"></script>`)}
-    <script src="/web/js/snack-bar.js"></script>
+    <script src="/web/js/app.js"></script>
 </body>
 </html>`
 }
