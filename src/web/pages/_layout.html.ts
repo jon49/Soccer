@@ -3,6 +3,7 @@ import { version } from "../server/settings.js"
 import { when } from "../server/shared.js"
 import { Theme } from "./user-settings/edit.html.js"
 import { errors, messages } from "../service-worker/route-handling.js"
+import db from "../server/global-model.js"
 
 interface Nav {
     name: string
@@ -14,8 +15,10 @@ interface Render {
     referrer: URL | null
 }
 
-const render = ({theme}: Render, o: LayoutTemplateArguments) => {
+const render = async ({theme}: Render, o: LayoutTemplateArguments) => {
     const { main, head, scripts, nav, title } = o
+    const [isLoggedIn, updated] = await Promise.all([db.isLoggedIn(), db.updated()])
+    const updatedCount = updated.length
     return html`
 <!DOCTYPE html>
 <html>
@@ -29,7 +32,7 @@ const render = ({theme}: Render, o: LayoutTemplateArguments) => {
     $${head}
 </head>
 <body $${when(theme, x => `class=${x}`)}>
-    <div style="position: absolute; top: 10px; right: 10px;">
+    <div class=top-nav>
         <form method=post action="/web/user-settings/edit?handler=updateTheme" class=inline>
             <label class="toggle">
                 <input
@@ -44,7 +47,15 @@ const render = ({theme}: Render, o: LayoutTemplateArguments) => {
                 <span class="none button bg">⛅</span>
             </label>
         </form>
-        <a href="/login?handler=logout">Logout</a>
+
+       <form method=post action="/web/api/sync?handler=force" class=inline>
+           <button id=sync-count class=bg>🖫 ${when(updatedCount, count => html`(${count})`)}</button>
+       </form>
+
+        ${isLoggedIn
+            ? html`<a href="/logout">Logout</a>`
+        : html`<a href="/login">Login</a>`}
+        
     </div>
     <header>
         <div class=sync>
@@ -77,6 +88,10 @@ const render = ({theme}: Render, o: LayoutTemplateArguments) => {
     <footer><p>${version}</p></footer>
     <script src="/web/js/lib/mpa.min.js"></script>
     ${(scripts ?? []).map(x => html`<script src="${x}"></script>`)}
+    <script>
+        App = window.App ?? {};
+        ${when(updatedCount, _ => html`App.shouldWaitToSync = true`)}
+    </script>
     <script src="/web/js/app.js"></script>
 </body>
 </html>`

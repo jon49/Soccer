@@ -3,7 +3,6 @@ import { version } from "../server/settings.js"
 import { options } from "../server/route.js"
 import { redirect, reject, searchParams } from "../server/utils.js"
 import links from "../entry-points.js"
-import { updated } from "../server/sync.js"
 
 options.searchParams = searchParams
 options.reject = reject
@@ -65,14 +64,23 @@ async function post(url: URL, req: Request) : Promise<Response> {
                     ? handler
                 : handlePost(handler))({ req, data })
 
-            messages.push("Saved!")
-            updated()
+            if ("message" in result) {
+                if (result.message.length > 0) {
+                    messages.push(result.message)
+                }
+            } else {
+                messages.push("Saved!")
+            }
+            if ("response" in result) {
+                result = result.response
+            }
             if (result instanceof Response) {
                 return result
             }
             if (result) {
                 return streamResponse(url.pathname, result)
             }
+            return redirect(req)
         } catch (error) {
             console.error("Post error:", error, "\nURL:", url);
             errors.push(error?.toString() ?? "Unknown error!")

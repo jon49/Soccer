@@ -1,32 +1,12 @@
 import { getMany, setMany, set, update } from "./db.js"
-import { globalDB as db } from "./global-model.js"
+import db from "./global-model.js"
 
-let updatedTime : number[] = []
-export function updated(immediate = false) {
-    if (immediate) {
-        return clearAndSync()
-    }
-
-    // If there is a timeout, clear it.
-    clearTimeout(updatedTime.shift())
-    let id = setTimeout(async () => {
-        clearAndSync()
-    }, /* ten minutes */ 6e5)
-
-    updatedTime.push(id)
-}
-
-function clearAndSync() {
-    for (let x of updatedTime) {
-        clearTimeout(x)
-    }
-    updatedTime = []
-    sync().catch(console.error)
-}
-
-async function sync() {
+export default async function sync() {
+    console.log("sync")
     let isLoggedIn = await db.isLoggedIn()
     if (!isLoggedIn) return
+
+    console.log("syncing")
 
     let keys = await db.updated()
     const items = await getMany(keys)
@@ -80,6 +60,7 @@ async function sync() {
         }
     }
 
+    console.log("finished syncing")
     await Promise.all([
         ...updatedRevisionsTask,
         update("settings", val => ({ ...val, lastSyncedId: newData.lastSyncedId }), { sync: false }),
@@ -119,5 +100,4 @@ interface ConflictedDto {
     id: number
     timestamp: string
 }
-
 
