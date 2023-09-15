@@ -39,16 +39,12 @@ ${when(!!grid.length, () => html`
 <form class=form method=post onchange="this.submit()">
     ${function* positionViews() {
         let count = 0
-        console.log("Positions", positions)
         for (let width of grid) {
-            console.log("Count", count, "Width", width)
             yield html`<div class=row>`
             let p = positions.slice(count, count + width)
-            console.log("First", p)
             if (p.length < width) {
                 p = p.concat(new Array(width - p.length).fill(""))
             }
-            console.log("Second", p)
             yield p.map(x =>
                 html`<input id="position${count++}" name="names[]" value="${x}">`)
             yield html`</div>`
