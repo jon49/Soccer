@@ -75,7 +75,7 @@ input, select, textarea {
 
 /* Cards */
 
-.cards {
+.cards, .row {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(var(--card-width), 1fr));
     grid-gap: 0.5em;

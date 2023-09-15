@@ -61,10 +61,9 @@ export interface Stats extends Revision {
     stats: { id: number, name: string }[]
 }
 
-export type Position = Positions["positions"][0]
-
 export interface Positions extends Revision {
-    positions: { id: number, name: string }[]
+    positions: string[]
+    grid: number[]
 }
 
 export type Activity = Activities["activities"][0]

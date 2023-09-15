@@ -45,7 +45,12 @@ export async function teamSave(o: Team) {
             if (teamId === undefined || teamId === -1) {
                 throw new Error(`Could not find team with id: ${o.id}. This should have never happened!`)
             }
-            teams.teams[teamId] = o
+            teams.teams[teamId] = {
+                id: o.id,
+                name: o.name,
+                year: o.year,
+                active: o.active,
+            }
             return teams
         })
     return
@@ -83,12 +88,18 @@ export async function teamsCreate(o: TeamNew) : Promise<number> {
 
     await Promise.all([
         update<Teams>("teams", o => {
+            const teamsSingle = {
+                    id,
+                    name: team.name,
+                    year: team.year,
+                    active: team.active,
+            }
             if (o) {
-                o.teams.push(teamSingle)
+                o.teams.push(teamsSingle)
             } else {
                 return {
                     _rev: 0,
-                    teams: [teamSingle]
+                    teams: [teamsSingle]
                 }
             }
             return o

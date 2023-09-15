@@ -1,40 +1,61 @@
-import html from "../server/html.js"
+import html, { when } from "../server/html.js"
 import layout from "./_layout.html.js"
-import { Position, Team } from "../server/db.js"
+import { Team } from "../server/db.js"
 import { searchParams } from "../server/utils.js"
 import { PostHandlers, Route } from "../server/route.js"
 import { teamGet } from "../server/repo-team.js"
-import { createIdNumber, createString25, validate, validateObject } from "../server/validation.js"
-import { dataPositionValidator, queryTeamIdPositionIdValidator, queryTeamIdValidator } from "../server/validators.js"
-import { positionGetAll, positionSaveNew, positionsSave } from "../server/repo-player-game.js"
+import { createArrayOf, createPositiveWholeNumber, createString25, maybe, validateObject } from "../server/validation.js"
+import { queryTeamIdValidator } from "../server/validators.js"
+import { positionGetAll, positionsSave } from "../server/repo-player-game.js"
 
 interface PositionView {
-    positions: Position[]
+    positions: string[]
+    grid: number[]
     team: Team
 }
 
 async function start(req: Request) : Promise<PositionView> {
     let { teamId } = await validateObject(searchParams(req), queryTeamIdValidator)
     let [positions, team] = await Promise.all([positionGetAll(teamId), teamGet(teamId)])
-    return { positions: positions.positions, team }
+    return { positions: positions.positions, team, grid: positions.grid }
 }
 
-function render({ team, positions }: PositionView) {
+function render({ team, positions, grid }: PositionView) {
     return html`
 <h2>${team.name} - Positions</h2>
 
-<form class=form method=post>
-    <div id=positions>
-    ${positions.map(x => positionView(x, team.id))}
-    </div>
-    <button>Save</button>
+<h3>Grid</h3>
+<form
+    class="form cards"
+    style="--card-width:3.5em;"
+    method=post
+    action="?handler=addGrid&teamId=${team.id}" onchange="this.submit()">
+    ${grid.map((x, i) => html`<input id="grid${i}" class=inline type=number name="grid[]" value="${x}">`)}
+    <input id="grid${grid.length}" type=number name="grid[]" ${when(!grid.length, () => "autofocus")}>
 </form>
 
-<h3>Add Position</h3>
-<form class=form method=post action="?handler=addPosition&teamId=${team.id}">
-    <input type=text name=position placeholder="E.g., Defender L, Defender C, Attacker, etc.">
-    <button>Save</button>
+${when(!!grid.length, () => html`
+<h3>Positions</h3>
+<form class=form method=post onchange="this.submit()">
+    ${function* positionViews() {
+        let count = 0
+        console.log("Positions", positions)
+        for (let width of grid) {
+            console.log("Count", count, "Width", width)
+            yield html`<div class=row>`
+            let p = positions.slice(count, count + width)
+            console.log("First", p)
+            if (p.length < width) {
+                p = p.concat(new Array(width - p.length).fill(""))
+            }
+            console.log("Second", p)
+            yield p.map(x =>
+                html`<input id="position${count++}" name="names[]" value="${x}">`)
+            yield html`</div>`
+        }
+    }}
 </form>
+`)}
 
 <script>
     document.addEventListener("onchange", e => {
@@ -47,42 +68,30 @@ function render({ team, positions }: PositionView) {
     `
 }
 
-function positionView(position: Position, teamId: number) {
-    return html`
-    <div id="_${position.id}">
-        <button formaction="?handler=deletePosition&positionId=${position.id}&teamId=${teamId}">X</button>
-        <input class=inline name="${position.id}" value="${position.name}">
-    </div>`
+const positionValidator = {
+    names: createArrayOf(maybe(createString25("Position Name")))
 }
 
-const positionValidator = {
-    id: createIdNumber("Position ID"),
-    name: createString25("Position Name")
+const gridValidator = {
+    grid: createArrayOf(createPositiveWholeNumber("Grid"))
 }
 
 const postHandlers : PostHandlers = {
-    addPosition: async ({ data, query }) => {
-        let [{ teamId }, { position }] =
-            await validate([
-                validateObject(query, queryTeamIdValidator),
-                validateObject(data, dataPositionValidator)])
-        await positionSaveNew(teamId, position)
-    },
-    deletePosition: async ({ query }) => {
-        let { positionId, teamId } = await validateObject(query, queryTeamIdPositionIdValidator)
+    addGrid: async ({ query, data }) => {
+        let { teamId } = await validateObject(query, queryTeamIdValidator)
+        let { grid } = await validateObject(data, gridValidator)
+        grid = grid.filter(x => x)
         let o = await positionGetAll(teamId)
-        o.positions = o.positions.filter(x => x.id !== positionId)
-        await positionsSave(teamId, o)
+        await positionsSave(teamId, {
+            grid,
+            positions: o.positions,
+            _rev: o._rev })
     },
     post: async ({ query, data }) => {
         let { teamId } = await validateObject(query, queryTeamIdValidator)
-        let editedPositions : Position[] = await
-            validate(
-                Object.entries(data)
-                .filter(x => x[1])
-                .map(x => validateObject({id: +x[0], name: ""+x[1]}, positionValidator)))
+        let { names } = await validateObject(data, positionValidator)
         let o = await positionGetAll(teamId)
-        o.positions = editedPositions
+        o.positions = names.map(x => x || "")
         await positionsSave(teamId, o)
     }
 }

@@ -52,6 +52,13 @@ export function createPositiveWholeNumber(name: string) : (val: number | string)
     }
 }
 
+export function createArrayOf<S, T>(fn: (val: S) => Promise<T>) : (val: S[]) => Promise<T[]> {
+    return async (values: S[]) => {
+        let result = Promise.all(values.map(fn))
+        return result
+    }
+}
+
 export function createIdNumber(name: string) : (val: number | string) => Promise<number> {
     return async (val: number | string) => {
         let wholeNumber = await createPositiveWholeNumber(name)(val)

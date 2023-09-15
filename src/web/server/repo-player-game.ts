@@ -1,4 +1,4 @@
-import { Activities, Activity, get, getMany, PlayerGame, Position, Positions, set } from "./db.js"
+import { Activities, Activity, get, getMany, PlayerGame, Positions, set } from "./db.js"
 import { reject } from "./repo.js"
 import { equals, getNewId } from "./utils.js"
 import { assert, required } from "./validation.js"
@@ -34,37 +34,26 @@ function getPositionsId(teamId: number) {
 }
 
 export async function positionGetAll(teamId: number) : Promise<Positions> {
-    return (await get<Positions>(getPositionsId(teamId))) ?? { _rev: 0, positions: [] }
-}
-
-export async function positionCreateOrGet(teamId: number, position: string) : Promise<Position> {
-    let { positions } = await positionGetAll(teamId)
-    let positionObj = positions.find(x => equals(x.name, position))
-    if (!positionObj) {
-        positionObj = {
-            id: getNewId(positions.map(x => x.id)),
-            name: position,
+    let positions = await get<Positions>(getPositionsId(teamId))
+    if (!positions) {
+        positions = {
+            _rev: 0,
+            positions: [],
+            grid: [],
         }
-        await positionSave(teamId, positionObj)
     }
-    return positionObj
-}
-
-export async function positionSaveNew(teamId: number, name: string) {
-    let { positions, _rev } = await positionGetAll(teamId)
-    let [newPosition, updatedPositions] = await saveNew(positions, name)
-    await set(getPositionsId(teamId), { positions: updatedPositions, _rev } as Positions)
-    return newPosition
-}
-
-export async function positionSave(teamId: number, position: Position) {
-    let { positions, _rev } = await positionGetAll(teamId)
-    await save(positions, position)
-    await set(getPositionsId(teamId), { positions, _rev } as Positions)
+    if (!positions.grid) {
+        positions.grid = []
+    }
+    if ("name" in positions.positions) {
+        // @ts-ignore
+        posistions.positions = positions.positions.map(x => x.name)
+    }
+    return positions
 }
 
 export async function positionsSave(teamId: number, positions: Positions) {
-    await areUnique(positions.positions.map(x => x.name))
+    await areUnique(positions.positions.filter(x => x))
     await set(getPositionsId(teamId), positions)
 }
 

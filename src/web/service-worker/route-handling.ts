@@ -95,7 +95,18 @@ async function getData(req: Request) {
     let o : any = {}
     if (req.headers.get("content-type")?.includes("application/x-www-form-urlencoded")) {
         const formData = await req.formData()
-        formData.forEach((val, key) => o[key] = val)
+        for (let [key, val] of formData.entries()) {
+            if (key.endsWith("[]")) {
+                key = key.slice(0, -2)
+                if (key in o) {
+                    o[key].push(val)
+                } else {
+                    o[key] = [val]
+                }
+            } else {
+                o[key] = val
+            }
+        }
     } else if (req.headers.get("Content-Type")?.includes("json")) {
         o = await req.json()
     }
