@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title></title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body {
+    background: #000;
+}
+:root {
+    --background-shade: #000;
+    --text-shade-color: #fff;
+}
+    .position-shader {
+        background: var(--background-shade);
+        color: var(--text-shade-color);
+    }
+    .temp {
+        padding: 2em;
+        font-size: 2em;
+    }
+</style>
+<script src="game-shader.js"></script>
+    </head>
+    <body>
+        <position-shader data-total=100 data-value=50>
+            <div class=temp><span>Smiles!</span></div>
+        </position-shader>
+    </body>
+</html>

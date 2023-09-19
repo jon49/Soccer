@@ -88,15 +88,44 @@ export interface Game {
 export interface GameTime {
     start?: number
     end?: number
-    positionId: number 
+    position: string 
 }
+
+export interface OnDeckPlayer {
+    _: "onDeck"
+    targetPosition: number
+    currentPlayerId: number | undefined
+}
+
+export interface InPlayPlayer {
+    _: "inPlay"
+    position: number
+}
+
+export interface OutPlayer {
+    _: "out"
+}
+
+export interface NotPlayingPlayer {
+    _: "notPlaying"
+}
+
+export type PlayerStatus = OnDeckPlayer | InPlayPlayer | OutPlayer | NotPlayingPlayer
 
 export interface PlayerGame extends Revision {
     playerId: number
     gameId: number
     stats: {statId: number, count: number}[]
     gameTime: GameTime[]
-    status?: { playerId?: number, _: "onDeck" } | { _: "inPlay" } | { _: "out" } | { _: "notPlaying" }
+    status?: PlayerStatus
+}
+
+export interface PlayerGameStatus<T extends PlayerStatus> extends Revision {
+    playerId: number
+    gameId: number
+    stats: {statId: number, count: number}[]
+    gameTime: GameTime[]
+    status: T
 }
 
 export interface TeamPlayer {

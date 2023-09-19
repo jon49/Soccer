@@ -1,4 +1,5 @@
 import { Activities, Activity, get, getMany, PlayerGame, Positions, set } from "./db.js"
+import { teamGet } from "./repo-team.js"
 import { reject } from "./repo.js"
 import { equals, getNewId } from "./utils.js"
 import { assert, required } from "./validation.js"
@@ -12,6 +13,9 @@ export async function playerGameSave(teamId: number, playerGame: PlayerGame) {
 }
 
 export async function playerGameAllGet(teamId: number, gameId: number, playerIds: number[]) {
+    if (playerIds.length === 0) {
+        playerIds = await teamGet(teamId).then(x => x.players.map(x => x.id))
+    }
     let playersGame = await getMany<PlayerGame>(playerIds.map(x => getPlayerGameKey(teamId, gameId, x)))
     for (let i = 0; i < playersGame.length; i++) {
         if (!playersGame[i]) {
