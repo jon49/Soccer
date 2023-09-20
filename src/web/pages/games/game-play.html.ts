@@ -107,14 +107,14 @@ ${function* positionViews() {
         yield p.map(() => {
             let player = inPlayPlayers.find(x => count === x.status.position)
             let view = html`<form method=post>${
-                () => {
-                    return player
-                        ? html`
-                        <span>${player.name}</span>
-                        <game-timer data-start=${player.start} data-total="${player.total}" ${when(!isInPlay, "data-static")}></game-timer>
-                        <button formaction="?${queryTeamGame}&playerId=${player.playerId}&handler=playerNowOut">X</button>`
-                    : html`<span>No player.</span>`
-                }
+            () => {
+                return player
+                    ? html`
+                    <a href="?$${queryTeamGame}&playerId=${player.playerId}&handler=placePlayerOnDeck&playerSwap#game-swap-top">${player.name}</a>
+                    <game-timer data-start=${player.start} data-total="${player.total}" ${when(!isInPlay, "data-static")}></game-timer>
+                    <button formaction="?${queryTeamGame}&playerId=${player.playerId}&handler=playerNowOut">X</button>`
+                : html`<span>No player.</span>`
+            }
             }</form>`
             count++
             return view
@@ -156,7 +156,7 @@ ${when(out, () => html`
     <form method=post action="?$${queryTeamGame}&playerId=$${x.playerId}&handler=notPlaying">
         <button>X</button>
     </form>
-    <a href="?$${queryTeamGame}&playerId=${x.playerId}&handler=placePlayerOnDeck&playerSwap#heaader">${x.name}</a>
+    <a href="?$${queryTeamGame}&playerId=${x.playerId}&handler=placePlayerOnDeck&playerSwap#game-swap-top">${x.name}</a>
     <game-timer data-total="${x.total}" data-static></game-timer>
 </li>
         `
@@ -563,7 +563,7 @@ export default route
 //                 border-radius: 0 var(--rc) var(--rc) 0;
 //             }
 //         </style>
-//         <script src="/web/js/game-timer.v5.js"></script>`
+//         <script src="/web/js/game-timer.js"></script>`
 //     return layout(req, {
 //         main: html`
 // <h2>${result.team.name} - Game ${result.game.date} ${when(result.game.opponent, x => ` - ${x}`)}</h2>
@@ -573,7 +573,7 @@ export default route
 // <form id=reload-form action="?teamId=${result.team.id}&gameId=${result.game.id}&handler=reload" hidden>
 // </form>`,
 //         head,
-//         scripts: [ "/web/js/game-play.v4.js" ],
+//         scripts: [ "/web/js/game-play.js" ],
 //         title: `${result.team.name} - Game ${result.game.date} - ${result.game.opponent}`,
 //     })
 // }
