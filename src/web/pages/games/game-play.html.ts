@@ -229,6 +229,14 @@ const postHandlers : PostHandlers = {
         await playerGameSave(teamId, p)
     },
 
+    cancelOnDeck: async ({ query }) => {
+        let { teamId, playerId, gameId } = await validateObject(query, queryTeamGamePlayerValidator)
+        let [player] = await playerGameAllGet(teamId, gameId, [playerId])
+        player.status = { _: "out" }
+        player.gameTime.pop()
+        await playerGameSave(teamId, player)
+    },
+
 }
 
 const route : Route = {
@@ -457,13 +465,6 @@ export default route
 //     //     }
 //     // },
 //
-//     cancelOnDeck: async ({ query }) => {
-//         let { teamId, playerId, gameId } = await validateObject(query, queryTeamGamePlayerValidator)
-//         let [player] = await playerGameAllGet(teamId, gameId, [playerId])
-//         player.status = { _: "out" }
-//         player.gameTime.pop()
-//         await playerGameSave(teamId, player)
-//     },
 //
 //     notPlaying: async ({ query }) => {
 //         let { teamId, playerId, gameId } = await validateObject(query, queryTeamGamePlayerValidator)
