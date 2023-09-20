@@ -287,6 +287,34 @@ const postHandlers : PostHandlers = {
         }))
     },
 
+    pauseGame: async ({ query }) => {
+        let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
+        let timestamp = +new Date()
+        let team = await teamGet(teamId)
+
+        let game = await required(team.games.find(x => x.id === gameId), `Could not find game! ${gameId}`)
+        game.status = "paused"
+        let time = tail(game.gameTime)
+        if (time) {
+            time.end = timestamp
+        }
+        await teamSave(team)
+
+        let players = await playerGameAllGet(teamId, gameId, team.players.map(x => x.id))
+        let inPlayPlayers = players.filter(filterInPlayPlayers)
+        await Promise.all(inPlayPlayers.map(player => {
+            let gameTime = tail(player.gameTime)
+            if (gameTime) {
+                gameTime.end = timestamp
+                player.gameTime.push({
+                    position: gameTime.position
+                })
+                return playerGameSave(teamId, player)
+            }
+
+            return null
+        }).filter(x => x))
+    },
 }
 
 const route : Route = {
@@ -358,32 +386,6 @@ export default route
 //
 //
 //
-//     // pauseGame: async ({ query }) => {
-//     //     let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
-//     //     let timestamp = +new Date()
-//     //     let team = await teamGet(teamId)
-//     //
-//     //     let game = await required(team.games.find(x => x.id === gameId), `Could not find game! ${gameId}`)
-//     //     game.status = "paused"
-//     //     let time = tail(game.gameTime)
-//     //     if (time) {
-//     //         time.end = timestamp
-//     //     }
-//     //     await teamSave(team)
-//     //
-//     //     let players = await playerGameAllGet(teamId, gameId, team.players.map(x => x.id))
-//     //     let inPlayPlayers = players.filter(x => x.status?._ === "inPlay")
-//     //     for (let player of inPlayPlayers) {
-//     //         let gameTime = tail(player.gameTime)
-//     //         if (gameTime) {
-//     //             gameTime.end = timestamp
-//     //             player.gameTime.push({
-//     //                 positionId: gameTime.positionId
-//     //             })
-//     //         }
-//     //         await playerGameSave(teamId, player)
-//     //     }
-//     // },
 //
 //
 //
