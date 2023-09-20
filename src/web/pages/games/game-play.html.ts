@@ -258,6 +258,13 @@ const postHandlers : PostHandlers = {
         player.status = { _: "notPlaying" }
         await playerGameSave(teamId, player)
     },
+
+    backIn: async ({ query }) => {
+        let { teamId, playerId, gameId } = await validateObject(query, queryTeamGamePlayerValidator)
+        let [player] = await playerGameAllGet(teamId, gameId, [playerId])
+        player.status = { _: "out" }
+        await playerGameSave(teamId, player)
+    },
 }
 
 const route : Route = {
@@ -475,12 +482,6 @@ export default route
 //
 //
 //
-//     backIn: async ({ query }) => {
-//         let { teamId, playerId, gameId } = await validateObject(query, queryTeamGamePlayerValidator)
-//         let [player] = await playerGameAllGet(teamId, gameId, [playerId])
-//         player.status = { _: "out" }
-//         await playerGameSave(teamId, player)
-//     },
 //
 //     // positionChange: async ({ query, data }) => {
 //     //     let { teamId, playerId, gameId } = await validateObject(query, queryTeamGamePlayerValidator)
