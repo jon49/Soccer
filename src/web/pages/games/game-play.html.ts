@@ -361,6 +361,14 @@ const postHandlers : PostHandlers = {
             }))
     },
 
+    restartGame: async ({ query }) => {
+        let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
+        let team = await teamGet(teamId)
+        let game = await required(team.games.find(x => x.id === gameId), `Could not find game! ${gameId}`)
+        game.status = "paused"
+        await teamSave(team)
+    },
+
 }
 
 const route : Route = {
@@ -376,20 +384,6 @@ const route : Route = {
 export default route
 
 
-//
-//
-// const postHandlers : PostHandlers = {
-//
-//
-//
-//
-//     restartGame: async ({ query }) => {
-//         let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
-//         let team = await teamGet(teamId)
-//         let game = await required(team.games.find(x => x.id === gameId), `Could not find game! ${gameId}`)
-//         game.status = "paused"
-//         await teamSave(team)
-//     },
 //
 // }
 //
