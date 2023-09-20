@@ -14,7 +14,7 @@ import { validateObject } from "promise-validation"
 import { searchParams, tail } from "../../server/utils.js"
 import { teamGet } from "../../server/repo-team.js"
 import { createIdNumber, createPositiveWholeNumber, required } from "../../server/validation.js"
-import { OutPlayer, PlayerGame, PlayerGameStatus } from "../../server/db.js"
+import { NotPlayingPlayer, OutPlayer, PlayerGame, PlayerGameStatus } from "../../server/db.js"
 import { playerGameAllGet, playerGameSave, positionGetAll } from "../../server/repo-player-game.js"
 import { createPlayersView, filterInPlayPlayers, filterOnDeckPlayers, getAggregateGameTime } from "./shared.js"
 
@@ -26,9 +26,9 @@ function filterOutPlayers(x: PlayerGame) : x is PlayerGameStatus<OutPlayer> {
     return !x.status || x.status?._ === "out"
 }
 
-// function filterNotPlayingPlayers(x: PlayerGame) : x is PlayerGameStatus<NotPlayingPlayer> {
-//     return x.status?._ === "notPlaying"
-// }
+function filterNotPlayingPlayers(x: PlayerGame) : x is PlayerGameStatus<NotPlayingPlayer> {
+    return x.status?._ === "notPlaying"
+}
 
 async function render(req: Request) {
     let { teamId, gameId } = await validateObject(searchParams(req), queryTeamIdGameIdValidator)
@@ -55,6 +55,9 @@ async function render(req: Request) {
 
     let outPlayers = await createPlayersView(filterOutPlayers, team.players, players, total)
     let out = outPlayers.length > 0
+
+    let notPlayingPlayers = await createPlayersView(filterNotPlayingPlayers, team.players, players, total)
+    let notPlaying = notPlayingPlayers.length > 0
 
     return html`
 <h2>Game Play</h2>
@@ -163,6 +166,18 @@ ${when(out, () => html`
     })}
 </ul>`)}
 
+${when(notPlaying, () => html`
+<h3>Not Playing</h3>
+<ul class=list>
+    ${notPlayingPlayers.map(x => html`
+    <li>
+        <p>${x.name}</p>
+        <form method=post action="?${queryTeamGame}&playerId=${x.playerId}&handler=backIn">
+            <button>Back in</button>
+        </form>
+    </li>`)}
+</ul>`)}
+
 `
 }
 
@@ -237,6 +252,12 @@ const postHandlers : PostHandlers = {
         await playerGameSave(teamId, player)
     },
 
+    notPlaying: async ({ query }) => {
+        let { teamId, playerId, gameId } = await validateObject(query, queryTeamGamePlayerValidator)
+        let [player] = await playerGameAllGet(teamId, gameId, [playerId])
+        player.status = { _: "notPlaying" }
+        await playerGameSave(teamId, player)
+    },
 }
 
 const route : Route = {
@@ -336,19 +357,6 @@ export default route
 //
 //
 //
-// ${when(notPlaying, html`
-// <h3>Not Playing</h3>
-// <ul class=list>
-//     ${notPlayingPlayers.map(x => html`
-//     <li>
-//         <p>${x.name}</p>
-//         <form method=post action="?${queryTeamGame}&playerId=${x.playerId}&handler=backIn">
-//             <button>Back in</button>
-//         </form>
-//     </li>
-//     `)}
-// </ul>
-// `)}
 // `
 // }
 //
@@ -466,12 +474,6 @@ export default route
 //     // },
 //
 //
-//     notPlaying: async ({ query }) => {
-//         let { teamId, playerId, gameId } = await validateObject(query, queryTeamGamePlayerValidator)
-//         let [player] = await playerGameAllGet(teamId, gameId, [playerId])
-//         player.status = { _: "notPlaying" }
-//         await playerGameSave(teamId, player)
-//     },
 //
 //     backIn: async ({ query }) => {
 //         let { teamId, playerId, gameId } = await validateObject(query, queryTeamGamePlayerValidator)
