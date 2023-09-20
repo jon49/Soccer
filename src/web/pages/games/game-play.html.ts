@@ -48,6 +48,7 @@ async function render(req: Request) {
 
     let outPlayers = await createPlayersView(filterOutPlayers, team.players, players, total)
     let out = outPlayers.length > 0
+    outPlayers.sort((a, b) => a.total - b.total)
 
     let notPlayingPlayers = await createPlayersView(filterNotPlayingPlayers, team.players, players, total)
     let notPlaying = notPlayingPlayers.length > 0
