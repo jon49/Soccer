@@ -12,7 +12,7 @@ import { when } from "../../server/html.js"
 import { queryTeamIdGameIdValidator } from "../../server/validators.js"
 import { validateObject } from "promise-validation"
 import { searchParams, tail } from "../../server/utils.js"
-import { teamGet } from "../../server/repo-team.js"
+import { teamGet, teamSave } from "../../server/repo-team.js"
 import { createIdNumber, createPositiveWholeNumber, required } from "../../server/validation.js"
 import { NotPlayingPlayer, OutPlayer, PlayerGame, PlayerGameStatus } from "../../server/db.js"
 import { playerGameAllGet, playerGameSave, positionGetAll } from "../../server/repo-player-game.js"
@@ -265,6 +265,28 @@ const postHandlers : PostHandlers = {
         player.status = { _: "out" }
         await playerGameSave(teamId, player)
     },
+
+    startGame: async ({ query }) => {
+        let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
+        let timestamp = +new Date()
+        let team = await teamGet(teamId)
+
+        let game = await required(team.games.find(x => x.id === gameId), `Could not find game! ${gameId}`)
+        game.status = "play"
+        game.gameTime.push({
+            start: timestamp
+        })
+        await teamSave(team)
+
+        let players = await playerGameAllGet(teamId, gameId, team.players.map(x => x.id))
+        let inPlayPlayers = players.filter(filterInPlayPlayers)
+        await Promise.all(inPlayPlayers.map(player => {
+            let gameTime = tail(player.gameTime)
+            gameTime.start = timestamp
+            return playerGameSave(teamId, player)
+        }))
+    },
+
 }
 
 const route : Route = {
@@ -280,103 +302,6 @@ const route : Route = {
 export default route
 
 
-// interface PlayerGameView extends PlayerGame {
-//     name: string
-// }
-//
-// interface View {
-//     team: Team
-//     playersGame: PlayerGameView[]
-//     game: Game
-//     positions: Positions
-//     activities: Activity[]
-// }
-//
-// async function start(req : Request) : Promise<View> {
-//     let { teamId, gameId } = await validateObject(searchParams(req), queryTeamIdGameIdValidator)
-//     let team = await teamGet(teamId)
-//     team.players = team.players.filter(x => x.active)
-//     let game = await required(team.games.find(x => x.id === gameId), "Could not find game ID!")
-//     let [playersGame, positions, { activities }] = await Promise.all([
-//         playerGameAllGet(teamId, gameId, team.players.map(x => x.id)),
-//         positionGetAll(teamId),
-//         activityGetAll(teamId),
-//     ])
-//
-//     sort(activities, x => x.name)
-//
-//     let playersGameView : PlayerGameView[] = playersGame.map(x => ({
-//         ...x,
-//         name: team.players.find(y => x.playerId === y.id)?.name ?? ""
-//     }))
-//
-//     return {
-//         team,
-//         playersGame: playersGameView,
-//         game,
-//         positions,
-//         activities,
-//     }
-// }
-//
-//
-//
-// function render({ team, playersGame, game, positions: { positions, grid } }: View) {
-//     let queryTeamGame = `teamId=${team.id}&gameId=${game.id}`
-//     let inPlayPlayers_ : PlayerGameStatus<InPlayPlayer>[] =
-//         <any>playersGame.filter(filterInPlayPlayers)
-//     let currentTime = +new Date()
-//     let inPlayPlayers = inPlayPlayers_.map(x => {
-//         let { start, total } = getAggregateGameTime(x.gameTime)
-//         let calcTotal = total + (start ? currentTime - start : 0)
-//         return { calcTotal, start, total, ...x }
-//     })
-//     inPlayPlayers.sort((a, b) => a.calcTotal - b.calcTotal)
-//     let inPlay = inPlayPlayers.length > 0
-//     let onDeckPlayers : PlayerGameStatus<OnDeckPlayer>[] = <any>playersGame.filter(filterOnDeckPlayers)
-//     let toReplacePlayerIds = new Set(onDeckPlayers.map(x => (x.status as { playerId?: number }).playerId).filter(x => x))
-//     let onDeck = onDeckPlayers.length > 0
-//     let out = playersGame.filter(filterOutPlayers).length > 0
-//     let { start, total } = getAggregateGameTime(game.gameTime)
-//     let availablePlayersToSwap = inPlayPlayers
-//         .filter(x => !onDeckPlayers.find((y: any) => y.status.playerId === x.playerId))
-//     let outPlayers =
-//         playersGame.filter(filterOutPlayers)
-//         .map(x => {
-//             let { total } = getAggregateGameTime(x.gameTime)
-//             return { ...x, total }
-//         })
-//         .sort((a, b) => a.total - b.total)
-//     let notPlayingPlayers = playersGame.filter(filterNotPlayingPlayers)
-//     let notPlaying = notPlayingPlayers.length > 0
-//
-//     let isInPlay = false
-//     let isPaused = false
-//     let isEnded = false
-//     switch (game.status) {
-//         case "paused": isPaused = true; break
-//         case "play": isInPlay = true; break
-//         case "ended": isEnded = true; break
-//         default: isPaused = true
-//     }
-//
-//
-//
-//
-//
-// `
-// }
-//
-//
-//
-// const dataActivityIdValidator = {
-//     activityId: createIdNumber("Activity")
-// }
-//
-// // const dataPositionIdValidator = {
-// //     positionId: createIdNumber("Position")
-// // }
-//
 //
 // function setPoints(f: (game: Game) => number) {
 //     return async ({ query } : { query: any }) => {
@@ -432,26 +357,6 @@ export default route
 //     // },
 //
 //
-//     startGame: async ({ query }) => {
-//         let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
-//         let timestamp = +new Date()
-//         let team = await teamGet(teamId)
-//
-//         let game = await required(team.games.find(x => x.id === gameId), `Could not find game! ${gameId}`)
-//         game.status = "play"
-//         game.gameTime.push({
-//             start: timestamp
-//         })
-//         await teamSave(team)
-//
-//         let players = await playerGameAllGet(teamId, gameId, team.players.map(x => x.id))
-//         let inPlayPlayers = players.filter(x => x.status?._ === "inPlay")
-//         for (let player of inPlayPlayers) {
-//             let gameTime = tail(player.gameTime)
-//             gameTime.start = timestamp
-//             await playerGameSave(teamId, player)
-//         }
-//     },
 //
 //     // pauseGame: async ({ query }) => {
 //     //     let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
