@@ -14,7 +14,7 @@ import { validateObject } from "promise-validation"
 import { searchParams, tail } from "../../server/utils.js"
 import { teamGet, teamSave } from "../../server/repo-team.js"
 import { createIdNumber, createPositiveWholeNumber, required } from "../../server/validation.js"
-import { NotPlayingPlayer, OutPlayer, PlayerGame, PlayerGameStatus } from "../../server/db.js"
+import { Game, NotPlayingPlayer, OutPlayer, PlayerGame, PlayerGameStatus } from "../../server/db.js"
 import { playerGameAllGet, playerGameSave, positionGetAll } from "../../server/repo-player-game.js"
 import { createPlayersView, filterInPlayPlayers, filterOnDeckPlayers, getAggregateGameTime } from "./shared.js"
 
@@ -222,7 +222,26 @@ const queryTeamGamePlayerValidator = {
     playerId: createIdNumber("Query Player Id")
 }
 
+function setPoints(f: (game: Game) => number) {
+    return async ({ query } : { query: any }) => {
+        let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
+        let team = await teamGet(teamId)
+        let game = await required(team.games.find(x => x.id === gameId), "Could not find game!")
+        let points = f(game)
+        if (points >= 0) {
+            await teamSave(team)
+        } else {
+            points = 0
+        }
+    }
+}
+
 const postHandlers : PostHandlers = {
+    pointsInc: setPoints(game => ++game.points),
+    pointsDec: setPoints(game => --game.points),
+    oPointsDec: setPoints(game => --game.opponentPoints),
+    oPointsInc: setPoints(game => ++game.opponentPoints),
+
     swap: async ({ query }) => {
         let { gameId, playerId, teamId } = await validateObject(query, queryTeamGamePlayerValidator)
         await swap({ gameId, teamId, playerIds: [playerId], timestamp: +new Date() })
@@ -331,25 +350,8 @@ export default route
 
 
 //
-// function setPoints(f: (game: Game) => number) {
-//     return async ({ query } : { query: any }) => {
-//         let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
-//         let team = await teamGet(teamId)
-//         let game = await required(team.games.find(x => x.id === gameId), "Could not find game!")
-//         let points = f(game)
-//         if (points >= 0) {
-//             await teamSave(team)
-//         } else {
-//             points = 0
-//         }
-//     }
-// }
 //
 // const postHandlers : PostHandlers = {
-//     pointsInc: setPoints(game => ++game.points),
-//     pointsDec: setPoints(game => --game.points),
-//     oPointsDec: setPoints(game => --game.opponentPoints),
-//     oPointsInc: setPoints(game => ++game.opponentPoints),
 //
 //     addPlayerPosition: async ({ }) => {
 //         // let { teamId, playerId, gameId } = await validateObject(query, queryTeamGamePlayerValidator)
