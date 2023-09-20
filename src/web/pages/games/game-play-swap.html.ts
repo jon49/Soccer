@@ -9,7 +9,7 @@ import { playerGameAllGet, playerGameSave, positionGetAll } from "../../server/r
 import { teamGet } from "../../server/repo-team.js"
 import { createPlayersView, filterInPlayPlayers, filterOnDeckPlayers, getAggregateGameTime } from "./shared.js"
 import { when } from "../../server/html.js"
-import { InPlayPlayer, PlayerGame, PlayerGameStatus } from "../../server/db.js"
+import { InPlayPlayer, PlayerGameStatus } from "../../server/db.js"
 
 const querySwapValidator = {
     ...queryTeamIdGameIdValidator,
@@ -29,9 +29,10 @@ async function render(req: Request) {
     let { total } = getAggregateGameTime(game.gameTime)
     let inPlayPlayers = await createPlayersView(filterInPlayPlayers, team.players, players, total)
     let onDeckPlayers = await createPlayersView(filterOnDeckPlayers, team.players, players, total)
+    let player = await required(team.players.find(x => x.id === playerId), "Could not find player ID!")
 
     return html`
-<h2 id=game-swap-top>Game Play Swap</h2>
+<h2 id=game-swap-top>Swap for ${player.name}</h2>
 ${function* positionViews() {
     let count = 0
     for (let width of grid) {
@@ -47,12 +48,15 @@ ${function* positionViews() {
             let row = html`<form method=post action="?position=${count}&teamId=${teamId}&gameId=${gameId}&playerId=${playerId}&handler=updateUserPosition&playerSwap">${
                 () => player
                         ? html`
-                        <button
-                        ${when(playerOnDeck || isCurrentPlayer, "disabled")}
-                        title="${when(playerOnDeck, "Player is on deck already.")}${when(isCurrentPlayer, "You cannot swap the same player!")}">
-                            ${player.name}${when(playerOnDeck, p => html` (${p.name})`)}
-                            <game-timer data-start=${player.start} data-total="${player.total}"}></game-timer>
-                        </button>`
+                <game-shader data-total="${total}" data-value="${player.total}">
+                    <button
+                    ${when(playerOnDeck || isCurrentPlayer, "disabled")}
+                    title="${when(playerOnDeck, "Player is on deck already.")}${when(isCurrentPlayer, "You cannot swap the same player!")}">
+                        ${player.name}${when(playerOnDeck, p => html` (${p.name})`)}
+                        <game-timer data-start=${player.start} data-total="${player.total}"}></game-timer>
+                    </button>
+                </game-shader>
+                        `
                     : playerOnDeck
                         ? html`<button disabled>(${playerOnDeck.name}) <game-timer data-start=${playerOnDeck.start} data-total="${playerOnDeck.total}"}></game-timer></button>`
                     : html`<button>${p[i]}</button>`
@@ -146,7 +150,11 @@ const route : Route = {
     route: (url: URL) => url.pathname.endsWith("/games/") && url.searchParams.has("playerSwap"),
     async get(req: Request) {
         let main = await render(req)
-        return layout(req, { main, title: "Game Play Swap" })
+        let head = `<script src="/web/js/game-shader.js"></script>`
+        return layout(req, {
+            head,
+            main,
+            title: "Game Play Swap" })
     },
     post: postHandlers,
 }

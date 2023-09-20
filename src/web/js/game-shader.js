@@ -3,12 +3,17 @@
 document.head.appendChild(document.createElement('style')).textContent = `
 <style>
 :root {
-    --position-shader-background: #000;
-    --position-shader-color: #fff;
+    --game-shader-background: #000;
+    --game-shader-color: #fff;
 }
-.position-shader {
-    background: var(--position-shader-background);
-    color: var(--position-shader-color);
+.game-shader {
+    background: var(--game-shader-background);
+    color: var(--game-shader-color);
+    padding: 0.5em;
+    border-radius: 1em;
+}
+.game-shader a {
+    color: var(--game-shader-color);
 }
 </style>`
 
@@ -34,7 +39,7 @@ function invert(array) {
     return array.map(x => 255 - x)
 }
 
-class PositionShader extends HTMLElement {
+class GameShader extends HTMLElement {
     constructor() {
         super()
     }
@@ -55,7 +60,7 @@ class PositionShader extends HTMLElement {
         this.background = invert(getRGB(document.body, 'backgroundColor'))
 
         this.el = this.firstElementChild
-        this.el.classList.add('position-shader')
+        this.el.classList.add('game-shader')
 
         this.update()
     }
@@ -70,12 +75,12 @@ class PositionShader extends HTMLElement {
         const total = this.dataset.total || 1
         const value = this.dataset.value || 0
         this.background[3] = value / total
-        this.el.style.setProperty('--position-shader-background', `rgba(${this.background.join(',')})`)
+        this.el.style.setProperty('--game-shader-background', `rgba(${this.background.join(',')})`)
         let color = invertRGBA(this.background)
-        this.el.style.setProperty('--position-shader-color', `rgb(${color.join(',')})`)
+        this.el.style.setProperty('--game-shader-color', `rgb(${color.join(',')})`)
     }
 }
 
-customElements.define('position-shader', PositionShader)
+customElements.define('game-shader', GameShader)
 
 })()

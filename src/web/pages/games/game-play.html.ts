@@ -108,10 +108,15 @@ ${function* positionViews() {
             () => {
                 return player
                     ? html`
-                    ${when(sub, sub => html`<span>${player?.name} (${sub.name})</span>`)}
-                    ${when(!sub, () => html`<a href="?$${queryTeamGame}&playerId=${player?.playerId}&handler=placePlayerOnDeck&playerSwap#game-swap-top">${player?.name}</a>`)}
-                    <game-timer data-start="${player.start}" data-total="${player.total}" ${when(!isInPlay, "data-static")}></game-timer>
-                    <button formaction="?${queryTeamGame}&playerId=${player.playerId}&handler=playerNowOut">X</button>`
+                <game-shader data-total="${total}" data-value="${player.total}">
+                    <div>
+                        ${when(sub, sub => html`<span>${player?.name} (${sub.name})</span>`)}
+                        ${when(!sub, () => html`<a href="?$${queryTeamGame}&playerId=${player?.playerId}&handler=placePlayerOnDeck&playerSwap#game-swap-top">${player?.name}</a>`)}
+                        <game-timer data-start="${player.start}" data-total="${player.total}" ${when(!isInPlay, "data-static")}></game-timer>
+                        <button formaction="?${queryTeamGame}&playerId=${player.playerId}&handler=playerNowOut">X</button>
+                    </div>
+                </game-shader>
+                    `
                 : html`<span>No player.</span>`
             }
             }</form>`
@@ -393,7 +398,8 @@ const route : Route = {
                     border-radius: 0 var(--rc) var(--rc) 0;
                 }
             </style>
-            <script src="/web/js/game-timer.js"></script>`
+            <script src="/web/js/game-timer.js"></script>
+            <script src="/web/js/game-shader.js"></script>`
         return layout(req, {
             head,
             main: (await render(req)),
@@ -404,41 +410,3 @@ const route : Route = {
 
 export default route
 
-
-//
-// }
-//
-// async function get(req: Request) {
-//     let result = await start(req)
-//     return layout(req, {
-//         main: html`
-// <h2>${result.team.name} - Game ${result.game.date} ${when(result.game.opponent, x => ` - ${x}`)}</h2>
-// <div id=refresh>
-// ${render(result)}
-// </div>
-// <form id=reload-form action="?teamId=${result.team.id}&gameId=${result.game.id}&handler=reload" hidden>
-// </form>`,
-//         head,
-//         scripts: [ "/web/js/game-play.js" ],
-//         title: `${result.team.name} - Game ${result.game.date} - ${result.game.opponent}`,
-//     })
-// }
-//
-// async function reload(req: Request) {
-//     let result = await start(req)
-//     return render(result)
-// }
-//
-// const route : Route = {
-//     route: (url: URL) => url.pathname.endsWith("/games/") && ["gameId", "teamId"].every(x => url.searchParams.has(x)),
-//     async get(req: Request) {
-//         let params = searchParams<{ handler?: "reload" }>(req)
-//         if (params.handler === "reload") {
-//             return reload(req)
-//         }
-//         return get(req)
-//     },
-//     post: postHandlers,
-// }
-//
-// export default route
