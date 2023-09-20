@@ -1,5 +1,17 @@
 (() => {
 
+document.head.appendChild(document.createElement('style')).textContent = `
+<style>
+:root {
+    --position-shader-background: #000;
+    --position-shader-color: #fff;
+}
+.position-shader {
+    background: var(--position-shader-background);
+    color: var(--position-shader-color);
+}
+</style>`
+
 function getRGB(el, prop) {
     let computed = window.getComputedStyle(el, null)[prop]
     let s = computed.slice(computed.indexOf('(') + 1, computed.indexOf(')'))
@@ -8,7 +20,7 @@ function getRGB(el, prop) {
 }
 
 function calcInversion(color, alpha) {
-    if (alpha >= .5) return 255 - color
+    if (alpha >= .4) return 255 - color
     return color
 }
 
@@ -39,10 +51,12 @@ class PositionShader extends HTMLElement {
     _init() {
         this._observer?.disconnect()
         this._observer = null
-        let el = this.firstElementChild
-        this.el = el
-        el.classList.add("position-shader")
-        this.background = invert(getRGB(el, 'backgroundColor'))
+
+        this.background = invert(getRGB(document.body, 'backgroundColor'))
+
+        this.el = this.firstElementChild
+        this.el.classList.add('position-shader')
+
         this.update()
     }
 
@@ -53,15 +67,13 @@ class PositionShader extends HTMLElement {
 
     update() {
         if (!this.el) return
-        const total = this.dataset.total || 0
+        const total = this.dataset.total || 1
         const value = this.dataset.value || 0
-        const percent = Math.floor(value / total * 100)
-        this.background[3] = percent / 100
-        this.el.style.setProperty('--background-shade', `rgba(${this.background.join(',')})`)
+        this.background[3] = value / total
+        this.el.style.setProperty('--position-shader-background', `rgba(${this.background.join(',')})`)
         let color = invertRGBA(this.background)
-        this.el.style.setProperty('--text-shade-color', `rgb(${color.join(',')})`)
+        this.el.style.setProperty('--position-shader-color', `rgb(${color.join(',')})`)
     }
-
 }
 
 customElements.define('position-shader', PositionShader)
