@@ -334,6 +334,33 @@ const postHandlers : PostHandlers = {
             return null
         }).filter(x => x))
     },
+
+    endGame: async ({ query }) => {
+        let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
+        let timestamp = +new Date()
+        let team = await teamGet(teamId)
+
+        let game = await required(team.games.find(x => x.id === gameId), `Could not find game! ${gameId}`)
+        game.status = "ended"
+        let time = tail(game.gameTime)
+        if (time && !time.end) {
+            time.end = timestamp
+        }
+        await teamSave(team)
+
+        let players = await playerGameAllGet(teamId, gameId, team.players.map(x => x.id))
+        await Promise.all(
+            players
+            .filter(filterInPlayPlayers)
+            .map(player => {
+                let gameTime = tail(player.gameTime)
+                gameTime.end = timestamp
+                // @ts-ignore
+                player.status = { _: "out"}
+                return playerGameSave(teamId, player)
+            }))
+    },
+
 }
 
 const route : Route = {
@@ -353,96 +380,8 @@ export default route
 //
 // const postHandlers : PostHandlers = {
 //
-//     addPlayerPosition: async ({ }) => {
-//         // let { teamId, playerId, gameId } = await validateObject(query, queryTeamGamePlayerValidator)
-//         // let [p] = await playerGameAllGet(teamId, gameId, [playerId])
-//         // p.status = { _: "onDeck" }
-//         // let gameTime = p.gameTime.find(x => !x.end)
-//         // if (!gameTime) {
-//         //     gameTime = {
-//         //         positionId: positionObj.id
-//         //     }
-//         //     p.gameTime.push(gameTime)
-//         // }
-//         // await playerGameSave(teamId, p)
-//     },
 //
 //
-//
-//     // onDeckWith: async ({ query, data }) => {
-//     //     let { teamId, playerId, gameId } = await validateObject(query, queryTeamGamePlayerValidator)
-//     //     let { swapPlayerId } = await validateObject(data, { swapPlayerId: createIdNumber("Swap Player Id") })
-//     //     let [player, swapPlayer] = await playerGameAllGet(teamId, gameId, [playerId, swapPlayerId])
-//     //     player.status = { _: "onDeck", playerId: swapPlayer.playerId }
-//     //     let gameTime = tail(player.gameTime)
-//     //     if (!gameTime || gameTime.end) {
-//     //         gameTime = {
-//     //             positionId: tail(swapPlayer.gameTime).positionId
-//     //         }
-//     //         player.gameTime.push(gameTime)
-//     //     } else {
-//     //         gameTime.positionId = tail(swapPlayer.gameTime).positionId
-//     //     }
-//     //     await playerGameSave(teamId, player)
-//     // },
-//
-//
-//
-//
-//
-//
-//
-//     // positionChange: async ({ query, data }) => {
-//     //     let { teamId, playerId, gameId } = await validateObject(query, queryTeamGamePlayerValidator)
-//     //     let { positionId } = await validateObject(data, dataPositionIdValidator)
-//     //     let [player] = await playerGameAllGet(teamId, gameId, [playerId])
-//     //     let timestamp = +new Date()
-//     //     tail(player.gameTime).end = timestamp
-//     //     player.gameTime.push({
-//     //         positionId,
-//     //         start: timestamp,
-//     //     })
-//     //     await playerGameSave(teamId, player)
-//     // },
-//
-//     activityMarker: async ({ query, data }) => {
-//         let { teamId, gameId, playerId } = await validateObject(query, queryTeamGamePlayerValidator)
-//         let { activityId } = await validateObject(data, dataActivityIdValidator)
-//         let [player] = await playerGameAllGet(teamId, gameId, [playerId])
-//         let stat = player.stats.find(x => x.statId === activityId)
-//         if (!stat) {
-//             player.stats.push({ count: 1, statId: activityId })
-//         } else {
-//             stat.count++
-//         }
-//         await playerGameSave(teamId, player)
-//     },
-//
-//     endGame: async ({ query }) => {
-//         let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
-//         let timestamp = +new Date()
-//         let team = await teamGet(teamId)
-//
-//         let game = await required(team.games.find(x => x.id === gameId), `Could not find game! ${gameId}`)
-//         game.status = "ended"
-//         let time = tail(game.gameTime)
-//         if (time && !time.end) {
-//             time.end = timestamp
-//         }
-//         await teamSave(team)
-//
-//         let players = await playerGameAllGet(teamId, gameId, team.players.map(x => x.id))
-//         for (let player of players) {
-//             let gameTime = tail(player.gameTime)
-//             if (gameTime && gameTime.start && !gameTime.end) {
-//                 gameTime.end = timestamp
-//             }
-//             if (player.status?._ !== "notPlaying") {
-//                 player.status = { _: "out"}
-//             }
-//             await playerGameSave(teamId, player)
-//         }
-//     },
 //
 //     restartGame: async ({ query }) => {
 //         let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
