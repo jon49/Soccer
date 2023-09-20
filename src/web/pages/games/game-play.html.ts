@@ -1,14 +1,7 @@
-// import { Activity, Game, InPlayPlayer, OnDeckPlayer, PlayerGame, PlayerGameStatus, Positions, Team } from "../../server/db.js"
-// import html from "../../server/html.js"
-// import { activityGetAll, playerGameAllGet, playerGameSave, positionGetAll } from "../../server/repo-player-game.js"
-// import { teamGet, teamSave } from "../../server/repo-team.js"
 import html from "html-template-tag-stream"
 import { PostHandlers, Route } from "../../server/route.js"
-// import { when } from "../../server/shared.js"
-// import { searchParams, sort, tail } from "../../server/utils.js"
 import layout from "../_layout.html.js"
 import { when } from "../../server/html.js"
-// import { createIdNumber, required, validateObject } from "../../server/validation.js"
 import { queryTeamIdGameIdValidator } from "../../server/validators.js"
 import { validateObject } from "promise-validation"
 import { searchParams, tail } from "../../server/utils.js"
@@ -116,7 +109,7 @@ ${function* positionViews() {
                     ? html`
                     ${when(sub, sub => html`<span>${player?.name} (${sub.name})</span>`)}
                     ${when(!sub, () => html`<a href="?$${queryTeamGame}&playerId=${player?.playerId}&handler=placePlayerOnDeck&playerSwap#game-swap-top">${player?.name}</a>`)}
-                    <game-timer data-start=${player.start} data-total="${player.total}" ${when(!isInPlay, "data-static")}></game-timer>
+                    <game-timer data-start="${player.start}" data-total="${player.total}" ${when(!isInPlay, "data-static")}></game-timer>
                     <button formaction="?${queryTeamGame}&playerId=${player.playerId}&handler=playerNowOut">X</button>`
                 : html`<span>No player.</span>`
             }
@@ -379,7 +372,31 @@ const route : Route = {
         url.pathname.endsWith("/games/")
         && ["gameId", "teamId"].every(x => url.searchParams.has(x)),
     async get(req: Request) {
-        return layout(req, { main: (await render(req)), title: "Game Play" })
+        let head = `
+            <style>
+                .auto-select {
+                    width: 2em;
+                    appearance: none;
+                }
+                .auto-select:focus {
+                    width: auto;
+                    appearance: auto;
+                }
+                ul.list {
+                    border-collapse: collapse;
+                }
+                .round > *:first-child {
+                    border-radius: var(--rc) 0 0 var(--rc);
+                }
+                .round > *:last-child {
+                    border-radius: 0 var(--rc) var(--rc) 0;
+                }
+            </style>
+            <script src="/web/js/game-timer.js"></script>`
+        return layout(req, {
+            head,
+            main: (await render(req)),
+            title: "Game Play" })
     },
     post: postHandlers,
 }
@@ -392,27 +409,6 @@ export default route
 //
 // async function get(req: Request) {
 //     let result = await start(req)
-//     let head = `
-//         <style>
-//             .auto-select {
-//                 width: 2em;
-//                 appearance: none;
-//             }
-//             .auto-select:focus {
-//                 width: auto;
-//                 appearance: auto;
-//             }
-//             ul.list {
-//                 border-collapse: collapse;
-//             }
-//             .round > *:first-child {
-//                 border-radius: var(--rc) 0 0 var(--rc);
-//             }
-//             .round > *:last-child {
-//                 border-radius: 0 var(--rc) var(--rc) 0;
-//             }
-//         </style>
-//         <script src="/web/js/game-timer.js"></script>`
 //     return layout(req, {
 //         main: html`
 // <h2>${result.team.name} - Game ${result.game.date} ${when(result.game.opponent, x => ` - ${x}`)}</h2>
