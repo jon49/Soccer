@@ -109,11 +109,13 @@ ${function* positionViews() {
         }
         yield p.map(() => {
             let player = inPlayPlayers.find(x => count === x.status.position)
+            let sub = player && onDeckPlayers.find(x => x.status.currentPlayerId === player?.playerId)
             let view = html`<form method=post>${
             () => {
                 return player
                     ? html`
-                    <a href="?$${queryTeamGame}&playerId=${player.playerId}&handler=placePlayerOnDeck&playerSwap#game-swap-top">${player.name}</a>
+                    ${when(sub, sub => html`<span>${player?.name} (${sub.name})</span>`)}
+                    ${when(!sub, () => html`<a href="?$${queryTeamGame}&playerId=${player?.playerId}&handler=placePlayerOnDeck&playerSwap#game-swap-top">${player?.name}</a>`)}
                     <game-timer data-start=${player.start} data-total="${player.total}" ${when(!isInPlay, "data-static")}></game-timer>
                     <button formaction="?${queryTeamGame}&playerId=${player.playerId}&handler=playerNowOut">X</button>`
                 : html`<span>No player.</span>`
@@ -131,6 +133,7 @@ ${when(onDeck, () => html`
 
 <ul class=list>
     ${onDeckPlayers.map(x => {
+        let currentPlayer = inPlayPlayers.find(y => y.playerId === x.status.currentPlayerId)
         return html`
     <li>
         <form method=post action="?$${queryTeamGame}&playerId=$${x.playerId}&handler=swap">
@@ -139,7 +142,7 @@ ${when(onDeck, () => html`
         <form method=post action="?$${queryTeamGame}&playerId=$${x.playerId}&handler=cancelOnDeck">
             <button class=danger>X</button>
         </form>
-        <span>${x.name} - ${positions[x.status.targetPosition]}</span>
+        <span>${x.name} - ${positions[x.status.targetPosition]}${when(currentPlayer, c => html` (${c.name})`)}</span>
     </li>
     `})}
 </ul>`)}

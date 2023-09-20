@@ -50,7 +50,7 @@ ${function* positionViews() {
                         <button
                         ${when(playerOnDeck || isCurrentPlayer, "disabled")}
                         title="${when(playerOnDeck, "Player is on deck already.")}${when(isCurrentPlayer, "You cannot swap the same player!")}">
-                            ${player.name}
+                            ${player.name}${when(playerOnDeck, p => html` (${p.name})`)}
                             <game-timer data-start=${player.start} data-total="${player.total}"}></game-timer>
                         </button>`
                     : playerOnDeck
