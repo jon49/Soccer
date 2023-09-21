@@ -392,6 +392,7 @@ const route : Route = {
             <script src="/web/js/game-shader.js"></script>`
         return layout(req, {
             head,
+            bodyAttr: `mpa-persist mpa-page-name="game"`,
             main: (await render(req)),
             title: "Game Play" })
     },

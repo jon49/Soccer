@@ -16,7 +16,7 @@ interface Render {
 }
 
 const render = async ({theme}: Render, o: LayoutTemplateArguments) => {
-    const { main, head, scripts, nav, title } = o
+    const { main, head, scripts, nav, title, bodyAttr } = o
     const [isLoggedIn, updated] = await Promise.all([db.isLoggedIn(), db.updated()])
     const updatedCount = updated.length
     return html`
@@ -31,7 +31,7 @@ const render = async ({theme}: Render, o: LayoutTemplateArguments) => {
     <link href="/web/css/app.css" rel=stylesheet>
     $${head}
 </head>
-<body $${when(theme, x => `class=${x}`)}>
+<body $${when(theme, x => `class=${x}`)} $${bodyAttr}>
     <div class=top-nav>
         <form method=post action="/web/user-settings/edit?handler=updateTheme" class=inline>
             <label class="toggle">
@@ -108,6 +108,7 @@ export type Layout = typeof layout
 export interface LayoutTemplateArguments {
     title: string
     head?: string
+    bodyAttr?: string
     main?: AsyncGenerator<any, void, unknown>
     scripts?: string[]
     nav?: Nav[]
