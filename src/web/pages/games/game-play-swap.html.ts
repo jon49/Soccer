@@ -2,14 +2,13 @@ import html from "html-template-tag-stream"
 import { PostHandlers, Route } from "../../server/route.js"
 import layout from "../_layout.html.js"
 import { validateObject } from "promise-validation"
-import { searchParams, tail } from "../../server/utils.js"
+import { searchParams } from "../../server/utils.js"
 import { createIdNumber, createPositiveWholeNumber, required } from "../../server/validation.js"
 import { queryTeamIdGameIdValidator } from "../../server/validators.js"
-import { playerGameAllGet, playerGameSave, positionGetAll } from "../../server/repo-player-game.js"
+import { playerGameAllGet, positionGetAll } from "../../server/repo-player-game.js"
 import { teamGet } from "../../server/repo-team.js"
-import { createPlayersView, filterInPlayPlayers, filterOnDeckPlayers, getAggregateGameTime } from "./shared.js"
+import { createPlayersView, filterInPlayPlayers, filterOnDeckPlayers, GameTimeCalculator, PlayerGameTimeCalculator } from "./shared.js"
 import { when } from "../../server/html.js"
-import { InPlayPlayer, PlayerGameStatus } from "../../server/db.js"
 
 const querySwapValidator = {
     ...queryTeamIdGameIdValidator,
@@ -26,9 +25,9 @@ async function render(req: Request) {
     ])
 
     let game = await required(team.games.find(x => x.id === gameId), "Could not find game ID!")
-    let { total } = getAggregateGameTime(game.gameTime)
-    let inPlayPlayers = await createPlayersView(filterInPlayPlayers, team.players, players, total)
-    let onDeckPlayers = await createPlayersView(filterOnDeckPlayers, team.players, players, total)
+    let gameTimeCalculator = new GameTimeCalculator(game)
+    let inPlayPlayers = await createPlayersView(filterInPlayPlayers, team.players, players)
+    let onDeckPlayers = await createPlayersView(filterOnDeckPlayers, team.players, players)
     let player = await required(team.players.find(x => x.id === playerId), "Could not find player ID!")
 
     return html`
@@ -46,20 +45,28 @@ ${function* positionViews() {
             let playerOnDeck = onDeckPlayers.find(x => count === x.status.targetPosition)
             let isCurrentPlayer = player?.playerId === playerId
             let row = html`<form method=post action="?position=${count}&teamId=${teamId}&gameId=${gameId}&playerId=${playerId}&handler=updateUserPosition&playerSwap">${
-                () => player
-                        ? html`
-                <game-shader data-total="${total}" data-value="${player.total}">
+            () => {
+                if (player) {
+                    let playerGameCalc = new PlayerGameTimeCalculator(player)
+                    return html`
+                <game-shader data-total="${gameTimeCalculator.currentTotal()}" data-value="${playerGameCalc.currentTotal()}">
                     <button
                     ${when(playerOnDeck || isCurrentPlayer, "disabled")}
                     title="${when(playerOnDeck, "Player is on deck already.")}${when(isCurrentPlayer, "You cannot swap the same player!")}">
                         ${player.name}${when(playerOnDeck, p => html` (${p.name})`)}
-                        <game-timer data-start=${player.start} data-total="${player.total}"}></game-timer>
+                        <game-timer data-start=${playerGameCalc.start()} data-total="${playerGameCalc.total()}"></game-timer>
                     </button>
-                </game-shader>
-                        `
-                    : playerOnDeck
-                        ? html`<button disabled>(${playerOnDeck.name}) <game-timer data-start=${playerOnDeck.start} data-total="${playerOnDeck.total}"}></game-timer></button>`
-                    : html`<button>${p[i]}</button>`
+                </game-shader>`
+                }
+                if (playerOnDeck) {
+                    let playerOnDeckGameCalc = new PlayerGameTimeCalculator(playerOnDeck)
+                    return html`
+                    <button disabled>
+                        (${playerOnDeck.name})
+                        <game-timer data-start=${playerOnDeckGameCalc.start()} data-total="${playerOnDeckGameCalc.total()}"></game-timer></button>`
+                }
+                return html`<button>${p[i]}</button>`
+            }
                 }</form>`
             count++
             return row
@@ -85,9 +92,10 @@ const postHandlers : PostHandlers = {
         ])
 
         let player = await required(players.find(x => x.playerId === playerId), "Could not find swap player!")
-        let inGamePlayer = <PlayerGameStatus<InPlayPlayer> | undefined>players.find(x =>
-            x.status?._ === "inPlay"
-            && x.status.position === position)
+        let inGamePlayer =
+            players
+            .filter(filterInPlayPlayers)
+            .find(x => x.status.position === position)
 
         if (player.status?._ === "inPlay") {
             if (inGamePlayer) {
@@ -107,39 +115,36 @@ const postHandlers : PostHandlers = {
                 currentPlayerId: inGamePlayer?.playerId,
             }
         }
-        let gameTime = player.gameTime.find(x => !x.end)
-        let gameOn = !!gameTime
-        if (!gameTime) {
-            gameTime = {
-                position: positions[position],
-            }
-            player.gameTime.push(gameTime)
+        let playerCalc = new PlayerGameTimeCalculator(player)
+        let gameOn = playerCalc.isGameOn()
+        if (player.status._ === "onDeck") {
+            playerCalc.position(positions[position])
         }
 
         if (player.status._ === "inPlay") {
-            let stamp = gameOn ? +new Date() : undefined
+            let positionName = positions[position]
             if (gameOn) {
-                gameTime.end = stamp
-                player.gameTime.push({
-                    position: positions[position],
-                    start: stamp,
-                })
+                playerCalc.end()
+                playerCalc.position(positionName)
+                playerCalc.start()
+            } else {
+                playerCalc.position(positionName)
             }
 
             if (inGamePlayer) {
-                let gameTime = tail(inGamePlayer.gameTime)
+                let inGamePlayerCalc = new PlayerGameTimeCalculator(inGamePlayer)
+                let positionName = positions[player.status.position]
                 if (gameOn) {
-                    gameTime.end = stamp
+                    inGamePlayerCalc.end()
+                    inGamePlayerCalc.position(positionName)
+                    inGamePlayerCalc.start()
+                } else {
+                    inGamePlayerCalc.position(positionName)
                 }
-                inGamePlayer.gameTime.push({
-                    position: positions[inGamePlayer.status.position],
-                    start: stamp,
-                })
-
-                await playerGameSave(teamId, inGamePlayer)
+                await inGamePlayerCalc.save(teamId)
             }
         }
-        await playerGameSave(teamId, player)
+        await playerCalc.save(teamId)
         let url = new URL(req.referrer)
         url.search = `?teamId=${teamId}&gameId=${gameId}`
         return Response.redirect(url.toString(), 303)

@@ -75,6 +75,11 @@ export interface Activities extends Revision {
     }[]
 }
 
+export interface GameTime {
+    start: number
+    end?: number
+}
+
 export interface Game {
     id: number
     date: string
@@ -82,10 +87,10 @@ export interface Game {
     status?: "play" | "paused" | "ended"
     points: number
     opponentPoints: number
-    gameTime: { start: number, end?: number }[]
+    gameTime: GameTime[]
 }
 
-export interface GameTime {
+export interface PlayerGameTime {
     start?: number
     end?: number
     position: string 
@@ -116,7 +121,7 @@ export interface PlayerGame extends Revision {
     playerId: number
     gameId: number
     stats: {statId: number, count: number}[]
-    gameTime: GameTime[]
+    gameTime: PlayerGameTime[]
     status?: PlayerStatus
 }
 
@@ -124,7 +129,7 @@ export interface PlayerGameStatus<T extends PlayerStatus> extends Revision {
     playerId: number
     gameId: number
     stats: {statId: number, count: number}[]
-    gameTime: GameTime[]
+    gameTime: PlayerGameTime[]
     status: T
 }
 

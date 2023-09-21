@@ -72,7 +72,8 @@ class GameShader extends HTMLElement {
 
     update() {
         if (!this.el) return
-        const total = this.dataset.total || 1
+        const total = this.dataset.total || 0
+        if (!total) return
         const value = this.dataset.value || 0
         this.background[3] = value / total
         this.el.style.setProperty('--game-shader-background', `rgba(${this.background.join(',')})`)
