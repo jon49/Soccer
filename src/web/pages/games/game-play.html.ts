@@ -117,7 +117,7 @@ ${function* positionViews() {
                     </div>
                 </game-shader>
                     `
-                : html`<span>No player.</span>`
+                : html`<span></span>`
             }
             }</form>`
             count++
