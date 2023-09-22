@@ -30,6 +30,10 @@ async function render(req: Request) {
     let onDeckPlayers = await createPlayersView(filterOnDeckPlayers, team.players, players)
     let player = await required(team.players.find(x => x.id === playerId), "Could not find player ID!")
 
+    let isInPlay = game.status === "play"
+    let isEnded = game.status === "ended"
+    let isPaused = game.status === "paused" || (!isInPlay && !isEnded)
+
     return html`
 <h2 id=game-swap-top>Swap for ${player.name}</h2>
 ${function* positionViews() {
@@ -54,7 +58,11 @@ ${function* positionViews() {
                     ${when(playerOnDeck || isCurrentPlayer, "disabled")}
                     title="${when(playerOnDeck, "Player is on deck already.")}${when(isCurrentPlayer, "You cannot swap the same player!")}">
                         ${player.name}${when(playerOnDeck, p => html` (${p.name})`)}
-                        <game-timer data-start="${player.calc.getLastStartTime()}" data-total="${player.calc.total()}"></game-timer>
+                        <game-timer
+                            data-start="${player.calc.getLastStartTime()}"
+                            data-total="${player.calc.total()}"
+                            $${when(isPaused, `data-static`)}>
+                            ></game-timer>
                     </button>
                 </game-shader>`
                 }
@@ -63,7 +71,11 @@ ${function* positionViews() {
                     return html`
                     <button disabled>
                         (${playerOnDeck.name})
-                        <game-timer data-start=${playerOnDeckGameCalc.start()} data-total="${playerOnDeckGameCalc.total()}"></game-timer></button>`
+                        <game-timer
+                            data-start=${playerOnDeckGameCalc.start()}
+                            data-total="${playerOnDeckGameCalc.total()}"
+                            $${when(isPaused, `data-static`)}>
+                            ></game-timer></button>`
                 }
                 return html`<button>${p[i]}</button>`
             }
