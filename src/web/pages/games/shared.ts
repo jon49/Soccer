@@ -63,6 +63,14 @@ export class PlayerGameTimeCalculator {
         })
     }
 
+    pop() {
+        this.times.pop()
+    }
+
+    hasStarted() {
+        return !!tail(this.times)?.start
+    }
+
     getLastStartTime() {
         return tail(this.times)?.start
     }

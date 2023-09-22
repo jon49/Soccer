@@ -262,7 +262,11 @@ const postHandlers : PostHandlers = {
         let [p] = await playerGameAllGet(teamId, gameId, [playerId])
         p.status = { _: "out" }
         let calc = new PlayerGameTimeCalculator(p)
-        calc.end()
+        if (calc.hasStarted()) {
+            calc.end()
+        } else {
+            calc.pop()
+        }
         await calc.save(teamId)
     },
 
