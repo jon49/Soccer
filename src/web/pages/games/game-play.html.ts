@@ -93,7 +93,7 @@ async function render(req: Request) {
 <h3>In-Play</h3>
 
 ${when(!inPlay, () => html`<p>No players are in play.</p>`)}
-${function* positionViews() {
+${when(inPlayPlayers.length, function* positionViews() {
     let count = 0
     for (let width of grid) {
         yield html`<div class="row grid-center">`
@@ -125,7 +125,7 @@ ${function* positionViews() {
         })
         yield html`</div>`
     }
-}}
+})}
 
 ${when(onDeck, () => html`
 <h3>On Deck</h3>
