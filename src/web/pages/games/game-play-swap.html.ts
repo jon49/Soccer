@@ -54,7 +54,7 @@ ${function* positionViews() {
                     ${when(playerOnDeck || isCurrentPlayer, "disabled")}
                     title="${when(playerOnDeck, "Player is on deck already.")}${when(isCurrentPlayer, "You cannot swap the same player!")}">
                         ${player.name}${when(playerOnDeck, p => html` (${p.name})`)}
-                        <game-timer data-start=${playerGameCalc.start()} data-total="${playerGameCalc.total()}"></game-timer>
+                        <game-timer data-start="${player.calc.getLastStartTime()}" data-total="${player.calc.total()}"></game-timer>
                     </button>
                 </game-shader>`
                 }
@@ -155,7 +155,9 @@ const route : Route = {
     route: (url: URL) => url.pathname.endsWith("/games/") && url.searchParams.has("playerSwap"),
     async get(req: Request) {
         let main = await render(req)
-        let head = `<script src="/web/js/game-shader.js"></script>`
+        let head = `
+        <script src="/web/js/game-timer.js"></script>
+        <script src="/web/js/game-shader.js"></script>`
         return layout(req, {
             head,
             main,
