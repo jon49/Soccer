@@ -31,7 +31,7 @@ function render({ team, positions, grid }: PositionView) {
     method=post
     action="?handler=addGrid&teamId=${team.id}" onchange="this.submit()">
     ${grid.map((x, i) => html`<input id="grid${i}" class=inline type=number name="grid[]" value="${x}">`)}
-    <input id="grid${grid.length}" type=number name="grid[]" ${when(!grid.length, () => "autofocus")}>
+    <input id="grid-1" type=number name="grid[]" ${when(!grid.length, () => "autofocus")}>
 </form>
 
 ${when(!!grid.length, () => html`
