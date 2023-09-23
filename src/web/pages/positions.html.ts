@@ -26,6 +26,8 @@ function render({ team, positions, grid }: PositionView) {
 
 <h3>Grid</h3>
 <form
+    id=add-grid
+    mpa-miss="#grid-1" 
     class="form cards"
     style="--card-width:3.5em;"
     method=post

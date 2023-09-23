@@ -130,7 +130,7 @@ ${when(inPlayPlayers.length, function* positionViews() {
 ${when(onDeck, () => html`
 <h3>On Deck</h3>
 
-<ul class=list>
+<ul id=on-deck-players class=list>
     ${onDeckPlayers.map(x => {
         let currentPlayer = inPlayPlayers.find(y => y.playerId === x.status.currentPlayerId)
         return html`
@@ -154,7 +154,7 @@ ${when(onDeckPlayers.length > 1, () => html`
 ${when(out, () => html`
 <h3>Out</h3>
 
-<ul class=list>
+<ul id=out-players class=list mpa-miss="#out-players">
     ${outPlayers.map(x => {
         return html`
 <li>
