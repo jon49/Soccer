@@ -201,7 +201,9 @@ async function swap({ teamId, playerIds, gameId } : { teamId : number, playerIds
         if (player.status?._ === "onDeck" && player.status.targetPosition != null && player.status.currentPlayerId) {
             let [currentPlayer] = await playerGameAllGet(teamId, gameId, [player.status.currentPlayerId])
             let inPlayerCalc = new PlayerGameTimeCalculator(currentPlayer)
-            inPlayerCalc.end()
+            if (inPlayerCalc.hasStarted()) {
+                inPlayerCalc.end()
+            }
             currentPlayer.status = { _: "out" }
             await inPlayerCalc.save(teamId)
         }
