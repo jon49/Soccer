@@ -284,3 +284,8 @@ button.anchor:hover {
     color: var(--c1);
 }
 
+nav li {
+    display: inline-block;
+    margin: 0 0.5em;
+}
+
