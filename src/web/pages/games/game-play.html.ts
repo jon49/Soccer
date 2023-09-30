@@ -54,7 +54,7 @@ async function render(req: Request) {
     let notPlaying = notPlayingPlayers.length > 0
 
     return html`
-<h2>Game Play</h2>
+<h2>Game Play — ${game.opponent}</h2>
 
 <div>
     ${when(!isEnded, () => html`
