@@ -83,6 +83,8 @@ export interface GameTime {
 export interface Game {
     id: number
     date: string
+    time?: string
+    home: boolean
     opponent?: string
     status?: "play" | "paused" | "ended"
     points: number
