@@ -19,6 +19,7 @@ async function start(req: Request): Promise<GameView> {
 }
 
 function render({ team }: GameView) {
+    team.games.sort((a, b) => b.date.localeCompare(a.date))
     return html`
 <h2>${team.name} - Games</h2>
 
