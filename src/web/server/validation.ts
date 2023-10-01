@@ -1,4 +1,4 @@
-import { reject } from "./repo"
+import { reject } from "./repo.js"
 
 interface Value<T> {
     value: T
@@ -23,7 +23,7 @@ const maxLength = async (error: string, val: string, maxLength: number) =>
 const createString = async (name: string, maxLength_: number, val?: string | undefined) => {
     const trimmed = await notFalsey(`"${name}" is required.`, val?.trim())
     const s = await maxLength(`'${name}' must be less than ${maxLength_} characters.`, trimmed, maxLength_)
-    return s
+    return <string>s
 }
 
 function isInteger(val: number) {
@@ -91,6 +91,11 @@ export const createString50 =
     (name: string) =>
     (val: string | undefined) =>
         createString(name, 50, val)
+
+export const createStringInfinity =
+    (name: string) =>
+    (val: string | undefined) =>
+        createString(name, Infinity, val)
 
 export function createCheckbox(val: string | undefined) {
     return Promise.resolve(val === "on")

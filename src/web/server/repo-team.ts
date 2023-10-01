@@ -1,4 +1,4 @@
-import { get, set, update, getMany, Team, Teams, TeamSingle } from "./db.js"
+import { get, set, update, getMany, Team, Teams, TeamSingle, Revision } from "./db.js"
 import { reject } from "./repo.js"
 import { equals, getNewId } from "./utils.js"
 import { requiredAsync } from "./validation.js"
@@ -27,6 +27,25 @@ export async function teamGetAll(all: boolean, wasFiltered?: WasFiltered) : Prom
             ? b.year.localeCompare(a.year)
         : a.name.localeCompare(b.name))
     return teams
+}
+
+interface GameNotes extends Revision {
+    notes: string
+}
+
+export async function saveGameNotes(teamId: number, gameId: number, notes: string) {
+    let gameNotes = await getGameNotes(teamId, gameId)
+    gameNotes.notes = notes
+    await set(getGameNotesId(teamId, gameId), gameNotes)
+}
+
+export async function getGameNotes(teamId: number, gameId: number) : Promise<GameNotes> {
+    let notes = await get<GameNotes>(getGameNotesId(teamId, gameId))
+    return notes ?? { notes: "", _rev: 0 }
+}
+
+function getGameNotesId(teamId: number, gameId: number) {
+    return ["game-notes", teamId, gameId]
 }
 
 export async function teamSave(o: Team) {

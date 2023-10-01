@@ -36,6 +36,21 @@ def main [build: bool = false] {
             } else { "node_modules/mpa-enhancer/src/mpa.js" }) $hashName
     }
 
+    # elastic-textarea
+    ls node_modules/@cloudfour/elastic-textarea/*.min.js
+    | each $addHash
+    | each { |x|
+        let target = $"($targetDir)/web/js/lib"
+        mkdir $target
+        let hashName = $"($target)/($x.hashed | path basename)"
+        cp (if $build {
+                "node_modules/@cloudfour/elastic-textarea/index.min.js"
+            } else {
+                "node_modules/@cloudfour/elastic-textarea/index.js"
+            }
+        ) $hashName
+    }
+
     # copy css files
     ls src/**/css/**/*.css
     | each $addHash

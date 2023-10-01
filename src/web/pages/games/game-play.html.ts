@@ -5,8 +5,8 @@ import { when } from "../../server/html.js"
 import { queryTeamIdGameIdValidator } from "../../server/validators.js"
 import { validateObject } from "promise-validation"
 import { searchParams } from "../../server/utils.js"
-import { teamGet, teamSave } from "../../server/repo-team.js"
-import { createIdNumber, createPositiveWholeNumber, required } from "../../server/validation.js"
+import { getGameNotes, saveGameNotes, teamGet, teamSave } from "../../server/repo-team.js"
+import { createIdNumber, createPositiveWholeNumber, createString50, createStringInfinity, required } from "../../server/validation.js"
 import { Game, NotPlayingPlayer, OutPlayer, PlayerGame, PlayerGameStatus } from "../../server/db.js"
 import { playerGameAllGet, playerGameSave, positionGetAll } from "../../server/repo-player-game.js"
 import { GameTimeCalculator, PlayerGameTimeCalculator, createPlayersView, filterInPlayPlayers, filterOnDeckPlayers } from "./shared.js"
@@ -35,9 +35,10 @@ async function render(req: Request) {
     let isEnded = game.status === "ended"
     let isPaused = game.status === "paused" || (!isInPlay && !isEnded)
 
-    let [ players, { grid, positions } ] = await Promise.all([
+    let [ players, { grid, positions }, { notes } ] = await Promise.all([
         playerGameAllGet(teamId, gameId, team.players.map(x => x.id)),
         positionGetAll(teamId),
+        getGameNotes(teamId, gameId)
     ])
 
     let inPlayPlayers = await createPlayersView(filterInPlayPlayers, team.players, players)
@@ -180,6 +181,14 @@ ${when(notPlaying, () => html`
     </li>`)}
 </ul>`)}
 
+<h3>Notes</h3>
+
+<form method=post action="?${queryTeamGame}&handler=updateNote" onchange="this.submit()">
+    <elastic-textarea>
+        <textarea name=notes>${notes}</textarea>
+    </elastic-textarea>
+</form>
+
 `
 }
 
@@ -240,11 +249,21 @@ function setPoints(f: (game: Game) => number) {
     }
 }
 
+const dataNotesValidator = {
+    notes: createStringInfinity("Notes")
+}
+
 const postHandlers : PostHandlers = {
     pointsInc: setPoints(game => ++game.points),
     pointsDec: setPoints(game => --game.points),
     oPointsDec: setPoints(game => --game.opponentPoints),
     oPointsInc: setPoints(game => ++game.opponentPoints),
+
+    updateNote: async ({ query, data }) => {
+        let { gameId, teamId } = await validateObject(query, queryTeamIdGameIdValidator)
+        let { notes } = await validateObject(data, dataNotesValidator)
+        await saveGameNotes(teamId, gameId, notes)
+    },
 
     swap: async ({ query }) => {
         let { gameId, playerId, teamId } = await validateObject(query, queryTeamGamePlayerValidator)
@@ -400,6 +419,7 @@ const route : Route = {
             head,
             bodyAttr: `mpa-persist mpa-page-name="game"`,
             main: (await render(req)),
+            scripts: ["/web/js/lib/elastic-textarea.js"],
             title: "Game Play" })
     },
     post: postHandlers,

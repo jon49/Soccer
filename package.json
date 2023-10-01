@@ -10,6 +10,7 @@
   "author": "Jon Nyman",
   "license": "ISC",
   "dependencies": {
+    "@cloudfour/elastic-textarea": "^1.0.7",
     "html-template-tag-stream": "^2.0.0",
     "idb-keyval": "^6.2.1",
     "mpa-enhancer": "^2.2.3",
