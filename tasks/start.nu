@@ -80,26 +80,27 @@ def main [build: bool = false] {
 
     ^npx esbuild $e
 
-    # let bundles = (
-    #     ls **/src/**/js/**/*bundle.ts
-    #     | where type == "file"
-    #     | $in.name
-    # )
+    let bundles = (
+        ls **/src/**/js/**/*.bundle.ts
+        | where type == "file"
+        | $in.name
+    )
 
-    # let eBundle = ($bundles | append [
-    #     $"--outdir=($targetDir)",
-    #     '--outbase=src',
-    #     '--format=iife',
-    #     '--bundle',
-    #     '--entry-names=[dir]/[name].[hash]',
-    # ]
-    # | append (
-    #     if $build {
-    #         [ '--minify' ]
-    #     } else { [] }
-    # ))
+    let eBundle = ($bundles | append [
+        $"--outdir=($targetDir)",
+        '--outbase=src',
+        '--format=iife',
+        '--bundle',
+        '--tree-shaking=true'
+    ]
+    | append (
+        if $build {
+            [ '--minify' ]
+        } else {
+            [ '--entry-names=[dir]/[name].[hash]' ] }
+    ))
 
-    # ^npx esbuild $eBundle
+    ^npx esbuild $eBundle
 
     # write static files to entry-points file
     let files = (

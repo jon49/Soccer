@@ -5,11 +5,13 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "./tasks/start.nu false",
-    "build": "./tasks/start.nu true"
+    "build": "./tasks/start.nu true",
+    "start-game-play": "npx esbuild --watch --outdir=public --outbase=src --format=iife --bundle --tree-shaking=true ./src/web/js/game-play2.bundle.ts"
   },
   "author": "Jon Nyman",
   "license": "ISC",
   "dependencies": {
+    "@arrow-js/core": "^1.0.0-alpha.9",
     "@cloudfour/elastic-textarea": "^1.0.7",
     "html-template-tag-stream": "^2.0.0",
     "idb-keyval": "^6.2.1",
