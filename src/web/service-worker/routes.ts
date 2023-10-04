@@ -9,7 +9,6 @@ import activities from "../pages/activities.html.js"
 import userSettings from "../pages/user-settings/edit.html.js"
 import sync from "../api/sync.js"
 import gameSwap from "../pages/games/game-play-swap.html.js"
-import gamesPlay2 from "../pages/games2/game-play.html.js"
 
 addRoutes([
     index,
@@ -18,7 +17,6 @@ addRoutes([
     gameSwap,
     players,
     gamesPlay,
-    gamesPlay2,
     games,
     positions,
     activities,
