@@ -8,7 +8,8 @@ function parseKey(key: unknown) : string | number {
 
 const settingDefaults : Settings = {
     lastSyncedId: 0,
-    _rev: 0
+    _rev: 0,
+    lastSynced: 0
 }
 
 class GlobalDB {
@@ -27,6 +28,7 @@ class GlobalDB {
     async settings() : Promise<Settings> {
         return { ...settingDefaults, ...((await get("settings")) ?? {}) }
     }
+
 }
 
 const globalDB = new GlobalDB
@@ -35,5 +37,6 @@ export default globalDB
 export interface Settings extends Revision {
     earliestDate?: string
     lastSyncedId: number
+    lastSynced?: number
 }
 

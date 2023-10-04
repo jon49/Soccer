@@ -1,5 +1,7 @@
 (() => {
 
+let w = window
+
 for (let dialog of document.querySelectorAll('dialog.toast')) {
     let id = setTimeout(() => {
         dialog.remove()
@@ -7,10 +9,10 @@ for (let dialog of document.querySelectorAll('dialog.toast')) {
     }, (dialog.dataset.timeout || 3) * 1e3)
 }
 
-if (App?.shouldSync) {
+if (w.App?.shouldSync) {
     sync()
 }
-if (App?.shouldWaitToSync) {
+if (w.App?.shouldWaitToSync) {
     // Sync every 10 minutes
     setTimeout(sync, 6e5)
 }

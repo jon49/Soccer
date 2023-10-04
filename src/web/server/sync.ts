@@ -2,11 +2,8 @@ import { getMany, setMany, set, update } from "./db.js"
 import db from "./global-model.js"
 
 export default async function sync() {
-    console.log("sync")
     let isLoggedIn = await db.isLoggedIn()
     if (!isLoggedIn) return
-
-    console.log("syncing")
 
     let keys = await db.updated()
     const items = await getMany(keys)
@@ -60,10 +57,9 @@ export default async function sync() {
         }
     }
 
-    console.log("finished syncing")
     await Promise.all([
         ...updatedRevisionsTask,
-        update("settings", val => ({ ...val, lastSyncedId: newData.lastSyncedId }), { sync: false }),
+        update("settings", val => ({ ...val, lastSynced: +new Date(), lastSyncedId: newData.lastSyncedId }), { sync: false }),
         update("updated", val => (val?.clear(), val), { sync: false })])
 }
 

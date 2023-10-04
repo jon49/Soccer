@@ -17,8 +17,13 @@ interface Render {
 
 const render = async ({theme}: Render, o: LayoutTemplateArguments) => {
     const { main, head, scripts, nav, title, bodyAttr } = o
-    const [isLoggedIn, updated] = await Promise.all([db.isLoggedIn(), db.updated()])
+    const [isLoggedIn, updated, { lastSynced }] = await Promise.all([
+        db.isLoggedIn(),
+        db.updated(),
+        db.settings()
+    ])
     const updatedCount = updated.length
+
     return html`
 <!DOCTYPE html>
 <html>
@@ -91,6 +96,7 @@ const render = async ({theme}: Render, o: LayoutTemplateArguments) => {
     <script>
         App = window.App ?? {};
         ${when(updatedCount, _ => html`App.shouldWaitToSync = true`)}
+        ${when(+new Date() - lastSynced > /* 2 hours */ 1e3*60*60*2, _ => html`App.shouldSync = true`)}
     </script>
     <script src="/web/js/app.js"></script>
 </body>
