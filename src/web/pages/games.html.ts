@@ -4,7 +4,7 @@ import { teamGet, teamSave } from "../server/repo-team.js"
 import { PostHandlers, Route } from "../server/route.js"
 import { when } from "../server/shared.js"
 import { equals, getNewId, searchParams } from "../server/utils.js"
-import { assert, createCheckbox, createDateTimeString, createIdNumber, createString25, createString50, maybe, required, validate, validateObject } from "../server/validation.js"
+import { assert, createCheckbox, createDateTimeString, createIdNumber, createString50, required, validate, validateObject } from "../server/validation.js"
 import { queryTeamIdValidator } from "../server/validators.js"
 import layout from "./_layout.html.js"
 

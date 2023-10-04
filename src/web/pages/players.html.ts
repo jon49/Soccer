@@ -37,14 +37,14 @@ function render(o: PlayersEditView) {
 <h3 id=team>Team Settings</h3>
 <form class=form method=post action="?handler=editTeam&teamId=${team.id}">
     <div class=inline>
-        <label for=team>Team Name:</label><input id=team name=name type=text value="${team.name}">
+        <label for=team>Team Name:</label><input id=team-input name=name type=text value="${team.name}">
     </div>
     <div class=inline>
-        <label for=year>Year:</label> <input id=year name=year type=text value="${team.year}">
+        <label for=year>Year:</label> <input id=year-input name=year type=text value="${team.year}">
     </div>
-    <div>
+    <div id=team-active>
         <label class=toggle>
-            <input id=team-active name=active type=checkbox $${when(team.active, "checked")}>
+            <input mpa-target="#team-active" name=active type=checkbox $${when(team.active, "checked")}>
             <span class="off button">Inactive</span>
             <span class="on button">Active</span>
         </label>
@@ -75,7 +75,7 @@ function playerView(team: Team, playerId: number) {
     let playerId_ : string = `edit-player${playerId}`
 
     return html`
-<div>
+<div id="active-${playerId_}">
     <form method=post action="?handler=editPlayer&$${teamPlayerQuery}">
         <div>
             <input id=${playerId_} class=editable name=name type=text value="${player.name}">
@@ -83,7 +83,11 @@ function playerView(team: Team, playerId: number) {
         </div>
         <div>
             <label class=toggle>
-                <input id="active-${playerId_}" name=active type=checkbox $${when(player.active, "checked")}>
+                <input
+                    mpa-target="#active-${playerId_}"
+                    name=active
+                    type=checkbox
+                    $${when(player.active, "checked")}>
                 <span class="off button full-width">Inactive</span>
                 <span class="on button full-width">Active</span>
             </label>
