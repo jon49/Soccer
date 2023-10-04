@@ -53,7 +53,7 @@ function render({ team }: GameView) {
 }
 
 function getGameView(teamId: number, game: Game) {
-    return html`<li id=game-${game.id}>${getGamePartialView(teamId, game)}</li>`
+    return html`<li onchange="event.target.form.submit()" id=game-${game.id}>${getGamePartialView(teamId, game)}</li>`
 }
 
 function formatTime(time: string | undefined) {
@@ -78,7 +78,6 @@ function getGamePartialView(teamId: number, game: Game) {
     name=date
     required
     value="${game.date}${when(game.time, x => html`T$${x}`)}"
-    onchange="this.form.submit()"
     >
 <label for="game-date-${game.id}">
     <a href="?$${teamQuery}&gameId=${game.id}">${game.date} (${formatTime(game.time)})</a>
@@ -95,7 +94,7 @@ function getGamePartialView(teamId: number, game: Game) {
     <a href="?$${teamQuery}&gameId=${game.id}">${game.opponent}</a>
     <span class=editable-pencil>&#9998;</span>
 </label>
-<input form=${formId} class=inline id="home-${game.id}" type=checkbox name=home $${when(game.home, "checked")} onchange="this.form.submit()">
+<input form=${formId} class=inline id="home-${game.id}" type=checkbox name=home $${when(game.home, "checked")}>
 <label for="home-${game.id}">Home</label>
 <form id=${formId} class=hidden method=post action="?${teamQuery}&handler=edit" onchange="this.submit()"></form>
 `
