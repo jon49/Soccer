@@ -57,7 +57,7 @@ async function render(req: Request) {
     return html`
 <h2>Game Play — ${game.home ? "Home" : "Away"} — ${game.opponent}</h2>
 
-<div>
+<div id=root>
     ${when(!isEnded, () => html`
     <form class=inline method=post action="?$${queryTeamGame}&handler=${isInPlay ? "pauseGame" : "startGame"}">
         <button>${isInPlay ? "Pause" : "Start"}</button>
@@ -131,7 +131,7 @@ ${when(inPlayPlayers.length, function* positionViews() {
 ${when(onDeck, () => html`
 <h3>On Deck</h3>
 
-<ul id=on-deck-players class=list>
+<ul mpa-miss="#root" class=list>
     ${onDeckPlayers.map(x => {
         let currentPlayer = inPlayPlayers.find(y => y.playerId === x.status.currentPlayerId)
         return html`
@@ -417,7 +417,7 @@ const route : Route = {
             <script src="/web/js/game-shader.js"></script>`
         return layout(req, {
             head,
-            bodyAttr: `mpa-persist mpa-page-name="game"`,
+            bodyAttr: `mpa-persist mpa-page-name="game-play"`,
             main: (await render(req)),
             scripts: ["/web/js/lib/elastic-textarea.js"],
             title: "Game Play" })

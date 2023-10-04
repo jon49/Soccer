@@ -15,7 +15,7 @@
     "@cloudfour/elastic-textarea": "^1.0.7",
     "html-template-tag-stream": "^2.0.0",
     "idb-keyval": "^6.2.1",
-    "mpa-enhancer": "^2.2.3",
+    "mpa-enhancer": "^2.2.6",
     "promise-validation": "^4.0.1"
   }
 }
