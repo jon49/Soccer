@@ -7,7 +7,7 @@ import { validateObject } from "promise-validation"
 import { searchParams } from "../../server/utils.js"
 import { getGameNotes, saveGameNotes, teamGet, teamSave } from "../../server/repo-team.js"
 import { createIdNumber, createPositiveWholeNumber, createStringInfinity, required } from "../../server/validation.js"
-import { Game, NotPlayingPlayer, OutPlayer, PlayerGame, PlayerGameStatus } from "../../server/db.js"
+import { Game, NotPlayingPlayer, OutPlayer, PlayerGame, PlayerGameStatus, Team } from "../../server/db.js"
 import { playerGameAllGet, playerGameSave, positionGetAll } from "../../server/repo-player-game.js"
 import { GameTimeCalculator, PlayerGameTimeCalculator, createPlayersView, filterInPlayPlayers, filterOnDeckPlayers } from "./shared.js"
 
@@ -25,7 +25,7 @@ function filterNotPlayingPlayers(x: PlayerGame) : x is PlayerGameStatus<NotPlayi
 
 async function render(req: Request) {
     let { teamId, gameId } = await validateObject(searchParams(req), queryTeamIdGameIdValidator)
-    let team = await teamGet(teamId)
+    let [team, notes ] = await Promise.all([teamGet(teamId), getGameNotes(teamId, gameId)])
     team.players = team.players.filter(x => x.active)
     let game = await required(team.games.find(x => x.id === gameId), "Could not find game ID!")
     let queryTeamGame = `teamId=${team.id}&gameId=${game.id}`
@@ -34,25 +34,6 @@ async function render(req: Request) {
     let isInPlay = game.status === "play"
     let isEnded = game.status === "ended"
     let isPaused = game.status === "paused" || (!isInPlay && !isEnded)
-
-    let [ players, { grid, positions }, { notes } ] = await Promise.all([
-        playerGameAllGet(teamId, gameId, team.players.map(x => x.id)),
-        positionGetAll(teamId),
-        getGameNotes(teamId, gameId)
-    ])
-
-    let inPlayPlayers = await createPlayersView(filterInPlayPlayers, team.players, players)
-    let inPlay = inPlayPlayers.length > 0
-
-    let onDeckPlayers = await createPlayersView(filterOnDeckPlayers, team.players, players)
-    let onDeck = onDeckPlayers.length > 0
-
-    let outPlayers = await createPlayersView(filterOutPlayers, team.players, players)
-    let out = outPlayers.length > 0
-    outPlayers.sort((a, b) => a.calc.total() - b.calc.total())
-
-    let notPlayingPlayers = await createPlayersView(filterNotPlayingPlayers, team.players, players)
-    let notPlaying = notPlayingPlayers.length > 0
 
     return html`
 <h2>Game Play — ${game.home ? "Home" : "Away"} — ${game.opponent}</h2>
@@ -91,6 +72,39 @@ async function render(req: Request) {
     </ul>
 </div>
 
+<div id="player-state">${playerState(team, gameId, gameCalc, queryTeamGame, isInPlay)}</div>
+
+<h3>Notes</h3>
+
+<form method=post action="?${queryTeamGame}&handler=updateNote" onchange="this.requestSubmit()">
+    <elastic-textarea>
+        <textarea name=notes>${notes}</textarea>
+    </elastic-textarea>
+</form>
+`
+}
+
+async function playerState(team: Team, gameId: number, gameCalc: GameTimeCalculator, queryTeamGame: string, isInPlay: boolean) {
+    let teamId = team.id
+    let [ players, { grid, positions } ] = await Promise.all([
+        playerGameAllGet(teamId, gameId, team.players.map(x => x.id)),
+        positionGetAll(teamId)
+    ])
+
+    let inPlayPlayers = await createPlayersView(filterInPlayPlayers, team.players, players)
+    let inPlay = inPlayPlayers.length > 0
+
+    let onDeckPlayers = await createPlayersView(filterOnDeckPlayers, team.players, players)
+    let onDeck = onDeckPlayers.length > 0
+
+    let outPlayers = await createPlayersView(filterOutPlayers, team.players, players)
+    let out = outPlayers.length > 0
+    outPlayers.sort((a, b) => a.calc.total() - b.calc.total())
+
+    let notPlayingPlayers = await createPlayersView(filterNotPlayingPlayers, team.players, players)
+    let notPlaying = notPlayingPlayers.length > 0
+
+    return html`
 <h3>In-Play</h3>
 
 ${when(!inPlay, () => html`<p>No players are in play.</p>`)}
@@ -180,16 +194,8 @@ ${when(notPlaying, () => html`
         </form>
     </li>`)}
 </ul>`)}
-
-<h3>Notes</h3>
-
-<form method=post action="?${queryTeamGame}&handler=updateNote" onchange="this.requestSubmit()">
-    <elastic-textarea>
-        <textarea name=notes>${notes}</textarea>
-    </elastic-textarea>
-</form>
-
 `
+
 }
 
 function getPlayerPosition(player : PlayerGame) {
