@@ -2,12 +2,27 @@
 
 let w = window
 
-for (let dialog of document.querySelectorAll('dialog.toast')) {
-    let id = setTimeout(() => {
-        dialog.remove()
-        clearTimeout(id)
-    }, (dialog.dataset.timeout || 3) * 1e3)
+document.addEventListener("user-messages", e => {
+    let template = document.getElementById("toast-template")
+    let toasts = document.getElementById("toasts")
+    for (let message of e.detail) {
+        let clone = template.content.cloneNode(true)
+        clone.querySelector(".message").textContent = message
+        toasts.appendChild(clone)
+    }
+    closeDialogs()
+})
+
+function closeDialogs() {
+    for (let dialog of document.querySelectorAll("dialog.toast")) {
+        let id = setTimeout(() => {
+            dialog.remove()
+            clearTimeout(id)
+        }, (dialog.dataset.timeout || 3) * 1e3)
+    }
 }
+
+closeDialogs()
 
 if (w.App?.shouldSync) {
     sync()

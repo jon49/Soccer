@@ -51,6 +51,13 @@ async function get(url: URL, req: Request, event: FetchEvent) : Promise<Response
     return new Response("Not Found!")
 }
 
+function setHtmfMessage(response: Response) {
+    response.headers.set("hf-events", JSON.stringify({
+            "user-messages": messages
+        }))
+    messages = []
+}
+
 async function post(url: URL, req: Request) : Promise<Response> {
     let handler =
         <RoutePost | PostHandlers |null>
@@ -74,11 +81,12 @@ async function post(url: URL, req: Request) : Promise<Response> {
             if ("response" in result) {
                 result = result.response
             }
-            if (result instanceof Response) {
-                return result
+            if (result.__proto__.toString() === '[object AsyncGenerator]') {
+                result = streamResponse(url.pathname, result)
             }
-            if (result) {
-                return streamResponse(url.pathname, result)
+            if (result instanceof Response) {
+                setHtmfMessage(result)
+                return result
             }
             return redirect(req)
         } catch (error) {
@@ -127,7 +135,6 @@ async function cacheResponse(url: string, event: { request: string | Request } |
 
 const encoder = new TextEncoder()
 function streamResponse(url: string, generator: AsyncGenerator | { body: Generator, headers?: any }) : Response {
-    console.log(`Loading ${url}`)
     let { body, headers } = "body" in generator ? generator : { body: generator, headers: {} }
     const stream = new ReadableStream({
         async start(controller : ReadableStreamDefaultController<any>) {
@@ -139,7 +146,11 @@ function streamResponse(url: string, generator: AsyncGenerator | { body: Generat
         }
     })
 
-    return new Response(stream, { headers: { ...htmlHeader(), ...headers }})
+    return new Response(stream, {
+        headers: {
+            ...htmlHeader(),
+            ...headers,
+        }})
 }
 
 /**

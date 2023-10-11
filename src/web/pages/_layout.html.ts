@@ -15,8 +15,16 @@ interface Render {
     referrer: URL | null
 }
 
-const render = async ({theme}: Render, o: LayoutTemplateArguments) => {
-    const { main, head, scripts, nav, title, bodyAttr } = o
+const render = async (
+    {theme}: Render,
+    { main,
+      head,
+      scripts,
+      nav,
+      title,
+      bodyAttr,
+      useHtmf
+    }: LayoutTemplateArguments) => {
     const [isLoggedIn, updated, { lastSynced }] = await Promise.all([
         db.isLoggedIn(),
         db.updated(),
@@ -84,13 +92,22 @@ const render = async ({theme}: Render, o: LayoutTemplateArguments) => {
             if (e) yield html`<dialog class=toast open><p class=error>${e}</p></dialog>`
         }
     }}
+
+    <template id=toast-template><dialog class=toast open><p class=message></p></dialog></template>
+    <div id=toasts>
     ${function* printMessages() {
         while (messages.length) {
             const m = messages.shift()
             if (m) yield html`<dialog class=toast open><p class=message>${m}</p></dialog>`
         }
     }}
+    </div>
+
     <footer><p>${version}</p></footer>
+    ${ null /*useHtmf
+        ? html`<script src="/web/js/lib/htmf.min.js"></script>`
+    : html`<script src="/web/js/lib/mpa.min.js"></script>`*/ }
+    ${when(useHtmf, () => html`<script src="/web/js/lib/htmf.min.js"></script>`)}
     <script src="/web/js/lib/mpa.min.js"></script>
     ${(scripts ?? []).map(x => html`<script src="${x}"></script>`)}
     <script>
@@ -118,4 +135,5 @@ export interface LayoutTemplateArguments {
     main?: AsyncGenerator<any, void, unknown>
     scripts?: string[]
     nav?: Nav[]
+    useHtmf?: boolean
 }

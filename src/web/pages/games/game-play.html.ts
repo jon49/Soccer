@@ -6,7 +6,7 @@ import { queryTeamIdGameIdValidator } from "../../server/validators.js"
 import { validateObject } from "promise-validation"
 import { searchParams } from "../../server/utils.js"
 import { getGameNotes, saveGameNotes, teamGet, teamSave } from "../../server/repo-team.js"
-import { createIdNumber, createPositiveWholeNumber, createString50, createStringInfinity, required } from "../../server/validation.js"
+import { createIdNumber, createPositiveWholeNumber, createStringInfinity, required } from "../../server/validation.js"
 import { Game, NotPlayingPlayer, OutPlayer, PlayerGame, PlayerGameStatus } from "../../server/db.js"
 import { playerGameAllGet, playerGameSave, positionGetAll } from "../../server/repo-player-game.js"
 import { GameTimeCalculator, PlayerGameTimeCalculator, createPlayersView, filterInPlayPlayers, filterOnDeckPlayers } from "./shared.js"
@@ -76,14 +76,14 @@ async function render(req: Request) {
     <ul class=list>
         <li>
             <span>Points</span>
-            <form id=team-points class=inline method=post hidden></form>
+            <form id=team-points class=inline method=post hf-target="#points" hidden></form>
             <button formaction="?$${queryTeamGame}&handler=pointsDec" form=team-points>-</button>
             <span id=points>${getPointsView(game.points)}</span>
             <button formaction="?$${queryTeamGame}&handler=pointsInc" form=team-points>+</button>
         </li>
         <li>
             <span>Opponent</span>
-            <form id=opponent-points class=inline method=post hidden></form>
+            <form id=opponent-points class=inline method=post hf-target="#o-points" hidden></form>
             <button formaction="?$${queryTeamGame}&handler=oPointsDec" form=opponent-points>-</button>
             <span id=o-points>${getPointsView(game.opponentPoints)}</span>
             <button formaction="?$${queryTeamGame}&handler=oPointsInc" form=opponent-points>+</button>
@@ -183,7 +183,7 @@ ${when(notPlaying, () => html`
 
 <h3>Notes</h3>
 
-<form method=post action="?${queryTeamGame}&handler=updateNote" onchange="this.submit()">
+<form method=post action="?${queryTeamGame}&handler=updateNote" onchange="this.requestSubmit()">
     <elastic-textarea>
         <textarea name=notes>${notes}</textarea>
     </elastic-textarea>
@@ -246,6 +246,7 @@ function setPoints(f: (game: Game) => number) {
         } else {
             points = 0
         }
+        return getPointsView(points)
     }
 }
 
@@ -263,6 +264,7 @@ const postHandlers : PostHandlers = {
         let { gameId, teamId } = await validateObject(query, queryTeamIdGameIdValidator)
         let { notes } = await validateObject(data, dataNotesValidator)
         await saveGameNotes(teamId, gameId, notes)
+        return new Response(null, { status: 204 })
     },
 
     swap: async ({ query }) => {
@@ -420,7 +422,9 @@ const route : Route = {
             bodyAttr: `mpa-persist mpa-page-name="game-play"`,
             main: (await render(req)),
             scripts: ["/web/js/lib/elastic-textarea.js"],
-            title: "Game Play" })
+            title: "Game Play",
+            useHtmf: true,
+        })
     },
     post: postHandlers,
 }
