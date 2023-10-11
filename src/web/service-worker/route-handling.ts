@@ -3,6 +3,7 @@ import { version } from "../server/settings.js"
 import { options } from "../server/route.js"
 import { redirect, reject, searchParams } from "../server/utils.js"
 import links from "../entry-points.js"
+import { isHtml } from "html-template-tag-stream"
 
 options.searchParams = searchParams
 options.reject = reject
@@ -45,17 +46,20 @@ async function get(url: URL, req: Request, event: FetchEvent) : Promise<Response
         if (result instanceof Response) {
             return result
         } else {
-            return streamResponse(url.pathname, result)
+            return streamResponse({ body: result, headers: {}})
         }
     }
     return new Response("Not Found!")
 }
 
-function setHtmfMessage(response: Response) {
-    response.headers.set("hf-events", JSON.stringify({
-            "user-messages": messages
-        }))
+function htmfHeader(req: Request, headers : any = {}) {
+    if (!req.headers.has("HF-Request")) return headers
+    headers["hf-events"] = JSON.stringify({
+        "user-messages": messages,
+        ...(headers["hf-events"] || {})
+    })
     messages = []
+    return headers
 }
 
 async function post(url: URL, req: Request) : Promise<Response> {
@@ -78,14 +82,29 @@ async function post(url: URL, req: Request) : Promise<Response> {
             } else {
                 messages.push("Saved!")
             }
+            if ("status" in result) {
+                let headers = result.headers || {}
+                result.headers = htmfHeader(req, headers)
+                if (isHtml(result.body)) {
+                    result = streamResponse(result)
+                } else {
+                    result = new Response(result.body, {
+                        status: result.status,
+                        headers: result.headers
+                    })
+                }
+            }
             if ("response" in result) {
                 result = result.response
             }
-            if (result.__proto__.toString() === '[object AsyncGenerator]') {
-                result = streamResponse(url.pathname, result)
+            if (isHtml(result)) {
+                result = {
+                    body: result,
+                    headers: htmfHeader(req)
+                }
+                result = streamResponse(result)
             }
             if (result instanceof Response) {
-                setHtmfMessage(result)
                 return result
             }
             return redirect(req)
@@ -134,8 +153,8 @@ async function cacheResponse(url: string, event: { request: string | Request } |
 }
 
 const encoder = new TextEncoder()
-function streamResponse(url: string, generator: AsyncGenerator | { body: Generator, headers?: any }) : Response {
-    let { body, headers } = "body" in generator ? generator : { body: generator, headers: {} }
+function streamResponse(response: { body: Generator, headers?: any }) : Response {
+    let { body, headers } = response
     const stream = new ReadableStream({
         async start(controller : ReadableStreamDefaultController<any>) {
             for await (let x of body) {
