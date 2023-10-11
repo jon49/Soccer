@@ -75,6 +75,10 @@ async function post(url: URL, req: Request) : Promise<Response> {
                     ? handler
                 : handlePost(handler))({ req, data })
 
+            if (result instanceof Response) {
+                return result
+            }
+
             if ("message" in result) {
                 if (result.message.length > 0) {
                     messages.push(result.message)
@@ -167,7 +171,7 @@ function streamResponse(response: { body: Generator, headers?: any }) : Response
 
     return new Response(stream, {
         headers: {
-            ...htmlHeader(),
+            "content-type": "text/html; charset=utf-8",
             ...headers,
         }})
 }
@@ -186,9 +190,4 @@ function normalizeUrl(url: string) : URL {
 function isFile(s: string) {
     return s.lastIndexOf("/") < s.lastIndexOf(".")
 }
-
-function htmlHeader() {
-    return { "content-type": "text/html; charset=utf-8" }
-}
-
 
