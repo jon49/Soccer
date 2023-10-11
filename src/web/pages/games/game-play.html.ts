@@ -25,7 +25,7 @@ function filterNotPlayingPlayers(x: PlayerGame) : x is PlayerGameStatus<NotPlayi
 
 async function render(req: Request) {
     let { teamId, gameId } = await validateObject(searchParams(req), queryTeamIdGameIdValidator)
-    let [team, notes ] = await Promise.all([teamGet(teamId), getGameNotes(teamId, gameId)])
+    let [team, { notes } ] = await Promise.all([teamGet(teamId), getGameNotes(teamId, gameId)])
     team.players = team.players.filter(x => x.active)
     let game = await required(team.games.find(x => x.id === gameId), "Could not find game ID!")
     let queryTeamGame = `teamId=${team.id}&gameId=${game.id}`
