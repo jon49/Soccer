@@ -264,7 +264,7 @@ const postHandlers : PostHandlers = {
         let { gameId, teamId } = await validateObject(query, queryTeamIdGameIdValidator)
         let { notes } = await validateObject(data, dataNotesValidator)
         await saveGameNotes(teamId, gameId, notes)
-        return new Response(null, { status: 204 })
+        return { body: null, status: 204 }
     },
 
     swap: async ({ query }) => {
