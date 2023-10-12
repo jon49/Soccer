@@ -89,9 +89,11 @@ async function playerState(o: PlayerStateView) {
     let queryTeamGame = o.queryTeamGame
 
     return html`
-<h3 id=in-play-players>In-Play</h3>
+<h3>In-Play</h3>
 
+<div id=in-play-players>
 ${inPlayPlayersView(o)}
+</div>
 
 ${when(onDeck, () => html`
 <h3>On Deck</h3>
