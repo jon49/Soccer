@@ -4,23 +4,15 @@ import layout from "../_layout.html.js"
 import { when } from "../../server/html.js"
 import { queryTeamIdGameIdValidator } from "../../server/validators.js"
 import { validateObject } from "promise-validation"
-import { searchParams } from "../../server/utils.js"
-import { getGameNotes, saveGameNotes, teamGet, teamSave } from "../../server/repo-team.js"
+import { saveGameNotes, teamGet, teamSave } from "../../server/repo-team.js"
 import { createIdNumber, createPositiveWholeNumber, createStringInfinity, required } from "../../server/validation.js"
-import { Game, NotPlayingPlayer, OutPlayer, PlayerGame, PlayerGameStatus } from "../../server/db.js"
-import { playerGameAllGet, playerGameSave, positionGetAll } from "../../server/repo-player-game.js"
-import { GameTimeCalculator, PlayerGameTimeCalculator, createPlayersView, filterInPlayPlayers, filterOnDeckPlayers } from "./shared.js"
+import { Game, PlayerGame } from "../../server/db.js"
+import { playerGameAllGet, playerGameSave } from "../../server/repo-player-game.js"
+import { GameTimeCalculator, PlayerGameTimeCalculator, PlayerStateView, filterInPlayPlayers, filterOnDeckPlayers } from "./shared.js"
+import { inPlayPlayersView } from "./_in-play-players-view.js"
 
 function getPointsView(points: number) {
     return html`&nbsp;${points || "0"}&nbsp;`
-}
-
-function filterOutPlayers(x: PlayerGame) : x is PlayerGameStatus<OutPlayer> {
-    return !x.status || x.status?._ === "out"
-}
-
-function filterNotPlayingPlayers(x: PlayerGame) : x is PlayerGameStatus<NotPlayingPlayer> {
-    return x.status?._ === "notPlaying"
 }
 
 async function render(req: Request) {
@@ -83,52 +75,6 @@ async function render(req: Request) {
 `
 }
 
-async function inPlayPlayersView(o: PlayerStateView) {
-    let inPlay = await o.inPlayPlayers(),
-        isGameInPlay = await o.isGameInPlay(),
-        { grid, positions } = await o.positions(),
-        onDeckPlayers = await o.onDeckPlayers(),
-        inPlayPlayers = await o.inPlayPlayers(),
-        queryTeamGame = o.queryTeamGame,
-        gameCalc = await o.gameCalc()
-
-    return html`
-${when(!inPlay, () => html`<p>No players are in play.</p>`)}
-${when(inPlayPlayers.length, function* positionViews() {
-    let count = 0
-    for (let width of grid) {
-        yield html`<div class="row grid-center">`
-        let p = positions.slice(count, count + width)
-        if (p.length < width) {
-            p = p.concat(new Array(width - p.length).fill("None"))
-        }
-        yield p.map(() => {
-            let player = inPlayPlayers.find(x => count === x.status.position)
-            let sub = player && onDeckPlayers.find(x => x.status.currentPlayerId === player?.playerId)
-            let view = html`<form method=post>${
-            () => {
-                return player
-                    ? html`
-                <game-shader data-total="${gameCalc.currentTotal()}" data-value="${player.calc.currentTotal()}">
-                    <div>
-                        ${when(sub, sub => html`<span>${player?.name} (${sub.name})</span>`)}
-                        ${when(!sub, () => html`<a href="?$${queryTeamGame}&playerId=${player?.playerId}&handler=placePlayerOnDeck&playerSwap#game-swap-top">${player?.name}</a>`)}
-                        <game-timer data-start="${player.calc.getLastStartTime()}" data-total="${player.calc.total()}" ${when(!isGameInPlay, "data-static")}></game-timer>
-                        <button formaction="?${queryTeamGame}&playerId=${player.playerId}&handler=playerNowOut">X</button>
-                    </div>
-                </game-shader>
-                    `
-                : html`<span></span>`
-            }
-            }</form>`
-            count++
-            return view
-        })
-        yield html`</div>`
-    }
-})}`
-}
-
 async function playerState(o: PlayerStateView) {
     let { positions } = await o.positions()
 
@@ -155,10 +101,10 @@ ${when(onDeck, () => html`
         let currentPlayer = inPlayPlayers.find(y => y.playerId === x.status.currentPlayerId)
         return html`
     <li>
-        <form method=post action="?$${queryTeamGame}&playerId=$${x.playerId}&handler=swap">
+        <form method=post action="?$${queryTeamGame}&playerId=${x.playerId}&handler=swap">
             <button>Swap</button>
         </form>
-        <form method=post action="?$${queryTeamGame}&playerId=$${x.playerId}&handler=cancelOnDeck">
+        <form method=post action="?$${queryTeamGame}&playerId=${x.playerId}&handler=cancelOnDeck">
             <button class=danger>X</button>
         </form>
         <span>${x.name} - ${positions[x.status.targetPosition]}${when(currentPlayer, c => html` (${c.name})`)}</span>
@@ -185,7 +131,6 @@ ${when(notPlaying, () => html`
     </li>`)}
 </ul>`)}
 `
-
 }
 
 async function outPlayersView(o: PlayerStateView) {
@@ -450,140 +395,4 @@ const route : Route = {
 }
 
 export default route
-
-class PlayerStateView {
-    #teamId: number
-    #gameId: number
-    #cache: Cache
-    constructor(teamId: number, gameId: number) {
-        this.#teamId = teamId
-        this.#gameId = gameId
-        this.#cache = new Cache()
-    }
-
-    async team() {
-        return this.#cache.get("team", async () => {
-            let team = await teamGet(this.#teamId)
-            team.players = team.players.filter(x => x.active)
-            return team
-        })
-    }
-
-    async notes() {
-        return this.#cache.get("notes", async () =>
-            (await getGameNotes(this.#teamId, this.#gameId)).notes)
-    }
-
-    async game() {
-        return this.#cache.get("game", async () =>
-            required(
-                (await this.team()).games.find(x => x.id === this.#gameId),
-                "Could not find game ID!"))
-    }
-
-    get queryTeamGame() {
-        return `teamId=${this.#teamId}&gameId=${this.#gameId}`
-    }
-
-    async gameCalc() {
-        return this.#cache.get("gameCalc", async () =>
-            new GameTimeCalculator(await this.game())
-        )
-    }
-
-    async isGameInPlay() {
-        return this.#cache.get("isGameInPlay", async () =>
-            (await this.game()).status === "play"
-        )
-    }
-
-    async isGameEnded() {
-        return this.#cache.get("isGameEnded", async () =>
-            (await this.game()).status === "ended"
-        )
-    }
-
-    async isGamePaused() {
-        return this.#cache.get("isGamePaused", async () => {
-            return (await this.game()).status === "paused" || !(await this.isGameInPlay()) && !(await this.isGameEnded())
-        })
-    }
-
-    async gamePlayers() {
-        return this.#cache.get("gamePlayers", async () => {
-            let team = await this.team()
-            return await playerGameAllGet(this.#teamId, this.#gameId, team.players.map(x => x.id))
-        })
-    }
-
-    async positions() {
-        return this.#cache.get("positions", () => positionGetAll(this.#teamId))
-    }
-
-    async inPlayPlayers() {
-        return this.#cache.get("inPlayPlayers", async () =>
-            createPlayersView(filterInPlayPlayers, (await this.team()).players, (await this.gamePlayers()))
-        )
-    }
-
-    async playersInPlay() {
-        return this.#cache.get("playersInPlay", async () =>
-            (await this.inPlayPlayers()).length
-        )
-    }
-
-    async onDeckPlayers() {
-        return this.#cache.get("onDeckPlayers", async () =>
-            createPlayersView(filterOnDeckPlayers, (await this.team()).players, (await this.gamePlayers()))
-        )
-    }
-
-    async playersOnDeck() {
-        return this.#cache.get("playersOnDeck", async () => (await this.onDeckPlayers()).length)
-    }
-
-
-    async outPlayers() {
-        return this.#cache.get("outPlayers", async () => {
-            let players = await createPlayersView(filterOutPlayers, (await this.team()).players, (await this.gamePlayers()))
-            return players.sort((a, b) => a.calc.total() - b.calc.total())
-        })
-    }
-
-    async playersOut() {
-        return this.#cache.get("playersOut", async () => (await this.outPlayers()).length)
-    }
-
-    async notPlayingPlayers() {
-        return this.#cache.get("notPlayingPlayers", async () =>
-            createPlayersView(filterNotPlayingPlayers, (await this.team()).players, (await this.gamePlayers()))
-        )
-    }
-
-    async playersNotPlaying() {
-        return this.#cache.get("playersNotPlaying", async () => (await this.notPlayingPlayers()).length)
-    }
-
-    static async create(req: Request) {
-        let { teamId, gameId } = await validateObject(searchParams(req), queryTeamIdGameIdValidator)
-        return new PlayerStateView(teamId, gameId)
-    }
-
-}
-
-class Cache {
-    #cache: Map<string, any>
-    constructor() {
-        this.#cache = new Map()
-    }
-
-    async get<T>(key: string, fn: () => Promise<T>): Promise<T> {
-        if (this.#cache.has(key)) {
-            return this.#cache.get(key)
-        }
-        let value = await fn()
-        this.#cache.set(key, value)
-        return value
-    }
-}
 
