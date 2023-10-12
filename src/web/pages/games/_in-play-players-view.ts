@@ -13,7 +13,7 @@ export async function inPlayPlayersView(o: PlayerStateView) {
 
     return html`
 ${when(!inPlay, () => html`<p>No players are in play.</p>`)}
-${when(inPlayPlayers.length, () => function* positionViews() {
+${when(inPlayPlayers.length, function* positionViews() {
     let count = 0
     for (let width of grid) {
         yield html`<div class="row grid-center">`
