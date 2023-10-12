@@ -84,7 +84,7 @@ async function render(req: Request) {
 `
 }
 
-function inPlayerPlayersView(
+function inPlayPlayersView(
     inPlay: boolean,
     isInPlay: boolean,
     grid: number[],
@@ -153,7 +153,7 @@ async function playerState(team: Team, gameId: number, gameCalc: GameTimeCalcula
     return html`
 <h3 id=in-play-players>In-Play</h3>
 
-${inPlayerPlayersView(
+${inPlayPlayersView(
     inPlay,
     isInPlay,
     grid,
