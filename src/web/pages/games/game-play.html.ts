@@ -7,9 +7,9 @@ import { validateObject } from "promise-validation"
 import { searchParams } from "../../server/utils.js"
 import { getGameNotes, saveGameNotes, teamGet, teamSave } from "../../server/repo-team.js"
 import { createIdNumber, createPositiveWholeNumber, createStringInfinity, required } from "../../server/validation.js"
-import { Game, NotPlayingPlayer, OutPlayer, PlayerGame, PlayerGameStatus, Team } from "../../server/db.js"
+import { Game, InPlayPlayer, NotPlayingPlayer, OnDeckPlayer, OutPlayer, PlayerGame, PlayerGameStatus, Team } from "../../server/db.js"
 import { playerGameAllGet, playerGameSave, positionGetAll } from "../../server/repo-player-game.js"
-import { GameTimeCalculator, PlayerGameTimeCalculator, createPlayersView, filterInPlayPlayers, filterOnDeckPlayers } from "./shared.js"
+import { GamePlayerStatusView, GameTimeCalculator, PlayerGameTimeCalculator, createPlayersView, filterInPlayPlayers, filterOnDeckPlayers } from "./shared.js"
 
 function getPointsView(points: number) {
     return html`&nbsp;${points || "0"}&nbsp;`
@@ -84,29 +84,16 @@ async function render(req: Request) {
 `
 }
 
-async function playerState(team: Team, gameId: number, gameCalc: GameTimeCalculator, queryTeamGame: string, isInPlay: boolean) {
-    let teamId = team.id
-    let [ players, { grid, positions } ] = await Promise.all([
-        playerGameAllGet(teamId, gameId, team.players.map(x => x.id)),
-        positionGetAll(teamId)
-    ])
-
-    let inPlayPlayers = await createPlayersView(filterInPlayPlayers, team.players, players)
-    let inPlay = inPlayPlayers.length > 0
-
-    let onDeckPlayers = await createPlayersView(filterOnDeckPlayers, team.players, players)
-    let onDeck = onDeckPlayers.length > 0
-
-    let outPlayers = await createPlayersView(filterOutPlayers, team.players, players)
-    let out = outPlayers.length > 0
-    outPlayers.sort((a, b) => a.calc.total() - b.calc.total())
-
-    let notPlayingPlayers = await createPlayersView(filterNotPlayingPlayers, team.players, players)
-    let notPlaying = notPlayingPlayers.length > 0
-
+function inPlayerPlayersView(
+    inPlay: boolean,
+    isInPlay: boolean,
+    grid: number[],
+    positions: string[],
+    onDeckPlayers: GamePlayerStatusView<OnDeckPlayer>[],
+    inPlayPlayers: GamePlayerStatusView<InPlayPlayer>[],
+    queryTeamGame: string,
+    gameCalc: GameTimeCalculator) {
     return html`
-<h3>In-Play</h3>
-
 ${when(!inPlay, () => html`<p>No players are in play.</p>`)}
 ${when(inPlayPlayers.length, function* positionViews() {
     let count = 0
@@ -140,7 +127,41 @@ ${when(inPlayPlayers.length, function* positionViews() {
         })
         yield html`</div>`
     }
-})}
+})}`
+}
+
+async function playerState(team: Team, gameId: number, gameCalc: GameTimeCalculator, queryTeamGame: string, isInPlay: boolean) {
+    let teamId = team.id
+    let [ players, { grid, positions } ] = await Promise.all([
+        playerGameAllGet(teamId, gameId, team.players.map(x => x.id)),
+        positionGetAll(teamId)
+    ])
+
+    let inPlayPlayers = await createPlayersView(filterInPlayPlayers, team.players, players)
+    let inPlay = inPlayPlayers.length > 0
+
+    let onDeckPlayers = await createPlayersView(filterOnDeckPlayers, team.players, players)
+    let onDeck = onDeckPlayers.length > 0
+
+    let outPlayers = await createPlayersView(filterOutPlayers, team.players, players)
+    let out = outPlayers.length > 0
+    outPlayers.sort((a, b) => a.calc.total() - b.calc.total())
+
+    let notPlayingPlayers = await createPlayersView(filterNotPlayingPlayers, team.players, players)
+    let notPlaying = notPlayingPlayers.length > 0
+
+    return html`
+<h3 id=in-play-players>In-Play</h3>
+
+${inPlayerPlayersView(
+    inPlay,
+    isInPlay,
+    grid,
+    positions,
+    onDeckPlayers,
+    inPlayPlayers,
+    queryTeamGame,
+    gameCalc)}
 
 ${when(onDeck, () => html`
 <h3>On Deck</h3>

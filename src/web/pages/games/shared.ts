@@ -3,7 +3,15 @@ import { playerGameSave } from "../../server/repo-player-game.js"
 import { tail } from "../../server/utils.js"
 import { required } from "../../server/validation.js"
 
-export async function createPlayersView<T extends PlayerStatus>(filter: (playerGame: PlayerGame) => playerGame is PlayerGameStatus<T>, teamPlayers: TeamPlayer[], players: PlayerGame[]) {
+export interface GamePlayerStatusView<T extends PlayerStatus> extends PlayerGameStatus<T> {
+    name: string
+    calc: PlayerGameTimeCalculator
+}
+
+export async function createPlayersView<T extends PlayerStatus>(
+        filter: (playerGame: PlayerGame) => playerGame is PlayerGameStatus<T>,
+        teamPlayers: TeamPlayer[],
+        players: PlayerGame[]) : Promise<GamePlayerStatusView<T>[]> {
     let typedPlayers_ = players.filter(filter)
     let typedPlayers = await Promise.all(typedPlayers_.map(async x => {
         let calc = new PlayerGameTimeCalculator(x)
