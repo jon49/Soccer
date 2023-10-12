@@ -7,9 +7,9 @@ import { validateObject } from "promise-validation"
 import { searchParams } from "../../server/utils.js"
 import { getGameNotes, saveGameNotes, teamGet, teamSave } from "../../server/repo-team.js"
 import { createIdNumber, createPositiveWholeNumber, createStringInfinity, required } from "../../server/validation.js"
-import { Game, InPlayPlayer, NotPlayingPlayer, OnDeckPlayer, OutPlayer, PlayerGame, PlayerGameStatus, Team } from "../../server/db.js"
+import { Game, NotPlayingPlayer, OutPlayer, PlayerGame, PlayerGameStatus } from "../../server/db.js"
 import { playerGameAllGet, playerGameSave, positionGetAll } from "../../server/repo-player-game.js"
-import { GamePlayerStatusView, GameTimeCalculator, PlayerGameTimeCalculator, createPlayersView, filterInPlayPlayers, filterOnDeckPlayers } from "./shared.js"
+import { GameTimeCalculator, PlayerGameTimeCalculator, createPlayersView, filterInPlayPlayers, filterOnDeckPlayers } from "./shared.js"
 
 function getPointsView(points: number) {
     return html`&nbsp;${points || "0"}&nbsp;`
@@ -24,34 +24,33 @@ function filterNotPlayingPlayers(x: PlayerGame) : x is PlayerGameStatus<NotPlayi
 }
 
 async function render(req: Request) {
-    let { teamId, gameId } = await validateObject(searchParams(req), queryTeamIdGameIdValidator)
-    let [team, { notes } ] = await Promise.all([teamGet(teamId), getGameNotes(teamId, gameId)])
-    team.players = team.players.filter(x => x.active)
-    let game = await required(team.games.find(x => x.id === gameId), "Could not find game ID!")
-    let queryTeamGame = `teamId=${team.id}&gameId=${game.id}`
-    let gameCalc = new GameTimeCalculator(game)
+    let o = await PlayerStateView.create(req)
+    let notes = await o.notes()
+    let game = await o.game()
+    let queryTeamGame = o.queryTeamGame
+    let gameCalc = await o.gameCalc()
 
-    let isInPlay = game.status === "play"
-    let isEnded = game.status === "ended"
-    let isPaused = game.status === "paused" || (!isInPlay && !isEnded)
+    let isGameInPlay = await o.isGameInPlay()
+    let isGameEnded = await o.isGameEnded()
+    let isGamePaused = await o.isGamePaused()
 
     return html`
 <h2>Game Play — ${game.home ? "Home" : "Away"} — ${game.opponent}</h2>
 
 <div id=root>
-    ${when(!isEnded, () => html`
-    <form class=inline method=post action="?$${queryTeamGame}&handler=${isInPlay ? "pauseGame" : "startGame"}">
-        <button>${isInPlay ? "Pause" : "Start"}</button>
+    ${when(!isGameEnded, () => html`
+    <form class=inline method=post action="?$${queryTeamGame}&handler=${isGameInPlay ? "pauseGame" : "startGame"}">
+        <button>${isGameInPlay ? "Pause" : "Start"}</button>
     </form>`)}
 
     <game-timer
-        $${when(isPaused, () => `data-flash data-start="${gameCalc.getLastEndTime()}"`)}
-        $${when(isInPlay, `data-start="${gameCalc.getLastStartTime()}" data-total="${gameCalc.total()}"`)}
-        $${when(isEnded, `data-static`)}>
+        $${when(isGamePaused, () => `data-flash data-start="${gameCalc.getLastEndTime()}"`)}
+        $${when(isGameInPlay, `data-start="${gameCalc.getLastStartTime()}" data-total="${gameCalc.total()}"`)}
+        $${when(isGameEnded, `data-static`)}>
     </game-timer>
 
-    <form class=inline method=post action="?$${queryTeamGame}&handler=${isEnded ? "restartGame" : "endGame"}">
-        <button>${isEnded ? "Restart" : "End"}</button>
+    <form class=inline method=post action="?$${queryTeamGame}&handler=${isGameEnded ? "restartGame" : "endGame"}">
+        <button>${isGameEnded ? "Restart" : "End"}</button>
     </form>
 
     <ul class=list>
@@ -72,7 +71,7 @@ async function render(req: Request) {
     </ul>
 </div>
 
-<div id="player-state">${playerState(team, gameId, gameCalc, queryTeamGame, isInPlay)}</div>
+<div id="player-state">${playerState(o)}</div>
 
 <h3>Notes</h3>
 
@@ -84,15 +83,15 @@ async function render(req: Request) {
 `
 }
 
-function inPlayPlayersView(
-    inPlay: boolean,
-    isInPlay: boolean,
-    grid: number[],
-    positions: string[],
-    onDeckPlayers: GamePlayerStatusView<OnDeckPlayer>[],
-    inPlayPlayers: GamePlayerStatusView<InPlayPlayer>[],
-    queryTeamGame: string,
-    gameCalc: GameTimeCalculator) {
+async function inPlayPlayersView(o: PlayerStateView) {
+    let inPlay = await o.inPlayPlayers(),
+        isGameInPlay = await o.isGameInPlay(),
+        { grid, positions } = await o.positions(),
+        onDeckPlayers = await o.onDeckPlayers(),
+        inPlayPlayers = await o.inPlayPlayers(),
+        queryTeamGame = o.queryTeamGame,
+        gameCalc = await o.gameCalc()
+
     return html`
 ${when(!inPlay, () => html`<p>No players are in play.</p>`)}
 ${when(inPlayPlayers.length, function* positionViews() {
@@ -114,7 +113,7 @@ ${when(inPlayPlayers.length, function* positionViews() {
                     <div>
                         ${when(sub, sub => html`<span>${player?.name} (${sub.name})</span>`)}
                         ${when(!sub, () => html`<a href="?$${queryTeamGame}&playerId=${player?.playerId}&handler=placePlayerOnDeck&playerSwap#game-swap-top">${player?.name}</a>`)}
-                        <game-timer data-start="${player.calc.getLastStartTime()}" data-total="${player.calc.total()}" ${when(!isInPlay, "data-static")}></game-timer>
+                        <game-timer data-start="${player.calc.getLastStartTime()}" data-total="${player.calc.total()}" ${when(!isGameInPlay, "data-static")}></game-timer>
                         <button formaction="?${queryTeamGame}&playerId=${player.playerId}&handler=playerNowOut">X</button>
                     </div>
                 </game-shader>
@@ -130,38 +129,26 @@ ${when(inPlayPlayers.length, function* positionViews() {
 })}`
 }
 
-async function playerState(team: Team, gameId: number, gameCalc: GameTimeCalculator, queryTeamGame: string, isInPlay: boolean) {
-    let teamId = team.id
-    let [ players, { grid, positions } ] = await Promise.all([
-        playerGameAllGet(teamId, gameId, team.players.map(x => x.id)),
-        positionGetAll(teamId)
-    ])
+async function playerState(o: PlayerStateView) {
+    let { positions } = await o.positions()
 
-    let inPlayPlayers = await createPlayersView(filterInPlayPlayers, team.players, players)
-    let inPlay = inPlayPlayers.length > 0
+    let inPlayPlayers = await o.inPlayPlayers()
 
-    let onDeckPlayers = await createPlayersView(filterOnDeckPlayers, team.players, players)
-    let onDeck = onDeckPlayers.length > 0
+    let onDeckPlayers = await o.onDeckPlayers()
+    let onDeck = await o.playersOnDeck()
 
-    let outPlayers = await createPlayersView(filterOutPlayers, team.players, players)
-    let out = outPlayers.length > 0
-    outPlayers.sort((a, b) => a.calc.total() - b.calc.total())
+    let outPlayers = await o.outPlayers()
+    let out = await o.playersOut()
 
-    let notPlayingPlayers = await createPlayersView(filterNotPlayingPlayers, team.players, players)
-    let notPlaying = notPlayingPlayers.length > 0
+    let notPlayingPlayers = await o.notPlayingPlayers()
+    let notPlaying = await o.playersNotPlaying()
+
+    let queryTeamGame = o.queryTeamGame
 
     return html`
 <h3 id=in-play-players>In-Play</h3>
 
-${inPlayPlayersView(
-    inPlay,
-    isInPlay,
-    grid,
-    positions,
-    onDeckPlayers,
-    inPlayPlayers,
-    queryTeamGame,
-    gameCalc)}
+${inPlayPlayersView(o)}
 
 ${when(onDeck, () => html`
 <h3>On Deck</h3>
@@ -457,4 +444,140 @@ const route : Route = {
 }
 
 export default route
+
+class PlayerStateView {
+    #teamId: number
+    #gameId: number
+    #cache: Cache
+    constructor(teamId: number, gameId: number) {
+        this.#teamId = teamId
+        this.#gameId = gameId
+        this.#cache = new Cache()
+    }
+
+    async team() {
+        return this.#cache.get("team", async () => {
+            let team = await teamGet(this.#teamId)
+            team.players = team.players.filter(x => x.active)
+            return team
+        })
+    }
+
+    async notes() {
+        return this.#cache.get("notes", async () =>
+            (await getGameNotes(this.#teamId, this.#gameId)).notes)
+    }
+
+    async game() {
+        return this.#cache.get("game", async () =>
+            required(
+                (await this.team()).games.find(x => x.id === this.#gameId),
+                "Could not find game ID!"))
+    }
+
+    get queryTeamGame() {
+        return `teamId=${this.#teamId}&gameId=${this.#gameId}`
+    }
+
+    async gameCalc() {
+        return this.#cache.get("gameCalc", async () =>
+            new GameTimeCalculator(await this.game())
+        )
+    }
+
+    async isGameInPlay() {
+        return this.#cache.get("isGameInPlay", async () =>
+            (await this.game()).status === "play"
+        )
+    }
+
+    async isGameEnded() {
+        return this.#cache.get("isGameEnded", async () =>
+            (await this.game()).status === "ended"
+        )
+    }
+
+    async isGamePaused() {
+        return this.#cache.get("isGamePaused", async () => {
+            return (await this.game()).status === "paused" || !(await this.isGameInPlay()) && !(await this.isGameEnded())
+        })
+    }
+
+    async gamePlayers() {
+        return this.#cache.get("gamePlayers", async () => {
+            let team = await this.team()
+            return await playerGameAllGet(this.#teamId, this.#gameId, team.players.map(x => x.id))
+        })
+    }
+
+    async positions() {
+        return this.#cache.get("positions", () => positionGetAll(this.#teamId))
+    }
+
+    async inPlayPlayers() {
+        return this.#cache.get("inPlayPlayers", async () =>
+            createPlayersView(filterInPlayPlayers, (await this.team()).players, (await this.gamePlayers()))
+        )
+    }
+
+    async playersInPlay() {
+        return this.#cache.get("playersInPlay", async () =>
+            (await this.inPlayPlayers()).length
+        )
+    }
+
+    async onDeckPlayers() {
+        return this.#cache.get("onDeckPlayers", async () =>
+            createPlayersView(filterOnDeckPlayers, (await this.team()).players, (await this.gamePlayers()))
+        )
+    }
+
+    async playersOnDeck() {
+        return this.#cache.get("playersOnDeck", async () => (await this.onDeckPlayers()).length)
+    }
+
+
+    async outPlayers() {
+        return this.#cache.get("outPlayers", async () => {
+            let players = await createPlayersView(filterOutPlayers, (await this.team()).players, (await this.gamePlayers()))
+            return players.sort((a, b) => a.calc.total() - b.calc.total())
+        })
+    }
+
+    async playersOut() {
+        return this.#cache.get("playersOut", async () => (await this.outPlayers()).length)
+    }
+
+    async notPlayingPlayers() {
+        return this.#cache.get("notPlayingPlayers", async () =>
+            createPlayersView(filterNotPlayingPlayers, (await this.team()).players, (await this.gamePlayers()))
+        )
+    }
+
+    async playersNotPlaying() {
+        return this.#cache.get("playersNotPlaying", async () => (await this.notPlayingPlayers()).length)
+    }
+
+    static async create(req: Request) {
+        let { teamId, gameId } = await validateObject(searchParams(req), queryTeamIdGameIdValidator)
+        return new PlayerStateView(teamId, gameId)
+    }
+
+}
+
+class Cache {
+    #cache: Map<string, any>
+    constructor() {
+        this.#cache = new Map()
+    }
+
+    async get<T>(key: string, fn: () => Promise<T>): Promise<T> {
+        if (this.#cache.has(key)) {
+            return this.#cache.get(key)
+        }
+        let value = await fn()
+        this.#cache.set(key, value)
+        return value
+    }
+}
 
