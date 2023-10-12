@@ -137,9 +137,6 @@ async function playerState(o: PlayerStateView) {
     let onDeckPlayers = await o.onDeckPlayers()
     let onDeck = await o.playersOnDeck()
 
-    let outPlayers = await o.outPlayers()
-    let out = await o.playersOut()
-
     let notPlayingPlayers = await o.notPlayingPlayers()
     let notPlaying = await o.playersNotPlaying()
 
@@ -169,27 +166,12 @@ ${when(onDeck, () => html`
     `})}
 </ul>`)}
 
-${when(onDeckPlayers.length > 1, () => html`
+${when(onDeckPlayers.length, () => html`
 <form method=post action="?$${queryTeamGame}&handler=swapAll">
     <button>Swap All</button>
 </form>`)}
 
-${when(out, () => html`
-<h3>Out</h3>
-
-<ul id=out-players class=list mpa-miss="#out-players">
-    ${outPlayers.map(x => {
-        return html`
-<li>
-    <form method=post action="?$${queryTeamGame}&playerId=$${x.playerId}&handler=notPlaying">
-        <button>X</button>
-    </form>
-    <a href="?$${queryTeamGame}&playerId=${x.playerId}&handler=placePlayerOnDeck&playerSwap#game-swap-top">${x.name}</a>
-    <game-timer data-total="${x.calc.total()}" data-static></game-timer>
-</li>
-        `
-    })}
-</ul>`)}
+<div id=out-players> ${outPlayersView(o)} </div>
 
 ${when(notPlaying, () => html`
 <h3>Not Playing</h3>
@@ -204,6 +186,30 @@ ${when(notPlaying, () => html`
 </ul>`)}
 `
 
+}
+
+async function outPlayersView(o: PlayerStateView) {
+    let out = await o.playersOut()
+    if (!out) return html``
+
+    let outPlayers = await o.outPlayers()
+    let queryTeamGame = o.queryTeamGame
+
+    return html`
+<h3>Out</h3>
+
+<ul id=out-players class=list mpa-miss="#out-players">
+
+    ${outPlayers.map(x => html`
+<li>
+    <form method=post action="?$${queryTeamGame}&playerId=$${x.playerId}&handler=notPlaying">
+        <button>X</button>
+    </form>
+    <a href="?$${queryTeamGame}&playerId=${x.playerId}&handler=placePlayerOnDeck&playerSwap#game-swap-top">${x.name}</a>
+    <game-timer data-total="${x.calc.total()}" data-static></game-timer>
+</li>`)}
+
+</ul>`
 }
 
 function getPlayerPosition(player : PlayerGame) {
