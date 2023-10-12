@@ -1,7 +1,7 @@
 import { when } from "../../server/html.js"
 import html from "html-template-tag-stream"
 import { PlayerStateView } from "./shared.js"
-import { playerStateView } from "./_player-state-view.js"
+import playerStateView from "./_player-state-view.js"
 
 export function getPointsView(points: number) {
     return html`&nbsp;${points || "0"}&nbsp;`

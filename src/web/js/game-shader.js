@@ -59,8 +59,9 @@ class GameShader extends HTMLElement {
 
         this.background = invert(getRGB(document.body, 'backgroundColor'))
 
-        this.el = this.firstElementChild
-        this.el.classList.add('game-shader')
+        let el = this.el = this.firstElementChild
+        if (!el) return
+        el.classList.add('game-shader')
 
         this.update()
     }
