@@ -8,18 +8,18 @@ export function getPointsView(points: number) {
 }
 
 export default async function render(req: Request) {
-    let o = await PlayerStateView.create(req)
-    let notes = await o.notes()
-    let game = await o.game()
-    let queryTeamGame = o.queryTeamGame
-    let gameCalc = await o.gameCalc()
-
-    let isGameInPlay = await o.isGameInPlay()
-    let isGameEnded = await o.isGameEnded()
-    let isGamePaused = await o.isGamePaused()
+    let o = await PlayerStateView.create(req),
+        notes = await o.notes(),
+        game = await o.game(),
+        team = await o.team(),
+        queryTeamGame = o.queryTeamGame,
+        gameCalc = await o.gameCalc(),
+        isGameInPlay = await o.isGameInPlay(),
+        isGameEnded = await o.isGameEnded(),
+        isGamePaused = await o.isGamePaused()
 
     return html`
-<h2>Game Play — ${game.home ? "Home" : "Away"} — ${game.opponent}</h2>
+<h2>${team.name} ($${game.home ? "Home" : "Away"}) vs ${game.opponent}</h2>
 
 <div id=root>
     ${when(!isGameEnded, () => html`
