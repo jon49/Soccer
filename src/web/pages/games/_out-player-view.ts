@@ -15,7 +15,11 @@ export async function outPlayersView(o: PlayerStateView) {
 
     ${outPlayers.map(x => html`
 <li>
-    <form method=post action="?$${queryTeamGame}&playerId=$${x.playerId}&handler=notPlaying">
+    <form
+        method=post
+        action="?$${queryTeamGame}&playerId=$${x.playerId}&handler=notPlaying"
+        hf-target="#player-state"
+        >
         <button>X</button>
     </form>
     <a href="?$${queryTeamGame}&playerId=${x.playerId}&handler=placePlayerOnDeck&playerSwap#game-swap-top">${x.name}</a>

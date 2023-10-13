@@ -124,11 +124,13 @@ const postHandlers : PostHandlers = {
         return playerStateView(await PlayerStateView.create(req))
     },
 
-    notPlaying: async ({ query }) => {
+    notPlaying: async ({ query, req }) => {
         let { teamId, playerId, gameId } = await validateObject(query, queryTeamGamePlayerValidator)
         let [player] = await playerGameAllGet(teamId, gameId, [playerId])
         player.status = { _: "notPlaying" }
         await playerGameSave(teamId, player)
+
+        return playerStateView(await PlayerStateView.create(req))
     },
 
     backIn: async ({ query }) => {
