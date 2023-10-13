@@ -83,12 +83,15 @@ const postHandlers : PostHandlers = {
         let { gameId, teamId } = await validateObject(query, queryTeamIdGameIdValidator)
         let { notes } = await validateObject(data, dataNotesValidator)
         await saveGameNotes(teamId, gameId, notes)
+
         return { body: null, status: 204 }
     },
 
-    swap: async ({ query }) => {
+    swap: async ({ query, req }) => {
         let { gameId, playerId, teamId } = await validateObject(query, queryTeamGamePlayerValidator)
         await swap({ gameId, teamId, playerIds: [playerId], timestamp: +new Date() })
+
+        return playerStateView(await PlayerStateView.create(req))
     },
 
     swapAll: async ({ query, req }) => {

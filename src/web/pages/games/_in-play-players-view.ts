@@ -45,7 +45,11 @@ function subPlayerView(
         queryTeamGame: string) {
     return html`
 <li>
-    <form method=post action="?$${queryTeamGame}&playerId=${sub.playerId}&handler=swap">
+    <form
+        method=post
+        action="?$${queryTeamGame}&playerId=${sub.playerId}&handler=swap"
+        hf-target="#player-state"
+        >
         <button>(${sub.name})</button>
     </form>
     <game-timer
