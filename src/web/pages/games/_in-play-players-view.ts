@@ -30,7 +30,11 @@ function playerView(
             data-start="${player.calc.getLastStartTime()}"
             data-total="${player.calc.total()}"
             ${when(!isGameInPlay, "data-static")}></game-timer>
-        <form method=post action="?${queryTeamGame}&playerId=${player.playerId}&handler=playerNowOut">
+        <form
+            method=post
+            action="?${queryTeamGame}&playerId=${player.playerId}&handler=playerNowOut"
+            hf-target="#player-state"
+            >
             <button>X</button>
         </form>
     </li>`

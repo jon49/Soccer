@@ -21,39 +21,40 @@ export default async function render(req: Request) {
     return html`
 <h2>${team.name} ($${game.home ? "Home" : "Away"}) vs ${game.opponent}</h2>
 
-<div id=root>
-    ${when(!isGameEnded, () => html`
-    <form class=inline method=post action="?$${queryTeamGame}&handler=${isGameInPlay ? "pauseGame" : "startGame"}">
-        <button>${isGameInPlay ? "Pause" : "Start"}</button>
-    </form>`)}
+${when(!isGameEnded, () => html`
+<form class=inline
+      method=post
+      action="?$${queryTeamGame}&handler=${isGameInPlay ? "pauseGame" : "startGame"}"
+      hf-target=main >
+    <button>${isGameInPlay ? "Pause" : "Start"}</button>
+</form>`)}
 
-    <game-timer
-        $${when(isGamePaused, () => `data-flash data-start="${gameCalc.getLastEndTime()}"`)}
-        $${when(isGameInPlay, `data-start="${gameCalc.getLastStartTime()}" data-total="${gameCalc.total()}"`)}
-        $${when(isGameEnded, `data-static`)}>
-    </game-timer>
+<game-timer
+    $${when(isGamePaused, () => `data-flash data-start="${gameCalc.getLastEndTime()}"`)}
+    $${when(isGameInPlay, `data-start="${gameCalc.getLastStartTime()}" data-total="${gameCalc.total()}"`)}
+    $${when(isGameEnded, `data-static`)}>
+</game-timer>
 
-    <form class=inline method=post action="?$${queryTeamGame}&handler=${isGameEnded ? "restartGame" : "endGame"}">
-        <button>${isGameEnded ? "Restart" : "End"}</button>
-    </form>
+<form class=inline method=post action="?$${queryTeamGame}&handler=${isGameEnded ? "restartGame" : "endGame"}">
+    <button>${isGameEnded ? "Restart" : "End"}</button>
+</form>
 
-    <ul class=list>
-        <li>
-            <span>Points</span>
-            <form id=team-points class=inline method=post hf-target="#points" hidden></form>
-            <button formaction="?$${queryTeamGame}&handler=pointsDec" form=team-points>-</button>
-            <span id=points>${getPointsView(game.points)}</span>
-            <button formaction="?$${queryTeamGame}&handler=pointsInc" form=team-points>+</button>
-        </li>
-        <li>
-            <span>Opponent</span>
-            <form id=opponent-points class=inline method=post hf-target="#o-points" hidden></form>
-            <button formaction="?$${queryTeamGame}&handler=oPointsDec" form=opponent-points>-</button>
-            <span id=o-points>${getPointsView(game.opponentPoints)}</span>
-            <button formaction="?$${queryTeamGame}&handler=oPointsInc" form=opponent-points>+</button>
-        </li>
-    </ul>
-</div>
+<ul class=list>
+    <li>
+        <span>Points</span>
+        <form id=team-points class=inline method=post hf-target="#points" hidden></form>
+        <button formaction="?$${queryTeamGame}&handler=pointsDec" form=team-points>-</button>
+        <span id=points>${getPointsView(game.points)}</span>
+        <button formaction="?$${queryTeamGame}&handler=pointsInc" form=team-points>+</button>
+    </li>
+    <li>
+        <span>Opponent</span>
+        <form id=opponent-points class=inline method=post hf-target="#o-points" hidden></form>
+        <button formaction="?$${queryTeamGame}&handler=oPointsDec" form=opponent-points>-</button>
+        <span id=o-points>${getPointsView(game.opponentPoints)}</span>
+        <button formaction="?$${queryTeamGame}&handler=oPointsInc" form=opponent-points>+</button>
+    </li>
+</ul>
 
 <div id="player-state">${playerStateView(o)}</div>
 

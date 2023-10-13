@@ -6,8 +6,10 @@ import { saveGameNotes, teamGet, teamSave } from "../../server/repo-team.js"
 import { createIdNumber, createPositiveWholeNumber, createStringInfinity, required } from "../../server/validation.js"
 import { Game, PlayerGame } from "../../server/db.js"
 import { playerGameAllGet, playerGameSave } from "../../server/repo-player-game.js"
-import { GameTimeCalculator, PlayerGameTimeCalculator, filterInPlayPlayers, filterOnDeckPlayers } from "./shared.js"
+import { GameTimeCalculator, PlayerGameTimeCalculator, PlayerStateView, filterInPlayPlayers, filterOnDeckPlayers } from "./shared.js"
 import render, { getPointsView } from "./_game-play-view.js"
+import playerStateView from "./_player-state-view.js"
+import html from "html-template-tag-stream"
 
 function getPlayerPosition(player : PlayerGame) {
     if (player.status?._ === "onDeck") {
@@ -97,7 +99,7 @@ const postHandlers : PostHandlers = {
         await swap({ gameId, teamId, playerIds: onDeckPlayers.map(x => x.playerId), timestamp: +new Date() })
     },
 
-    playerNowOut: async ({ query }) => {
+    playerNowOut: async ({ query, req }) => {
         let { teamId, playerId, gameId } = await validateObject(query, queryTeamGamePlayerValidator)
         let [p] = await playerGameAllGet(teamId, gameId, [playerId])
         p.status = { _: "out" }
@@ -108,6 +110,8 @@ const postHandlers : PostHandlers = {
             calc.pop()
         }
         await calc.save(teamId)
+
+        return playerStateView(await PlayerStateView.create(req))
     },
 
     cancelOnDeck: async ({ query }) => {
@@ -132,7 +136,7 @@ const postHandlers : PostHandlers = {
         await playerGameSave(teamId, player)
     },
 
-    startGame: async ({ query }) => {
+    startGame: async ({ query, req }) => {
         let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
         let timestamp = +new Date()
         let team = await teamGet(teamId)
@@ -151,9 +155,11 @@ const postHandlers : PostHandlers = {
             calc.start()
             return calc.save(teamId)
         }))
+
+        return render(req)
     },
 
-    pauseGame: async ({ query }) => {
+    pauseGame: async ({ query, req }) => {
         let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
         let team = await teamGet(teamId)
 
@@ -172,6 +178,8 @@ const postHandlers : PostHandlers = {
             calc.position(currentPosition)
             return calc.save(teamId)
         }).filter(x => x))
+
+        return render(req)
     },
 
     endGame: async ({ query }) => {
@@ -237,7 +245,7 @@ const route : Route = {
         return layout(req, {
             head,
             bodyAttr: `mpa-persist mpa-page-name="game-play"`,
-            main: (await render(req)),
+            main: await render(req),
             scripts: ["/web/js/lib/elastic-textarea.js"],
             title: "Game Play",
             useHtmf: true,
