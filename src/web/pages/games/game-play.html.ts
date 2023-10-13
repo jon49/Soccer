@@ -133,11 +133,13 @@ const postHandlers : PostHandlers = {
         return playerStateView(await PlayerStateView.create(req))
     },
 
-    backIn: async ({ query }) => {
+    backIn: async ({ query, req }) => {
         let { teamId, playerId, gameId } = await validateObject(query, queryTeamGamePlayerValidator)
         let [player] = await playerGameAllGet(teamId, gameId, [playerId])
         player.status = { _: "out" }
         await playerGameSave(teamId, player)
+
+        return playerStateView(await PlayerStateView.create(req))
     },
 
     startGame: async ({ query, req }) => {
@@ -186,7 +188,7 @@ const postHandlers : PostHandlers = {
         return render(req)
     },
 
-    endGame: async ({ query }) => {
+    endGame: async ({ query, req }) => {
         let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
         let team = await teamGet(teamId)
 
@@ -207,6 +209,8 @@ const postHandlers : PostHandlers = {
                 player.status = { _: "out"}
                 return calc.save(teamId)
             }))
+
+        return render(req)
     },
 
     restartGame: async ({ query }) => {

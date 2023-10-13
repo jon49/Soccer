@@ -35,7 +35,12 @@ ${when(!isGameEnded, () => html`
     $${when(isGameEnded, `data-static`)}>
 </game-timer>
 
-<form class=inline method=post action="?$${queryTeamGame}&handler=${isGameEnded ? "restartGame" : "endGame"}">
+<form
+    class=inline
+    method=post
+    action="?$${queryTeamGame}&handler=${isGameEnded ? "restartGame" : "endGame"}"
+    hf-target="main"
+    >
     <button>${isGameEnded ? "Restart" : "End"}</button>
 </form>
 

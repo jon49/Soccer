@@ -27,7 +27,11 @@ ${when(notPlaying, () => html`
     ${notPlayingPlayers.map(x => html`
     <li>
         <p>${x.name}</p>
-        <form method=post action="?${queryTeamGame}&playerId=${x.playerId}&handler=backIn">
+        <form
+            method=post
+            action="?${queryTeamGame}&playerId=${x.playerId}&handler=backIn"
+            hf-target="#player-state"
+            >
             <button>Back in</button>
         </form>
     </li>`)}
