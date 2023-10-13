@@ -91,12 +91,14 @@ const postHandlers : PostHandlers = {
         await swap({ gameId, teamId, playerIds: [playerId], timestamp: +new Date() })
     },
 
-    swapAll: async ({ query }) => {
+    swapAll: async ({ query, req }) => {
         let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
         let team = await teamGet(teamId)
         let players = await playerGameAllGet(teamId, gameId, team.players.map(x => x.id))
         let onDeckPlayers = players.filter(filterOnDeckPlayers)
         await swap({ gameId, teamId, playerIds: onDeckPlayers.map(x => x.playerId), timestamp: +new Date() })
+
+        return playerStateView(await PlayerStateView.create(req))
     },
 
     playerNowOut: async ({ query, req }) => {

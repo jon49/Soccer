@@ -13,7 +13,12 @@ export default async function playerStateView(o: PlayerStateView) {
     return html`
 <h3 class=inline>In-Play</h3>
 ${when(onDeckPlayers.length, () => html`
-<form class=inline method=post action="?$${queryTeamGame}&handler=swapAll">
+<form
+    class=inline
+    method=post
+    action="?$${queryTeamGame}&handler=swapAll"
+    hf-target="#player-state"
+    >
     <button>Swap All</button>
 </form>`)}
 
