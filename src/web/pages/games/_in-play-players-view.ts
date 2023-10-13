@@ -54,7 +54,9 @@ function subPlayerView(
         data-static></game-timer>
     <form
         method=post
-        action="?$${queryTeamGame}&playerId=${sub.playerId}&handler=cancelOnDeck">
+        action="?$${queryTeamGame}&playerId=${sub.playerId}&handler=cancelOnDeck"
+        hf-target="#player-state"
+        >
         <button class=danger>X</button>
     </form>
 </li>`

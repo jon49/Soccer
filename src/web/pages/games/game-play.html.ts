@@ -114,12 +114,14 @@ const postHandlers : PostHandlers = {
         return playerStateView(await PlayerStateView.create(req))
     },
 
-    cancelOnDeck: async ({ query }) => {
+    cancelOnDeck: async ({ query, req }) => {
         let { teamId, playerId, gameId } = await validateObject(query, queryTeamGamePlayerValidator)
         let [player] = await playerGameAllGet(teamId, gameId, [playerId])
         player.status = { _: "out" }
         player.gameTime.pop()
         await playerGameSave(teamId, player)
+
+        return playerStateView(await PlayerStateView.create(req))
     },
 
     notPlaying: async ({ query }) => {
