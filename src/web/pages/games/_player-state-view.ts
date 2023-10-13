@@ -5,16 +5,9 @@ import { when } from "../../server/shared.js"
 import { outPlayersView } from "./_out-player-view.js"
 
 export default async function playerStateView(o: PlayerStateView) {
-    let { positions } = await o.positions()
-
-    let inPlayPlayers = await o.inPlayPlayers()
-
     let onDeckPlayers = await o.onDeckPlayers()
-    let onDeck = await o.playersOnDeck()
-
     let notPlayingPlayers = await o.notPlayingPlayers()
     let notPlaying = await o.playersNotPlaying()
-
     let queryTeamGame = o.queryTeamGame
 
     return html`
@@ -24,9 +17,7 @@ ${when(onDeckPlayers.length, () => html`
     <button>Swap All</button>
 </form>`)}
 
-<div id=in-play-players>
-${inPlayPlayersView(o)}
-</div>
+<div id=in-play-players> ${inPlayPlayersView(o)} </div>
 
 <div id=out-players> ${outPlayersView(o)} </div>
 
