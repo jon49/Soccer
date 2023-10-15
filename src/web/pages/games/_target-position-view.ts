@@ -1,22 +1,19 @@
 import html from "html-template-tag-stream"
-import { PostHandlers, Route } from "../../server/route.js"
-import layout from "../_layout.html.js"
-import { validateObject } from "promise-validation"
 import { searchParams } from "../../server/utils.js"
-import { createIdNumber, createPositiveWholeNumber, required } from "../../server/validation.js"
-import { queryTeamIdGameIdValidator } from "../../server/validators.js"
 import { playerGameAllGet, positionGetAll } from "../../server/repo-player-game.js"
 import { teamGet } from "../../server/repo-team.js"
 import { createPlayersView, filterInPlayPlayers, filterOnDeckPlayers, GameTimeCalculator, PlayerGameTimeCalculator } from "./shared.js"
 import { when } from "../../server/html.js"
-import { PlayerSwap } from "./player-swap.js"
+import { queryTeamIdGameIdValidator } from "../../server/validators.js"
+import { createIdNumber, required } from "../../server/validation.js"
+import { validateObject } from "promise-validation"
 
 const querySwapValidator = {
     ...queryTeamIdGameIdValidator,
     playerId: createIdNumber("Player ID"),
 }
 
-async function render(req: Request) {
+export default async function render(req: Request) {
     let { teamId, gameId, playerId } = await validateObject(searchParams(req), querySwapValidator)
     let team = await teamGet(teamId)
     team.players = team.players.filter(x => x.active)
@@ -36,7 +33,16 @@ async function render(req: Request) {
     let isPaused = game.status === "paused" || (!isInPlay && !isEnded)
 
     return html`
-<h2 id=game-swap-top>Swap for ${player.name}</h2>
+<h2 id=game-swap-top class=inline>Swap for ${player.name}</h2>
+<form
+    class=inline
+    action="?teamId=${teamId}&gameId=${gameId}&handler=cancelSwap"
+    hf-target="#player-state"
+    hf-scroll="#out-players"
+    >
+    <button>Cancel Swap</button>
+</form>
+
 ${function* positionViews() {
     let count = 0
     for (let width of grid) {
@@ -49,7 +55,12 @@ ${function* positionViews() {
             let player = inPlayPlayers.find(x => count === x.status.position)
             let playerOnDeck = onDeckPlayers.find(x => count === x.status.targetPosition)
             let isCurrentPlayer = player?.playerId === playerId
-            let row = html`<form method=post action="?position=${count}&teamId=${teamId}&gameId=${gameId}&playerId=${playerId}&handler=updateUserPosition&playerSwap">${
+            let row =
+            html`<form
+                method=post
+                action="?position=${count}&teamId=${teamId}&gameId=${gameId}&playerId=${playerId}&handler=updateUserPosition&playerSwap"
+                hf-target="#player-state"
+                hf-scroll="#out-players" >${
             () => {
                 if (player) {
                     let playerGameCalc = new PlayerGameTimeCalculator(player)
@@ -86,43 +97,6 @@ ${function* positionViews() {
         })
         yield html`</div>`
     }
-}}
-    `
+}}`
+
 }
-
-const queryPositionUpdateValidator = {
-    ...queryTeamIdGameIdValidator,
-    playerId: createIdNumber("Player ID"),
-    position: createPositiveWholeNumber("Position"),
-}
-
-const postHandlers : PostHandlers = {
-    async updateUserPosition({ query, req }) {
-        let { teamId, gameId, position } = await validateObject(query, queryPositionUpdateValidator)
-
-        let playerSwap = await PlayerSwap.create(query)
-        await playerSwap.targetPosition(position)
-
-        let url = new URL(req.referrer)
-        url.search = `?teamId=${teamId}&gameId=${gameId}`
-        return Response.redirect(url.toString(), 303)
-    },
-}
-
-const route : Route = {
-    route: (url: URL) => url.pathname.endsWith("/games/") && url.searchParams.has("playerSwap"),
-    async get(req: Request) {
-        let main = await render(req)
-        let head = `
-        <script src="/web/js/game-timer.js"></script>
-        <script src="/web/js/game-shader.js"></script>`
-        return layout(req, {
-            head,
-            main,
-            title: "Game Play Swap" })
-    },
-    post: postHandlers,
-}
-
-export default route
-

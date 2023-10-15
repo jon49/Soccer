@@ -10,6 +10,7 @@ import { GameTimeCalculator, PlayerGameTimeCalculator, PlayerStateView, filterIn
 import render, { getPointsView } from "./_game-play-view.js"
 import playerStateView from "./_player-state-view.js"
 import { PlayerSwap } from "./player-swap.js"
+import targetPositionView from "./_target-position-view.js"
 
 function getPlayerPosition(player : PlayerGame) {
     if (player.status?._ === "onDeck") {
@@ -73,6 +74,12 @@ const dataNotesValidator = {
     notes: createStringInfinity("Notes")
 }
 
+const queryPositionUpdateValidator = {
+    ...queryTeamIdGameIdValidator,
+    playerId: createIdNumber("Player ID"),
+    position: createPositiveWholeNumber("Position"),
+}
+
 const postHandlers : PostHandlers = {
     pointsInc: setPoints(game => ++game.points),
     pointsDec: setPoints(game => --game.points),
@@ -100,6 +107,15 @@ const postHandlers : PostHandlers = {
         let players = await playerGameAllGet(teamId, gameId, team.players.map(x => x.id))
         let onDeckPlayers = players.filter(filterOnDeckPlayers)
         await swap({ gameId, teamId, playerIds: onDeckPlayers.map(x => x.playerId), timestamp: +new Date() })
+
+        return playerStateView(await PlayerStateView.create(req))
+    },
+
+    async updateUserPosition({ query, req }) {
+        let { position } = await validateObject(query, queryPositionUpdateValidator)
+
+        let playerSwap = await PlayerSwap.create(query)
+        await playerSwap.targetPosition(position)
 
         return playerStateView(await PlayerStateView.create(req))
     },
@@ -235,6 +251,13 @@ const route : Route = {
         url.pathname.endsWith("/games/")
         && ["gameId", "teamId"].every(x => url.searchParams.has(x)),
     async get(req: Request) {
+        if (req.headers.has("HF-Request")) {
+            let url = new URL(req.url)
+            if (url.searchParams.get("handler") === "cancelSwap") {
+                return playerStateView(await PlayerStateView.create(req))
+            }
+            return targetPositionView(req)
+        }
         let head = `
             <style>
                 .auto-select {

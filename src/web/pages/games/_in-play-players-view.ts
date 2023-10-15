@@ -25,7 +25,11 @@ function playerView(
         queryTeamGame: string) {
     return html`
     <li>
-        <a href="?$${queryTeamGame}&playerId=${player?.playerId}&handler=placePlayerOnDeck&playerSwap#game-swap-top">${player?.name}</a>
+        <form
+            action="?$${queryTeamGame}&playerId=${player?.playerId}&handler=playerSwap"
+            hf-target="#player-state" >
+            <button>${player?.name}</button>
+        </form>
         <game-timer
             data-start="${player.calc.getLastStartTime()}"
             data-total="${player.calc.total()}"

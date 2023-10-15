@@ -8,13 +8,11 @@ import positions from "../pages/positions.html.js"
 import activities from "../pages/activities.html.js"
 import userSettings from "../pages/user-settings/edit.html.js"
 import sync from "../api/sync.js"
-import gameSwap from "../pages/games/game-play-swap.html.js"
 
 addRoutes([
     index,
     sync,
     teams,
-    gameSwap,
     players,
     gamesPlay,
     games,

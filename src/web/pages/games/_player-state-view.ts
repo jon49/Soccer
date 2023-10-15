@@ -24,7 +24,7 @@ ${when(onDeckPlayers.length, () => html`
 
 <div id=in-play-players> ${inPlayPlayersView(o)} </div>
 
-<div id=out-players> ${outPlayersView(o)} </div>
+<div> ${outPlayersView(o)} </div>
 
 ${when(notPlaying, () => html`
 <h3>Not Playing</h3>

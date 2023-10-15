@@ -9,9 +9,9 @@ export async function outPlayersView(o: PlayerStateView) {
     let queryTeamGame = o.queryTeamGame
 
     return html`
-<h3>Out</h3>
+<h3 id=out-players>Out</h3>
 
-<ul id=out-players class=list mpa-miss="#out-players">
+<ul class=list>
 
     ${outPlayers.map(x => html`
 <li>
@@ -22,7 +22,12 @@ export async function outPlayersView(o: PlayerStateView) {
         >
         <button>X</button>
     </form>
-    <a href="?$${queryTeamGame}&playerId=${x.playerId}&handler=placePlayerOnDeck&playerSwap#game-swap-top">${x.name}</a>
+    <form
+        action="?$${queryTeamGame}&playerId=${x.playerId}&handler=playerSwap"
+        hf-target="#player-state"
+        hf-scroll="#game-swap-top" >
+        <button>${x.name}</button>
+    </form>
     <game-timer data-total="${x.calc.total()}" data-static></game-timer>
 </li>`)}
 
