@@ -11,7 +11,12 @@ function twoPlayerView(
 ) {
     return html`
 <details>
-    <summary>${player.name} (${sub.name})</summary>
+    <summary>${player.name} (${sub.name})
+        <game-timer
+            data-start="${player.calc.getLastStartTime()}"
+            data-total="${player.calc.total()}"
+            ${when(!isGameInPlay, "data-static")}></game-timer>
+    </summary>
     <ul class=list>
     ${playerView(player, isGameInPlay, queryTeamGame)}
     ${subPlayerView(sub, queryTeamGame)}
