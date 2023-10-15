@@ -101,7 +101,6 @@ export interface PlayerGameTime {
 export interface OnDeckPlayer {
     _: "onDeck"
     targetPosition: number
-    currentPlayerId: number | undefined
 }
 
 export interface InPlayPlayer {

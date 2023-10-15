@@ -9,7 +9,7 @@ import { playerGameAllGet, playerGameSave } from "../../server/repo-player-game.
 import { GameTimeCalculator, PlayerGameTimeCalculator, PlayerStateView, filterInPlayPlayers, filterOnDeckPlayers } from "./shared.js"
 import render, { getPointsView } from "./_game-play-view.js"
 import playerStateView from "./_player-state-view.js"
-import html from "html-template-tag-stream"
+import { PlayerSwap } from "./player-swap.js"
 
 function getPlayerPosition(player : PlayerGame) {
     if (player.status?._ === "onDeck") {
@@ -88,8 +88,8 @@ const postHandlers : PostHandlers = {
     },
 
     swap: async ({ query, req }) => {
-        let { gameId, playerId, teamId } = await validateObject(query, queryTeamGamePlayerValidator)
-        await swap({ gameId, teamId, playerIds: [playerId], timestamp: +new Date() })
+        let playerSwap = await PlayerSwap.create(query)
+        await playerSwap.swap()
 
         return playerStateView(await PlayerStateView.create(req))
     },

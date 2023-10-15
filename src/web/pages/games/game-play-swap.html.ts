@@ -9,6 +9,7 @@ import { playerGameAllGet, positionGetAll } from "../../server/repo-player-game.
 import { teamGet } from "../../server/repo-team.js"
 import { createPlayersView, filterInPlayPlayers, filterOnDeckPlayers, GameTimeCalculator, PlayerGameTimeCalculator } from "./shared.js"
 import { when } from "../../server/html.js"
+import { PlayerSwap } from "./player-swap.js"
 
 const querySwapValidator = {
     ...queryTeamIdGameIdValidator,
@@ -55,7 +56,7 @@ ${function* positionViews() {
                     return html`
                 <game-shader data-total="${gameTimeCalculator.currentTotal()}" data-value="${playerGameCalc.currentTotal()}">
                     <button
-                    ${when(playerOnDeck || isCurrentPlayer, "disabled")}
+                    ${when(isCurrentPlayer, "disabled")}
                     title="${when(playerOnDeck, "Player is on deck already.")}${when(isCurrentPlayer, "You cannot swap the same player!")}">
                         ${player.name}${when(playerOnDeck, p => html` (${p.name})`)}
                         <game-timer
@@ -69,7 +70,7 @@ ${function* positionViews() {
                 if (playerOnDeck) {
                     let playerOnDeckGameCalc = new PlayerGameTimeCalculator(playerOnDeck)
                     return html`
-                    <button disabled>
+                    <button>
                         (${playerOnDeck.name})
                         <game-timer
                             data-start=${playerOnDeckGameCalc.start()}
@@ -97,66 +98,11 @@ const queryPositionUpdateValidator = {
 
 const postHandlers : PostHandlers = {
     async updateUserPosition({ query, req }) {
-        let { teamId, playerId, gameId, position } = await validateObject(query, queryPositionUpdateValidator)
-        let [ players, { positions } ] = await Promise.all([
-            playerGameAllGet(teamId, gameId, []),
-            positionGetAll(teamId)
-        ])
+        let { teamId, gameId, position } = await validateObject(query, queryPositionUpdateValidator)
 
-        let player = await required(players.find(x => x.playerId === playerId), "Could not find swap player!")
-        let inGamePlayer =
-            players
-            .filter(filterInPlayPlayers)
-            .find(x => x.status.position === position)
+        let playerSwap = await PlayerSwap.create(query)
+        await playerSwap.targetPosition(position)
 
-        if (player.status?._ === "inPlay") {
-            if (inGamePlayer) {
-                inGamePlayer.status = {
-                    _: "inPlay",
-                    position: player.status.position,
-                }
-            }
-            player.status = {
-                _: "inPlay",
-                position,
-            }
-        } else {
-            player.status = {
-                _: "onDeck",
-                targetPosition: position,
-                currentPlayerId: inGamePlayer?.playerId,
-            }
-        }
-        let playerCalc = new PlayerGameTimeCalculator(player)
-        let gameOn = playerCalc.isGameOn()
-        if (player.status._ === "onDeck") {
-            playerCalc.position(positions[position])
-        }
-
-        if (player.status._ === "inPlay") {
-            let positionName = positions[position]
-            if (gameOn) {
-                playerCalc.end()
-                playerCalc.position(positionName)
-                playerCalc.start()
-            } else {
-                playerCalc.position(positionName)
-            }
-
-            if (inGamePlayer) {
-                let inGamePlayerCalc = new PlayerGameTimeCalculator(inGamePlayer)
-                let positionName = positions[player.status.position]
-                if (gameOn) {
-                    inGamePlayerCalc.end()
-                    inGamePlayerCalc.position(positionName)
-                    inGamePlayerCalc.start()
-                } else {
-                    inGamePlayerCalc.position(positionName)
-                }
-                await inGamePlayerCalc.save(teamId)
-            }
-        }
-        await playerCalc.save(teamId)
         let url = new URL(req.referrer)
         url.search = `?teamId=${teamId}&gameId=${gameId}`
         return Response.redirect(url.toString(), 303)
