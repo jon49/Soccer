@@ -2,7 +2,7 @@ import html from "html-template-tag-stream"
 import { searchParams } from "../../server/utils.js"
 import { playerGameAllGet, positionGetAll } from "../../server/repo-player-game.js"
 import { teamGet } from "../../server/repo-team.js"
-import { createPlayersView, filterInPlayPlayers, filterOnDeckPlayers, GameTimeCalculator, PlayerGameTimeCalculator } from "./shared.js"
+import { createPlayersView, isInPlayPlayer, isOnDeckPlayer, GameTimeCalculator, PlayerGameTimeCalculator } from "./shared.js"
 import { when } from "../../server/html.js"
 import { queryTeamIdGameIdValidator } from "../../server/validators.js"
 import { createIdNumber, required } from "../../server/validation.js"
@@ -24,8 +24,8 @@ export default async function render(req: Request) {
 
     let game = await required(team.games.find(x => x.id === gameId), "Could not find game ID!")
     let gameTimeCalculator = new GameTimeCalculator(game)
-    let inPlayPlayers = await createPlayersView(filterInPlayPlayers, team.players, players)
-    let onDeckPlayers = await createPlayersView(filterOnDeckPlayers, team.players, players)
+    let inPlayPlayers = await createPlayersView(isInPlayPlayer, team.players, players)
+    let onDeckPlayers = await createPlayersView(isOnDeckPlayer, team.players, players)
     let player = await required(team.players.find(x => x.id === playerId), "Could not find player ID!")
 
     let isInPlay = game.status === "play"

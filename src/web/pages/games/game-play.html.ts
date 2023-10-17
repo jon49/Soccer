@@ -6,7 +6,7 @@ import { saveGameNotes, teamGet, teamSave } from "../../server/repo-team.js"
 import { createIdNumber, createPositiveWholeNumber, createStringInfinity, required } from "../../server/validation.js"
 import { Game, PlayerGame } from "../../server/db.js"
 import { playerGameAllGet, playerGameSave } from "../../server/repo-player-game.js"
-import { GameTimeCalculator, PlayerGameTimeCalculator, PlayerStateView, filterInPlayPlayers, filterOnDeckPlayers } from "./shared.js"
+import { GameTimeCalculator, PlayerGameTimeCalculator, PlayerStateView, isInPlayPlayer, isOnDeckPlayer } from "./shared.js"
 import render, { getPointsView } from "./_game-play-view.js"
 import playerStateView from "./_player-state-view.js"
 import { PlayerSwap } from "./player-swap.js"
@@ -105,7 +105,7 @@ const postHandlers : PostHandlers = {
         let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
         let team = await teamGet(teamId)
         let players = await playerGameAllGet(teamId, gameId, team.players.map(x => x.id))
-        let onDeckPlayers = players.filter(filterOnDeckPlayers)
+        let onDeckPlayers = players.filter(isOnDeckPlayer)
         await swap({ gameId, teamId, playerIds: onDeckPlayers.map(x => x.playerId), timestamp: +new Date() })
 
         return playerStateView(await PlayerStateView.create(req))
@@ -176,7 +176,7 @@ const postHandlers : PostHandlers = {
         await teamSave(team)
 
         let players = await playerGameAllGet(teamId, gameId, team.players.map(x => x.id))
-        let inPlayPlayers = players.filter(filterInPlayPlayers)
+        let inPlayPlayers = players.filter(isInPlayPlayer)
         await Promise.all(inPlayPlayers.map(player => {
             let calc = new PlayerGameTimeCalculator(player)
             calc.start()
@@ -197,7 +197,7 @@ const postHandlers : PostHandlers = {
         await teamSave(team)
 
         let players = await playerGameAllGet(teamId, gameId, team.players.map(x => x.id))
-        let inPlayPlayers = players.filter(filterInPlayPlayers)
+        let inPlayPlayers = players.filter(isInPlayPlayer)
         await Promise.all(inPlayPlayers.map(player => {
             let calc = new PlayerGameTimeCalculator(player)
             let currentPosition = calc.currentPosition()
@@ -222,7 +222,7 @@ const postHandlers : PostHandlers = {
         let players = await playerGameAllGet(teamId, gameId, team.players.map(x => x.id))
         await Promise.all(
             players
-            .filter(filterInPlayPlayers)
+            .filter(isInPlayPlayer)
             .map(player => {
                 let calc = new PlayerGameTimeCalculator(player)
                 calc.end()
