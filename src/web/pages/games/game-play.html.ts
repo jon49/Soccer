@@ -4,51 +4,13 @@ import { queryTeamIdGameIdValidator } from "../../server/validators.js"
 import { validateObject } from "promise-validation"
 import { saveGameNotes, teamGet, teamSave } from "../../server/repo-team.js"
 import { createIdNumber, createPositiveWholeNumber, createStringInfinity, required } from "../../server/validation.js"
-import { Game, PlayerGame } from "../../server/db.js"
+import { Game } from "../../server/db.js"
 import { playerGameAllGet, playerGameSave } from "../../server/repo-player-game.js"
 import { GameTimeCalculator, PlayerGameTimeCalculator, PlayerStateView, isInPlayPlayer, isOnDeckPlayer } from "./shared.js"
 import render, { getPointsView } from "./_game-play-view.js"
 import playerStateView from "./_player-state-view.js"
-import { PlayerSwap } from "./player-swap.js"
+import { PlayerSwap, swapAll } from "./player-swap.js"
 import targetPositionView from "./_target-position-view.js"
-
-function getPlayerPosition(player : PlayerGame) {
-    if (player.status?._ === "onDeck") {
-        return player.status.targetPosition
-    }
-    if (player.status?._ === "inPlay") {
-        return player.status.position
-    }
-    return null
-}
-
-async function swap({ teamId, playerIds, gameId } : { teamId : number, playerIds: number[], gameId: number, timestamp: number }) {
-    let [team, players] = await Promise.all([teamGet(teamId), playerGameAllGet(teamId, gameId, playerIds)])
-    let game = await required(team.games.find(x => x.id === gameId), "Could not find game ID!")
-    for (let player of players) {
-        let calc = new PlayerGameTimeCalculator(player)
-        if (player.status?._ === "onDeck" && player.status.targetPosition != null && player.status.currentPlayerId) {
-            let [currentPlayer] = await playerGameAllGet(teamId, gameId, [player.status.currentPlayerId])
-            let inPlayerCalc = new PlayerGameTimeCalculator(currentPlayer)
-            if (inPlayerCalc.hasStarted()) {
-                inPlayerCalc.end()
-            }
-            currentPlayer.status = { _: "out" }
-            await inPlayerCalc.save(teamId)
-        }
-        if (game.status === "play") {
-            calc.start()
-        }
-
-        let position = await createPositiveWholeNumber("Player position number")(getPlayerPosition(player))
-
-        player.status = {
-            _: "inPlay",
-            position,
-        }
-        await calc.save(teamId)
-    }
-}
 
 const queryTeamGamePlayerValidator = {
     ...queryTeamIdGameIdValidator,
@@ -103,10 +65,7 @@ const postHandlers : PostHandlers = {
 
     swapAll: async ({ query, req }) => {
         let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
-        let team = await teamGet(teamId)
-        let players = await playerGameAllGet(teamId, gameId, team.players.map(x => x.id))
-        let onDeckPlayers = players.filter(isOnDeckPlayer)
-        await swap({ gameId, teamId, playerIds: onDeckPlayers.map(x => x.playerId), timestamp: +new Date() })
+        await swapAll(teamId, gameId)
 
         return playerStateView(await PlayerStateView.create(req))
     },
