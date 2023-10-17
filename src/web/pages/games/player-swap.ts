@@ -4,7 +4,7 @@ import { playerGameAllGet, playerGameSave, positionGetAll } from "../../server/r
 import { teamGet } from "../../server/repo-team.js";
 import { createIdNumber, required } from "../../server/validation.js";
 import { queryTeamIdGameIdValidator } from "../../server/validators.js";
-import { PlayerGameTimeCalculator, filterInPlayPlayers, filterOnDeckPlayers } from "./shared.js";
+import { GameTimeCalculator, PlayerGameTimeCalculator, isInPlayPlayer, isOnDeckPlayer } from "./shared.js";
 
 const queryTeamGamePlayerValidator = {
     ...queryTeamIdGameIdValidator,
@@ -59,7 +59,7 @@ async function swapWhenInGame(
 
     let inGamePlayer =
         players
-        .filter(filterInPlayPlayers)
+        .filter(isInPlayPlayer)
         .find(x => x.status.position === targetPosition)
 
     if (inGamePlayer) {
@@ -106,7 +106,7 @@ async function swapToOnDeck(
 
     let onDeckPlayer =
         players
-        .filter(filterOnDeckPlayers)
+        .filter(isOnDeckPlayer)
         .find(x => x.status.targetPosition === targetPosition)
 
     if (onDeckPlayer) {
@@ -131,15 +131,16 @@ async function swapWhenOnDeck(
     player: PlayerGame,
     players: PlayerGame[],
     positions: string[],
-    team: Team
+    team: Team,
+    gameCalc: GameTimeCalculator
 ) {
-    if (!filterOnDeckPlayers(player)) return
+    if (!isOnDeckPlayer(player)) return
 
     let targetPosition = player.status.targetPosition
 
     let inPlayPlayer =
         players.find(x => 
-            filterInPlayPlayers(x)
+            isInPlayPlayer(x)
             && x.status.position === targetPosition)
     if (inPlayPlayer) {
         let inPlyaerCalc = new PlayerGameTimeCalculator(inPlayPlayer)
@@ -157,7 +158,9 @@ async function swapWhenOnDeck(
 
     let playerCalc = new PlayerGameTimeCalculator(player)
     playerCalc.position(positions[targetPosition])
-    playerCalc.start()
+    if (gameCalc.isGameOn()) {
+        playerCalc.start()
+    }
     await playerCalc.save(team.id)
 }
 
@@ -166,7 +169,8 @@ async function _swap(player: PlayerGame, team: Team, game: Game) {
         playerGameAllGet(team.id, game.id, []),
         positionGetAll(team.id)
     ])
-    await swapWhenOnDeck(player, players, positions, team)
+    let gameCalc = new GameTimeCalculator(game)
+    await swapWhenOnDeck(player, players, positions, team, gameCalc)
     // await swapWhenInPlay(player, players, positions, team)
 }
 

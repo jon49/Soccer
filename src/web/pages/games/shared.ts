@@ -24,11 +24,11 @@ export async function createPlayersView<T extends PlayerStatus>(
     return typedPlayers
 }
 
-export function filterInPlayPlayers(x: PlayerGame) : x is PlayerGameStatus<InPlayPlayer> {
+export function isInPlayPlayer(x: PlayerGame) : x is PlayerGameStatus<InPlayPlayer> {
     return x.status?._ === "inPlay"
 }
 
-export function filterOnDeckPlayers(x: PlayerGame) : x is PlayerGameStatus<OnDeckPlayer> {
+export function isOnDeckPlayer(x: PlayerGame) : x is PlayerGameStatus<OnDeckPlayer> {
     return x.status?._ === "onDeck"
 }
 
@@ -132,6 +132,11 @@ export class GameTimeCalculator {
             throw new Error("Cannot end time without starting!")
         }
         time.end = +new Date()
+    }
+
+    isGameOn() {
+        let time = tail(this.times)
+        return !time?.end && time?.start
     }
 
     getLastEndTime() {
@@ -245,7 +250,7 @@ export class PlayerStateView {
 
     async inPlayPlayers() {
         return this.#cache.get("inPlayPlayers", async () =>
-            createPlayersView(filterInPlayPlayers, (await this.team()).players, (await this.gamePlayers()))
+            createPlayersView(isInPlayPlayer, (await this.team()).players, (await this.gamePlayers()))
         )
     }
 
@@ -257,7 +262,7 @@ export class PlayerStateView {
 
     async onDeckPlayers() {
         return this.#cache.get("onDeckPlayers", async () =>
-            createPlayersView(filterOnDeckPlayers, (await this.team()).players, (await this.gamePlayers()))
+            createPlayersView(isOnDeckPlayer, (await this.team()).players, (await this.gamePlayers()))
         )
     }
 
