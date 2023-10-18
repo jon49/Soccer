@@ -6,11 +6,12 @@ import { saveGameNotes, teamGet, teamSave } from "../../server/repo-team.js"
 import { createIdNumber, createPositiveWholeNumber, createStringInfinity, required } from "../../server/validation.js"
 import { Game } from "../../server/db.js"
 import { playerGameAllGet, playerGameSave } from "../../server/repo-player-game.js"
-import { GameTimeCalculator, PlayerGameTimeCalculator, PlayerStateView, isInPlayPlayer, isOnDeckPlayer } from "./shared.js"
+import { GameTimeCalculator, PlayerGameTimeCalculator, PlayerStateView, isInPlayPlayer } from "./shared.js"
 import render, { getPointsView } from "./_game-play-view.js"
 import playerStateView from "./_player-state-view.js"
-import { PlayerSwap, swapAll } from "./player-swap.js"
+import { swapAll } from "./player-swap.js"
 import targetPositionView from "./_target-position-view.js"
+import targetPosition from "./player-target-position.js"
 
 const queryTeamGamePlayerValidator = {
     ...queryTeamIdGameIdValidator,
@@ -57,24 +58,21 @@ const postHandlers : PostHandlers = {
     },
 
     swap: async ({ query, req }) => {
-        let playerSwap = await PlayerSwap.create(query)
-        await playerSwap.swap()
+        // The query contains the player ID and so will only swap one player.
+        await swapAll(query)
 
         return playerStateView(await PlayerStateView.create(req))
     },
 
     swapAll: async ({ query, req }) => {
-        let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
-        await swapAll(teamId, gameId)
+        await swapAll(query)
 
         return playerStateView(await PlayerStateView.create(req))
     },
 
     async updateUserPosition({ query, req }) {
         let { position } = await validateObject(query, queryPositionUpdateValidator)
-
-        let playerSwap = await PlayerSwap.create(query)
-        await playerSwap.targetPosition(position)
+        await targetPosition(query, position)
 
         return playerStateView(await PlayerStateView.create(req))
     },
