@@ -35,7 +35,7 @@ function render({ team }: GameView) {
         </div>
         <div>
             <label for=game-opponent>Opponent</label>
-            <input id=game-opponent type=text name=opponent>
+            <input id=game-opponent type=text name=opponent required>
         </div>
     </div>
 
