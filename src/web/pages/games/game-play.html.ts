@@ -216,25 +216,6 @@ const route : Route = {
             return targetPositionView(req)
         }
         let head = `
-            <style>
-                .auto-select {
-                    width: 2em;
-                    appearance: none;
-                }
-                .auto-select:focus {
-                    width: auto;
-                    appearance: auto;
-                }
-                ul.list {
-                    border-collapse: collapse;
-                }
-                .round > *:first-child {
-                    border-radius: var(--rc) 0 0 var(--rc);
-                }
-                .round > *:last-child {
-                    border-radius: 0 var(--rc) var(--rc) 0;
-                }
-            </style>
             <script src="/web/js/game-timer.js"></script>
             <script src="/web/js/game-shader.js"></script>`
         return layout(req, {
