@@ -216,6 +216,17 @@ const route : Route = {
             return targetPositionView(req)
         }
         let head = `
+            <style>
+                .flex {
+                    display: flex;
+                    gap: 1rem;
+                    justify-content: center;
+                }
+                .empty {
+                    margin: 2rem;
+                    border: 1px solid #ccc;
+                }
+            </style>
             <script src="/web/js/game-timer.js"></script>
             <script src="/web/js/game-shader.js"></script>`
         return layout(req, {

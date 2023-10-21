@@ -90,7 +90,7 @@ ${when(!inPlay && !onDeck, () => html`<p>No players are in play.</p>`)}
 ${when(inPlayPlayers.length || onDeckPlayers.length, function* positionViews() {
     let count = 0
     for (let width of grid) {
-        yield html`<div class="row grid-center">`
+        yield html`<div class="flex">`
         let p = positions.slice(count, count + width)
         if (p.length < width) {
             p = p.concat(new Array(width - p.length).fill("None"))
@@ -110,7 +110,7 @@ ${when(inPlayPlayers.length || onDeckPlayers.length, function* positionViews() {
                     ? html`<ul class=list>${playerView(player, isGameInPlay, queryTeamGame)}</ul>`
                 : sub
                     ? html`<ul class=list>${subPlayerView(sub, queryTeamGame)}</ul>`
-                : null
+                : html`<ul class="list empty"><li></li><li></li><li></li></ul>`
             }</game-shader>`
             count++
             return view
