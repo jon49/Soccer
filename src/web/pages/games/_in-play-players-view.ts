@@ -89,9 +89,8 @@ export default async function inPlayPlayersView(o: PlayerStateView) {
 ${when(!inPlay && !onDeck, () => html`<p>No players are in play.</p>`)}
 ${when(inPlayPlayers.length || onDeckPlayers.length, function* positionViews() {
     let count = 0
-    yield html`<ul class=list>`
     for (let width of grid) {
-        yield html`<li>`
+        yield html`<div class="row grid-center">`
         let p = positions.slice(count, count + width)
         if (p.length < width) {
             p = p.concat(new Array(width - p.length).fill("None"))
@@ -116,8 +115,7 @@ ${when(inPlayPlayers.length || onDeckPlayers.length, function* positionViews() {
             count++
             return view
         })
-        yield html`</li>`
+        yield html`</div>`
     }
-    yield html`</ul>`
 })}`
 }
