@@ -3,7 +3,7 @@ import db from "./global-model.js"
 
 export default async function sync() {
     let isLoggedIn = await db.isLoggedIn()
-    if (!isLoggedIn) return
+    if (!isLoggedIn) return { status: 403 }
 
     let keys = await db.updated()
     const items = await getMany(keys)
@@ -31,8 +31,11 @@ export default async function sync() {
     if (res.status >= 200 && res.status <= 299 && res.headers.get("Content-Type")?.startsWith("application/json")) {
         newData = await res.json()
     } else {
-        console.log("Oops! Something happened and could not sync the data!")
-        return
+        if (res.status === 401) {
+            await db.setLoggedIn(false)
+            return { status: 401 }
+        }
+        return { status: res.status }
     }
 
     let toSaveNewData = []
@@ -61,6 +64,11 @@ export default async function sync() {
         ...updatedRevisionsTask,
         update("settings", val => ({ ...val, lastSynced: +new Date(), lastSyncedId: newData.lastSyncedId }), { sync: false }),
         update("updated", val => (val?.clear(), val), { sync: false })])
+
+    if (toSaveNewData.length > 0) {
+        return { status: 200 }
+    }
+    return { status: 204 }
 }
 
 function parse(value: any) {

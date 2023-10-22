@@ -5,6 +5,8 @@
 body {
     max-width: 800px;
     margin: 0 auto;
+    overflow-x: scroll;
+    -webkit-overflow-scrolling: touch;
 }
 
 .editable {

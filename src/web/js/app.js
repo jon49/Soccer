@@ -32,18 +32,30 @@ if (w.App?.shouldWaitToSync) {
     setTimeout(sync, 6e5)
 }
 
-function sync() {
-    fetch('/web/api/sync', {
-        method: 'POST',
-    })
-    .then(() => {
+async function sync() {
+    var response =
+        await fetch('/web/api/sync', {
+            method: 'POST',
+        })
+    if (response.redirected) {
+        document.location = document.location
+        return
+    }
+    if (response.headers.get("content-type")?.includes("application/json")) {
+        let json = await response.json()
+        if (json.messages) {
+            document.dispatchEvent(new CustomEvent("user-messages", {
+                detail: json.messages
+            }))
+        }
+    }
+    let status = response.status
+    if (status > 199 || status < 300) {
         let count = document.getElementById('sync-count')
         if (count) {
-            count.textContent = "🖫"
+            count.innerHTML = "&#128259;"
         }
-    })
-    .catch(e => console.error(e))
+    }
 }
-
 
 })();

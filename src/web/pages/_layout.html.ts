@@ -62,7 +62,7 @@ const render = async (
         </form>
 
        <form method=post action="/web/api/sync?handler=force" class=inline>
-           <button id=sync-count class=bg>🖫 ${when(updatedCount, count => html`(${count})`)}</button>
+           <button id=sync-count class=bg>&#128259; ${when(updatedCount, count => html`(${count})`)}</button>
        </form>
 
         ${isLoggedIn
