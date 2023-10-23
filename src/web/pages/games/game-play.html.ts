@@ -220,11 +220,13 @@ const route : Route = {
                 .flex {
                     display: flex;
                     gap: 1rem;
-                    justify-content: center;
+                }
+                .flex > * {
+                    margin: auto;
                 }
                 .empty {
                     margin: 2rem;
-                    border: 1px solid #ccc;
+                    border: 3px solid #ccc;
                 }
             </style>
             <script src="/web/js/game-timer.js"></script>
