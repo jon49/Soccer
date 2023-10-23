@@ -50,7 +50,7 @@ async function sync() {
         }
     }
     let status = response.status
-    if (status > 199 || status < 300) {
+    if (status > 199 && status < 300) {
         let count = document.getElementById('sync-count')
         if (count) {
             count.innerHTML = "&#128259;"
