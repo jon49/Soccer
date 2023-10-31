@@ -17,7 +17,7 @@ export default async function render(req: Request) {
     let { teamId, gameId, playerId } = await validateObject(searchParams(req), querySwapValidator)
     let team = await teamGet(teamId)
     team.players = team.players.filter(x => x.active)
-    let [ players, { grid, positions } ] = await Promise.all([
+    let [players, { grid, positions }] = await Promise.all([
         playerGameAllGet(teamId, gameId, team.players.map(x => x.id)),
         positionGetAll(teamId),
     ])
@@ -44,27 +44,26 @@ export default async function render(req: Request) {
 </form>
 
 ${function* positionViews() {
-    let count = 0
-    for (let width of grid) {
-        yield html`<div class="row grid-center">`
-        let p = positions.slice(count, count + width)
-        if (p.length < width) {
-            p = p.concat(new Array(width - p.length))
-        }
-        yield p.map((_, i) => {
-            let player = inPlayPlayers.find(x => count === x.status.position)
-            let playerOnDeck = onDeckPlayers.find(x => count === x.status.targetPosition)
-            let isCurrentPlayer = player?.playerId === playerId
-            let row =
-            html`<form
+            let count = 0
+            for (let width of grid) {
+                yield html`<div class="row grid-center">`
+                let p = positions.slice(count, count + width)
+                if (p.length < width) {
+                    p = p.concat(new Array(width - p.length))
+                }
+                yield p.map((_, i) => {
+                    let player = inPlayPlayers.find(x => count === x.status.position)
+                    let playerOnDeck = onDeckPlayers.find(x => count === x.status.targetPosition)
+                    let isCurrentPlayer = player?.playerId === playerId
+                    let row =
+                        html`<form
                 method=post
                 action="?position=${count}&teamId=${teamId}&gameId=${gameId}&playerId=${playerId}&handler=updateUserPosition&playerSwap"
                 hf-target="#player-state"
-                hf-scroll="#out-players" >${
-            () => {
-                if (player) {
-                    let playerGameCalc = new PlayerGameTimeCalculator(player)
-                    return html`
+                hf-scroll="#out-players" >${() => {
+                                if (player) {
+                                    let playerGameCalc = new PlayerGameTimeCalculator(player)
+                                    return html`
                 <game-shader data-total="${gameTimeCalculator.currentTotal()}" data-value="${playerGameCalc.currentTotal()}">
                     <button
                     ${when(isCurrentPlayer, "disabled")}
@@ -77,10 +76,10 @@ ${function* positionViews() {
                             ></game-timer>
                     </button>
                 </game-shader>`
-                }
-                if (playerOnDeck) {
-                    let playerOnDeckGameCalc = new PlayerGameTimeCalculator(playerOnDeck)
-                    return html`
+                                }
+                                if (playerOnDeck) {
+                                    let playerOnDeckGameCalc = new PlayerGameTimeCalculator(playerOnDeck)
+                                    return html`
                     <button>
                         (${playerOnDeck.name})
                         <game-timer
@@ -88,15 +87,15 @@ ${function* positionViews() {
                             data-total="${playerOnDeckGameCalc.total()}"
                             $${when(isPaused, `data-static`)}>
                             ></game-timer></button>`
-                }
-                return html`<button>${p[i]}</button>`
+                                }
+                                return html`<button>${p[i]}</button>`
+                            }
+                            }</form>`
+                    count++
+                    return row
+                })
+                yield html`</div>`
             }
-                }</form>`
-            count++
-            return row
-        })
-        yield html`</div>`
-    }
-}}`
+        }}`
 
 }

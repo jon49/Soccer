@@ -12,7 +12,7 @@ const postHandlers : PostHandlers = {
             case 204:
                 return {
                     message: "Synced!",
-                    response: null
+                    status: 204
                 }
             case 401:
                 return {
@@ -39,7 +39,7 @@ const postHandlers : PostHandlers = {
             case 204:
                 return {
                     message: "Synced!",
-                    response: null
+                    status: 204
                 }
             case 401:
             case 403:

@@ -1,4 +1,4 @@
-import { Revision, get, set } from "./db.js";
+import { Credentials, get, set } from "./db.js";
 
 function parseKey(key: unknown) : string | number {
     return typeof key === "string" && key.startsWith("[")
@@ -7,9 +7,8 @@ function parseKey(key: unknown) : string | number {
 }
 
 const settingDefaults : Settings = {
-    lastSyncedId: 0,
-    _rev: 0,
-    lastSynced: 0
+    lastSynced: 0,
+    lastUpdated: ""
 }
 
 class GlobalDB {
@@ -17,12 +16,12 @@ class GlobalDB {
         return Array.from((await get("updated")) ?? new Set).map(parseKey)
     }
 
-    async setLoggedIn(loggedIn: boolean) : Promise<void> {
-        await set("loggedIn", loggedIn, false)
+    credentials() : Promise<Credentials | undefined> {
+        return get("credentials")
     }
 
-    async isLoggedIn() : Promise<boolean> {
-        return (await get("loggedIn")) ?? false
+    setCredentials(credentials: Credentials) {
+        return set("credentials", credentials, false)
     }
 
     async settings() : Promise<Settings> {
@@ -34,9 +33,8 @@ class GlobalDB {
 const globalDB = new GlobalDB
 export default globalDB
 
-export interface Settings extends Revision {
-    earliestDate?: string
-    lastSyncedId: number
+export interface Settings {
+    lastUpdated: string
     lastSynced?: number
 }
 

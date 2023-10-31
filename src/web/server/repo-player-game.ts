@@ -24,7 +24,7 @@ export async function playerGameAllGet(teamId: number, gameId: number, playerIds
                 gameTime: [],
                 playerId: playerIds[i],
                 stats: [],
-                _rev: 0,
+                updated: "",
             }
         }
     }
@@ -41,7 +41,7 @@ export async function positionGetAll(teamId: number) : Promise<Positions> {
     let positions = await get<Positions>(getPositionsId(teamId))
     if (!positions) {
         positions = {
-            _rev: 0,
+            updated: "",
             positions: [],
             grid: [],
         }
@@ -85,25 +85,29 @@ async function save(xs: IdName[], x: IdName) {
 /*** Activities ***/
 
 export async function activityGetAll(teamId: number) : Promise<Activities> {
-    return (await get<Activities>(getActivitiesId(teamId))) ?? { activities: [], _rev: 0 }
+    return (await get<Activities>(getActivitiesId(teamId))) ?? {
+        activities: [],
+        updated: "" }
 }
 
 export async function activitySaveNew(teamId: number, name: string) {
-    let { activities, _rev } = await activityGetAll(teamId)
+    let { activities, updated } = await activityGetAll(teamId)
     let [newActivity, updatedActivities] = await saveNew(activities, name)
-    await set(getActivitiesId(teamId), { activities: updatedActivities, _rev } as Activities)
+    await set(getActivitiesId(teamId), {
+        activities: updatedActivities,
+        updated } as Activities)
     return newActivity
 }
 
 export async function activitySave(teamId: number, activity: Activity) {
-    let { activities, _rev } = await activityGetAll(teamId)
+    let { activities, updated } = await activityGetAll(teamId)
     await save(activities, activity)
-    await set(getActivitiesId(teamId), { activities, _rev } as Activities)
+    await set(getActivitiesId(teamId), { activities, updated } as Activities)
 }
 
-export async function activitiesSave(teamId: number, {activities, _rev}: Activities) {
+export async function activitiesSave(teamId: number, {activities, updated}: Activities) {
     await areUnique(activities.map(x => x.name))
-    await set(getActivitiesId(teamId), { activities, _rev } as Activities)
+    await set(getActivitiesId(teamId), { activities, updated } as Activities)
 }
 
 function getActivitiesId(teamId: number) {

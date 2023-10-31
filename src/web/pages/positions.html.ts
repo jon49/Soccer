@@ -83,7 +83,7 @@ const postHandlers : PostHandlers = {
         await positionsSave(teamId, {
             grid,
             positions: o.positions,
-            _rev: o._rev })
+            updated: o.updated })
     },
     post: async ({ query, data }) => {
         let { teamId } = await validateObject(query, queryTeamIdValidator)

@@ -1,4 +1,4 @@
-import { get, set, update, getMany, Team, Teams, TeamSingle, Revision } from "./db.js"
+import { get, set, update, getMany, Team, Teams, TeamSingle, LastUpdated } from "./db.js"
 import { reject } from "./repo.js"
 import { equals, getNewId } from "./utils.js"
 import { requiredAsync } from "./validation.js"
@@ -29,7 +29,7 @@ export async function teamGetAll(all: boolean, wasFiltered?: WasFiltered) : Prom
     return teams
 }
 
-interface GameNotes extends Revision {
+interface GameNotes extends LastUpdated {
     notes: string
 }
 
@@ -41,7 +41,7 @@ export async function saveGameNotes(teamId: number, gameId: number, notes: strin
 
 export async function getGameNotes(teamId: number, gameId: number) : Promise<GameNotes> {
     let notes = await get<GameNotes>(getGameNotesId(teamId, gameId))
-    return notes ?? { notes: "", _rev: 0 }
+    return notes ?? { notes: "", updated: "" }
 }
 
 function getGameNotesId(teamId: number, gameId: number) {
@@ -86,7 +86,8 @@ export function teamNew(o: TeamSingle): Team {
         players: [],
         games: [],
         positions: [],
-        _rev: 0,
+        grid: [],
+        updated: ""
     }
 }
 
@@ -117,7 +118,7 @@ export async function teamsCreate(o: TeamNew) : Promise<number> {
                 o.teams.push(teamsSingle)
             } else {
                 return {
-                    _rev: 0,
+                    updated: "",
                     teams: [teamsSingle]
                 }
             }

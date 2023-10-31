@@ -1,107 +1,89 @@
-import { getMany, setMany, set, update } from "./db.js"
+import { getMany, setMany, update } from "./db.js"
 import db from "./global-model.js"
+import api, { UpdatedDataResponse } from "./api.js"
+
+const keyMap = {
+    "player-game": "a",
+    "team": "b",
+    "positions": "c",
+    "game-notes": "d",
+}
 
 export default async function sync() {
-    let isLoggedIn = await db.isLoggedIn()
-    if (!isLoggedIn) return { status: 403 }
+    let credentials = await db.credentials()
+    if (!credentials) return { status: 403 }
+
+    let lastUpdated = (await db.settings()).lastUpdated
+    let latestData = await api.getLatestData(lastUpdated)
 
     let keys = await db.updated()
     const items = await getMany(keys)
-    const data : Data[] = new Array(keys.length)
+    const responseTasks = new Array<Promise<UpdatedDataResponse>>(keys.length)
     for (let index = 0; index < items.length; index++) {
-        let key = keys[index]
-        let d = items[index]
-        data[index] = { key, data: d, id: d._rev ?? 0 }
-    }
-    const lastSyncedId = (await db.settings()).lastSyncedId
-
-    let postData : PostData = { lastSyncedId, data }
-    const res = await fetch("/api/data", {
-        method: "POST",
-        body: JSON.stringify(postData),
-        headers: {
-            "Content-Type": "application/json"
-        },
-        keepalive: true,
-        credentials: "same-origin",
-        mode: "same-origin"
-    })
-
-    let newData : ResponseData
-    if (res.status >= 200 && res.status <= 299 && res.headers.get("Content-Type")?.startsWith("application/json")) {
-        newData = await res.json()
-    } else {
-        if (res.status === 401) {
-            await db.setLoggedIn(false)
-            return { status: 401 }
-        }
-        return { status: res.status }
+        let id = serializeKey(keys[index])
+        if (latestData.items.some(x => x.id === id)) continue
+        let value = items[index]
+        responseTasks[index] = api.upsertData({
+            id,
+            updated: value.updated,
+            value,
+            userId: credentials.record.id,
+        })
     }
 
-    let toSaveNewData = []
-    for (let saved of newData.data) {
-        let key = parse(saved.key)
-        let data = parse(saved.data)
-        data._rev = saved.id
-        toSaveNewData.push([key, data])
-    }
-    await setMany(<any>toSaveNewData)
+    let serverSavedData = await Promise.all(responseTasks)
+    // .catch(err => {
+    //     console.error(err)
+    //     debugger
+    //     return <UpdatedDataResponse[]>[]
+    // })
+    let toSave = serverSavedData.map(x => [deserializeKey(x.id), x.value])
 
-    let updatedData = await getMany(newData.saved.map(x => parse(x.key)))
-    let updatedRevisionsTask = []
-    for (let index = 0; index < updatedData.length; index++) {
-        let d = updatedData[index]
-        let { key, id } = newData.saved[index]
-        if (d) {
-            d._rev = id
-            updatedRevisionsTask.push(set(parse(key), updatedData[index], false))
-        } else {
-            console.error("Could not find the key to update the revision!", key, id)
-        }
-    }
+    let newLastUpdated =
+        serverSavedData.reduce((acc, val) =>
+           val.updated > acc ? val.updated : acc, lastUpdated)
 
     await Promise.all([
-        ...updatedRevisionsTask,
-        update("settings", val => ({ ...val, lastSynced: +new Date(), lastSyncedId: newData.lastSyncedId }), { sync: false }),
+        setMany(<any>toSave),
+        update("settings", val => ({
+            ...val,
+            lastSynced: newLastUpdated, }), { sync: false }),
         update("updated", val => (val?.clear(), val), { sync: false })])
 
-    if (toSaveNewData.length > 0) {
+    if (toSave.length > 0) {
         return { status: 200 }
     }
     return { status: 204 }
 }
 
-function parse(value: any) {
-    return JSON.parse(value)
+function serializeKey(key: string | number | any[]) {
+    if (!key) throw new Error("Key is undefined.")
+    if (Array.isArray(key)) {
+        // @ts-ignore
+        let keyName = keyMap[key[0]]
+        if (!keyName) throw new Error(`Key "${key[0]}" not found in keyMap.`)
+        key = `${keyName},${key.slice(1).join("-")}`
+    }
+
+    // If key is not string or number then make it a string.
+    if (typeof key !== "string") {
+        key = ""+key
+    }
+
+    return key.padEnd(15, "-")
 }
 
-interface Data {
-    key: any
-    data: any
-    id: number 
-}
-
-interface PostData {
-    lastSyncedId: number
-    data: Data[]
-}
-
-interface ResponseData {
-    data: Data[]
-    saved: SavedDto[]
-    conflicted: ConflictedDto[]
-    lastSyncedId: number
-}
-
-interface SavedDto {
-    key: string
-    id: number
-}
-
-interface ConflictedDto {
-    key: string
-    data?: string
-    id: number
-    timestamp: string
+function deserializeKey(key: string) {
+    if (!key) throw new Error("Key is undefined.")
+    key = key.replace(/-+$/, "")
+    if (key.includes(",")) {
+        let keyName = key[0]
+        let keyArgs = key.slice(1).split("-").map(x => +x)
+        // @ts-ignore
+        let keyMapName = Object.keys(keyMap).find(k => keyMap[k] === keyName)
+        if (!keyMapName) throw new Error(`Key "${keyName}" not found in keyMap.`)
+        return [keyMapName, ...keyArgs]
+    }
+    return key
 }
 

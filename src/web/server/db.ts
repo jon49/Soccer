@@ -22,8 +22,8 @@ const _updated =
 function set<K extends keyof DBAccessors>(key: K, value: DBAccessors[K], sync?: boolean): Promise<void>
 function set<T>(key: string | any[], value: T, sync?: boolean): Promise<void>
 async function set(key: string | any[], value: any, sync = true) {
-    if (sync && "_rev" in value) {
-        if ("_rev" in value) {
+    if (sync && "updated" in value) {
+        if ("updated" in value) {
             await _updated(key)
         } else {
             return reject(`Revision number not specified! For "${key}".`)
@@ -39,7 +39,7 @@ async function update(key: string, f: (v: any) => any, options = { sync: true })
     await update1(key, f)
     if (options.sync) {
         let o : any = await get(key)
-        if (o && "_rev" in o) {
+        if (o && "updated" in o) {
             await _updated(key)
         } else {
             reject(`Revision number not found for "${key}".`)
@@ -49,26 +49,34 @@ async function update(key: string, f: (v: any) => any, options = { sync: true })
 
 export { update, set, get, getMany, setMany }
 
+export interface Credentials {
+    record: {
+        id: string,
+        verified: boolean
+    }
+    token: string
+}
+
 export interface Settings {
     lastSyncedId?: number | undefined
 }
 
-export interface Revision {
-    _rev: number
+export interface LastUpdated {
+    updated: string
 }
 
-export interface Stats extends Revision {
+export interface Stats extends LastUpdated {
     stats: { id: number, name: string }[]
 }
 
-export interface Positions extends Revision {
+export interface Positions extends LastUpdated {
     positions: string[]
     grid: number[]
 }
 
 export type Activity = Activities["activities"][0]
 
-export interface Activities extends Revision {
+export interface Activities extends LastUpdated {
     activities: {
         id: number
         name: string
@@ -118,7 +126,7 @@ export interface NotPlayingPlayer {
 
 export type PlayerStatus = OnDeckPlayer | InPlayPlayer | OutPlayer | NotPlayingPlayer
 
-export interface PlayerGame extends Revision {
+export interface PlayerGame extends LastUpdated {
     playerId: number
     gameId: number
     stats: {statId: number, count: number}[]
@@ -126,7 +134,7 @@ export interface PlayerGame extends Revision {
     status?: PlayerStatus
 }
 
-export interface PlayerGameStatus<T extends PlayerStatus> extends Revision {
+export interface PlayerGameStatus<T extends PlayerStatus> extends LastUpdated {
     playerId: number
     gameId: number
     stats: {statId: number, count: number}[]
@@ -140,7 +148,7 @@ export interface TeamPlayer {
     name: string
 }
 
-export interface Team extends Revision, Positions {
+export interface Team extends LastUpdated, Positions {
     id: number
     name: string
     active: boolean
@@ -156,7 +164,7 @@ export interface TeamSingle {
     year: string
 }
 
-export interface Teams extends Revision {
+export interface Teams extends LastUpdated {
     teams: TeamSingle[]
 }
 
@@ -166,6 +174,7 @@ interface DBAccessors {
     updated: Updated
     settings: Settings
     teams: Teams
+    credentials: Credentials
 }
 
 interface DBGet {

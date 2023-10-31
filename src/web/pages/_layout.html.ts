@@ -26,7 +26,7 @@ const render = async (
       useHtmf
     }: LayoutTemplateArguments) => {
     const [isLoggedIn, updated, { lastSynced }] = await Promise.all([
-        db.isLoggedIn(),
+        db.credentials(),
         db.updated(),
         db.settings()
     ])
@@ -66,8 +66,8 @@ const render = async (
        </form>
 
         ${isLoggedIn
-            ? html`<a href="/logout">Logout</a>`
-        : html`<a href="/login">Login</a>`}
+            ? html`<a href="/login?handler=logout">Logout</a>`
+        : html`<a href="/web/login">Login</a>`}
         
     </div>
     <header>
