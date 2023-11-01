@@ -7,9 +7,12 @@ import db from "../server/global-model.js"
 let index : Route = {
     route: /\/web\/$/,
     get: async (req: Request) => {
-        let params = searchParams<{ success?: string }>(req)
+        let params = searchParams<{ success?: string, loggedOut?: string }>(req)
         if (params.success === "true") {
             await db.setLoggedIn(true)
+        }
+        if (params.loggedOut === "true") {
+            await db.setLoggedIn(false)
         }
         return layout(req, {
             main: html`<p>Welcome to drive tracking!</p>`,
