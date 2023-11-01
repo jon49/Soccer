@@ -110,7 +110,7 @@ def main [build: string = "dev"] {
 
     # write static files to entry-points file
     let files = (
-        ls $"($targetDir)/**/web/**/*"
+        ls $"($targetDir)/web/**/*"
         | where { |x| $x.name =~ '\.(css|js)$' }
         | insert file { |x| $x.name | str substring ($x.name | str index-of '/web')..999 }
         | insert url { |x|
