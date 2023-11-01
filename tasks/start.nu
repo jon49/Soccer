@@ -1,8 +1,14 @@
 #!/usr/bin/env nu
 
-def main [build: bool = false] {
+# prod, dev, or server
+def main [build: string = "dev"] {
 
-    let targetDir = "public"
+    let targetDir = (
+        if $build == "server" {
+            "../soccer-server/public"
+        } else {
+            "public"
+        })
 
     rm -r -f $targetDir
 
@@ -18,9 +24,9 @@ def main [build: bool = false] {
         $x
         | insert hash { |x| open $x.name | hash sha256 | str substring 56..64 }
         | insert hashed $insertHash
-        | insert pathname { |x| $x.hashed | str substring ($x.hashed | str index-of '/')..999 }
+        | insert pathname { |x| $x.hashed | str substring ($x.hashed | str index-of '/web')..999 }
         | insert target-dir { |x| $x.hashed | path dirname }
-        | insert url { |x| $x.name | str substring ($x.name | str index-of '/')..999 }
+        | insert url { |x| $x.name | str substring ($x.name | str index-of '/web')..999 }
         | select name hashed url pathname target-dir
     }
 
@@ -31,7 +37,7 @@ def main [build: bool = false] {
         let target = $"($targetDir)/web/js/lib"
         mkdir $target
         let hashName = $"($target)/($x.hashed | path basename)"
-        cp (if $build {
+        cp (if $build == "prod" {
                 "node_modules/mpa-enhancer/src/*.min.js"
             } else { "node_modules/mpa-enhancer/src/mpa.js" }) $hashName
     }
@@ -43,7 +49,7 @@ def main [build: bool = false] {
         let target = $"($targetDir)/web/js/lib"
         mkdir $target
         let hashName = $"($target)/($x.hashed | path basename)"
-        cp (if $build {
+        cp (if $build == "prod" {
                 "node_modules/@cloudfour/elastic-textarea/index.min.js"
             } else {
                 "node_modules/@cloudfour/elastic-textarea/index.js"
@@ -73,7 +79,7 @@ def main [build: bool = false] {
         '--entry-names=[dir]/[name].[hash]',
     ]
     | append (
-        if $build {
+        if $build == "prod" {
             [ '--minify' ]
         } else { [] }
     ))
@@ -106,7 +112,7 @@ def main [build: bool = false] {
     let files = (
         ls $"($targetDir)/**/*"
         | where { |x| $x.name =~ '\.(css|js)$' }
-        | insert file { |x| $x.name | str substring ($x.name | str index-of '/')..999 }
+        | insert file { |x| $x.name | str substring ($x.name | str index-of '/web')..999 }
         | insert url { |x|
             let s = $x.file
             let length = ($s | str length)
@@ -121,12 +127,18 @@ def main [build: bool = false] {
     $"export default ($files)" | save -f src/web/entry-points.ts
 
     # copy html files
-    cp src/index.html $"($targetDir)/index.html"
-
+    let appCss = (ls $"($targetDir)/**/app.*.css" | get name | first | str replace $targetDir "")
+    let indexCss = (ls $"($targetDir)/**/index.*.css" | get name | first | str replace $targetDir "")
     let apploaderjs = (ls $"($targetDir)/**/app-loader*.js" | get name | first | str replace $targetDir "")
-    open src/web/index.html
-    | str replace '{{apploaderjs}}' $apploaderjs
-    | save -f $"($targetDir)/web/index.html"
+    ls src/**/*.html
+    | each { |x|
+        mkdir ($x.name | path dirname | str replace '^src/' $"($targetDir)/")
+        open $x.name
+        | str replace '{{indexCss}}' $indexCss
+        | str replace '{{apploaderjs}}' $apploaderjs
+        | str replace '{{appCss}}' $appCss
+        | save -f ($x.name | str replace '^src/' $"($targetDir)/")
+    }
 
     # Service worker
     let sw = ([
@@ -137,12 +149,13 @@ def main [build: bool = false] {
         'src/web/sw.ts',
     ]
     | append (
-        if $build {
+        if $build == "prod" {
             ['--minify']
-        } else { [
+        } else if $build == "dev" { [
             $"--servedir=($targetDir)",
             '--watch'
         ] }
+        else { [ '--watch' ] }
     ))
 
     ^npx esbuild $sw
