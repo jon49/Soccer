@@ -7,8 +7,8 @@ import db from "../server/global-model.js"
 let index : Route = {
     route: /\/web\/$/,
     get: async (req: Request) => {
-        let params = searchParams<{ success?: string, loggedOut?: string }>(req)
-        if (params.success === "true") {
+        let params = searchParams<{ login?: string, loggedOut?: string }>(req)
+        if (params.login === "success") {
             await db.setLoggedIn(true)
         }
         if (params.loggedOut === "true") {

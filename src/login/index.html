@@ -13,7 +13,7 @@
 
 <script>
     document.querySelector('main').innerHTML = `
-<form action="/login" method="post">
+<form action="/api/authentication/login" method="post">
     <div>
         <label for="email">Email</label>
         <input type="email" name="email" id="email" required>
@@ -43,6 +43,8 @@
     }
 })()
 </script>
+
+    <script src="{{appJs}}"></script>
 
     </body>
 </html>

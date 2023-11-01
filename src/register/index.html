@@ -13,7 +13,7 @@
 
 <script>
     document.querySelector('main').innerHTML = `
-    <form id=register-form action="/register" method=post>
+    <form id=register-form action="/api/authentication/register" method=post>
         <div>
             <label for="email">Email</label>
             <input type="email" name="email" id="email" required>
@@ -47,6 +47,8 @@
         }
     })
 </script>
+
+    <script src="{{appJs}}"></script>
 
     </body>
 </html>

@@ -110,7 +110,7 @@ def main [build: string = "dev"] {
 
     # write static files to entry-points file
     let files = (
-        ls $"($targetDir)/**/*"
+        ls $"($targetDir)/**/web/**/*"
         | where { |x| $x.name =~ '\.(css|js)$' }
         | insert file { |x| $x.name | str substring ($x.name | str index-of '/web')..999 }
         | insert url { |x|
@@ -130,6 +130,7 @@ def main [build: string = "dev"] {
     let appCss = (ls $"($targetDir)/**/app.*.css" | get name | first | str replace $targetDir "")
     let indexCss = (ls $"($targetDir)/**/index.*.css" | get name | first | str replace $targetDir "")
     let apploaderjs = (ls $"($targetDir)/**/app-loader*.js" | get name | first | str replace $targetDir "")
+    let appJs = (ls $"($targetDir)/js/app.*.js" | get name | first | str replace $targetDir "")
     ls src/**/*.html
     | each { |x|
         mkdir ($x.name | path dirname | str replace '^src/' $"($targetDir)/")
@@ -137,6 +138,7 @@ def main [build: string = "dev"] {
         | str replace '{{indexCss}}' $indexCss
         | str replace '{{apploaderjs}}' $apploaderjs
         | str replace '{{appCss}}' $appCss
+        | str replace '{{appJs}}' $appJs
         | save -f ($x.name | str replace '^src/' $"($targetDir)/")
     }
 
