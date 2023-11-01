@@ -66,7 +66,7 @@ const render = async (
        </form>
 
         ${isLoggedIn
-            ? html`<a href="/logout">Logout</a>`
+            ? html`<a href="/login?logout">Logout</a>`
         : html`<a href="/login">Login</a>`}
         
     </div>
