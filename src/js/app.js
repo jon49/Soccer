@@ -2,7 +2,7 @@
 
 const doc = document
 
-doc.addEventListener('submit', async e => {
+doc.addEventListener("submit", async e => {
     e.preventDefault()
     const form = e.target
     let action = form.action
@@ -11,17 +11,17 @@ doc.addEventListener('submit', async e => {
         body: new FormData(form)
     })
     let data
-    if (response.headers.get('content-type').includes('application/json')) {
+    if (response.headers.get("content-type").includes("application/json")) {
         data = await response.json()
     }
     if (!response.ok) {
-        if (data?.msg) {
-            writeMessage(data?.msg)
+        if (data?.message) {
+            writeMessage(data?.message)
         }
         return
     }
 
-    if (['login', 'register'].some(x => action.includes(x))) {
+    if (["login", "register", "reset-password"].some(x => action.includes(x))) {
         location.href = "/web/?login=success"
         return
     }
@@ -42,7 +42,7 @@ function getHtml(text) {
 
 function writeMessage(msg) {
     let message = getHtml(`<p class="message">${msg}</p>`)
-    doc.querySelector('main').prepend(message)
+    doc.querySelector("main").prepend(message)
 }
 
 })()
