@@ -11,7 +11,7 @@ doc.addEventListener("submit", async e => {
         body: new FormData(form)
     })
     let data
-    if (response.headers.get("content-type").includes("application/json")) {
+    if (response.headers.get("content-type")?.includes("application/json")) {
         data = await response.json()
     }
     if (!response.ok) {
