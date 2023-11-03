@@ -56,18 +56,16 @@ function getGameView(teamId: number, game: Game) {
     return html`<li onchange="event.target.form.submit()" id=game-${game.id}>${getGamePartialView(teamId, game)}</li>`
 }
 
-function formatTime(time: string | undefined) {
-    if (!time) return ""
-    let hours = +time.slice(0, 2)
-    let ampm = hours < 12 ? "AM" : "PM"
-    hours = hours % 12
-    let minutes = time.slice(3, 5)
-    return `${hours}:${minutes} ${ampm}`
+function formatTime(date: Date | undefined) {
+    if (!date) return ""
+    return date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
 }
 
 function getGamePartialView(teamId: number, game: Game) {
     let teamQuery = `teamId=${teamId}`
     let formId = `game-form-${game.id}`
+    let datetime = game.date && game.time ? `${game.date}T${game.time}` : ""
+    let d = new Date(datetime)
     return html`
 <input form=${formId} type=hidden name=gameId value="${game.id}">
 <input
@@ -77,10 +75,10 @@ function getGamePartialView(teamId: number, game: Game) {
     type=datetime-local
     name=date
     required
-    value="${game.date}${when(game.time, x => html`T$${x}`)}"
+    value="$${datetime}"
     >
 <label for="game-date-${game.id}">
-    <a href="?$${teamQuery}&gameId=${game.id}">${game.date} (${formatTime(game.time)})</a>
+    <a href="?$${teamQuery}&gameId=${game.id}">${game.date} (${formatTime(d)})</a>
     <span class=editable-pencil>&#9998;</span>
 </label>
 <input
