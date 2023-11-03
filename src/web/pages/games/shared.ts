@@ -14,10 +14,12 @@ export interface GamePlayerStatusView<T extends PlayerStatus> extends PlayerGame
 export async function createPlayersView<T extends PlayerStatus>(
         filter: (playerGame: PlayerGame) => playerGame is PlayerGameStatus<T>,
         teamPlayers: TeamPlayer[],
-        players: PlayerGame[]) : Promise<GamePlayerStatusView<T>[]> {
+        players: PlayerGame[],
+        game: Game) : Promise<GamePlayerStatusView<T>[]> {
     let typedPlayers_ = players.filter(filter)
     let typedPlayers = await Promise.all(typedPlayers_.map(async x => {
-        let calc = new PlayerGameTimeCalculator(x)
+        let calc =
+            new PlayerGameTimeCalculator(x, new GameTimeCalculator(game))
         let name = await required(teamPlayers.find(y => y.id === x.playerId)?.name, "Could not find player ID!")
         return { name, calc, ...x }
     }))
@@ -35,27 +37,32 @@ export function isOnDeckPlayer(x: PlayerGame) : x is PlayerGameStatus<OnDeckPlay
 export class PlayerGameTimeCalculator {
     times: PlayerGameTime[]
     player: PlayerGame
-    constructor(player: PlayerGame) {
+    gameCalc: GameTimeCalculator
+    constructor(player: PlayerGame, gameCalc: GameTimeCalculator) {
         this.player = player
         player.gameTime = player.gameTime || []
         this.times = player.gameTime
+        this.gameCalc = gameCalc
     }
 
     start() {
         let time = tail(this.times)
+        if (!this.gameCalc.isGameOn()) {
+            return
+        }
         if (!time || !time.position) {
-            throw new Error("Cannot start new time a position assigned!")
+            return
         }
         if (time.end) {
-            throw new Error("Cannot start when already ended!")
+            return
         }
         time.start = +new Date()
     }
 
     end() {
         let time = tail(this.times)
-        if (!time || !time.start) {
-            throw new Error("Cannot end time without starting!")
+        if (!time?.start || time?.end) {
+            return
         }
         time.end = +new Date()
     }
@@ -63,9 +70,14 @@ export class PlayerGameTimeCalculator {
     position(position: string) {
         let time = tail(this.times)
         if (time && !time.end && time.start) {
-            throw new Error("Cannot set position without ending previous time!")
+            this.end()
+            this.times.push({
+                position
+            })
+            this.start()
+            return
         }
-        if (time && !time.start) {
+        if (time && !this.hasStarted()) {
             time.position = position
             return
         }
@@ -74,8 +86,12 @@ export class PlayerGameTimeCalculator {
         })
     }
 
-    pop() {
-        this.times.pop()
+    playerOut() {
+        if (!this.hasStarted()) {
+            this.times.pop()
+        } else {
+            this.end()
+        }
     }
 
     hasStarted() {
@@ -95,8 +111,7 @@ export class PlayerGameTimeCalculator {
     }
 
     isGameOn() {
-        let time = tail(this.times)
-        return time && !time.end && time.start
+        return this.gameCalc.isGameOn()
     }
 
     currentPosition() {
@@ -112,14 +127,20 @@ export class GameTimeCalculator {
     times: GameTime[]
     game: Game
     constructor(game: Game) {
+        if (!game) {
+            throw new Error("Game cannot be null!")
+        }
         this.game = game
-        this.times = game.gameTime = game.gameTime || []
+        if (!game.gameTime) {
+            game.gameTime = []
+        }
+        this.times = game.gameTime
     }
 
     start() {
         let time = tail(this.times)
-        if (!time?.end) {
-            throw new Error("Cannot start when has not ended!")
+        if (time && !time.end) {
+            return
         }
         this.times.push({
             start: +new Date(),
@@ -139,12 +160,12 @@ export class GameTimeCalculator {
         return !time?.end && time?.start
     }
 
-    getLastEndTime() {
-        return tail(this.times)?.end
-    }
-
     getLastStartTime() {
         return tail(this.times)?.start
+    }
+
+    getLastEndTime() {
+        return tail(this.times)?.end
     }
 
     total() {
@@ -250,7 +271,7 @@ export class PlayerStateView {
 
     async inPlayPlayers() {
         return this.#cache.get("inPlayPlayers", async () =>
-            createPlayersView(isInPlayPlayer, (await this.team()).players, (await this.gamePlayers()))
+            createPlayersView(isInPlayPlayer, (await this.team()).players, (await this.gamePlayers()), await this.game())
         )
     }
 
@@ -262,7 +283,7 @@ export class PlayerStateView {
 
     async onDeckPlayers() {
         return this.#cache.get("onDeckPlayers", async () =>
-            createPlayersView(isOnDeckPlayer, (await this.team()).players, (await this.gamePlayers()))
+            createPlayersView(isOnDeckPlayer, (await this.team()).players, (await this.gamePlayers()), await this.game())
         )
     }
 
@@ -273,7 +294,7 @@ export class PlayerStateView {
 
     async outPlayers() {
         return this.#cache.get("outPlayers", async () => {
-            let players = await createPlayersView(filterOutPlayers, (await this.team()).players, (await this.gamePlayers()))
+            let players = await createPlayersView(filterOutPlayers, (await this.team()).players, (await this.gamePlayers()), await this.game())
             return players.sort((a, b) => a.calc.total() - b.calc.total())
         })
     }
@@ -284,7 +305,7 @@ export class PlayerStateView {
 
     async notPlayingPlayers() {
         return this.#cache.get("notPlayingPlayers", async () =>
-            createPlayersView(filterNotPlayingPlayers, (await this.team()).players, (await this.gamePlayers()))
+            createPlayersView(filterNotPlayingPlayers, (await this.team()).players, (await this.gamePlayers()), await this.game())
         )
     }
 

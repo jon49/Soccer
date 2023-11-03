@@ -161,11 +161,15 @@ function streamResponse(response: { body: Generator, headers?: any }) : Response
     let { body, headers } = response
     const stream = new ReadableStream({
         async start(controller : ReadableStreamDefaultController<any>) {
-            for await (let x of body) {
-                if (typeof x === "string")
-                    controller.enqueue(encoder.encode(x))
+            try {
+                for await (let x of body) {
+                    if (typeof x === "string")
+                        controller.enqueue(encoder.encode(x))
+                }
+                controller.close()
+            } catch (error) {
+                console.error(error)
             }
-            controller.close()
         }
     })
 

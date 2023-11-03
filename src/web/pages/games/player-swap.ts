@@ -32,13 +32,14 @@ export async function swapAll(query: any) {
         .filter(x => playerId ? x.playerId === playerId : true)
     let game = await required(team.games.find(x => x.id === gameId), "Could not find game ID!")
     let gameCalc = new GameTimeCalculator(game)
+
     for (let player of onDeckPlayers) {
-        let calc = new PlayerGameTimeCalculator(player)
+        let calc = new PlayerGameTimeCalculator(player, gameCalc)
 
         let currentPlayer =
             inPlayers.find(x => x.status.position === player.status.targetPosition)
         if (currentPlayer) {
-            let inPlayerCalc = new PlayerGameTimeCalculator(<PlayerGame>currentPlayer)
+            let inPlayerCalc = new PlayerGameTimeCalculator(<PlayerGame>currentPlayer, gameCalc)
             if (inPlayerCalc.hasStarted()) {
                 inPlayerCalc.end()
             }
@@ -46,9 +47,7 @@ export async function swapAll(query: any) {
             await inPlayerCalc.save(teamId)
         }
 
-        if (gameCalc.isGameOn()) {
-            calc.start()
-        }
+        calc.start()
 
         let position = await createPositiveWholeNumber("Player position number")(getPlayerPosition(player))
 

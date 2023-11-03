@@ -24,8 +24,8 @@ export default async function render(req: Request) {
 
     let game = await required(team.games.find(x => x.id === gameId), "Could not find game ID!")
     let gameTimeCalculator = new GameTimeCalculator(game)
-    let inPlayPlayers = await createPlayersView(isInPlayPlayer, team.players, players)
-    let onDeckPlayers = await createPlayersView(isOnDeckPlayer, team.players, players)
+    let inPlayPlayers = await createPlayersView(isInPlayPlayer, team.players, players, game)
+    let onDeckPlayers = await createPlayersView(isOnDeckPlayer, team.players, players, game)
     let player = await required(team.players.find(x => x.id === playerId), "Could not find player ID!")
 
     let isInPlay = game.status === "play"
@@ -63,7 +63,7 @@ ${function* positionViews() {
                 hf-scroll="#out-players" >${
             () => {
                 if (player) {
-                    let playerGameCalc = new PlayerGameTimeCalculator(player)
+                    let playerGameCalc = new PlayerGameTimeCalculator(player, gameTimeCalculator)
                     return html`
                 <game-shader data-total="${gameTimeCalculator.currentTotal()}" data-value="${playerGameCalc.currentTotal()}">
                     <button
@@ -79,7 +79,7 @@ ${function* positionViews() {
                 </game-shader>`
                 }
                 if (playerOnDeck) {
-                    let playerOnDeckGameCalc = new PlayerGameTimeCalculator(playerOnDeck)
+                    let playerOnDeckGameCalc = new PlayerGameTimeCalculator(playerOnDeck, gameTimeCalculator)
                     return html`
                     <button>
                         (${playerOnDeck.name})

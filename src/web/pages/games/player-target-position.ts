@@ -4,7 +4,7 @@ import { playerGameAllGet, playerGameSave, positionGetAll } from "../../server/r
 import { teamGet } from "../../server/repo-team.js";
 import { createIdNumber, required } from "../../server/validation.js";
 import { queryTeamIdGameIdValidator } from "../../server/validators.js";
-import { PlayerGameTimeCalculator, isInPlayPlayer, isOnDeckPlayer } from "./shared.js";
+import { GameTimeCalculator, PlayerGameTimeCalculator, isInPlayPlayer, isOnDeckPlayer } from "./shared.js";
 
 const queryTeamGamePlayerValidator = {
     ...queryTeamIdGameIdValidator,
@@ -36,8 +36,8 @@ async function _targetPosition(
         positionGetAll(team.id)
     ])
 
-    await swapWhenInGame(player, players, positions, team, targetPosition)
-    await swapToOnDeck(player, players, positions, team, targetPosition)
+    await swapWhenInGame(player, players, positions, team, targetPosition, game)
+    await swapToOnDeck(player, players, positions, team, targetPosition, game)
 }
 
 async function swapToOnDeck(
@@ -45,7 +45,8 @@ async function swapToOnDeck(
     players: PlayerGame[],
     positions: string[],
     team: Team,
-    targetPosition: number) {
+    targetPosition: number,
+    game: Game) {
 
     if (!(player.status?._ === "onDeck" || player.status?._ === "out" || !player.status?._)) return
 
@@ -64,8 +65,8 @@ async function swapToOnDeck(
         targetPosition,
     }
 
-    let playerCalc = new PlayerGameTimeCalculator(player)
-    if (player.status._ === "onDeck") {
+    let playerCalc = new PlayerGameTimeCalculator(player, new GameTimeCalculator(game))
+    if (isOnDeckPlayer(player)) {
         playerCalc.position(positions[targetPosition])
     }
 
@@ -77,7 +78,8 @@ async function swapWhenInGame(
     players: PlayerGame[],
     positions: string[],
     team: Team,
-    targetPosition: number) {
+    targetPosition: number,
+    game: Game) {
 
     if (player.status?._ !== "inPlay") return
 
@@ -91,7 +93,8 @@ async function swapWhenInGame(
     }
     player.status.position = targetPosition
 
-    let playerCalc = new PlayerGameTimeCalculator(player)
+    let gameCalc = new GameTimeCalculator(game)
+    let playerCalc = new PlayerGameTimeCalculator(player, gameCalc)
     let gameOn = playerCalc.isGameOn()
 
     let positionName = positions[targetPosition]
@@ -104,7 +107,7 @@ async function swapWhenInGame(
     }
 
     if (inGamePlayer) {
-        let inGamePlayerCalc = new PlayerGameTimeCalculator(inGamePlayer)
+        let inGamePlayerCalc = new PlayerGameTimeCalculator(inGamePlayer, gameCalc)
         let positionName = positions[player.status.position]
         if (gameOn) {
             inGamePlayerCalc.end()

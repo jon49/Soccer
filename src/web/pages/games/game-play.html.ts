@@ -49,7 +49,7 @@ const postHandlers : PostHandlers = {
     oPointsDec: setPoints(game => --game.opponentPoints),
     oPointsInc: setPoints(game => ++game.opponentPoints),
 
-    updateNote: async ({ query, data }) => {
+    async updateNote ({ query, data }) {
         let { gameId, teamId } = await validateObject(query, queryTeamIdGameIdValidator)
         let { notes } = await validateObject(data, dataNotesValidator)
         await saveGameNotes(teamId, gameId, notes)
@@ -57,14 +57,14 @@ const postHandlers : PostHandlers = {
         return { body: null, status: 204 }
     },
 
-    swap: async ({ query, req }) => {
+    async swap ({ query, req }) {
         // The query contains the player ID and so will only swap one player.
         await swapAll(query)
 
         return playerStateView(await PlayerStateView.create(req))
     },
 
-    swapAll: async ({ query, req }) => {
+    async swapAll ({ query, req }) {
         await swapAll(query)
 
         return playerStateView(await PlayerStateView.create(req))
@@ -77,22 +77,23 @@ const postHandlers : PostHandlers = {
         return playerStateView(await PlayerStateView.create(req))
     },
 
-    playerNowOut: async ({ query, req }) => {
+    async playerNowOut ({ query, req }) {
         let { teamId, playerId, gameId } = await validateObject(query, queryTeamGamePlayerValidator)
-        let [p] = await playerGameAllGet(teamId, gameId, [playerId])
+        let [[p], team] = await Promise.all([
+            playerGameAllGet(teamId, gameId, [playerId]),
+            teamGet(teamId)
+        ]) 
+        let game = await required(team.games.find(x => x.id === gameId), "Could not find game!")
+        let gameCalc = new GameTimeCalculator(game)
         p.status = { _: "out" }
-        let calc = new PlayerGameTimeCalculator(p)
-        if (calc.hasStarted()) {
-            calc.end()
-        } else {
-            calc.pop()
-        }
+        let calc = new PlayerGameTimeCalculator(p, gameCalc)
+        calc.playerOut()
         await calc.save(teamId)
 
         return playerStateView(await PlayerStateView.create(req))
     },
 
-    cancelOnDeck: async ({ query, req }) => {
+    async cancelOnDeck ({ query, req }) {
         let { teamId, playerId, gameId } = await validateObject(query, queryTeamGamePlayerValidator)
         let [player] = await playerGameAllGet(teamId, gameId, [playerId])
         player.status = { _: "out" }
@@ -102,7 +103,7 @@ const postHandlers : PostHandlers = {
         return playerStateView(await PlayerStateView.create(req))
     },
 
-    notPlaying: async ({ query, req }) => {
+    async notPlaying ({ query, req }) {
         let { teamId, playerId, gameId } = await validateObject(query, queryTeamGamePlayerValidator)
         let [player] = await playerGameAllGet(teamId, gameId, [playerId])
         player.status = { _: "notPlaying" }
@@ -111,7 +112,7 @@ const postHandlers : PostHandlers = {
         return playerStateView(await PlayerStateView.create(req))
     },
 
-    backIn: async ({ query, req }) => {
+    async backIn ({ query, req }) {
         let { teamId, playerId, gameId } = await validateObject(query, queryTeamGamePlayerValidator)
         let [player] = await playerGameAllGet(teamId, gameId, [playerId])
         player.status = { _: "out" }
@@ -120,7 +121,7 @@ const postHandlers : PostHandlers = {
         return playerStateView(await PlayerStateView.create(req))
     },
 
-    startGame: async ({ query, req }) => {
+    async startGame ({ query, req }) {
         let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
         let timestamp = +new Date()
         let team = await teamGet(teamId)
@@ -135,7 +136,7 @@ const postHandlers : PostHandlers = {
         let players = await playerGameAllGet(teamId, gameId, team.players.map(x => x.id))
         let inPlayPlayers = players.filter(isInPlayPlayer)
         await Promise.all(inPlayPlayers.map(player => {
-            let calc = new PlayerGameTimeCalculator(player)
+            let calc = new PlayerGameTimeCalculator(player, new GameTimeCalculator(game))
             calc.start()
             return calc.save(teamId)
         }))
@@ -143,7 +144,7 @@ const postHandlers : PostHandlers = {
         return render(req)
     },
 
-    pauseGame: async ({ query, req }) => {
+    async pauseGame ({ query, req }) {
         let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
         let team = await teamGet(teamId)
 
@@ -156,7 +157,7 @@ const postHandlers : PostHandlers = {
         let players = await playerGameAllGet(teamId, gameId, team.players.map(x => x.id))
         let inPlayPlayers = players.filter(isInPlayPlayer)
         await Promise.all(inPlayPlayers.map(player => {
-            let calc = new PlayerGameTimeCalculator(player)
+            let calc = new PlayerGameTimeCalculator(player, gameCalc)
             let currentPosition = calc.currentPosition()
             calc.end()
             calc.position(currentPosition)
@@ -166,7 +167,7 @@ const postHandlers : PostHandlers = {
         return render(req)
     },
 
-    endGame: async ({ query, req }) => {
+    async endGame ({ query, req }) {
         let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
         let team = await teamGet(teamId)
 
@@ -181,17 +182,17 @@ const postHandlers : PostHandlers = {
             players
             .filter(isInPlayPlayer)
             .map(player => {
-                let calc = new PlayerGameTimeCalculator(player)
-                calc.end()
+                let playerCalc = new PlayerGameTimeCalculator(player, calc)
+                playerCalc.end()
                 // @ts-ignore
                 player.status = { _: "out"}
-                return calc.save(teamId)
+                return playerCalc.save(teamId)
             }))
 
         return render(req)
     },
 
-    restartGame: async ({ query, req }) => {
+    async restartGame ({ query, req }) {
         let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
         let team = await teamGet(teamId)
         let game = await required(team.games.find(x => x.id === gameId), `Could not find game! ${gameId}`)
