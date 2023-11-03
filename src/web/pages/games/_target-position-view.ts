@@ -27,6 +27,7 @@ export default async function render(req: Request) {
     let inPlayPlayers = await createPlayersView(isInPlayPlayer, team.players, players, game)
     let onDeckPlayers = await createPlayersView(isOnDeckPlayer, team.players, players, game)
     let player = await required(team.players.find(x => x.id === playerId), "Could not find player ID!")
+    let playerGame = await required(players.find(x => x.playerId === playerId), "Could not find player!")
 
     let isInPlay = game.status === "play"
     let isEnded = game.status === "ended"
@@ -38,8 +39,7 @@ export default async function render(req: Request) {
     class=inline
     action="?teamId=${teamId}&gameId=${gameId}&handler=cancelSwap"
     hf-target="#player-state"
-    hf-scroll="#out-players"
-    >
+    hf-scroll="#out-players" >
     <button>Cancel Swap</button>
 </form>
 
@@ -60,7 +60,8 @@ ${function* positionViews() {
                 method=post
                 action="?position=${count}&teamId=${teamId}&gameId=${gameId}&playerId=${playerId}&handler=updateUserPosition&playerSwap"
                 hf-target="#player-state"
-                hf-scroll="#out-players" >${
+                $${when(!isInPlayPlayer(playerGame), `hf-scroll="#out-players"`)}
+                >${
             () => {
                 if (player) {
                     let playerGameCalc = new PlayerGameTimeCalculator(player, gameTimeCalculator)
