@@ -31,14 +31,15 @@ function render({ team, positions, grid }: PositionView) {
     class="form cards"
     style="--card-width:3.5em;"
     method=post
-    action="?handler=addGrid&teamId=${team.id}" onchange="this.submit()">
+    action="?handler=addGrid&teamId=${team.id}" onchange="this.requestSubmit()"
+    hf-target="main" >
     ${grid.map((x, i) => html`<input id="grid${i}" class=inline type=number name="grid[]" value="${x}">`)}
     <input id="grid-1" type=number name="grid[]" ${when(!grid.length, () => "autofocus")}>
 </form>
 
 ${when(!!grid.length, () => html`
 <h3>Positions</h3>
-<form class=form method=post onchange="this.submit()">
+<form class=form method=post onchange="this.requestSubmit()" hf-target="main">
     ${function* positionViews() {
         let count = 0
         for (let width of grid) {
@@ -54,15 +55,6 @@ ${when(!!grid.length, () => html`
     }}
 </form>
 `)}
-
-<script>
-    document.addEventListener("onchange", e => {
-        let target = e.target
-        if (target instanceof HTMLInputElement) {
-            target.form.submit()
-        }
-    })
-</script>
     `
 }
 
@@ -75,7 +67,7 @@ const gridValidator = {
 }
 
 const postHandlers : PostHandlers = {
-    addGrid: async ({ query, data }) => {
+    addGrid: async ({ req, query, data }) => {
         let { teamId } = await validateObject(query, queryTeamIdValidator)
         let { grid } = await validateObject(data, gridValidator)
         grid = grid.filter(x => x)
@@ -84,13 +76,15 @@ const postHandlers : PostHandlers = {
             grid,
             positions: o.positions,
             _rev: o._rev })
+        return render(await start(req))
     },
-    post: async ({ query, data }) => {
+    post: async ({ req, query, data }) => {
         let { teamId } = await validateObject(query, queryTeamIdValidator)
         let { names } = await validateObject(data, positionValidator)
         let o = await positionGetAll(teamId)
         o.positions = names.map(x => x || "")
         await positionsSave(teamId, o)
+        return render(await start(req))
     }
 }
 
@@ -101,6 +95,7 @@ const route : Route = {
         return layout(req, {
             main: render(result),
             title: `Positions - ${result.team.name} (${result.team.year})`,
+            useHtmf: true
         })
     },
     post: postHandlers,
