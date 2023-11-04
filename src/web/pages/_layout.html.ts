@@ -4,6 +4,7 @@ import { when } from "../server/shared.js"
 import { Theme } from "./user-settings/edit.html.js"
 import { errors, messages } from "../service-worker/route-handling.js"
 import db from "../server/global-model.js"
+import { syncCountView } from "../api/sync.js"
 
 interface Nav {
     name: string
@@ -62,7 +63,7 @@ const render = async (
         </form>
 
        <form method=post action="/web/api/sync?handler=force" class=inline>
-           <button id=sync-count class=bg>&#128259; ${when(updatedCount, count => html`(${count})`)}</button>
+           <button id=sync-count class=bg>${syncCountView(updatedCount)}</button>
        </form>
 
         ${isLoggedIn
@@ -107,13 +108,15 @@ const render = async (
     ${ null /*useHtmf
         ? html`<script src="/web/js/lib/htmf.min.js"></script>`
     : html`<script src="/web/js/lib/mpa.min.js"></script>`*/ }
-    ${when(useHtmf, () => html`<script src="/web/js/lib/htmf.min.js"></script>`)}
+    ${when(useHtmf, () => html`
+        <form id=get-sync-count-form action="/web/api/sync?handler=count" hf-target="#sync-count"></form>
+        <script src="/web/js/lib/htmf.min.js"></script>`)}
     <script src="/web/js/lib/mpa.min.js"></script>
     ${(scripts ?? []).map(x => html`<script src="${x}"></script>`)}
     <script>
         App = window.App ?? {};
         ${when(updatedCount, _ => html`App.shouldWaitToSync = true`)}
-        ${when(+new Date() - lastSynced > /* 2 hours */ 1e3*60*60*2, _ => html`App.shouldSync = true`)}
+        ${when(+new Date() - (lastSynced || 0) > /* 2 hours */ 1e3*60*60*2, _ => html`App.shouldSync = true`)}
     </script>
     <script src="/web/js/app.js"></script>
 </body>

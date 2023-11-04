@@ -1,5 +1,8 @@
+import html from "html-template-tag-stream"
 import { PostHandlers, Route } from "../server/route.js"
+import { when } from "../server/shared.js"
 import sync from "../server/sync.js"
+import db from "../server/global-model.js"
 
 const postHandlers : PostHandlers = {
     async post() {
@@ -55,8 +58,16 @@ const postHandlers : PostHandlers = {
     }
 }
 
+export function syncCountView(count: number) {
+    return html`&#128259; ${when(count, count => html`(${count})`)}`
+}
+
 const router: Route = {
     route: /\/api\/sync\/$/,
+    get: async () => {
+        let updated = await db.updated()
+        return syncCountView(updated.length)
+    },
     post: postHandlers
 }
 

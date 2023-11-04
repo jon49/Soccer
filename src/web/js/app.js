@@ -13,6 +13,12 @@ document.addEventListener("user-messages", e => {
     closeDialogs()
 })
 
+document.addEventListener("hf:completed", e => {
+    if (e.detail.method === "get") return
+    let count = document.getElementById('get-sync-count-form')
+    count.requestSubmit()
+})
+
 function closeDialogs() {
     for (let dialog of document.querySelectorAll("dialog.toast")) {
         let id = setTimeout(() => {
