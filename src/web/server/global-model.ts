@@ -1,4 +1,4 @@
-import { Revision, get, set } from "./db.js";
+import { Settings, Theme, get, set, update } from "./db.js";
 
 function parseKey(key: unknown) : string | number {
     return typeof key === "string" && key.startsWith("[")
@@ -8,8 +8,8 @@ function parseKey(key: unknown) : string | number {
 
 const settingDefaults : Settings = {
     lastSyncedId: 0,
-    _rev: 0,
-    lastSynced: 0
+    lastSynced: 0,
+    theme: "none"
 }
 
 class GlobalDB {
@@ -29,14 +29,15 @@ class GlobalDB {
         return { ...settingDefaults, ...((await get("settings")) ?? {}) }
     }
 
+    async setTheme(theme: Theme) : Promise<void> {
+        await update(
+            "settings",
+            v => ({ ...(v ?? settingDefaults), theme }),
+            { sync: false })
+    }
+
 }
 
 const globalDB = new GlobalDB
 export default globalDB
-
-export interface Settings extends Revision {
-    earliestDate?: string
-    lastSyncedId: number
-    lastSynced?: number
-}
 

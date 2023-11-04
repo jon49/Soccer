@@ -1,23 +1,17 @@
 import html from "../server/html.js"
 import { version } from "../server/settings.js"
 import { when } from "../server/shared.js"
-import { Theme } from "./user-settings/edit.html.js"
 import { errors, messages } from "../service-worker/route-handling.js"
 import db from "../server/global-model.js"
 import { syncCountView } from "../api/sync.js"
+import { themeView } from "../api/settings.js"
 
 interface Nav {
     name: string
     url: string
 }
 
-interface Render {
-    theme: Theme | undefined
-    referrer: URL | null
-}
-
 const render = async (
-    {theme}: Render,
     { main,
       head,
       scripts,
@@ -26,7 +20,7 @@ const render = async (
       bodyAttr,
       useHtmf
     }: LayoutTemplateArguments) => {
-    const [isLoggedIn, updated, { lastSynced }] = await Promise.all([
+    const [isLoggedIn, updated, { lastSynced, theme }] = await Promise.all([
         db.isLoggedIn(),
         db.updated(),
         db.settings()
@@ -47,19 +41,8 @@ const render = async (
 </head>
 <body $${when(theme, x => `class=${x}`)} $${bodyAttr}>
     <div class=top-nav>
-        <form method=post action="/web/user-settings/edit?handler=updateTheme" class=inline>
-            <label class="toggle">
-                <input
-                    id=theme-input
-                    name=light
-                    type=checkbox
-                    $${when(theme === "light", "checked")}
-                    $${when(theme === "none" || theme == null, `indeterminate`)}
-                    onclick="this.form.submit()">
-                <span class="off button bg">&#127774;</span>
-                <span class="on button bg">&#127762;</span>
-                <span class="none button bg">⛅</span>
-            </label>
+        <form method=post action="/web/api/settings?handler=theme" class=inline>
+            ${themeView(theme)}
         </form>
 
        <form method=post action="/web/api/sync?handler=force" class=inline>
@@ -124,9 +107,8 @@ const render = async (
 }
 
 export default
-    async function layout(req: Request, o: LayoutTemplateArguments) {
-        let referrer = req.referrer ? new URL(req.referrer) : null
-        return render({ referrer, theme: undefined }, o)
+    async function layout(_: Request, o: LayoutTemplateArguments) {
+        return render(o)
     }
 
 export type Layout = typeof layout

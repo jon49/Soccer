@@ -6,8 +6,6 @@ import { PostHandlers, Route } from "../../server/route.js"
 import { isSelected } from "../../server/utils.js"
 import { createCheckbox, validateObject } from "../../server/validation.js"
 
-const themes = ["dark", "light", "none"] as const
-export type Theme = typeof themes[number]
 
 const start = async () => {
     let settings = await db.get("settings")
@@ -15,9 +13,9 @@ const start = async () => {
     return { theme: getTheme(settings.theme) }
 }
 
-const render = (o: { theme: Theme }) => {
-    const selected = isSelected<Theme>(o.theme)
-    const option = (value: Theme, display: string) => html`<option value="${value}" ${selected(value)}>${display}</option>`
+const render = (o: { theme: db.Theme }) => {
+    const selected = isSelected<db.Theme>(o.theme)
+    const option = (value: db.Theme, display: string) => html`<option value="${value}" ${selected(value)}>${display}</option>`
     return html`
 <h2>User Settings</h2>
 <p id=message></p>
@@ -33,7 +31,7 @@ const render = (o: { theme: Theme }) => {
 }
 
 function getTheme(s: unknown) {
-    return themes.find(x => x === s) ?? "none"
+    return db.themes.find(x => x === s) ?? "none"
 }
 
 async function get(req: Request) {

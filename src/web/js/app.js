@@ -19,6 +19,13 @@ document.addEventListener("hf:completed", e => {
     count.requestSubmit()
 })
 
+document.addEventListener("app-theme", e => {
+    let theme = e.detail.theme
+    document.body.classList.remove("light")
+    document.body.classList.remove("dark")
+    document.body.classList.add(theme)
+})
+
 function closeDialogs() {
     for (let dialog of document.querySelectorAll("dialog.toast")) {
         let id = setTimeout(() => {

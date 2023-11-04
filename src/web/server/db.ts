@@ -49,8 +49,14 @@ async function update(key: string, f: (v: any) => any, options = { sync: true })
 
 export { update, set, get, getMany, setMany }
 
+export const themes = ["dark", "light", null] as const
+export type Theme = typeof themes[number]
+
 export interface Settings {
-    lastSyncedId?: number | undefined
+    earliestDate?: string
+    lastSyncedId: number
+    lastSynced?: number
+    theme: Theme
 }
 
 export interface Revision {
