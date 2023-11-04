@@ -52,8 +52,12 @@ async function get(url: URL, req: Request, event: FetchEvent) : Promise<Response
     return new Response("Not Found!")
 }
 
+function isHtmf(req: Request) {
+    return req.headers.has("HF-Request")
+}
+
 function htmfHeader(req: Request, headers : any = {}) {
-    if (!req.headers.has("HF-Request")) return headers
+    if (!isHtmf(req)) return headers
     headers["hf-events"] = JSON.stringify({
         "user-messages": messages,
         ...(headers["hf-events"] || {})
@@ -114,8 +118,16 @@ async function post(url: URL, req: Request) : Promise<Response> {
             return redirect(req)
         } catch (error) {
             console.error("Post error:", error, "\nURL:", url);
-            errors.push(error?.toString() ?? "Unknown error!")
-            return redirect(req)
+            messages.push(error?.toString() ?? "Unknown error!")
+            if (!isHtmf(req)) {
+                return redirect(req)
+            } else {
+                let headers = htmfHeader(req)
+                return new Response(null, {
+                    status: 400,
+                    headers
+                })
+            }
         }
     }
     errors.push(`Unknown POST request "${url.pathname}"!`)
