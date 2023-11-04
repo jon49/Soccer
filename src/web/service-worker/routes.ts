@@ -6,7 +6,6 @@ import games from "../pages/games.html.js"
 import gamesPlay from "../pages/games/game-play.html.js"
 import positions from "../pages/positions.html.js"
 import activities from "../pages/activities.html.js"
-import userSettings from "../pages/user-settings/edit.html.js"
 import sync from "../api/sync.js"
 import settings from "../api/settings.js"
 
@@ -20,6 +19,5 @@ addRoutes([
     games,
     positions,
     activities,
-    userSettings
 ])
 
