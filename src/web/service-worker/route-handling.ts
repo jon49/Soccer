@@ -79,14 +79,14 @@ async function post(url: URL, req: Request) : Promise<Response> {
                 return result
             }
 
-            if ("message" in result) {
+            if (result?.message) {
                 if (result.message.length > 0) {
                     messages.push(result.message)
                 }
             } else {
                 messages.push("Saved!")
             }
-            if ("status" in result) {
+            if (result?.status) {
                 let headers = result.headers || {}
                 result.headers = htmfHeader(req, headers)
                 if (isHtml(result.body)) {
@@ -98,7 +98,7 @@ async function post(url: URL, req: Request) : Promise<Response> {
                     })
                 }
             }
-            if ("response" in result) {
+            if (result?.response) {
                 result = result.response
             }
             if (isHtml(result)) {
