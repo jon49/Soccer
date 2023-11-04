@@ -9,7 +9,7 @@ function parseKey(key: unknown) : string | number {
 const settingDefaults : Settings = {
     lastSyncedId: 0,
     lastSynced: 0,
-    theme: "none"
+    theme: null
 }
 
 class GlobalDB {
