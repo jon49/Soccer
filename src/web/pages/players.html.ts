@@ -95,9 +95,12 @@ function playerView(team: Team, playerId: number) {
 </div>`
 }
 
+async function renderMain(req: Request) {
+    return render(await start(req))
+}
 
 const postHandlers: PostHandlers = {
-    async editPlayer({data: d, query: q}) {
+    async editPlayer({ req, data: d, query: q}) {
         let [{ teamId, playerId }, { name: playerName, active }] = await validate([
             validateObject(q, queryTeamIdPlayerIdValidator),
             validateObject(d, dataPlayerNameActiveValidator)
@@ -118,9 +121,11 @@ const postHandlers: PostHandlers = {
         player.active = active
         // Player name will also need to be updated for the individual player when implemented!
         await teamSave(team)
+
+        return renderMain(req)
     },
 
-    async addPlayer({ data, query }) {
+    async addPlayer({ req, data, query }) {
         let [{ teamId }, { name }] = await validate([
             validateObject(query, queryTeamIdValidator),
             validateObject(data, dataPlayerNameValidator)
@@ -132,9 +137,10 @@ const postHandlers: PostHandlers = {
         await assert.isFalse(!!existingPlayer, `The player name "${existingPlayer?.name}" has already been chosen.`)
 
         await playerCreate(teamId, name)
+        return renderMain(req)
     },
 
-    async editTeam({ data, query }) {
+    async editTeam({ req, data, query }) {
         let [{ name: newTeamName, year, active }, { teamId }] = await validate([
             validateObject(data, dataTeamNameYearActiveValidator),
             validateObject(query, queryTeamIdValidator),
@@ -145,6 +151,7 @@ const postHandlers: PostHandlers = {
         team.year = year
         team.name = newTeamName
         await teamSave(team)
+        return renderMain(req)
     }
 }
 
