@@ -38,7 +38,7 @@ ${ wasFiltered ? html`<p><a href="?all">Show all teams.</a></p>` : null }
 
 <h3>Add a team</h3>
 
-<form class=form method=post>
+<form class=form method=post hf-target=main>
     <div>
         <label for=name>Team Name</label>
         <input id=name name=name type=text $${when(!teams?.length, "autofocus")} required>
@@ -70,9 +70,10 @@ function getTeamView(team: Team) {
 }
 
 const postHandlers: PostHandlers = {
-    post: async function post({ data }) {
+    post: async function post({ req, data }) {
         let d = await validateObject(data, dataTeamNameYearValidator)
         await teamsCreate(d)
+        return render(await start(req))
     },
 }
 
