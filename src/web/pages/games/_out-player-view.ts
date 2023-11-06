@@ -25,7 +25,7 @@ export async function outPlayersView(o: PlayerStateView) {
     <form
         action="?$${queryTeamGame}&playerId=${x.playerId}&handler=playerSwap"
         hf-target="#player-state"
-        hf-scroll="#game-swap-top" >
+        hf-scroll-to="#game-swap-top" >
         <button>${x.name}</button>
     </form>
     <game-timer data-total="${x.calc.total()}" data-static></game-timer>
