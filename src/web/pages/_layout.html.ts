@@ -18,7 +18,6 @@ const render = async (
       nav,
       title,
       bodyAttr,
-      useHtmf
     }: LayoutTemplateArguments) => {
     const [isLoggedIn, updated, { lastSynced, theme }] = await Promise.all([
         db.isLoggedIn(),
@@ -88,13 +87,10 @@ const render = async (
     </div>
 
     <footer><p>${version}</p></footer>
-    ${ null /*useHtmf
-        ? html`<script src="/web/js/lib/htmf.min.js"></script>`
-    : html`<script src="/web/js/lib/mpa.min.js"></script>`*/ }
-    ${when(useHtmf, () => html`
-        <form id=get-sync-count-form action="/web/api/sync?handler=count" hf-target="#sync-count"></form>
-        <script src="/web/js/lib/htmf.min.js"></script>`)}
-    <script src="/web/js/lib/mpa.min.js"></script>
+
+    <form id=get-sync-count-form action="/web/api/sync?handler=count" hf-target="#sync-count"></form>
+    <script src="/web/js/lib/htmf.min.js"></script>
+
     ${(scripts ?? []).map(x => html`<script src="${x}"></script>`)}
     <script>
         App = window.App ?? {};
@@ -120,5 +116,4 @@ export interface LayoutTemplateArguments {
     main?: AsyncGenerator<any, void, unknown>
     scripts?: string[]
     nav?: Nav[]
-    useHtmf?: boolean
 }

@@ -30,18 +30,6 @@ def main [build: string = "dev"] {
         | select name hashed url pathname target-dir
     }
 
-    # copy static npm files
-    ls node_modules/mpa-enhancer/src/*.min.js
-    | each $addHash
-    | each { |x|
-        let target = $"($targetDir)/web/js/lib"
-        mkdir $target
-        let hashName = $"($target)/($x.hashed | path basename)"
-        cp (if $build == "prod" {
-                "node_modules/mpa-enhancer/src/*.min.js"
-            } else { "node_modules/mpa-enhancer/src/mpa.js" }) $hashName
-    }
-
     # elastic-textarea
     ls node_modules/@cloudfour/elastic-textarea/*.min.js
     | each $addHash

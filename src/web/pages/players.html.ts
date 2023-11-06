@@ -44,7 +44,7 @@ function render(o: PlayersEditView) {
     </div>
     <div id=team-active>
         <label class=toggle>
-            <input mpa-target="#team-active" name=active type=checkbox $${when(team.active, "checked")}>
+            <input name=active type=checkbox $${when(team.active, "checked")}>
             <span class="off button">Inactive</span>
             <span class="on button">Active</span>
         </label>
@@ -84,7 +84,6 @@ function playerView(team: Team, playerId: number) {
         <div>
             <label class=toggle>
                 <input
-                    mpa-target="#active-${playerId_}"
                     name=active
                     type=checkbox
                     $${when(player.active, "checked")}>

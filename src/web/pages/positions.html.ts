@@ -27,7 +27,6 @@ function render({ team, positions, grid }: PositionView) {
 <h3>Grid</h3>
 <form
     id=add-grid
-    mpa-miss="#grid-1" 
     class="form cards"
     style="--card-width:3.5em;"
     method=post
@@ -95,7 +94,6 @@ const route : Route = {
         return layout(req, {
             main: render(result),
             title: `Positions - ${result.team.name} (${result.team.year})`,
-            useHtmf: true
         })
     },
     post: postHandlers,

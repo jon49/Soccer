@@ -234,11 +234,9 @@ const route : Route = {
             <script src="/web/js/game-shader.js"></script>`
         return layout(req, {
             head,
-            bodyAttr: `mpa-persist mpa-page-name="game-play"`,
             main: await render(req),
             scripts: ["/web/js/lib/elastic-textarea.js"],
             title: "Game Play",
-            useHtmf: true,
         })
     },
     post: postHandlers,
