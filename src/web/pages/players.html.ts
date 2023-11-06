@@ -35,7 +35,7 @@ function render(o: PlayersEditView) {
 </nav>
 
 <h3 id=team>Team Settings</h3>
-<form class=form method=post action="?handler=editTeam&teamId=${team.id}">
+<form class=form method=post action="?handler=editTeam&teamId=${team.id}" hf-target=main>
     <div class=inline>
         <label for=team>Team Name:</label><input id=team-input name=name type=text value="${team.name}">
     </div>
@@ -58,10 +58,10 @@ ${team.players.length === 0 ? html`<p>No players have been added.</p>` : null }
     ${team.players.map(x => playerView(team, x.id))}
 </div>
 
-<form class=form method=post action="?handler=addPlayer&teamId=${team.id}">
+<form class=form method=post action="?handler=addPlayer&teamId=${team.id}" hf-target=main>
     <div>
-        <label for=name>Player Name</label>
-        <input id=name name=name type=text required ${when(!team.players.length, "autofocus")}>
+        <label for=new-player>Player Name</label>
+        <input id=new-player name=name type=text required ${when(!team.players.length, "autofocus")}>
     </div>
     <button>Save</button>
 </form>
@@ -76,7 +76,7 @@ function playerView(team: Team, playerId: number) {
 
     return html`
 <div id="active-${playerId_}">
-    <form method=post action="?handler=editPlayer&$${teamPlayerQuery}">
+    <form method=post action="?handler=editPlayer&$${teamPlayerQuery}" hf-target=main>
         <div>
             <input id=${playerId_} class=editable name=name type=text value="${player.name}">
             <label for=${playerId_}><a href="/web/players?$${teamPlayerQuery}">${player.name}</a> <span class="editable-pencil float-right">&#9998;</span></label>
