@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "./tasks/start.nu false",
+    "start": "./tasks/start.nu dev",
     "build": "./tasks/start.nu prod",
     "start-game-play": "npx esbuild --watch --outdir=public --outbase=src --format=iife --bundle --tree-shaking=true ./src/web/js/game-play2.bundle.ts"
   },
