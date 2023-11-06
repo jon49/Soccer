@@ -52,6 +52,10 @@ function render({ team }: GameView) {
 `
 }
 
+async function renderMain(req: Request) {
+    return render(await start(req))
+}
+
 function getGameView(teamId: number, game: Game) {
     return html`<li onchange="event.target.form.submit()" id=game-${game.id}>${getGamePartialView(teamId, game)}</li>`
 }
@@ -110,7 +114,7 @@ let editGameValidator = {
 }
 
 const postHandlers: PostHandlers = {
-    async post({ data, query }) {
+    async post({ req, data, query }) {
         let [{ date: datetime, opponent, home }, { teamId }] = await validate([
             validateObject(data, addGameValidator),
             validateObject(query, queryTeamIdValidator)])
@@ -141,8 +145,11 @@ const postHandlers: PostHandlers = {
         })
 
         await teamSave(team)
+
+        return renderMain(req)
     },
-    async edit({ data, query }) {
+
+    async edit({ req, data, query }) {
         let [{ date: datetime, opponent, gameId, home }, { teamId }] = await validate([
             validateObject(data, editGameValidator),
             validateObject(query, queryTeamIdValidator)])
@@ -163,14 +170,15 @@ const postHandlers: PostHandlers = {
         game.home = home
 
         await teamSave(team)
+
+        return renderMain(req)
     },
 }
 
 const router: Route = {
     route: /\/games\/$/,
     async get(req: Request) {
-        const result = await start(req)
-        return layout(req, { main: render(result), title: "Games" })
+        return layout(req, { main: await renderMain(req), title: "Games" })
     },
     post: postHandlers,
 }
