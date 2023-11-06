@@ -15,7 +15,7 @@ let index : Route = {
             await db.setLoggedIn(false)
         }
         return layout(req, {
-            main: html`<p>Welcome to drive tracking!</p>`,
+            main: html`<p>Welcome to soccer tracking!</p>`,
             title: "Home" })
     }
 }
