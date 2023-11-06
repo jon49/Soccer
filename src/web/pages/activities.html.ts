@@ -69,8 +69,12 @@ const queryTeamIdActivityIdValidator = {
     activityId: createIdNumber("Activity ID")
 }
 
+async function renderMain(req: Request) {
+    return render(await start(req))
+}
+
 const postHandlers : PostHandlers = {
-    addActivity: async ({ data, query }) => {
+    async addActivity ({ data, query }) {
         let [{ teamId }, { activity }] =
             await validate([
                 validateObject(query, queryTeamIdValidator),
@@ -78,14 +82,16 @@ const postHandlers : PostHandlers = {
         let newActivity = await activitySaveNew(teamId, activity)
         return activityView(newActivity, teamId)
     },
-    deleteActivity: async ({ query }) => {
+
+    async deleteActivity({ query }) {
         let { activityId, teamId } = await validateObject(query, queryTeamIdActivityIdValidator)
         let o = await activityGetAll(teamId)
         o.activities = o.activities.filter(x => x.id !== activityId)
         await activitiesSave(teamId, o)
         return html``
     },
-    post: async ({ query, data }) => {
+
+    async post({ req, query, data }) {
         let { teamId } = await validateObject(query, queryTeamIdValidator)
         let editedActivities : Activity[] = await
             validate(
@@ -95,6 +101,8 @@ const postHandlers : PostHandlers = {
         let o = await activityGetAll(teamId)
         o.activities = editedActivities
         await activitiesSave(teamId, o)
+
+        return renderMain(req)
     }
 }
 
