@@ -27,7 +27,7 @@ function render({ team }: GameView) {
     ${team.games.map(x => getGameView(team.id, x))}
 </ul>
 
-<form class="form" method=post>
+<form class="form" method=post hf-target=main>
     <div class=row>
         <div>
             <label for=game-date>Name</label>
@@ -57,7 +57,7 @@ async function renderMain(req: Request) {
 }
 
 function getGameView(teamId: number, game: Game) {
-    return html`<li onchange="event.target.form.submit()" id=game-${game.id}>${getGamePartialView(teamId, game)}</li>`
+    return html`<li onchange="event.target.form.requestSubmit()" id=game-${game.id}>${getGamePartialView(teamId, game)}</li>`
 }
 
 function formatTime(date: Date | undefined) {
@@ -71,7 +71,7 @@ function getGamePartialView(teamId: number, game: Game) {
     let datetime = game.date && game.time ? `${game.date}T${game.time}` : ""
     let d = new Date(datetime)
     return html`
-<input form=${formId} type=hidden name=gameId value="${game.id}">
+<input form=${formId} type=hidden name=gameId value="${game.id}" hf-target=main>
 <input
     id="game-date-${game.id}"
     form=${formId}
@@ -98,7 +98,7 @@ function getGamePartialView(teamId: number, game: Game) {
 </label>
 <input form=${formId} class=inline id="home-${game.id}" type=checkbox name=home $${when(game.home, "checked")}>
 <label for="home-${game.id}">Home</label>
-<form id=${formId} class=hidden method=post action="?${teamQuery}&handler=edit" onchange="this.submit()"></form>
+<form id=${formId} class=hidden method=post action="?${teamQuery}&handler=edit" onchange="this.requestSubmit()" hf-target=main></form>
 `
 }
 
