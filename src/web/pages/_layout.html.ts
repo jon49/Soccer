@@ -34,8 +34,10 @@ const render = async (
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${title} - Soccer</title>
+    <link rel="icon" type="image/x-icon" href="/web/images/soccer.ico">
     <link href="/web/css/index.css" rel=stylesheet>
     <link href="/web/css/app.css" rel=stylesheet>
+    <link rel="manifest" href="/web/manifest.json">
     $${head}
 </head>
 <body $${when(theme, x => `class=${x}`)} $${bodyAttr}>

@@ -1,0 +1,22 @@
+{
+    "name": "Soccer Tracker",
+    "icons": [
+        {
+            "src": "/web/images/soccer.svg",
+            "sizes": "any",
+            "type": "image/svg+xml"
+        },
+        {
+            "src": "/web/images/soccer.ico",
+            "sizes": "16x16",
+            "type": "image/ico"
+        },
+        {
+            "src": "/web/images/soccer.png",
+            "sizes": "any",
+            "type": "image/png"
+        }
+    ],
+    "start_url": "/web/",
+    "display": "standalone"
+}

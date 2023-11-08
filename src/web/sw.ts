@@ -1,5 +1,6 @@
 import "./service-worker/routes.js"
 import links from "./entry-points.js"
+import staticFiles from "./static-files.js"
 import { version } from "./server/settings.js"
 import { getResponse } from "./service-worker/route-handling.js"
 
@@ -16,7 +17,7 @@ self.addEventListener("install", async (e: Event) => {
     // @ts-ignore
     e.waitUntil(
         caches.open(version)
-        .then((cache: any) => cache.addAll(links.map(x => x.file))))
+        .then((cache: any) => cache.addAll(links.map(x => x.file).concat(staticFiles))))
 })
 
 // @ts-ignore

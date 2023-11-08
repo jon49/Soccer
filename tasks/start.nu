@@ -130,6 +130,12 @@ def main [build: string = "dev"] {
         | save -f ($x.name | str replace '^src/' $"($targetDir)/")
     }
 
+    # copy manifest.json
+    cp src/web/manifest.json $"($targetDir)/web/manifest.json"
+
+    # copy images
+    cp -r src/web/images $"($targetDir)/web/images"
+
     # Service worker
     let sw = ([
         '--bundle',
