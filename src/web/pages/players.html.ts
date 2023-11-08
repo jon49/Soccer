@@ -37,10 +37,10 @@ function render(o: PlayersEditView) {
 <h3 id=team>Team Settings</h3>
 <form class=form method=post action="?handler=editTeam&teamId=${team.id}" hf-target=main>
     <div class=inline>
-        <label for=team>Team Name:</label><input id=team-input name=name type=text value="${team.name}">
+        <label for=team-input>Team Name:</label><input id=team-input name=name type=text value="${team.name}">
     </div>
     <div class=inline>
-        <label for=year>Year:</label> <input id=year-input name=year type=text value="${team.year}">
+        <label for=year-input>Year:</label> <input id=year-input name=year type=text value="${team.year}">
     </div>
     <div id=team-active>
         <label class=toggle>
