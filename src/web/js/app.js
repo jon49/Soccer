@@ -5,6 +5,10 @@ let w = window
 document.addEventListener("user-messages", e => {
     let template = document.getElementById("toast-template")
     let toasts = document.getElementById("toasts")
+navigator.serviceWorker.addEventListener('controllerchange', () => {
+  w.location.reload()
+})
+
     for (let message of e.detail) {
         let clone = template.content.cloneNode(true)
         clone.querySelector(".message").textContent = message
