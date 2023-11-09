@@ -22,7 +22,7 @@ def main [build: string = "dev"] {
     # webpack uses sha256 with 8 characters so I guess I will too!
     let addHash = { |x|
         $x
-        | insert hash { |x| open $x.name | hash sha256 | str substring 56..64 }
+        | insert hash { |x| open -r $x.name | hash sha256 | str substring 56..64 }
         | insert hashed $insertHash
         | insert pathname { |x| $x.hashed | str substring ($x.hashed | str index-of '/web')..999 }
         | insert target-dir { |x| $x.hashed | path dirname }
@@ -51,6 +51,19 @@ def main [build: string = "dev"] {
     | each { |x|
         mkdir $x.target-dir
         cp $x.name $x.hashed
+    }
+
+    # copy json files
+    ls src/**/*.json
+    | each $addHash
+    | each { |x|
+        mkdir $x.target-dir
+        # minify json
+        if $build == "prod" {
+            open $x.name | to json -r | save -f $x.hashed
+        } else {
+            cp $x.name $x.hashed
+        }
     }
 
     let js = (
@@ -99,7 +112,7 @@ def main [build: string = "dev"] {
     # write static files to entry-points file
     let files = (
         ls $"($targetDir)/web/**/*"
-        | where { |x| $x.name =~ '\.(css|js)$' }
+        | where { |x| $x.name =~ '\.(css|js|json)$' }
         | insert file { |x| $x.name | str substring ($x.name | str index-of '/web')..999 }
         | insert url { |x|
             let s = $x.file
@@ -129,9 +142,6 @@ def main [build: string = "dev"] {
         | str replace '{{appJs}}' $appJs
         | save -f ($x.name | str replace '^src/' $"($targetDir)/")
     }
-
-    # copy manifest.json
-    cp src/web/manifest.json $"($targetDir)/web/manifest.json"
 
     # copy images
     cp -r src/web/images $"($targetDir)/web/images"
