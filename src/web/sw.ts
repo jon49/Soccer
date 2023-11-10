@@ -15,6 +15,8 @@ import { getResponse } from "./service-worker/route-handling.js"
 
 self.addEventListener("install", async (e: Event) => {
     // @ts-ignore
+    self.skipWaiting()
+    // @ts-ignore
     e.waitUntil(
         caches.open(version)
         .then((cache: any) => cache.addAll(links.map(x => x.file).concat(staticFiles))))
