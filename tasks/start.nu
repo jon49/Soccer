@@ -178,13 +178,5 @@ def main [build: string = "dev"] {
         ("importScripts(" + '"' + $swJs + '"' + ")") | save -f $"($targetDir)/web/sw.js"
     }
 
-    # let swArgs = [
-    #     './tasks/sw.config.js'
-    #     $build
-    #     $targetDir
-    # ]
-
-    # ^node $swArgs
-
 }
 
