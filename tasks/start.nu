@@ -155,8 +155,10 @@ def main [build: string = "dev"] {
         'src/web/sw.ts',
     ]
     | append (
-        if $build == "prod" {
-            ['--minify']
+        if $build == "prod" { [
+            '--minify',
+            '--entry-names=[dir]/[name].[hash]'
+            ]
         } else if $build == "dev" { [
             $"--servedir=($targetDir)",
             '--watch'
@@ -165,6 +167,17 @@ def main [build: string = "dev"] {
     ))
 
     ^npx esbuild $sw
+
+    if $build == "prod" {
+        # Get hashed sw.js file and create a new file that imports that file.
+        let swJs = (
+            ls $"($targetDir)/web/sw.*.js"
+            | get name
+            | first
+            | str replace $targetDir "")
+        ("importScripts(" + '"' + $swJs + '"' + ")") | save -f $"($targetDir)/web/sw.js"
+    }
+
 
 }
 

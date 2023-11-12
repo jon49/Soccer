@@ -15,5 +15,8 @@
     "html-template-tag-stream": "^2.1.1",
     "idb-keyval": "^6.2.1",
     "promise-validation": "^4.0.1"
+  },
+  "devDependencies": {
+    "esbuild": "^0.19.5"
   }
 }
