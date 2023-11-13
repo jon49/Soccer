@@ -31,7 +31,7 @@ function render({ team, activities }: ActivityView) {
 </form>
 
 <h3>Add Activity</h3>
-<form class=form method=post action="?handler=addActivity&teamId=${team.id}">
+<form class=form method=post action="/web/activities?handler=addActivity&teamId=${team.id}">
     <input type=text name=activity placeholder="E.g., Goal, Block, etc.">
     <button>Save</button>
 </form>
@@ -50,7 +50,7 @@ function render({ team, activities }: ActivityView) {
 function activityView(activity: Activity, teamId: number) {
     return html`
     <div id="_${activity.id}">
-        <button formaction="?handler=deleteActivity&activityId=${activity.id}&teamId=${teamId}">X</button>
+        <button formaction="/web/activities?handler=deleteActivity&activityId=${activity.id}&teamId=${teamId}">X</button>
         <input class=inline name="${activity.id}" value="${activity.name}">
     </div>`
 }

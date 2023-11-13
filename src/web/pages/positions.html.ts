@@ -30,7 +30,7 @@ function render({ team, positions, grid }: PositionView) {
     class="form cards"
     style="--card-width:3.5em;"
     method=post
-    action="?handler=addGrid&teamId=${team.id}" onchange="this.requestSubmit()"
+    action="/web/positions?handler=addGrid&teamId=${team.id}" onchange="this.requestSubmit()"
     hf-target="main" >
     ${grid.map((x, i) => html`<input id="grid${i}" class=inline type=number name="grid[]" value="${x}">`)}
     <input id="grid-1" type=number name="grid[]" ${when(!grid.length, () => "autofocus")}>
@@ -38,7 +38,12 @@ function render({ team, positions, grid }: PositionView) {
 
 ${when(!!grid.length, () => html`
 <h3>Positions</h3>
-<form class=form method=post onchange="this.requestSubmit()" hf-target="main">
+<form
+    class=form
+    method=post
+    action="/web/positions?teamId=${team.id}"
+    onchange="this.requestSubmit()"
+    hf-target="main">
     ${function* positionViews() {
         let count = 0
         for (let width of grid) {

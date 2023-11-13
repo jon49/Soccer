@@ -37,7 +37,7 @@ export default async function render(req: Request) {
 <h2 id=game-swap-top class=inline>Swap for ${player.name}</h2>
 <form
     class=inline
-    action="?teamId=${teamId}&gameId=${gameId}&handler=cancelSwap"
+    action="/web/games?teamId=${teamId}&gameId=${gameId}&handler=cancelSwap"
     hf-target="#player-state"
     hf-scroll-to="#out-players" >
     <button>Cancel Swap</button>
@@ -58,7 +58,7 @@ ${function* positionViews() {
             let row =
             html`<form
                 method=post
-                action="?position=${count}&teamId=${teamId}&gameId=${gameId}&playerId=${playerId}&handler=updateUserPosition&playerSwap"
+                action="/web/games?position=${count}&teamId=${teamId}&gameId=${gameId}&playerId=${playerId}&handler=updateUserPosition&playerSwap"
                 hf-target="#player-state"
                 $${when(!isInPlayPlayer(playerGame), `hf-scroll-to="#out-players"`)}
                 >${

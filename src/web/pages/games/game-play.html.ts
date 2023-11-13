@@ -12,6 +12,7 @@ import playerStateView from "./_player-state-view.js"
 import { swapAll } from "./player-swap.js"
 import targetPositionView from "./_target-position-view.js"
 import targetPosition from "./player-target-position.js"
+import { searchParams } from "../../server/utils.js"
 
 const queryTeamGamePlayerValidator = {
     ...queryTeamIdGameIdValidator,
@@ -209,9 +210,9 @@ const route : Route = {
         url.pathname.endsWith("/games/")
         && ["gameId", "teamId"].every(x => url.searchParams.has(x)),
     async get(req: Request) {
-        if (req.headers.has("HF-Request")) {
-            let url = new URL(req.url)
-            if (url.searchParams.get("handler") === "cancelSwap") {
+        let search = searchParams<{ playerId?: number, handler: string }>(req)
+        if (search.playerId) {
+            if (search.handler === "cancelSwap") {
                 return playerStateView(await PlayerStateView.create(req))
             }
             return targetPositionView(req)

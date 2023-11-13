@@ -38,9 +38,9 @@ const render = async (
     <link href="/web/css/index.css" rel=stylesheet>
     <link href="/web/css/app.css" rel=stylesheet>
     <link rel="manifest" href="/web/manifest.json">
-    $${head}
 </head>
 <body $${when(theme, x => `class=${x}`)} $${bodyAttr}>
+    <div id=head>$${head}</div>
     <div class=top-nav>
         <form method=post action="/web/api/settings?handler=theme" class=inline>
             ${themeView(theme)}
@@ -53,30 +53,32 @@ const render = async (
         ${isLoggedIn
             ? html`<a href="/login?logout">Logout</a>`
         : html`<a href="/login">Login</a>`}
-        
+
     </div>
     <header>
         <div class=sync>
             <h1 class=inline>Soccer</h1>
         </div>
-        <nav>
+        <nav id=nav-main>
             <ul>
-                <li><a href="/web/teams">Teams</a></li>
+                <li><button form=href formaction="/web/teams">Teams</button></li>
                 ${ !nav || nav.length === 0
                     ? null
-                : nav.map(x => html`<li><a href="$${x.url}">${x.name}</a></li>`) }
+                : nav.map(x => html`<li><button form=href formaction="$${x.url}">${x.name}</button></li>`) }
             </ul>
         </nav>
     </header>
     <main>
         ${main}
     </main>
+    <div id=errors>
     ${function* printErros() {
         while (errors.length) {
             const e = errors.shift()
             if (e) yield html`<dialog class=toast open><p class=error>${e}</p></dialog>`
         }
     }}
+    </div>
 
     <template id=toast-template><dialog class=toast open><p class=message></p></dialog></template>
     <div id=toasts>
@@ -90,10 +92,11 @@ const render = async (
 
     <footer><p>${version}</p></footer>
 
+    <form id=href hf-select="title,#head,#nav-main,main,#errors,#toasts,#scripts"></form>
     <form id=get-sync-count-form action="/web/api/sync?handler=count" hf-target="#sync-count"></form>
     <script src="/web/js/lib/htmf.min.js"></script>
 
-    ${(scripts ?? []).map(x => html`<script src="${x}"></script>`)}
+    <div id=scripts>${(scripts ?? []).map(x => html`<script src="${x}"></script>`)}</div>
     <script>
         App = window.App ?? {};
         ${when(updatedCount, _ => html`App.shouldWaitToSync = true`)}

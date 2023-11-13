@@ -23,7 +23,7 @@ function playerView(
     return html`
     <li>
         <form
-            action="?$${queryTeamGame}&playerId=${player?.playerId}&handler=playerSwap"
+            action="/web/games?$${queryTeamGame}&playerId=${player?.playerId}&handler=playerSwap"
             hf-target="#player-state" >
             <button>${player?.name}</button>
         </form>
@@ -33,7 +33,7 @@ function playerView(
             ${when(!isGameInPlay, "data-static")}></game-timer>
         <form
             method=post
-            action="?${queryTeamGame}&playerId=${player.playerId}&handler=playerNowOut"
+            action="/web/games?${queryTeamGame}&playerId=${player.playerId}&handler=playerNowOut"
             hf-target="#player-state"
             >
             <button>X</button>
@@ -48,7 +48,7 @@ function subPlayerView(
 <li>
     <form
         method=post
-        action="?$${queryTeamGame}&playerId=${sub.playerId}&handler=swap"
+        action="/web/games?$${queryTeamGame}&playerId=${sub.playerId}&handler=swap"
         hf-target="#player-state"
         >
         <button>(${sub.name})</button>
@@ -59,7 +59,7 @@ function subPlayerView(
         data-static></game-timer>
     <form
         method=post
-        action="?$${queryTeamGame}&playerId=${sub.playerId}&handler=cancelOnDeck"
+        action="/web/games?$${queryTeamGame}&playerId=${sub.playerId}&handler=cancelOnDeck"
         hf-target="#player-state"
         >
         <button class=danger>X</button>

@@ -225,7 +225,7 @@ header {
 
 .list > li > * {
     display: table-cell;
-    padding: 5px 10px;
+    padding: 5px 10px!important;
 }
 
 /** Fancy Checkbox **/
@@ -255,7 +255,7 @@ input:indeterminate ~ .none {
   background-color: var(--c2) !important;
 }
 
-button.anchor {
+button.anchor, button[form="href"] {
     background: none;
     margin: 0;
     padding: 0;

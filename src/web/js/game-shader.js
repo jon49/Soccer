@@ -1,5 +1,7 @@
 (() => {
 
+if (customElements.get('game-shader')) return
+
 document.head.appendChild(document.createElement('style')).textContent = `
 <style>
 :root {

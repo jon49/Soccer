@@ -2,6 +2,8 @@
 
 (() => {
 
+    if (customElements.get("game-timer")) return
+
     const times = new Map
 
     /**

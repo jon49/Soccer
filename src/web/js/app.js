@@ -18,10 +18,27 @@ doc.addEventListener("user-messages", e => {
     closeDialogs()
 })
 
+let shouldHandleHash = true
 doc.addEventListener("hf:completed", e => {
-    if (e.detail.method === "get") return
+    let detail = e.detail
+    if (detail.method === "get") {
+        if (detail.form.id === "href") {
+            let url = new URL(detail?.submitter?.formAction ?? detail.form.action)
+            shouldHandleHash = false
+            location.hash = url.pathname + url.search
+        }
+        closeDialogs()
+        return
+    }
     let count = doc.getElementById('get-sync-count-form')
     count.requestSubmit()
+})
+
+w.addEventListener("hashchange", () => {
+    if (shouldHandleHash) {
+        handleHash()
+    }
+    shouldHandleHash = true
 })
 
 doc.addEventListener("app-theme", e => {
@@ -74,6 +91,16 @@ async function sync() {
             count.innerHTML = "&#128259;"
         }
     }
+}
+
+function handleHash() {
+    let form = doc.getElementById("href")
+    form.setAttribute("action", location.hash.slice(1))
+    form.requestSubmit()
+}
+
+if (location.hash) {
+    handleHash()
 }
 
 })();
