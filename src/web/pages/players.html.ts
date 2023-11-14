@@ -12,7 +12,7 @@ interface PlayersEditView {
     team: Team
 }
 
-async function start(req: Request) : Promise<PlayersEditView> {
+async function start(req: Request): Promise<PlayersEditView> {
     let query = searchParams(req)
     let { teamId } = await validateObject(query, queryTeamIdValidator)
 
@@ -25,7 +25,7 @@ function render(o: PlayersEditView) {
     let { team } = o
 
     return html`
-<h2 id=subheading>${ o?.team.name ??  "Unknown"} (${o?.team.year})</h2>
+<h2 id=subheading>${o?.team.name ?? "Unknown"} (${o?.team.year})</h2>
 
 <nav>
     <ul>
@@ -52,7 +52,7 @@ function render(o: PlayersEditView) {
 </form>
 
 <h3 id=players>Players Settings</h3>
-${team.players.length === 0 ? html`<p>No players have been added.</p>` : null }
+${team.players.length === 0 ? html`<p>No players have been added.</p>` : null}
 
 <div id=player-cards  class=cards>
     ${team.players.map(x => playerView(team, x.id))}
@@ -72,14 +72,14 @@ function playerView(team: Team, playerId: number) {
     let player = team.players.find(x => x.id === playerId)
     if (!player) return html`<p>Could not find player "${playerId}"</p>`
     let teamPlayerQuery = `teamId=${team.id}&playerId=${playerId}`
-    let playerId_ : string = `edit-player${playerId}`
+    let playerId_: string = `edit-player${playerId}`
 
     return html`
 <div id="active-${playerId_}">
     <form method=post action="/web/players?handler=editPlayer&$${teamPlayerQuery}" hf-target=main>
         <div>
             <input id=${playerId_} class=editable name=name type=text value="${player.name}">
-            <label for=${playerId_}><button form=href formaction="/web/players?$${teamPlayerQuery}">${player.name}</button> <span class="editable-pencil float-right">&#9998;</span></label>
+            <label for=${playerId_}><a href="/web/players?$${teamPlayerQuery}">${player.name}</a> <span class="editable-pencil float-right">&#9998;</span></label>
         </div>
         <div>
             <label class=toggle>
@@ -100,7 +100,7 @@ async function renderMain(req: Request) {
 }
 
 const postHandlers: PostHandlers = {
-    async editPlayer({ req, data: d, query: q}) {
+    async editPlayer({ req, data: d, query: q }) {
         let [{ teamId, playerId }, { name: playerName, active }] = await validate([
             validateObject(q, queryTeamIdPlayerIdValidator),
             validateObject(d, dataPlayerNameActiveValidator)
@@ -155,7 +155,7 @@ const postHandlers: PostHandlers = {
     }
 }
 
-const route : Route = {
+const route: Route = {
     route: /\/players\/$/,
     async get(req: Request) {
         let result = await start(req)

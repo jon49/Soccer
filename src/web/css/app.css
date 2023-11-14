@@ -255,7 +255,7 @@ input:indeterminate ~ .none {
   background-color: var(--c2) !important;
 }
 
-button.anchor, button[form="href"] {
+button.anchor {
     background: none;
     margin: 0;
     padding: 0;

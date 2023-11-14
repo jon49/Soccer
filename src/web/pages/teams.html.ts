@@ -34,7 +34,7 @@ ${
     : html`<p>No teams found. Please add one!</p>`
 }
 
-${ wasFiltered ? html`<p><button form=href formaction="/web/teams?all">Show all teams.</button></p>` : null }
+${ wasFiltered ? html`<p><a href="/web/teams?all">Show all teams.</a></p>` : null }
 
 <h3>Add a team</h3>
 
@@ -54,8 +54,8 @@ function getTeamView(team: Team) {
     let teamId = team.id
     return html`
     <li>
-        <button form=href formaction="/web/players?teamId=${team.id}">${team.name} - ${team.year}</button></form>
-        <button form=href formaction="/web/games?teamId=${team.id}">Games</button>
+        <a href="/web/players?teamId=${team.id}">${team.name} - ${team.year}</a>
+        <a href="/web/games?teamId=${team.id}">Games</a>
         ${when((() => {
             let d = new Date()
             let currentDate = `${d.getFullYear()}-${(""+(d.getMonth() + 1)).padStart(2, "0")}-${(""+d.getDate()).padStart(2, "0")}`
@@ -64,7 +64,7 @@ function getTeamView(team: Team) {
             .find(x => x.date >= currentDate)
             return result
         })(),
-            x => html`<button form=href formaction="/web/games?teamId=${teamId}&gameId=${x.id}">${x.date}</button>`
+            x => html`<a href="/web/games?teamId=${teamId}&gameId=${x.id}">${x.date}</a>`
         ) ?? html`<span>&nbsp;</span>`}
     </li>`
 }

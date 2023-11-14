@@ -82,7 +82,7 @@ function getGamePartialView(teamId: number, game: Game) {
     value="$${datetime}"
     >
 <label for="game-date-${game.id}">
-    <button form=href formaction="/web/games?$${teamQuery}&gameId=${game.id}">${game.date} (${formatTime(d)})</button>
+    <a href="/web/games?$${teamQuery}&gameId=${game.id}">${game.date} (${formatTime(d)})</a>
     <span class=editable-pencil>&#9998;</span>
 </label>
 <input
@@ -93,7 +93,7 @@ function getGamePartialView(teamId: number, game: Game) {
     name=opponent
     value="${game.opponent}">
 <label for="game-opponent-${game.id}">
-    <button form=href formaction="/web/games?$${teamQuery}&gameId=${game.id}">${game.opponent}</button>
+    <a href="/web/games?$${teamQuery}&gameId=${game.id}">${game.opponent}</a>
     <span class=editable-pencil>&#9998;</span>
 </label>
 <input form=${formId} class=inline id="home-${game.id}" type=checkbox name=home $${when(game.home, "checked")}>

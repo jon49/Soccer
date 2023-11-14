@@ -44,6 +44,21 @@ doc.addEventListener("hf:completed", e => {
     count.requestSubmit()
 })
 
+// In the future use the `navigate` event.
+// https://developer.mozilla.org/en-US/docs/Web/API/Navigation/navigate_event
+doc.addEventListener("click", e => {
+    let target = e.target
+    if (target instanceof HTMLAnchorElement) {
+        let url = new URL(target.href)
+        if (url.pathname.startsWith("/web/")) {
+            e.preventDefault()
+            shouldHandleHash = false
+            location.hash = url.pathname + url.search
+            handleHash()
+        }
+    }
+})
+
 w.addEventListener("hashchange", () => {
     if (shouldHandleHash) {
         handleHash()

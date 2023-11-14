@@ -62,10 +62,10 @@ const render = async (
         </div>
         <nav id=nav-main>
             <ul>
-                <li><button form=href formaction="/web/teams">Teams</button></li>
+                <li><a href="/web/teams">Teams</a></li>
                 ${ !nav || nav.length === 0
                     ? null
-                : nav.map(x => html`<li><button form=href formaction="$${x.url}">${x.name}</button></li>`) }
+                : nav.map(x => html`<li><a href="$${x.url}">${x.name}</a></li>`) }
             </ul>
         </nav>
     </header>
