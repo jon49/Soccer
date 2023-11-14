@@ -120,7 +120,9 @@ async function sync() {
 
 function handleHash() {
     let button = doc.getElementById("href-nav")
-    button.setAttribute("formaction", location.hash.slice(1))
+    let location = w.location.hash.slice(1)
+    if (!location.startsWith("/web/")) return
+    button.setAttribute("formaction", location)
     button.click()
 }
 
