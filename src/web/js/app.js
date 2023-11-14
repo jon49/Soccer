@@ -49,11 +49,11 @@ doc.addEventListener("hf:completed", e => {
 doc.addEventListener("click", e => {
     let target = e.target
     if (target instanceof HTMLAnchorElement) {
-        let url = new URL(target.href)
-        if (url.pathname.startsWith("/web/")) {
+        let pathname = target.getAttribute("href")
+        if (pathname.startsWith("/web/")) {
             e.preventDefault()
             shouldHandleHash = false
-            location.hash = url.pathname + url.search
+            location.hash = pathname
             handleHash()
         }
     }
