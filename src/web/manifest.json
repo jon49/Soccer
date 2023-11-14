@@ -12,6 +12,6 @@
             "type": "image/png"
         }
     ],
-    "start_url": "/web/teams/",
+    "start_url": "/web/#/web/teams/",
     "display": "standalone"
 }
