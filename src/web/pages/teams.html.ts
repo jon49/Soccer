@@ -38,7 +38,7 @@ ${ wasFiltered ? html`<p><button form=href formaction="/web/teams?all">Show all 
 
 <h3>Add a team</h3>
 
-<form class=form method=post hf-target=main>
+<form class=form action="/web/teams" method=post hf-target=main>
     <div>
         <label for=name>Team Name</label>
         <input id=name name=name type=text $${when(!teams?.length, "autofocus")} required>
