@@ -32,7 +32,7 @@ let shouldHandleHash = true
 doc.addEventListener("hf:completed", e => {
     let detail = e.detail
     if (detail.method === "get") {
-        if (detail.form.id === "href") {
+        if (detail.form.id === "href" && detail.submitter?.id !== "href-nav") {
             let url = new URL(detail?.submitter?.formAction ?? detail.form.action)
             shouldHandleHash = false
             location.hash = url.pathname + url.search
@@ -104,9 +104,9 @@ async function sync() {
 }
 
 function handleHash() {
-    let form = doc.getElementById("href")
-    form.setAttribute("action", location.hash.slice(1))
-    form.requestSubmit()
+    let button = doc.getElementById("href-nav")
+    button.setAttribute("formaction", location.hash.slice(1))
+    button.click()
 }
 
 if (location.hash) {
