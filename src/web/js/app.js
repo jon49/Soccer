@@ -18,6 +18,16 @@ doc.addEventListener("user-messages", e => {
     closeDialogs()
 })
 
+doc.addEventListener("hf:beforeRequest", e => {
+    let detail = e.detail
+    if (detail.method === "get" && detail.form.id === "href") {
+        let dispose = w.app.dispose
+        while (dispose.length > 0) {
+            dispose.pop()()
+        }
+    }
+})
+
 let shouldHandleHash = true
 doc.addEventListener("hf:completed", e => {
     let detail = e.detail
