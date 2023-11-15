@@ -48,7 +48,7 @@ async function render(req: Request) {
 
     return html`
             <h1>Stats</h1>
-            <h2>Positions Played (Hour:Minute:Seconds)</h2>
+            <h2>Positions Played (Hours:Minutes:Seconds)</h2>
             <table>
             <thead>
                 <tr>
