@@ -1,0 +1,62 @@
+const w = window,
+    doc = document
+
+doc.addEventListener("hf:beforeRequest", e => {
+    let detail = e.detail
+    if (detail.method === "get" && detail.form.id === "href") {
+        let dispose = w.app.dispose
+        while (dispose.length > 0) {
+            dispose.pop()()
+        }
+    }
+})
+
+let shouldHandleHash = true
+doc.addEventListener("hf:completed", e => {
+    let detail = e.detail
+    if (detail.method === "get") {
+        if (detail.form.id === "href" && detail.submitter?.id !== "href-nav") {
+            let url = new URL(detail?.submitter?.formAction ?? detail.form.action)
+            shouldHandleHash = false
+            location.hash = url.pathname + url.search
+        }
+        return
+    }
+    let count = doc.getElementById('get-sync-count-form')
+    count.requestSubmit()
+})
+
+// In the future use the `navigate` event.
+// https://developer.mozilla.org/en-US/docs/Web/API/Navigation/navigate_event
+doc.addEventListener("click", e => {
+    let target = e.target
+    if (target instanceof HTMLAnchorElement) {
+        let pathname = target.getAttribute("href")
+        if (pathname.startsWith("/web/")) {
+            e.preventDefault()
+            shouldHandleHash = false
+            location.hash = pathname
+            handleHash()
+        }
+    }
+})
+
+w.addEventListener("hashchange", () => {
+    if (shouldHandleHash) {
+        handleHash()
+    }
+    shouldHandleHash = true
+})
+
+function handleHash() {
+    let button = doc.getElementById("href-nav")
+    let location = w.location.hash.slice(1)
+    if (!location.startsWith("/web/")) return
+    button.setAttribute("formaction", location)
+    button.click()
+}
+
+if (location.hash) {
+    handleHash()
+}
+
