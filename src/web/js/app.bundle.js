@@ -19,7 +19,7 @@ doc.addEventListener("user-messages", e => {
 })
 
 doc.addEventListener("hf:completed", e => {
-    if (detail.method === "get") return
+    if (e.detail?.method === "get") return
     let count = doc.getElementById('get-sync-count-form')
     count.requestSubmit()
 })
