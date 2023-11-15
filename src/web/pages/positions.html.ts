@@ -7,6 +7,7 @@ import { teamGet } from "../server/repo-team.js"
 import { createArrayOf, createPositiveWholeNumber, createString25, maybe, validateObject } from "../server/validation.js"
 import { queryTeamIdValidator } from "../server/validators.js"
 import { positionGetAll, positionsSave } from "../server/repo-player-game.js"
+import { teamNav } from "./_shared-views.js"
 
 interface PositionView {
     positions: string[]
@@ -98,6 +99,7 @@ const route : Route = {
         const result = await start(req)
         return layout(req, {
             main: render(result),
+            nav: teamNav(result.team.id),
             title: `Positions - ${result.team.name} (${result.team.year})`,
         })
     },

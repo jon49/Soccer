@@ -13,6 +13,7 @@ import { swapAll } from "./player-swap.js"
 import targetPositionView from "./_target-position-view.js"
 import targetPosition from "./player-target-position.js"
 import { searchParams } from "../../server/utils.js"
+import { teamNav } from "../_shared-views.js"
 
 const queryTeamGamePlayerValidator = {
     ...queryTeamIdGameIdValidator,
@@ -210,7 +211,7 @@ const route : Route = {
         url.pathname.endsWith("/games/")
         && ["gameId", "teamId"].every(x => url.searchParams.has(x)),
     async get(req: Request) {
-        let search = searchParams<{ playerId?: number, handler: string }>(req)
+        let search = searchParams<{ playerId?: string, teamId: string, handler: string }>(req)
         if (search.playerId) {
             if (search.handler === "cancelSwap") {
                 return playerStateView(await PlayerStateView.create(req))
@@ -236,6 +237,7 @@ const route : Route = {
         return layout(req, {
             head,
             main: await render(req),
+            nav: teamNav(+search.teamId),
             scripts: ["/web/js/lib/elastic-textarea.js"],
             title: "Game Play",
         })

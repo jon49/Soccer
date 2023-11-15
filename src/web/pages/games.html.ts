@@ -7,6 +7,7 @@ import { equals, getNewId, searchParams } from "../server/utils.js"
 import { assert, createCheckbox, createDateTimeString, createIdNumber, createString50, required, validate, validateObject } from "../server/validation.js"
 import { queryTeamIdValidator } from "../server/validators.js"
 import layout from "./_layout.html.js"
+import { teamNav } from "./_shared-views.js"
 
 interface GameView {
     team: Team
@@ -178,7 +179,12 @@ const postHandlers: PostHandlers = {
 const router: Route = {
     route: /\/games\/$/,
     async get(req: Request) {
-        return layout(req, { main: await renderMain(req), title: "Games" })
+        let search = searchParams<{ teamId: string }>(req)
+        return layout(req, {
+            main: await renderMain(req),
+            nav: teamNav(+search.teamId),
+            title: "Games"
+        })
     },
     post: postHandlers,
 }

@@ -7,6 +7,7 @@ import { assert, validate, validateObject } from "../server/validation.js"
 import { when } from "../server/shared.js"
 import { dataPlayerNameActiveValidator, dataPlayerNameValidator, dataTeamNameYearActiveValidator, queryTeamIdPlayerIdValidator, queryTeamIdValidator } from "../server/validators.js"
 import { playerCreate, teamGet, teamSave } from "../server/repo-team.js"
+import { teamNav } from "./_shared-views.js"
 
 interface PlayersEditView {
     team: Team
@@ -162,10 +163,7 @@ const route: Route = {
         return layout(req, {
             head: "<style>.player-card { min-width: 200px; }</style>",
             main: render(result),
-            nav: [
-                { name: "Positions", url: `/web/positions?teamId=${result.team.id}` },
-                { name: "Activities", url: `/web/activities?teamId=${result.team.id}` }
-            ],
+            nav: teamNav(result.team.id),
             scripts: ["/web/js/players-edit.js"],
             title: `Players - ${result.team.name} (${result.team.year})}`
         })
