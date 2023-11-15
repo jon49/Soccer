@@ -48,11 +48,13 @@ async function render(req: Request) {
 
     return html`
             <h1>Stats</h1>
+            <h2>Positions Played (Hour:Minute:Seconds)</h2>
             <table>
             <thead>
                 <tr>
                     <th>Player</th>
                     ${positionList.map(x => html`<th>${x}</th>`)}
+                    <th>Total</th>
                 </tr>
             </thead>
             <tbody>
@@ -68,6 +70,15 @@ async function render(req: Request) {
                             let playerStats = positionPlayerStats[position][player]
                             yield html`<td>${playerStats ? millisecondsToHourMinutes(playerStats.time) : ""}</td>`
                         }
+                        let totalTime = 0
+                        for (let position of positionList) {
+                            let stats = positionPlayerStats[position]
+                            if (!stats) continue
+                            let playerStats = positionPlayerStats[position][player]
+                            if (!playerStats) continue
+                            totalTime += playerStats.time
+                        }
+                        yield html`<td>${millisecondsToHourMinutes(totalTime)}</td>`
                         yield html`</tr>`
                     }
                 }}
