@@ -13,6 +13,7 @@ function millisecondsToHourMinutes(milliseconds: number) {
     let minutes = Math.floor(seconds / 60)
     let hours = Math.floor(minutes / 60)
     minutes -= hours * 60
+    seconds -= minutes * 60 + hours * 60 * 60
     return `${hours}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`
 }
 
