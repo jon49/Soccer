@@ -43,7 +43,7 @@ async function render(req: Request) {
         return acc
     }, {} as { [position: string]: { [playerId: string]: { time: number } } })
 
-    let playerList = Array.from(players).sort()
+    let playerIdList = Array.from(players).sort((a, b) => (playerMap.get(a) ?? "").localeCompare(playerMap.get(b) ?? ""))
     let positionList = Array.from(positions).sort()
 
     return html`
@@ -59,22 +59,22 @@ async function render(req: Request) {
             </thead>
             <tbody>
                 ${function* (){
-                    for (let player of playerList) {
-                        yield html`<tr><th>${playerMap.get(player)}</th>`
+                    for (let playerId of playerIdList) {
+                        yield html`<tr><th>${playerMap.get(playerId)}</th>`
                         for (let position of positionList) {
                             let stats = positionPlayerStats[position]
                             if (!stats) {
                                 yield html`<td></td>`
                                 continue
                             }
-                            let playerStats = positionPlayerStats[position][player]
+                            let playerStats = positionPlayerStats[position][playerId]
                             yield html`<td>${playerStats ? millisecondsToHourMinutes(playerStats.time) : ""}</td>`
                         }
                         let totalTime = 0
                         for (let position of positionList) {
                             let stats = positionPlayerStats[position]
                             if (!stats) continue
-                            let playerStats = positionPlayerStats[position][player]
+                            let playerStats = positionPlayerStats[position][playerId]
                             if (!playerStats) continue
                             totalTime += playerStats.time
                         }
@@ -92,11 +92,11 @@ async function render(req: Request) {
                 </thead>
             <tbody>
             ${function* (){
-                for (let player of playerList) {
-                    yield html`<tr><th>${playerMap.get(player)}</th>`
+                for (let playerId of playerIdList) {
+                    yield html`<tr><th>${playerMap.get(playerId)}</th>`
                     let games = 0
                     for (let playerGames of playersGames) {
-                        if (playerGames.find(x => x.playerId === player)?.gameTime?.length ?? 0 > 0) {
+                        if (playerGames.find(x => x.playerId === playerId)?.gameTime?.length ?? 0 > 0) {
                             games++
                         }
                     }
