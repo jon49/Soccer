@@ -84,6 +84,27 @@ async function render(req: Request) {
                 }}
             </tbody>
             </table>
+
+            <h2>Number of Games Played</h2>
+            <table>
+                <thead>
+                    <tr> <th>Player</th> <th>Games</th> </tr>
+                </thead>
+            <tbody>
+            ${function* (){
+                for (let player of playerList) {
+                    yield html`<tr><th>${playerMap.get(player)}</th>`
+                    let games = 0
+                    for (let playerGames of playersGames) {
+                        if (playerGames.find(x => x.playerId === player)?.gameTime?.length ?? 0 > 0) {
+                            games++
+                        }
+                    }
+                    yield html`<td>${games}</td>`
+                }
+            }}
+            </tbody>
+            </table>
         `
 }
 
