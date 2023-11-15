@@ -115,7 +115,7 @@ const router: Route = {
         return layout(req, {
             main: await render(req),
             nav: teamNav(+search.teamId),
-            title: "Games"
+            title: "Stats"
         })
     },
 }
