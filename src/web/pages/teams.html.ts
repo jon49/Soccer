@@ -13,28 +13,27 @@ interface TeamsView {
     wasFiltered: boolean
 }
 
-async function start(req: Request) : Promise<TeamsView> {
-    const query = searchParams<{all: string}>(req)
+async function start(req: Request): Promise<TeamsView> {
+    const query = searchParams<{ all: string }>(req)
     const showAll = query.all !== null
 
-    let wasFiltered : WasFiltered = {}
+    let wasFiltered: WasFiltered = {}
     let teams = await teamGetAll(showAll, wasFiltered)
     return { teams, wasFiltered: !!wasFiltered.filtered }
 }
 
-const render = ({ teams, wasFiltered }: TeamsView) => 
+const render = ({ teams, wasFiltered }: TeamsView) =>
     html`
 <h2>Teams</h2>
 
-${
-    teams ? html`
+${teams ? html`
         <ul id=teams class=list>
             ${teams?.map(getTeamView)}
         </ul>`
-    : html`<p>No teams found. Please add one!</p>`
-}
+            : html`<p>No teams found. Please add one!</p>`
+        }
 
-${ wasFiltered ? html`<p><a href="/web/teams?all">Show all teams.</a></p>` : null }
+${wasFiltered ? html`<p><a href="/web/teams?all">Show all teams.</a></p>` : null}
 
 <h3>Add a team</h3>
 
@@ -57,15 +56,15 @@ function getTeamView(team: Team) {
         <a href="/web/players?teamId=${team.id}">${team.name} - ${team.year}</a>
         <a href="/web/games?teamId=${team.id}">Games</a>
         ${when((() => {
-            let d = new Date()
-            let currentDate = `${d.getFullYear()}-${(""+(d.getMonth() + 1)).padStart(2, "0")}-${(""+d.getDate()).padStart(2, "0")}`
-            let result = team.games
+        let d = new Date()
+        let currentDate = `${d.getFullYear()}-${("" + (d.getMonth() + 1)).padStart(2, "0")}-${("" + d.getDate()).padStart(2, "0")}`
+        let result = team.games
             .sort((a, b) => a.date.localeCompare(b.date))
             .find(x => x.date >= currentDate)
-            return result
-        })(),
-            x => html`<a href="/web/games?teamId=${teamId}&gameId=${x.id}">${x.date}</a>`
-        ) ?? html`<span>&nbsp;</span>`}
+        return result
+    })(),
+        x => html`<a href="/web/games?teamId=${teamId}&gameId=${x.id}">${x.date}</a>`
+    ) ?? html`<span>&nbsp;</span>`}
     </li>`
 }
 
@@ -77,7 +76,7 @@ const postHandlers: PostHandlers = {
     },
 }
 
-const route : Route = {
+const route: Route = {
     route: /\/teams\/$/,
     async get(req: Request) {
         const result = await start(req)
