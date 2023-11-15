@@ -1,0 +1,91 @@
+import { validateObject } from "promise-validation"
+import html from "../server/html.js"
+import { Route } from "../server/route.js"
+import layout from "./_layout.html.js"
+import { searchParams } from "../server/utils.js"
+import { queryTeamIdValidator } from "../server/validators.js"
+import { teamGet } from "../server/repo-team.js"
+import { playerGameAllGet } from "../server/repo-player-game.js"
+import { teamNav } from "./_shared-views.js"
+
+function millisecondsToHourMinutes(milliseconds: number) {
+    let seconds = Math.floor(milliseconds / 1e3)
+    let minutes = Math.floor(seconds / 60)
+    let hours = Math.floor(minutes / 60)
+    minutes -= hours * 60
+    return `${hours}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`
+}
+
+async function render(req: Request) {
+    let { teamId } = await validateObject(searchParams(req), queryTeamIdValidator)
+    let team = await teamGet(teamId)
+    let playerMap = team.players.reduce((acc, x) => { acc.set(x.id, x.name); return acc }, new Map as Map<number, string>)
+    let playersGames = await Promise.all(team.games.map(x => playerGameAllGet(teamId, x.id, [])))
+    // Get all positions with how much time each player played in that position
+    // over all games.
+    let players: Set<number> = new Set()
+    let positions: Set<string> = new Set()
+    let positionPlayerStats = playersGames.reduce((acc, xs) => {
+        for (let playerGame of xs) {
+            players.add(playerGame.playerId)
+            for (let time of playerGame.gameTime) {
+                if (!time.position) continue
+                positions.add(time.position)
+                let position = acc[time.position]
+                if (!position) acc[time.position] = position = {}
+                let player = position[playerGame.playerId]
+                if (!player) position[playerGame.playerId] = player = { time: 0 }
+                if (time.start && time.end)
+                    player.time += time.end - time.start
+            }
+        }
+        return acc
+    }, {} as { [position: string]: { [playerId: string]: { time: number } } })
+
+    let playerList = Array.from(players).sort()
+    let positionList = Array.from(positions).sort()
+
+    return html`
+            <h1>Stats</h1>
+            <table>
+            <thead>
+                <tr>
+                    <th>Player</th>
+                    ${positionList.map(x => html`<th>${x}</th>`)}
+                </tr>
+            </thead>
+            <tbody>
+                ${function* (){
+                    for (let player of playerList) {
+                        yield html`<tr><th>${playerMap.get(player)}</th>`
+                        for (let position of positionList) {
+                            let stats = positionPlayerStats[position]
+                            if (!stats) {
+                                yield html`<td></td>`
+                                continue
+                            }
+                            let playerStats = positionPlayerStats[position][player]
+                            yield html`<td>${playerStats ? millisecondsToHourMinutes(playerStats.time) : ""}</td>`
+                        }
+                        yield html`</tr>`
+                    }
+                }}
+            </tbody>
+            </table>
+        `
+}
+
+const router: Route = {
+    route: /\/stats\/$/,
+    async get(req: Request) {
+        let search = searchParams<{ teamId: string }>(req)
+        return layout(req, {
+            main: await render(req),
+            nav: teamNav(+search.teamId),
+            title: "Games"
+        })
+    },
+}
+
+export default router
+

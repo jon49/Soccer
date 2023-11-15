@@ -8,10 +8,12 @@ import positions from "../pages/positions.html.js"
 import activities from "../pages/activities.html.js"
 import sync from "../api/sync.js"
 import settings from "../api/settings.js"
+import stats from "../pages/stats.html.js"
 
 addRoutes([
     index,
     settings,
+    stats,
     sync,
     teams,
     players,
