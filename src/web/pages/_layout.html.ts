@@ -76,17 +76,17 @@ const render = async (
     ${function* printErros() {
         while (errors.length) {
             const e = errors.shift()
-            if (e) yield html`<dialog class=toast open><p class=error>${e}</p></dialog>`
+            if (e) yield html`<user-message><dialog class=toast open><p class=error>${e}</p></dialog></user-message>`
         }
     }}
     </div>
 
-    <template id=toast-template><dialog class=toast open><p class=message></p></dialog></template>
+    <template id=toast-template><user-message><dialog class=toast open><p class=message></p></dialog></user-message></template>
     <div id=toasts>
     ${function* printMessages() {
         while (messages.length) {
             const m = messages.shift()
-            if (m) yield html`<dialog class=toast open><p class=message>${m}</p></dialog>`
+            if (m) yield html`<user-message><dialog class=toast open><p class=message>${m}</p></dialog></user-message>`
         }
     }}
     </div>
@@ -105,6 +105,7 @@ const render = async (
         ${when(updatedCount, _ => html`App.shouldWaitToSync = true`)}
         ${when(+new Date() - (lastSynced || 0) > /* 2 hours */ 1e3*60*60*2, _ => html`App.shouldSync = true`)}
     </script>
+    <script src="/web/js/toaster.js"></script>
     <script src="/web/js/app.js"></script>
 </body>
 </html>`
