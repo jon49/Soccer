@@ -4,49 +4,52 @@
 
     if (customElements.get("game-timer")) return
 
-    const times = new Map
+    class Timer {
 
-    /**
-     * @param {GameTimer} instance
-     */
-    function timer(instance) {
-        let time = instance.interval
-        if (times.get(time)?.add(instance)) return
+        times = new Map()
 
-        let m = new Set([instance])
-        times.set(time, m)
-        let interval = setInterval(() => {
-            if (m.size === 0) {
-                times.delete(time)
-                clearInterval(interval)
-                return
-            }
-            requestAnimationFrame(() => {
-                let currentTime = +new Date()
-                for (let instance of m) {
-                    instance.update(currentTime)
+        constructor() { }
+
+        /**
+        * @param {GameTimer} instance
+        * */
+        add(instance) {
+            let time = instance.interval
+            if (this.times.get(time)?.add(instance)) return
+
+            let m = new Set([instance])
+            this.times.set(time, m)
+            let interval = setInterval(() => {
+                try {
+                    if (m.size === 0) {
+                        this.times.delete(time)
+                        clearInterval(interval)
+                        return
+                    }
+                    requestAnimationFrame(() => {
+                        let currentTime = +new Date()
+                        for (let instance of m) {
+                            instance.update(currentTime)
+                        }
+                    })
+                } catch (e) {
                 }
-            })
-        }, time)
-    }
-
-    class GameTimerIs extends HTMLOptionElement {
-        connectedCallback() {
-            if (this.innerHTML) {
-                this.init()
-                return
-            }
-            this._observer = new MutationObserver(this.init.bind(this));
-            this._observer.observe(this, { childList: true });
+            }, time)
         }
 
-        init() {
-            this._observer?.disconnect()
-            let start = +(this.dataset.start ?? 0) || +new Date()
-            let total = +(this.dataset.total ?? 0)
-            this.textContent += formatTime(+new Date(), start, total)
+        /**
+        * @param {GameTimer} instance
+        * */
+        remove(instance) {
+            let time = instance.interval
+            let m = this.times.get(time)
+            if (!m) return
+            m.delete(instance)
+            if (m.size === 0) this.times.delete(time)
         }
     }
+
+    let timer = new Timer()
 
     class GameTimer extends HTMLElement {
         constructor() {
@@ -83,12 +86,12 @@
             this.interval = +(this.dataset.interval ?? 0) || 1e3
             this.static = this.dataset.static === ""
             this.a.setAttribute("class", this.hasAttribute("data-flash") ? "flash" : "")
-            if (!this.static) timer(this)
+            if (!this.static) timer.add(this)
             this.update(+new Date())
         }
 
         disconnectedCallback() {
-            times.get(this.interval)?.delete(this)
+            timer.remove(this)
         }
 
         /**
@@ -114,6 +117,5 @@
     }
 
     customElements.define("game-timer", GameTimer)
-    customElements.define("game-timer-is", GameTimerIs, { extends: "option" })
 
 })()
