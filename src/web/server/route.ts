@@ -49,11 +49,7 @@ export function findRoute(url: URL, method: unknown) {
     return null
 }
 
-export interface RoutePostArgsWithQuery extends RoutePostArgs {
-    query: any
-}
-
-export type PostHandlers = Record<string, (o: RoutePostArgsWithQuery) => Promise<any>>
+export type PostHandlers = Record<string, (o: RoutePostArgs) => Promise<any>>
 export function handlePost(handlers: PostHandlers) {
     return async (args: RoutePostArgs) => {
         let query = o.searchParams<{handler?: string}>(args.req)
@@ -77,21 +73,27 @@ export function handlePost(handlers: PostHandlers) {
 
 export function handleGet(handlers: RouteGetHandler | RouteGet | undefined, req: Request) {
     if (handlers == null) return
-    if (handlers instanceof Function) {
-        return handlers(req)
-    }
     let query = o.searchParams<{handler?: string}>(req)
+    let extendedArgs = { req, query }
+    if (handlers instanceof Function) {
+        return handlers(extendedArgs)
+    }
     let resultTask =
         query.handler && handlers[query.handler]
-            ? handlers[query.handler](req)
+            ? handlers[query.handler](extendedArgs)
         : handlers["get"]
-            ? handlers["get"](req)
+            ? handlers["get"](extendedArgs)
         : o.reject("I'm sorry, I couldn't find that page.")
     return resultTask
 }
 
+export interface RouteGetArgs {
+    req: Request
+    query: any
+}
+
 export interface RouteGet {
-    (req: Request): Promise<HTMLReturnType> | HTMLReturnType | Promise<Response>
+    (request: RouteGetArgs): Promise<HTMLReturnType> | HTMLReturnType | Promise<Response>
 }
 
 export interface RouteGetHandler {
@@ -99,6 +101,7 @@ export interface RouteGetHandler {
 }
 
 export interface RoutePostArgs {
+    query: any
     data: any
     req: Request 
 }

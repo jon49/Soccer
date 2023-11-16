@@ -1,4 +1,4 @@
-import { PostHandlers, Route } from "../../server/route.js"
+import { PostHandlers, Route, RouteGetHandler } from "../../server/route.js"
 import layout from "../_layout.html.js"
 import { queryTeamIdGameIdValidator } from "../../server/validators.js"
 import { validateObject } from "promise-validation"
@@ -206,16 +206,16 @@ const postHandlers : PostHandlers = {
 
 }
 
-const route : Route = {
-    route: /\/match\/$/,
-    async get(req: Request) {
-        let search = searchParams<{ playerId?: string, teamId: string, handler: string }>(req)
-        if (search.playerId) {
-            if (search.handler === "cancelSwap") {
-                return playerStateView(await PlayerStateView.create(req))
-            }
-            return targetPositionView(req)
-        }
+const getHandlers : RouteGetHandler = {
+    async cancelSwap ({ req }) {
+        return playerStateView(await PlayerStateView.create(req))
+    },
+
+    async playerSwap ({ req }) {
+        return targetPositionView(req)
+    },
+
+    async get({ req, query }) {
         let head = `
             <style>
                 .flex {
@@ -232,14 +232,21 @@ const route : Route = {
             </style>
             <script src="/web/js/game-timer.js"></script>
             <script src="/web/js/game-shader.js"></script>`
+        let team = await teamGet(+query.teamId)
+        let game = await required(team.games.find(x => x.id === +query.gameId), `Could not find game! ${query.gameId}`)
         return layout(req, {
             head,
             main: await render(req),
-            nav: teamNav(+search.teamId),
+            nav: teamNav(+query.teamId),
             scripts: ["/web/js/lib/elastic-textarea.js"],
-            title: "Game Play",
+            title: `Match — ${team.name} VS ${game.opponent}`,
         })
-    },
+    }
+}
+
+const route : Route = {
+    route: /\/match\/$/,
+    get: getHandlers,
     post: postHandlers,
 }
 

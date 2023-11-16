@@ -2,7 +2,6 @@ import { validateObject } from "promise-validation"
 import html from "../server/html.js"
 import { Route } from "../server/route.js"
 import layout from "./_layout.html.js"
-import { searchParams } from "../server/utils.js"
 import { queryTeamIdValidator } from "../server/validators.js"
 import { teamGet } from "../server/repo-team.js"
 import { playerGameAllGet } from "../server/repo-player-game.js"
@@ -17,8 +16,8 @@ function millisecondsToHourMinutes(milliseconds: number) {
     return `${hours}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`
 }
 
-async function render(req: Request) {
-    let { teamId } = await validateObject(searchParams(req), queryTeamIdValidator)
+async function render(query: any) {
+    let { teamId } = await validateObject(query, queryTeamIdValidator)
     let team = await teamGet(teamId)
     let playerMap = team.players.reduce((acc, x) => { acc.set(x.id, x.name); return acc }, new Map as Map<number, string>)
     let playersGames = await Promise.all(team.games.map(x => playerGameAllGet(teamId, x.id, [])))
@@ -110,11 +109,10 @@ async function render(req: Request) {
 
 const router: Route = {
     route: /\/stats\/$/,
-    async get(req: Request) {
-        let search = searchParams<{ teamId: string }>(req)
+    async get({ req, query }) {
         return layout(req, {
-            main: await render(req),
-            nav: teamNav(+search.teamId),
+            main: await render(query),
+            nav: teamNav(+query.teamId),
             title: "Stats"
         })
     },

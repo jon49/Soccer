@@ -1,7 +1,7 @@
 import { Team } from "../server/db.js"
 import html from "../server/html.js"
 import { PostHandlers, Route } from "../server/route.js"
-import { equals, searchParams } from "../server/utils.js"
+import { equals } from "../server/utils.js"
 import layout from "./_layout.html.js"
 import { assert, validate, validateObject } from "../server/validation.js"
 import { when } from "../server/shared.js"
@@ -13,8 +13,7 @@ interface PlayersEditView {
     team: Team
 }
 
-async function start(req: Request): Promise<PlayersEditView> {
-    let query = searchParams(req)
+async function start(query: any): Promise<PlayersEditView> {
     let { teamId } = await validateObject(query, queryTeamIdValidator)
 
     let team = await teamGet(teamId)
@@ -96,12 +95,12 @@ function playerView(team: Team, playerId: number) {
 </div>`
 }
 
-async function renderMain(req: Request) {
-    return render(await start(req))
+async function renderMain(query: any) {
+    return render(await start(query))
 }
 
 const postHandlers: PostHandlers = {
-    async editPlayer({ req, data: d, query: q }) {
+    async editPlayer({ data: d, query: q }) {
         let [{ teamId, playerId }, { name: playerName, active }] = await validate([
             validateObject(q, queryTeamIdPlayerIdValidator),
             validateObject(d, dataPlayerNameActiveValidator)
@@ -123,10 +122,10 @@ const postHandlers: PostHandlers = {
         // Player name will also need to be updated for the individual player when implemented!
         await teamSave(team)
 
-        return renderMain(req)
+        return renderMain(q)
     },
 
-    async addPlayer({ req, data, query }) {
+    async addPlayer({ data, query }) {
         let [{ teamId }, { name }] = await validate([
             validateObject(query, queryTeamIdValidator),
             validateObject(data, dataPlayerNameValidator)
@@ -138,10 +137,10 @@ const postHandlers: PostHandlers = {
         await assert.isFalse(!!existingPlayer, `The player name "${existingPlayer?.name}" has already been chosen.`)
 
         await playerCreate(teamId, name)
-        return renderMain(req)
+        return renderMain(query)
     },
 
-    async editTeam({ req, data, query }) {
+    async editTeam({ data, query }) {
         let [{ name: newTeamName, year, active }, { teamId }] = await validate([
             validateObject(data, dataTeamNameYearActiveValidator),
             validateObject(query, queryTeamIdValidator),
@@ -152,14 +151,14 @@ const postHandlers: PostHandlers = {
         team.year = year
         team.name = newTeamName
         await teamSave(team)
-        return renderMain(req)
+        return renderMain(query)
     }
 }
 
 const route: Route = {
     route: /\/players\/$/,
-    async get(req: Request) {
-        let result = await start(req)
+    async get({ req, query }) {
+        let result = await start(query)
         return layout(req, {
             head: "<style>.player-card { min-width: 200px; }</style>",
             main: render(result),

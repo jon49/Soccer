@@ -1,7 +1,6 @@
 import html, { when } from "../server/html.js"
 import layout from "./_layout.html.js"
 import { Team } from "../server/db.js"
-import { searchParams } from "../server/utils.js"
 import { PostHandlers, Route } from "../server/route.js"
 import { teamGet } from "../server/repo-team.js"
 import { createArrayOf, createPositiveWholeNumber, createString25, maybe, validateObject } from "../server/validation.js"
@@ -15,8 +14,8 @@ interface PositionView {
     team: Team
 }
 
-async function start(req: Request) : Promise<PositionView> {
-    let { teamId } = await validateObject(searchParams(req), queryTeamIdValidator)
+async function start(query: any) : Promise<PositionView> {
+    let { teamId } = await validateObject(query, queryTeamIdValidator)
     let [positions, team] = await Promise.all([positionGetAll(teamId), teamGet(teamId)])
     return { positions: positions.positions, team, grid: positions.grid }
 }
@@ -72,7 +71,7 @@ const gridValidator = {
 }
 
 const postHandlers : PostHandlers = {
-    addGrid: async ({ req, query, data }) => {
+    async addGrid({ query, data }) {
         let { teamId } = await validateObject(query, queryTeamIdValidator)
         let { grid } = await validateObject(data, gridValidator)
         grid = grid.filter(x => x)
@@ -81,22 +80,23 @@ const postHandlers : PostHandlers = {
             grid,
             positions: o.positions,
             _rev: o._rev })
-        return render(await start(req))
+        return render(await start(query))
     },
-    post: async ({ req, query, data }) => {
+
+    async post({ query, data }) {
         let { teamId } = await validateObject(query, queryTeamIdValidator)
         let { names } = await validateObject(data, positionValidator)
         let o = await positionGetAll(teamId)
         o.positions = names.map(x => x || "")
         await positionsSave(teamId, o)
-        return render(await start(req))
+        return render(await start(query))
     }
 }
 
 const route : Route = {
     route: /\/positions\/$/,
-    async get(req: Request) {
-        const result = await start(req)
+    async get({ req, query }) {
+        const result = await start(query)
         return layout(req, {
             main: render(result),
             nav: teamNav(result.team.id),

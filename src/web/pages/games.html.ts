@@ -178,11 +178,10 @@ const postHandlers: PostHandlers = {
 
 const router: Route = {
     route: /\/games\/$/,
-    async get(req: Request) {
-        let search = searchParams<{ teamId: string }>(req)
+    async get({ req, query }) {
         return layout(req, {
             main: await renderMain(req),
-            nav: teamNav(+search.teamId),
+            nav: teamNav(+query.teamId),
             title: "Games"
         })
     },

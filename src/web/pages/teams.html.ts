@@ -2,7 +2,6 @@ import html from "../server/html.js"
 import layout from "./_layout.html.js"
 import { Team } from "../server/db.js"
 import { PostHandlers, Route } from "../server/route.js"
-import { searchParams } from "../server/utils.js"
 import { validateObject } from "../server/validation.js"
 import { when } from "../server/shared.js"
 import { dataTeamNameYearValidator } from "../server/validators.js"
@@ -13,9 +12,8 @@ interface TeamsView {
     wasFiltered: boolean
 }
 
-async function start(req: Request): Promise<TeamsView> {
-    const query = searchParams<{ all: string }>(req)
-    const showAll = query.all !== null
+async function start(query: any): Promise<TeamsView> {
+    const showAll = query.all != null
 
     let wasFiltered: WasFiltered = {}
     let teams = await teamGetAll(showAll, wasFiltered)
@@ -69,17 +67,17 @@ function getTeamView(team: Team) {
 }
 
 const postHandlers: PostHandlers = {
-    post: async function post({ req, data }) {
+    post: async function post({ query, data }) {
         let d = await validateObject(data, dataTeamNameYearValidator)
         await teamsCreate(d)
-        return render(await start(req))
+        return render(await start(query))
     },
 }
 
 const route: Route = {
     route: /\/teams\/$/,
-    async get(req: Request) {
-        const result = await start(req)
+    async get({ req, query }) {
+        const result = await start(query)
         return layout(req, {
             main: render(result),
             title: "Teams",

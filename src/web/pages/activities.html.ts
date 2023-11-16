@@ -1,7 +1,6 @@
 import html from "../server/html.js"
 import layout from "./_layout.html.js"
 import { Activity, Team } from "../server/db.js"
-import { searchParams } from "../server/utils.js"
 import { PostHandlers, Route } from "../server/route.js"
 import { teamGet } from "../server/repo-team.js"
 import { createIdNumber, createString25, validate, validateObject } from "../server/validation.js"
@@ -13,8 +12,8 @@ interface ActivityView {
     team: Team
 }
 
-async function start(req: Request) : Promise<ActivityView> {
-    let { teamId } = await validateObject(searchParams(req), queryTeamIdValidator)
+async function start(query: any) : Promise<ActivityView> {
+    let { teamId } = await validateObject(query, queryTeamIdValidator)
     let [activities, team] = await Promise.all([activityGetAll(teamId), teamGet(teamId)])
     return { activities: activities.activities, team }
 }
@@ -69,8 +68,8 @@ const queryTeamIdActivityIdValidator = {
     activityId: createIdNumber("Activity ID")
 }
 
-async function renderMain(req: Request) {
-    return render(await start(req))
+async function renderMain(query: any) {
+    return render(await start(query))
 }
 
 const postHandlers : PostHandlers = {
@@ -91,7 +90,7 @@ const postHandlers : PostHandlers = {
         return html``
     },
 
-    async post({ req, query, data }) {
+    async post({ query, data }) {
         let { teamId } = await validateObject(query, queryTeamIdValidator)
         let editedActivities : Activity[] = await
             validate(
@@ -102,14 +101,14 @@ const postHandlers : PostHandlers = {
         o.activities = editedActivities
         await activitiesSave(teamId, o)
 
-        return renderMain(req)
+        return renderMain(query)
     }
 }
 
 const route : Route = {
     route: /\/activities\/$/,
-    async get(req: Request) {
-        const result = await start(req)
+    async get({ req, query }) {
+        const result = await start(query)
         return layout(req, {
             main: render(result),
             title: `Activities - ${result.team.name}`,
@@ -117,6 +116,6 @@ const route : Route = {
     },
     post: postHandlers,
 }
-export default route
 
+export default route
 
