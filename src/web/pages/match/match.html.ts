@@ -207,9 +207,7 @@ const postHandlers : PostHandlers = {
 }
 
 const route : Route = {
-    route: (url: URL) =>
-        url.pathname.endsWith("/games/")
-        && ["gameId", "teamId"].every(x => url.searchParams.has(x)),
+    route: /\/match\/$/,
     async get(req: Request) {
         let search = searchParams<{ playerId?: string, teamId: string, handler: string }>(req)
         if (search.playerId) {

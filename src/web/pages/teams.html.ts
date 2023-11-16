@@ -63,7 +63,7 @@ function getTeamView(team: Team) {
             .find(x => x.date >= currentDate)
         return result
     })(),
-        x => html`<a href="/web/games?teamId=${teamId}&gameId=${x.id}">${x.date}</a>`
+        x => html`<a href="/web/match?teamId=${teamId}&gameId=${x.id}">${x.date}</a>`
     ) ?? html`<span>&nbsp;</span>`}
     </li>`
 }

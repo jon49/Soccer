@@ -24,7 +24,7 @@ export default async function render(req: Request) {
 ${when(!isGameEnded, () => html`
 <form class=inline
       method=post
-      action="/web/games?$${queryTeamGame}&handler=${isGameInPlay ? "pauseGame" : "startGame"}"
+      action="/web/match?$${queryTeamGame}&handler=${isGameInPlay ? "pauseGame" : "startGame"}"
       hf-target=main >
     <button>${isGameInPlay ? "Pause" : "Start"}</button>
 </form>`)}
@@ -38,7 +38,7 @@ ${when(!isGameEnded, () => html`
 <form
     class=inline
     method=post
-    action="/web/games?$${queryTeamGame}&handler=${isGameEnded ? "restartGame" : "endGame"}"
+    action="/web/match?$${queryTeamGame}&handler=${isGameEnded ? "restartGame" : "endGame"}"
     hf-target="main"
     >
     <button>${isGameEnded ? "Restart" : "End"}</button>
@@ -48,16 +48,16 @@ ${when(!isGameEnded, () => html`
     <li>
         <span>Points</span>
         <form id=team-points class=inline method=post hf-target="#points" hidden></form>
-        <button formaction="/web/games?$${queryTeamGame}&handler=pointsDec" form=team-points>-</button>
+        <button formaction="/web/match?$${queryTeamGame}&handler=pointsDec" form=team-points>-</button>
         <span id=points>${getPointsView(game.points)}</span>
-        <button formaction="/web/games?$${queryTeamGame}&handler=pointsInc" form=team-points>+</button>
+        <button formaction="/web/match?$${queryTeamGame}&handler=pointsInc" form=team-points>+</button>
     </li>
     <li>
         <span>Opponent</span>
         <form id=opponent-points class=inline method=post hf-target="#o-points" hidden></form>
-        <button formaction="/web/games?$${queryTeamGame}&handler=oPointsDec" form=opponent-points>-</button>
+        <button formaction="/web/match?$${queryTeamGame}&handler=oPointsDec" form=opponent-points>-</button>
         <span id=o-points>${getPointsView(game.opponentPoints)}</span>
-        <button formaction="/web/games?$${queryTeamGame}&handler=oPointsInc" form=opponent-points>+</button>
+        <button formaction="/web/match?$${queryTeamGame}&handler=oPointsInc" form=opponent-points>+</button>
     </li>
 </ul>
 
@@ -65,7 +65,7 @@ ${when(!isGameEnded, () => html`
 
 <h3>Notes</h3>
 
-<form method=post action="/web/games?${queryTeamGame}&handler=updateNote" onchange="this.requestSubmit()">
+<form method=post action="/web/match?${queryTeamGame}&handler=updateNote" onchange="this.requestSubmit()">
     <elastic-textarea>
         <textarea name=notes>${notes}</textarea>
     </elastic-textarea>

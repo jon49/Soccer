@@ -17,13 +17,13 @@ export async function outPlayersView(o: PlayerStateView) {
 <li>
     <form
         method=post
-        action="/web/games?$${queryTeamGame}&playerId=$${x.playerId}&handler=notPlaying"
+        action="/web/match?$${queryTeamGame}&playerId=$${x.playerId}&handler=notPlaying"
         hf-target="#player-state"
         >
         <button>X</button>
     </form>
     <form
-        action="/web/games?$${queryTeamGame}&playerId=${x.playerId}&handler=playerSwap"
+        action="/web/match?$${queryTeamGame}&playerId=${x.playerId}&handler=playerSwap"
         hf-target="#player-state"
         hf-scroll-to="#game-swap-top" >
         <button>${x.name}</button>

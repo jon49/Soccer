@@ -16,7 +16,7 @@ ${when(onDeckPlayers.length, () => html`
 <form
     class=inline
     method=post
-    action="/web/games?$${queryTeamGame}&handler=swapAll"
+    action="/web/match?$${queryTeamGame}&handler=swapAll"
     hf-target="#player-state"
     >
     <button>Swap All</button>
@@ -34,7 +34,7 @@ ${when(notPlaying, () => html`
         <p>${x.name}</p>
         <form
             method=post
-            action="/web/games?${queryTeamGame}&playerId=${x.playerId}&handler=backIn"
+            action="/web/match?${queryTeamGame}&playerId=${x.playerId}&handler=backIn"
             hf-target="#player-state"
             >
             <button>Back in</button>
