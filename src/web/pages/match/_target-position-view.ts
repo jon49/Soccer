@@ -1,5 +1,4 @@
 import html from "html-template-tag-stream"
-import { searchParams } from "../../server/utils.js"
 import { playerGameAllGet, positionGetAll } from "../../server/repo-player-game.js"
 import { teamGet } from "../../server/repo-team.js"
 import { createPlayersView, isInPlayPlayer, isOnDeckPlayer, GameTimeCalculator, PlayerGameTimeCalculator } from "./shared.js"
@@ -13,8 +12,8 @@ const querySwapValidator = {
     playerId: createIdNumber("Player ID"),
 }
 
-export default async function render(req: Request) {
-    let { teamId, gameId, playerId } = await validateObject(searchParams(req), querySwapValidator)
+export default async function render(query: any) {
+    let { teamId, gameId, playerId } = await validateObject(query, querySwapValidator)
     let team = await teamGet(teamId)
     team.players = team.players.filter(x => x.active)
     let [ players, { grid, positions } ] = await Promise.all([

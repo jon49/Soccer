@@ -210,8 +210,8 @@ const getHandlers : RouteGetHandler = {
         return playerStateView(await PlayerStateView.create(query))
     },
 
-    async playerSwap ({ req }) {
-        return targetPositionView(req)
+    async playerSwap ({ query }) {
+        return targetPositionView(query)
     },
 
     async get({ query }) {
