@@ -96,7 +96,7 @@ const render = async (
 }
 
 export default
-    async function layout(_: Request, o: LayoutTemplateArguments) {
+    async function layout(o: LayoutTemplateArguments) {
         return render(o)
     }
 

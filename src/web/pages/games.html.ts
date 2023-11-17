@@ -3,7 +3,7 @@ import html from "../server/html.js"
 import { teamGet, teamSave } from "../server/repo-team.js"
 import { PostHandlers, Route } from "../server/route.js"
 import { when } from "../server/shared.js"
-import { equals, getNewId, searchParams } from "../server/utils.js"
+import { equals, getNewId } from "../server/utils.js"
 import { assert, createCheckbox, createDateTimeString, createIdNumber, createString50, required, validate, validateObject } from "../server/validation.js"
 import { queryTeamIdValidator } from "../server/validators.js"
 import layout from "./_layout.html.js"
@@ -13,8 +13,8 @@ interface GameView {
     team: Team
 }
 
-async function start(req: Request): Promise<GameView> {
-    let { teamId } = await validateObject(searchParams(req), queryTeamIdValidator)
+async function start(query: any): Promise<GameView> {
+    let { teamId } = await validateObject(query, queryTeamIdValidator)
     let team = await teamGet(teamId)
     return { team }
 }
@@ -53,8 +53,8 @@ function render({ team }: GameView) {
 `
 }
 
-async function renderMain(req: Request) {
-    return render(await start(req))
+async function renderMain(query: any) {
+    return render(await start(query))
 }
 
 function getGameView(teamId: number, game: Game) {
@@ -115,7 +115,7 @@ let editGameValidator = {
 }
 
 const postHandlers: PostHandlers = {
-    async post({ req, data, query }) {
+    async post({ data, query }) {
         let [{ date: datetime, opponent, home }, { teamId }] = await validate([
             validateObject(data, addGameValidator),
             validateObject(query, queryTeamIdValidator)])
@@ -147,10 +147,10 @@ const postHandlers: PostHandlers = {
 
         await teamSave(team)
 
-        return renderMain(req)
+        return renderMain(query)
     },
 
-    async edit({ req, data, query }) {
+    async edit({ data, query }) {
         let [{ date: datetime, opponent, gameId, home }, { teamId }] = await validate([
             validateObject(data, editGameValidator),
             validateObject(query, queryTeamIdValidator)])
@@ -172,15 +172,15 @@ const postHandlers: PostHandlers = {
 
         await teamSave(team)
 
-        return renderMain(req)
+        return renderMain(query)
     },
 }
 
 const router: Route = {
     route: /\/games\/$/,
-    async get({ req, query }) {
-        return layout(req, {
-            main: await renderMain(req),
+    async get({ query }) {
+        return layout({
+            main: await renderMain(query),
             nav: teamNav(+query.teamId),
             title: "Games"
         })

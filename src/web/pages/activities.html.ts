@@ -117,9 +117,9 @@ const postHandlers : PostHandlers = {
 
 const route : Route = {
     route: /\/activities\/$/,
-    async get({ req, query }) {
+    async get({ query }) {
         const result = await start(query)
-        return layout(req, {
+        return layout({
             main: render(result),
             title: `Activities - ${result.team.name}`,
         })

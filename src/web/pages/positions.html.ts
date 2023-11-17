@@ -95,9 +95,9 @@ const postHandlers : PostHandlers = {
 
 const route : Route = {
     route: /\/positions\/$/,
-    async get({ req, query }) {
+    async get({ query }) {
         const result = await start(query)
-        return layout(req, {
+        return layout({
             main: render(result),
             nav: teamNav(result.team.id),
             title: `Positions - ${result.team.name} (${result.team.year})`,

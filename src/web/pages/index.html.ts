@@ -5,14 +5,14 @@ import db from "../server/global-model.js"
 
 let index : Route = {
     route: /\/web\/$/,
-    get: async ({ req, query }) => {
+    get: async ({ query }) => {
         if (query.login === "success") {
             await db.setLoggedIn(true)
         }
         if (query.loggedOut === "true") {
             await db.setLoggedIn(false)
         }
-        return layout(req, {
+        return layout({
             main: html`<p>Welcome to soccer tracking!</p>`,
             title: "Home" })
     }

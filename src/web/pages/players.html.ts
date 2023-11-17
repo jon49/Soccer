@@ -157,9 +157,9 @@ const postHandlers: PostHandlers = {
 
 const route: Route = {
     route: /\/players\/$/,
-    async get({ req, query }) {
+    async get({ query }) {
         let result = await start(query)
-        return layout(req, {
+        return layout({
             head: "<style>.player-card { min-width: 200px; }</style>",
             main: render(result),
             nav: teamNav(result.team.id),

@@ -76,9 +76,9 @@ const postHandlers: PostHandlers = {
 
 const route: Route = {
     route: /\/teams\/$/,
-    async get({ req, query }) {
+    async get({ query }) {
         const result = await start(query)
-        return layout(req, {
+        return layout({
             main: render(result),
             title: "Teams",
         })

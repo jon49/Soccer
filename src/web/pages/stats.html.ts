@@ -109,8 +109,8 @@ async function render(query: any) {
 
 const router: Route = {
     route: /\/stats\/$/,
-    async get({ req, query }) {
-        return layout(req, {
+    async get({ query }) {
+        return layout({
             main: await render(query),
             nav: teamNav(+query.teamId),
             title: "Stats"

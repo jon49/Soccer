@@ -58,27 +58,27 @@ const postHandlers : PostHandlers = {
         return { body: null, status: 204 }
     },
 
-    async swap ({ query, req }) {
+    async swap ({ query }) {
         // The query contains the player ID and so will only swap one player.
         await swapAll(query)
 
-        return playerStateView(await PlayerStateView.create(req))
+        return playerStateView(await PlayerStateView.create(query))
     },
 
-    async swapAll ({ query, req }) {
+    async swapAll ({ query }) {
         await swapAll(query)
 
-        return playerStateView(await PlayerStateView.create(req))
+        return playerStateView(await PlayerStateView.create(query))
     },
 
-    async updateUserPosition({ query, req }) {
+    async updateUserPosition({ query }) {
         let { position } = await validateObject(query, queryPositionUpdateValidator)
         await targetPosition(query, position)
 
-        return playerStateView(await PlayerStateView.create(req))
+        return playerStateView(await PlayerStateView.create(query))
     },
 
-    async playerNowOut ({ query, req }) {
+    async playerNowOut ({ query }) {
         let { teamId, playerId, gameId } = await validateObject(query, queryTeamGamePlayerValidator)
         let [[p], team] = await Promise.all([
             playerGameAllGet(teamId, gameId, [playerId]),
@@ -91,38 +91,38 @@ const postHandlers : PostHandlers = {
         calc.playerOut()
         await calc.save(teamId)
 
-        return playerStateView(await PlayerStateView.create(req))
+        return playerStateView(await PlayerStateView.create(query))
     },
 
-    async cancelOnDeck ({ query, req }) {
+    async cancelOnDeck ({ query }) {
         let { teamId, playerId, gameId } = await validateObject(query, queryTeamGamePlayerValidator)
         let [player] = await playerGameAllGet(teamId, gameId, [playerId])
         player.status = { _: "out" }
         player.gameTime.pop()
         await playerGameSave(teamId, player)
 
-        return playerStateView(await PlayerStateView.create(req))
+        return playerStateView(await PlayerStateView.create(query))
     },
 
-    async notPlaying ({ query, req }) {
+    async notPlaying ({ query }) {
         let { teamId, playerId, gameId } = await validateObject(query, queryTeamGamePlayerValidator)
         let [player] = await playerGameAllGet(teamId, gameId, [playerId])
         player.status = { _: "notPlaying" }
         await playerGameSave(teamId, player)
 
-        return playerStateView(await PlayerStateView.create(req))
+        return playerStateView(await PlayerStateView.create(query))
     },
 
-    async backIn ({ query, req }) {
+    async backIn ({ query }) {
         let { teamId, playerId, gameId } = await validateObject(query, queryTeamGamePlayerValidator)
         let [player] = await playerGameAllGet(teamId, gameId, [playerId])
         player.status = { _: "out" }
         await playerGameSave(teamId, player)
 
-        return playerStateView(await PlayerStateView.create(req))
+        return playerStateView(await PlayerStateView.create(query))
     },
 
-    async startGame ({ query, req }) {
+    async startGame ({ query }) {
         let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
         let timestamp = +new Date()
         let team = await teamGet(teamId)
@@ -142,10 +142,10 @@ const postHandlers : PostHandlers = {
             return calc.save(teamId)
         }))
 
-        return render(req)
+        return render(query)
     },
 
-    async pauseGame ({ query, req }) {
+    async pauseGame ({ query }) {
         let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
         let team = await teamGet(teamId)
 
@@ -165,10 +165,10 @@ const postHandlers : PostHandlers = {
             return calc.save(teamId)
         }).filter(x => x))
 
-        return render(req)
+        return render(query)
     },
 
-    async endGame ({ query, req }) {
+    async endGame ({ query }) {
         let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
         let team = await teamGet(teamId)
 
@@ -190,31 +190,31 @@ const postHandlers : PostHandlers = {
                 return playerCalc.save(teamId)
             }))
 
-        return render(req)
+        return render(query)
     },
 
-    async restartGame ({ query, req }) {
+    async restartGame({ query }) {
         let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
         let team = await teamGet(teamId)
         let game = await required(team.games.find(x => x.id === gameId), `Could not find game! ${gameId}`)
         game.status = "paused"
         await teamSave(team)
 
-        return render(req)
+        return render(query)
     },
 
 }
 
 const getHandlers : RouteGetHandler = {
-    async cancelSwap ({ req }) {
-        return playerStateView(await PlayerStateView.create(req))
+    async cancelSwap ({ query }) {
+        return playerStateView(await PlayerStateView.create(query))
     },
 
     async playerSwap ({ req }) {
         return targetPositionView(req)
     },
 
-    async get({ req, query }) {
+    async get({ query }) {
         let head = `
             <style>
                 .flex {
@@ -233,9 +233,9 @@ const getHandlers : RouteGetHandler = {
             <script src="/web/js/game-shader.js"></script>`
         let team = await teamGet(+query.teamId)
         let game = await required(team.games.find(x => x.id === +query.gameId), `Could not find game! ${query.gameId}`)
-        return layout(req, {
+        return layout({
             head,
-            main: await render(req),
+            main: await render(query),
             nav: teamNav(+query.teamId),
             scripts: ["/web/js/lib/elastic-textarea.js"],
             title: `Match — ${team.name} VS ${game.opponent}`,

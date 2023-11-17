@@ -2,7 +2,7 @@ import { validateObject } from "promise-validation"
 import { PlayerGameTime, InPlayPlayer, OnDeckPlayer, PlayerGame, PlayerGameStatus, PlayerStatus, TeamPlayer, GameTime, Game, OutPlayer, NotPlayingPlayer } from "../../server/db.js"
 import { playerGameAllGet, playerGameSave, positionGetAll } from "../../server/repo-player-game.js"
 import { getGameNotes, teamGet } from "../../server/repo-team.js"
-import { searchParams, tail } from "../../server/utils.js"
+import { tail } from "../../server/utils.js"
 import { required } from "../../server/validation.js"
 import { queryTeamIdGameIdValidator } from "../../server/validators.js"
 
@@ -313,8 +313,8 @@ export class PlayerStateView {
         return this.#cache.get("playersNotPlaying", async () => (await this.notPlayingPlayers()).length)
     }
 
-    static async create(req: Request) {
-        let { teamId, gameId } = await validateObject(searchParams(req), queryTeamIdGameIdValidator)
+    static async create(query: any) {
+        let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
         return new PlayerStateView(teamId, gameId)
     }
 
