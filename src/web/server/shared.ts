@@ -8,3 +8,18 @@ export function when(b: any, s: any) {
     : undefined
 }
 
+export class DbCache {
+    #cache: Map<string, any>
+    constructor() {
+        this.#cache = new Map()
+    }
+
+    async get<T>(key: string, fn: () => Promise<T>): Promise<T> {
+        if (this.#cache.has(key)) {
+            return this.#cache.get(key)
+        }
+        let value = await fn()
+        this.#cache.set(key, value)
+        return value
+    }
+}

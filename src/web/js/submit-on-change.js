@@ -14,7 +14,7 @@ function listen(e) {
 }
 
 // @ts-ignore
-w.app.scripts.set("/web/js/players-edit.js", {
+w.app.scripts.set("/web/js/submit-on-change.js", {
     load() {
         document.addEventListener("change", listen)
     },

@@ -5,6 +5,7 @@ import { getGameNotes, teamGet } from "../../server/repo-team.js"
 import { tail } from "../../server/utils.js"
 import { required } from "../../server/validation.js"
 import { queryTeamIdGameIdValidator } from "../../server/validators.js"
+import { DbCache } from "../../server/shared.js"
 
 export interface GamePlayerStatusView<T extends PlayerStatus> extends PlayerGameStatus<T> {
     name: string
@@ -203,11 +204,11 @@ function filterNotPlayingPlayers(x: PlayerGame) : x is PlayerGameStatus<NotPlayi
 export class PlayerStateView {
     #teamId: number
     #gameId: number
-    #cache: Cache
+    #cache: DbCache
     constructor(teamId: number, gameId: number) {
         this.#teamId = teamId
         this.#gameId = gameId
-        this.#cache = new Cache()
+        this.#cache = new DbCache()
     }
 
     async team() {
@@ -318,21 +319,5 @@ export class PlayerStateView {
         return new PlayerStateView(teamId, gameId)
     }
 
-}
-
-class Cache {
-    #cache: Map<string, any>
-    constructor() {
-        this.#cache = new Map()
-    }
-
-    async get<T>(key: string, fn: () => Promise<T>): Promise<T> {
-        if (this.#cache.has(key)) {
-            return this.#cache.get(key)
-        }
-        let value = await fn()
-        this.#cache.set(key, value)
-        return value
-    }
 }
 

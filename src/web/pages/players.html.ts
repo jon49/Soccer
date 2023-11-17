@@ -163,7 +163,7 @@ const route: Route = {
             head: "<style>.player-card { min-width: 200px; }</style>",
             main: render(result),
             nav: teamNav(result.team.id),
-            scripts: ["/web/js/players-edit.js"],
+            scripts: ["/web/js/submit-on-change.js"],
             title: `Players - ${result.team.name} (${result.team.year})}`
         })
     },

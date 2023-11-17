@@ -71,7 +71,7 @@ interface IdName {
 async function saveNew(xs: IdName[], name: string) : Promise<[IdName, IdName[]]> {
     await checkDuplicates(xs, name)
     let id = getNewId(xs.map(x => x.id))
-    let newValue = { id, name }
+    let newValue = { id, name, active: true }
     xs.push(newValue)
     return [newValue, xs]
 }
@@ -85,14 +85,18 @@ async function save(xs: IdName[], x: IdName) {
 /*** Activities ***/
 
 export async function activityGetAll(teamId: number) : Promise<Activities> {
-    return (await get<Activities>(getActivitiesId(teamId))) ?? { activities: [], _rev: 0 }
+    return (await get<Activities>(getActivitiesId(teamId)))
+        ?? {
+            activities: [
+                { id: 1, name: "Goal", active: true },
+            ],
+            _rev: 0 }
 }
 
 export async function activitySaveNew(teamId: number, name: string) {
     let { activities, _rev } = await activityGetAll(teamId)
-    let [newActivity, updatedActivities] = await saveNew(activities, name)
+    let [_, updatedActivities] = await saveNew(activities, name)
     await set(getActivitiesId(teamId), { activities: updatedActivities, _rev } as Activities)
-    return newActivity
 }
 
 export async function activitySave(teamId: number, activity: Activity) {

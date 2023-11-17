@@ -72,13 +72,14 @@ export interface Positions extends Revision {
     grid: number[]
 }
 
-export type Activity = Activities["activities"][0]
+export interface Activity {
+    id: number
+    name: string
+    active: boolean
+}
 
 export interface Activities extends Revision {
-    activities: {
-        id: number
-        name: string
-    }[]
+    activities: Activity[]
 }
 
 export interface GameTime {

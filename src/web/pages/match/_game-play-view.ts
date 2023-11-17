@@ -7,8 +7,8 @@ export function getPointsView(points: number) {
     return html`&nbsp;${points || "0"}&nbsp;`
 }
 
-export default async function render(req: Request) {
-    let o = await PlayerStateView.create(req),
+export default async function render(query: any) {
+    let o = await PlayerStateView.create(query),
         notes = await o.notes(),
         game = await o.game(),
         team = await o.team(),

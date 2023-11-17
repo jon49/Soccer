@@ -14,7 +14,8 @@
     "@cloudfour/elastic-textarea": "^1.0.7",
     "html-template-tag-stream": "^2.1.1",
     "idb-keyval": "^6.2.1",
-    "promise-validation": "^4.0.1"
+    "promise-validation": "^4.0.1",
+    "simple-input-formatter": "^0.2.2"
   },
   "devDependencies": {
     "esbuild": "^0.19.5"

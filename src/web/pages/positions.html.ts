@@ -27,7 +27,7 @@ function render({ team, positions, grid }: PositionView) {
 <h3>Grid</h3>
 <form
     id=add-grid
-    class="form cards"
+    class=row
     style="--card-width:3.5em;"
     method=post
     action="/web/positions?handler=addGrid&teamId=${team.id}" onchange="this.requestSubmit()"
