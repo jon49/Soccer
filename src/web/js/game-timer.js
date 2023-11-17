@@ -20,20 +20,17 @@
             let m = new Set([instance])
             this.times.set(time, m)
             let interval = setInterval(() => {
-                try {
-                    if (m.size === 0) {
-                        this.times.delete(time)
-                        clearInterval(interval)
-                        return
-                    }
-                    requestAnimationFrame(() => {
-                        let currentTime = +new Date()
-                        for (let instance of m) {
-                            instance.update(currentTime)
-                        }
-                    })
-                } catch (e) {
+                if (m.size === 0) {
+                    this.times.delete(time)
+                    clearInterval(interval)
+                    return
                 }
+                requestAnimationFrame(() => {
+                    let currentTime = +new Date()
+                    for (let instance of m) {
+                        instance.update(currentTime)
+                    }
+                })
             }, time)
         }
 
