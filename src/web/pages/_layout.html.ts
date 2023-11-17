@@ -1,7 +1,6 @@
 import html from "../server/html.js"
 import { version } from "../server/settings.js"
 import { when } from "../server/shared.js"
-import { errors, messages } from "../service-worker/route-handling.js"
 import db from "../server/global-model.js"
 import { syncCountView } from "../api/sync.js"
 import { themeView } from "../api/settings.js"
@@ -72,24 +71,9 @@ const render = async (
     <main>
         ${main}
     </main>
-    <div id=errors>
-    ${function* printErros() {
-        while (errors.length) {
-            const e = errors.shift()
-            if (e) yield html`<user-message><dialog class=toast open><p class=error>${e}</p></dialog></user-message>`
-        }
-    }}
-    </div>
 
     <template id=toast-template><user-message><dialog class=toast open><p class=message></p></dialog></user-message></template>
-    <div id=toasts>
-    ${function* printMessages() {
-        while (messages.length) {
-            const m = messages.shift()
-            if (m) yield html`<user-message><dialog class=toast open><p class=message>${m}</p></dialog></user-message>`
-        }
-    }}
-    </div>
+    <div id=toasts></div>
 
     <footer><p>${version}</p></footer>
 
