@@ -12,7 +12,6 @@ import playerStateView from "./_player-state-view.js"
 import { swapAll } from "./player-swap.js"
 import targetPositionView from "./_target-position-view.js"
 import targetPosition from "./player-target-position.js"
-import { searchParams } from "../../server/utils.js"
 import { teamNav } from "../_shared-views.js"
 
 const queryTeamGamePlayerValidator = {
