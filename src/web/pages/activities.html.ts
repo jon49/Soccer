@@ -35,15 +35,25 @@ function render({ team, activities }: ActivityView) {
     <button>Save</button>
 </form>
 
-<script>
-    document.addEventListener("onchange", e => {
+<script id=activies-script>
+(() => {
+    function listen(e) {
         let target = e.target
         if (target instanceof HTMLInputElement) {
-            target.form.submit()
+            target.form.requestSubmit()
+        }
+    }
+
+    window.app.scripts.set("activities-script", {
+        load() {
+            document.addEventListener("change", listen)
+        },
+        unload() {
+            document.removeEventListener("change", listen)
         }
     })
-</script>
-    `
+})()
+</script>`
 }
 
 function activityView(activity: Activity, teamId: number) {

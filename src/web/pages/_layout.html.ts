@@ -40,7 +40,7 @@ const render = async (
     <link rel="manifest" href="/web/manifest.json">
 </head>
 <body $${when(theme, x => `class=${x}`)} $${bodyAttr}>
-    <script> window.app = { dispose: [] } </script>
+    <script> window.app = { scripts: new Map() } </script>
     <div id=head>$${head}</div>
     <div class=top-nav>
         <form method=post action="/web/api/settings?handler=theme" class=inline>

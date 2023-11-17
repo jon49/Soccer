@@ -2,11 +2,6 @@
 
 ((w) => {
 
-// @ts-ignore
-w.app.dispose.push(() => {
-    document.removeEventListener("change", listen)
-})
-
 /**
 * @param {Event} e
 * @returns {void}
@@ -18,6 +13,14 @@ function listen(e) {
         form.requestSubmit()
 }
 
-document.addEventListener("change", listen)
+// @ts-ignore
+w.app.scripts.set("/web/js/players-edit.js", {
+    load() {
+        document.addEventListener("change", listen)
+    },
+    unload() {
+        document.removeEventListener("change", listen)
+    }
+})
 
 })(window)

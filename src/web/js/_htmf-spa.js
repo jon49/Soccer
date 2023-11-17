@@ -1,13 +1,26 @@
 const w = window,
     doc = document
 
+
+let loadedScripts = new Set()
+doc.addEventListener("hf:script:load", async e => {
+    let detail = e.detail
+    if (!detail.script) return
+    let script = w.app.scripts.get(detail.script)
+    if (!script) return
+    if (script.load) {
+        loadedScripts.add(detail.script)
+        await script.load()
+    }
+})
+
 doc.addEventListener("hf:beforeRequest", e => {
     let detail = e.detail
     if (detail.method === "get" && detail.form.id === "href") {
-        let dispose = w.app.dispose
-        while (dispose.length > 0) {
-            dispose.pop()()
+        for (let script of loadedScripts) {
+            w.app.scripts.get(script)?.unload()
         }
+        loadedScripts.clear()
     }
 })
 
