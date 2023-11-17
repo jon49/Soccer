@@ -83,7 +83,7 @@ async function post(url: URL, req: Request) : Promise<Response> {
                 return result
             }
 
-            if (result?.message) {
+            if (result?.message != null) {
                 if (result.message.length > 0) {
                     messages.push(result.message)
                 }
