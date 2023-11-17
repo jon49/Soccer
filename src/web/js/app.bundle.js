@@ -13,6 +13,8 @@ doc.addEventListener("user-messages", e => {
     let toasts = doc.getElementById("toasts")
     for (let message of e.detail) {
         let clone = template.content.cloneNode(true)
+        let wordCount = message.split(" ").length
+        clone.firstElementChild.setAttribute("data-timeout", 1e3 + wordCount * 400)
         clone.querySelector(".message").textContent = message
         toasts.appendChild(clone)
     }
