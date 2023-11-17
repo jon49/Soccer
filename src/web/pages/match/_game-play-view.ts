@@ -48,16 +48,16 @@ ${when(!isGameEnded, () => html`
     <li>
         <span>Points</span>
         <form id=team-points class=inline method=post hf-target="#points" hidden></form>
-        <button formaction="/web/match?$${queryTeamGame}&handler=pointsDec" form=team-points>-</button>
+        ${when(!isGameEnded, () => html`<button formaction="/web/match?$${queryTeamGame}&handler=pointsDec" form=team-points>-</button>`)}
         <span id=points>${getPointsView(game.points)}</span>
-        <button formaction="/web/match?$${queryTeamGame}&handler=pointsInc" form=team-points>+</button>
+        ${when(!isGameEnded, () => html`<button formaction="/web/match?$${queryTeamGame}&handler=pointsInc" form=team-points>+</button>`)}
     </li>
     <li>
         <span>Opponent</span>
         <form id=opponent-points class=inline method=post hf-target="#o-points" hidden></form>
-        <button formaction="/web/match?$${queryTeamGame}&handler=oPointsDec" form=opponent-points>-</button>
+        ${when(!isGameEnded, () => html`<button formaction="/web/match?$${queryTeamGame}&handler=oPointsDec" form=opponent-points>-</button>`)}
         <span id=o-points>${getPointsView(game.opponentPoints)}</span>
-        <button formaction="/web/match?$${queryTeamGame}&handler=oPointsInc" form=opponent-points>+</button>
+        ${when(!isGameEnded, () => html`<button formaction="/web/match?$${queryTeamGame}&handler=oPointsInc" form=opponent-points>+</button>`)}
     </li>
 </ul>
 
