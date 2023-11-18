@@ -3,7 +3,7 @@ import layout from "../_layout.html.js"
 import { queryTeamIdGameIdValidator } from "../../server/validators.js"
 import { validateObject } from "promise-validation"
 import { saveGameNotes, teamGet, teamSave } from "../../server/repo-team.js"
-import { createIdNumber, createPositiveWholeNumber, createStringInfinity, required } from "../../server/validation.js"
+import { createIdNumber, createPositiveWholeNumber, createString25, createStringInfinity, required } from "../../server/validation.js"
 import { Game } from "../../server/db.js"
 import { playerGameAllGet, playerGameSave } from "../../server/repo-player-game.js"
 import { GameTimeCalculator, PlayerGameTimeCalculator, PlayerStateView, isInPlayPlayer } from "./shared.js"
@@ -13,6 +13,7 @@ import { swapAll } from "./player-swap.js"
 import targetPositionView from "./_target-position-view.js"
 import targetPosition from "./player-target-position.js"
 import { teamNav } from "../_shared-views.js"
+import { activityPlayerSelectorView } from "./_activity-position-view.js"
 
 const queryTeamGamePlayerValidator = {
     ...queryTeamIdGameIdValidator,
@@ -42,6 +43,12 @@ const queryPositionUpdateValidator = {
     ...queryTeamIdGameIdValidator,
     playerId: createIdNumber("Player ID"),
     position: createPositiveWholeNumber("Position"),
+}
+
+const dataSetPlayerActivity = {
+    activityId: createIdNumber("Activity ID"),
+    playerId: createIdNumber("Player ID"),
+    operation: createString25("Action")
 }
 
 const postHandlers : PostHandlers = {
@@ -168,7 +175,7 @@ const postHandlers : PostHandlers = {
         return render(query)
     },
 
-    async endGame ({ query }) {
+    async endGame({ query }) {
         let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
         let team = await teamGet(teamId)
 
@@ -203,6 +210,36 @@ const postHandlers : PostHandlers = {
         return render(query)
     },
 
+    async setPlayerActivity(o) {
+        let { query, data } = o
+        let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
+        let { activityId, playerId, operation } = await validateObject(data, dataSetPlayerActivity)
+        let [player] = await playerGameAllGet(teamId, gameId, [playerId])
+        let activity = player.stats.find(x => x.statId === activityId)
+        if (!activity) {
+            activity = {
+                statId: activityId,
+                count: 0
+            }
+        }
+
+        if (operation === "inc") {
+            activity.count += 1
+            if (activityId === 1) {
+                await postHandlers.pointsInc(o)
+            }
+        } else {
+            activity.count -= 1
+            if (activityId === 1) {
+                await postHandlers.pointsDec(o)
+            }
+        }
+
+        await playerGameSave(teamId, player)
+
+        return render(query)
+    }
+
 }
 
 const getHandlers : RouteGetHandler = {
@@ -212,6 +249,10 @@ const getHandlers : RouteGetHandler = {
 
     async playerSwap ({ query }) {
         return targetPositionView(query)
+    },
+
+    activityPlayerSelector({ query }) {
+        return activityPlayerSelectorView(query)
     },
 
     async get({ query }) {

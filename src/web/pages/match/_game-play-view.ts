@@ -22,7 +22,8 @@ export default async function render(query: any) {
 <h2>${team.name} ($${game.home ? "Home" : "Away"}) vs ${game.opponent}</h2>
 
 ${when(!isGameEnded, () => html`
-<form class=inline
+<form id=game-status
+      class=inline
       method=post
       action="/web/match?$${queryTeamGame}&handler=${isGameInPlay ? "pauseGame" : "startGame"}"
       hf-target=main >
@@ -47,10 +48,16 @@ ${when(!isGameEnded, () => html`
 <ul class=list>
     <li>
         <span>Points</span>
-        <form id=team-points class=inline method=post hf-target="#points" hidden></form>
-        ${when(!isGameEnded, () => html`<button formaction="/web/match?$${queryTeamGame}&handler=pointsDec" form=team-points>-</button>`)}
-        <span id=points>${getPointsView(game.points)}</span>
-        ${when(!isGameEnded, () => html`<button formaction="/web/match?$${queryTeamGame}&handler=pointsInc" form=team-points>+</button>`)}
+        <form id=team-points hf-target="#player-state" hidden></form>
+        ${() => {
+            let action = `/web/match?${queryTeamGame}&activityId=1&handler=activityPlayerSelector`
+            return html`
+            ${when(!isGameEnded, () =>
+                   html`<button formaction="$${action}&action=dec" form=team-points>-</button>`)}
+            <span id=points>${getPointsView(game.points)}</span>
+            ${when(!isGameEnded, () =>
+                   html`<button formaction="$${action}&action=inc" form=team-points>+</button>`)}`
+        }}
     </li>
     <li>
         <span>Opponent</span>
