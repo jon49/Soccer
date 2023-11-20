@@ -20,7 +20,7 @@ async function render(o: ActivityView) {
     let showAllActivities = o.query.all === ""
 
     return html`
-<h2>${team.name} - Activities</h2>
+<h2>${team.name} - Stats</h2>
 
 <div class=row onchange="this.target.form.requestSubmit()">
     ${activities.filter(x => showAllActivities || x.active).map((x, i) => {
@@ -147,7 +147,7 @@ const route : Route = {
         return layout({
             main: await render(data),
             nav: teamNav(teamId),
-            title: `Activities - ${team.name}`,
+            title: `Stats — ${team.name}`,
             scripts: ["/web/js/submit-on-change.js", "/web/js/input-formatter.js"],
         })
     },

@@ -16,7 +16,7 @@ async function render(query: any) {
         `formaction="/web/stats?teamId=${teamId}&handler=${handler}"`
 
     return html`
-    <h1>Stats</h1>
+    <h2>Stats</h2>
     
     <div style="margin-bottom: 1em;">
         <form
@@ -27,7 +27,7 @@ async function render(query: any) {
             ${[
                 ["timePlayed", "Time Played"],
                 ["gamesPlayed", "Games Played"],
-                ["activitiesPerformed", "Activities Performed"],
+                ["activitiesPerformed", "Player Stats"],
             ].map(([handler, label]) =>
              html`<button $${formAction(handler)}>$${label}</button>`)
             }
@@ -60,7 +60,7 @@ const getHandler: RouteGetHandler = {
         return layout({
             main: await render(query),
             nav: teamNav(+query.teamId),
-            title: "Stats"
+            title: "Player Stats"
         })
     },
 
