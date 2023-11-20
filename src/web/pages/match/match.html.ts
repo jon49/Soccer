@@ -221,15 +221,18 @@ const postHandlers : PostHandlers = {
                 statId: activityId,
                 count: 0
             }
+            player.stats.push(activity)
         }
 
         if (operation === "inc") {
             activity.count += 1
+            // This should use eventing to update instead of direct calls
             if (activityId === 1) {
                 await postHandlers.pointsInc(o)
             }
         } else {
             activity.count -= 1
+            // This should use eventing to update instead of direct calls
             if (activityId === 1) {
                 await postHandlers.pointsDec(o)
             }
