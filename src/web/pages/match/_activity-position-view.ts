@@ -93,11 +93,11 @@ interface SelectPlayerViewOptions {
 }
 
 function selectPlayerView(o: SelectPlayerViewOptions) {
-    let action = `/web/match?teamId=${o.teamId}&gameId=${o.gameId}&handler=setPlayerActivity`
+    let action = `/web/match?teamId=${o.teamId}&gameId=${o.gameId}&handler=setPlayerStat`
     return html`
     <form
         method=post
-        action="${action}"
+        action="$${action}"
         $${ o.activityId === 1 ? `hf-target="#points"` : `hf-target="main"` }
         hf-scroll-to="#game-status">
         <input type=hidden name=activityId value="${o.activityId}">

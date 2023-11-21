@@ -210,11 +210,12 @@ const postHandlers : PostHandlers = {
         return render(query)
     },
 
-    async setPlayerActivity(o) {
+    async setPlayerStat(o) {
         let { query, data } = o
         let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
         let { activityId, playerId, operation } = await validateObject(data, dataSetPlayerActivity)
         let [player] = await playerGameAllGet(teamId, gameId, [playerId])
+
         let activity = player.stats.find(x => x.statId === activityId)
         if (!activity) {
             activity = {
@@ -226,13 +227,13 @@ const postHandlers : PostHandlers = {
 
         let pointsView = null
         if (operation === "inc") {
-            activity.count += 1
+            activity.count++
             // This should use eventing to update instead of direct calls
             if (activityId === 1) {
                 pointsView = await postHandlers.pointsInc(o)
             }
         } else {
-            activity.count -= 1
+            activity.count--
             // This should use eventing to update instead of direct calls
             if (activityId === 1) {
                 pointsView = await postHandlers.pointsDec(o)

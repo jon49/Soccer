@@ -2,7 +2,7 @@ import html from "../../server/html.js"
 import { activityGetAll } from "../../server/repo-player-game.js"
 import { StatsView } from "./shared.js"
 
-export async function activitiesView(o: StatsView) {
+export async function playerStatsView(o: StatsView) {
     let [playerIdList,
         playerMap,
         playersGames,
@@ -18,18 +18,19 @@ export async function activitiesView(o: StatsView) {
 
     // playerId -> statId -> count
     let activityMap = new Map<number, Map<number, number>>()
-    for (let playerId of playerIdList) {
-        let activity = new Map<number, number>()
-        activityMap.set(playerId, activity)
-        for (let playerGames of playersGames) {
-            let playerGame = playerGames.find(x => x.playerId === playerId)
-            if (!playerGame) continue
+    for (let playerGames of playersGames) {
+        for (let playerGame of playerGames) {
+            let activity = activityMap.get(playerGame.playerId)
+            if (!activity) {
+                activity = new Map<number, number>()
+                activityMap.set(playerGame.playerId, activity)
+            }
             for (let stat of playerGame.stats) {
                 let count = activity.get(stat.statId)
                 if (!count) {
-                    activity.set(stat.statId, 1)
+                    activity.set(stat.statId, stat.count)
                 } else {
-                    activity.set(stat.statId, count + 1)
+                    activity.set(stat.statId, count + stat.count)
                 }
             }
         }

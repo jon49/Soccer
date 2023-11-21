@@ -7,7 +7,7 @@ import { teamNav } from "../_shared-views.js"
 import { StatsView } from "./shared.js"
 import { timePlayedView } from "./_positions-played-view.js"
 import { gamesPlayedView } from "./_number-of-games-played-view.js"
-import { activitiesView } from "./_activities-view.js"
+import { playerStatsView } from "./_activities-view.js"
 
 async function render(query: any) {
     let { teamId } = await validateObject(query, queryTeamIdValidator)
@@ -76,7 +76,7 @@ const getHandler: RouteGetHandler = {
 
     async activitiesPerformed({ query }) {
         let playersView = await StatsView.create(query)
-        return activitiesView(playersView)
+        return playerStatsView(playersView)
     }
 }
 
