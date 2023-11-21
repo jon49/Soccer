@@ -2,8 +2,6 @@
 
 (() => {
 
-    if (customElements.get("user-message")) return
-
     class UserMessage extends HTMLElement {
         constructor() {
             super()
