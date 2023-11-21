@@ -1,8 +1,6 @@
 import html from "html-template-tag-stream"
 import { playerGameAllGet, positionGetAll } from "../../server/repo-player-game.js"
 import { teamGet } from "../../server/repo-team.js"
-import { isInPlayPlayer, PlayerGameTimeCalculator } from "./shared.js"
-import { when } from "../../server/html.js"
 import { queryTeamIdGameIdValidator } from "../../server/validators.js"
 import { validateObject } from "promise-validation"
 import { createIdNumber, createString25 } from "../../server/validation.js"
