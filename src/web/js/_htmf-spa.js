@@ -27,16 +27,12 @@ doc.addEventListener("hf:beforeRequest", e => {
 let shouldHandleHash = true
 doc.addEventListener("hf:completed", e => {
     let detail = e.detail
-    if (detail.method === "get") {
-        if (detail.form.id === "href" && detail.submitter?.id !== "href-nav") {
-            let url = new URL(detail?.submitter?.formAction ?? detail.form.action)
-            shouldHandleHash = false
-            location.hash = url.pathname + url.search
-        }
-        return
+    if (detail.method !== "get") return
+    if (detail.form.id === "href" && detail.submitter?.id !== "href-nav") {
+        let url = new URL(detail?.submitter?.formAction ?? detail.form.action)
+        shouldHandleHash = false
+        location.hash = url.pathname + url.search
     }
-    let count = doc.getElementById('get-sync-count-form')
-    count.requestSubmit()
 })
 
 // In the future use the `navigate` event.
