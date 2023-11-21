@@ -42,8 +42,7 @@ export async function activityPlayerSelectorView(query: any) {
     }
 
     return html`
-<x-dialog show-modal close-event="hf:completed">
-<dialog class=modal>
+<dialog class=modal is=x-dialog show-modal close-event="hf:completed">
 <h2 id=game-goal-top class=inline>Goal For:</h2>
 <form class=inline method=dialog hf-scroll-to="#game-status">
     <button>Cancel</button>
@@ -79,8 +78,7 @@ ${function* activityTargetView() {
         return selectPlayerView(playerViewOptions)
     })
 }}
-</dialog>
-</x-dialog>`
+</dialog>`
 }
 
 interface SelectPlayerViewOptions {

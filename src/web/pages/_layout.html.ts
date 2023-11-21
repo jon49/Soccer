@@ -82,7 +82,6 @@ const render = async (
         <button id=href-nav class=hidden></button>
     </form>
     <form id=get-sync-count-form action="/web/api/sync?handler=count" hf-ignore-scroll hf-target="#sync-count"></form>
-    <script src="/web/js/lib/htmf.min.js"></script>
 
     <div id=scripts>${(scripts ?? []).map(x => html`<script src="${x}"></script>`)}</div>
     <script>
@@ -90,6 +89,7 @@ const render = async (
         ${when(updatedCount, _ => html`App.shouldWaitToSync = true`)}
         ${when(+new Date() - (lastSynced || 0) > /* 2 hours */ 1e3*60*60*2, _ => html`App.shouldSync = true`)}
     </script>
+    <script src="/web/js/lib/htmf.min.js"></script>
     <script src="/web/js/toaster.js"></script>
     <script src="/web/js/app.js"></script>
 </body>

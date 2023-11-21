@@ -33,8 +33,7 @@ export default async function render(query: any) {
     let isPaused = game.status === "paused" || (!isInPlay && !isEnded)
 
     return html`
-<x-dialog show-modal close-event="hf:completed">
-<dialog class=modal>
+<dialog class=modal is=x-dialog show-modal close-event="hf:completed">
 <h2 id=game-swap-top class=inline>Swap for ${player.name}</h2>
 <form class=inline>
     <button value=cancel formmethod="dialog">Cancel</button>
@@ -96,7 +95,6 @@ ${function* positionViews() {
         yield html`</div>`
     }
 }}
-</dialog>
-</x-dialog>`
+</dialog>`
 
 }

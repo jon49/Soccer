@@ -2,7 +2,7 @@
 
 (() => {
 
-    class XDialog extends HTMLElement {
+    class XDialog extends HTMLDialogElement {
         constructor() { super() }
 
         connectedCallback() {
@@ -20,64 +20,52 @@
             this.observer?.disconnect()
             this.observer = null
 
-            let dialog = this.firstElementChild
-            if (!(dialog instanceof HTMLDialogElement)) {
-                console.warn("x-dialog: first child must be a <dialog>")
-                this.remove()
-                return
-            }
-
-            this.dialog = dialog
-
-            if (this.hasAttribute("show-modal") && !dialog.open) {
-                dialog.showModal()
+            if (this.hasAttribute("show-modal") && !this.open) {
+                this.showModal()
             }
 
             this.hasDisposed = false
             let closeEvent = this.closeEvent = this.getAttribute("close-event")
             if (closeEvent) {
-                dialog.addEventListener(closeEvent, this.dispose.bind(this))
+                this.addEventListener(closeEvent, this.dispose.bind(this))
             }
-            dialog.addEventListener("close", this.dispose.bind(this))
-            dialog.addEventListener("click", this.outsideClickClose.bind(this))
+            this.addEventListener("close", this.dispose.bind(this))
+            this.addEventListener("click", this.outsideClickClose.bind(this))
         }
 
         /** @param {MouseEvent} e */
         outsideClickClose(e) {
-            let dialog = this.dialog
-            if (dialog?.open) {
-                const dialogDimensions = dialog.getBoundingClientRect()
+            if (this?.open) {
+                const dialogDimensions = this.getBoundingClientRect()
                 if (  e.clientX < dialogDimensions.left
                    || e.clientX > dialogDimensions.right
                    || e.clientY < dialogDimensions.top
                    || e.clientY > dialogDimensions.bottom ) {
-                    dialog.close()
+                    this.close()
                 }
             }
         }
 
         dispose() {
             if (this.hasDisposed) return
-            let dialog = this.dialog
-            if (dialog?.open) {
-                dialog.close()
+            if (this?.open) {
+                this.close()
             }
             this.remove()
             this.hasDisposed = true
         }
 
         disconnectedCallback() {
-            let dialog = this.dialog
             if (this.closeEvent) {
-                dialog?.removeEventListener(this.closeEvent, this.dispose.bind(this))
+                this?.removeEventListener(this.closeEvent, this.dispose.bind(this))
             }
-            dialog?.removeEventListener("close", this.dispose.bind(this))
-            dialog?.removeEventListener("click", this.outsideClickClose.bind(this))
+            this?.removeEventListener("close", this.dispose.bind(this))
+            this?.removeEventListener("click", this.outsideClickClose.bind(this))
         }
 
     }
 
-    customElements.define("x-dialog", XDialog)
+    customElements.define("x-dialog", XDialog, { extends: "dialog" })
 
 })()
 
