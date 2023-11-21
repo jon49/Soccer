@@ -24,7 +24,7 @@ function playerView(
     <li>
         <form
             action="/web/match?$${queryTeamGame}&playerId=${player?.playerId}&handler=playerSwap"
-            hf-target="#player-state" >
+            hf-target="#dialogs" >
             <button>${player?.name}</button>
         </form>
         <game-timer

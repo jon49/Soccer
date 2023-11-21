@@ -74,6 +74,7 @@ const render = async (
 
     <template id=toast-template><user-message><dialog class=toast open><p class=message></p></dialog></user-message></template>
     <div id=toasts></div>
+    <div id=dialogs></div>
 
     <footer><p>${version}</p></footer>
 

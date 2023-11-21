@@ -250,7 +250,7 @@ const getHandlers : RouteGetHandler = {
         return playerStateView(await PlayerStateView.create(query))
     },
 
-    async playerSwap ({ query }) {
+    async playerSwap({ query }) {
         return targetPositionView(query)
     },
 
@@ -281,7 +281,10 @@ const getHandlers : RouteGetHandler = {
             head,
             main: await render(query),
             nav: teamNav(+query.teamId),
-            scripts: ["/web/js/lib/elastic-textarea.js"],
+            scripts: [
+                "/web/js/lib/elastic-textarea.js",
+                "/web/js/x-dialog.js",
+            ],
             title: `Match — ${team.name} VS ${game.opponent}`,
         })
     }

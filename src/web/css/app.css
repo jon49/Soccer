@@ -55,6 +55,11 @@ body {
   --c4:#eee;
 }
 
+/* Fixes an issue where dialog doesn't inherit the color properly. */
+h1, h2, h3, h4, h5, h6 {
+    color: var(--c4);
+}
+
 .form {
     border: 1px solid black;
     margin: 5px 0;
@@ -289,5 +294,20 @@ button.anchor:hover {
 nav li {
     display: inline-block;
     margin: 0 0.5em;
+}
+
+/** Dialog **/
+
+dialog.modal {
+    background-color: var(--c2);
+    border-radius: 0.5em;
+    padding: 1em;
+    width: 100%;
+    max-width: 800px;
+    overflow: auto;
+}
+
+dialog::backdrop {
+  background-color: rgba(0, 0, 0, 0.5);
 }
 
