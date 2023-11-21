@@ -224,22 +224,26 @@ const postHandlers : PostHandlers = {
             player.stats.push(activity)
         }
 
+        let pointsView = null
         if (operation === "inc") {
             activity.count += 1
             // This should use eventing to update instead of direct calls
             if (activityId === 1) {
-                await postHandlers.pointsInc(o)
+                pointsView = await postHandlers.pointsInc(o)
             }
         } else {
             activity.count -= 1
             // This should use eventing to update instead of direct calls
             if (activityId === 1) {
-                await postHandlers.pointsDec(o)
+                pointsView = await postHandlers.pointsDec(o)
             }
         }
 
         await playerGameSave(teamId, player)
 
+        if (pointsView) {
+            return pointsView
+        }
         return render(query)
     }
 

@@ -48,7 +48,7 @@ ${when(!isGameEnded, () => html`
 <ul class=list>
     <li>
         <span>Points</span>
-        <form id=team-points hf-target="#player-state" hidden></form>
+        <form id=team-points hf-target="#dialogs" hidden></form>
         ${() => {
             let action = `/web/match?${queryTeamGame}&activityId=1&handler=activityPlayerSelector`
             return html`

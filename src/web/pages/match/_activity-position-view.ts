@@ -1,6 +1,7 @@
 import html from "html-template-tag-stream"
 import { playerGameAllGet, positionGetAll } from "../../server/repo-player-game.js"
 import { teamGet } from "../../server/repo-team.js"
+import { isInPlayPlayer } from "./shared.js"
 import { queryTeamIdGameIdValidator } from "../../server/validators.js"
 import { validateObject } from "promise-validation"
 import { createIdNumber, createString25 } from "../../server/validation.js"
@@ -23,13 +24,11 @@ export async function activityPlayerSelectorView(query: any) {
     let inPlayPlayers = players.filter(isInPlayPlayer)
 
     return html`
+<x-dialog show-modal close-event="hf:completed">
+<dialog class=modal>
 <h2 id=game-goal-top class=inline>Goal For:</h2>
-<form
-    class=inline
-    action="/web/match?teamId=${teamId}&gameId=${gameId}&handler=cancelSwap"
-    hf-target="#player-state"
-    hf-scroll-to="#game-status" >
-    <button>Cancel Goal</button>
+<form class=inline method=dialog hf-scroll-to="#game-status">
+    <button>Cancel</button>
 </form>
 
 ${function* activityTargetView() {
@@ -48,7 +47,7 @@ ${function* activityTargetView() {
                 row = html`<form
                     method=post
                     action="/web/match?position=${count}&teamId=${teamId}&gameId=${gameId}&handler=setPlayerActivity"
-                    hf-target="main"
+                    $${ activityId === 1 ? `hf-target="#points"` : `hf-target="main"` }
                     hf-scroll-to="#game-status">
                     <input type=hidden name=activityId value="${activityId}">
                     <input type=hidden name=playerId value="${player.playerId}">
@@ -67,7 +66,9 @@ ${function* activityTargetView() {
         })
         yield html`</div>`
     }
-}}`
+}}
+</dialog>
+</x-dialog>`
 
 }
 
