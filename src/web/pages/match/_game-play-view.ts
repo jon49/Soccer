@@ -33,7 +33,7 @@ ${when(!isGameEnded, () => html`
 <game-timer
     $${when(isGamePaused, () => `data-flash data-start="${gameCalc.getLastEndTime()}"`)}
     $${when(isGameInPlay, `data-start="${gameCalc.getLastStartTime()}" data-total="${gameCalc.total()}"`)}
-    $${when(isGameEnded, `data-static`)}>
+    $${when(isGameEnded, `data-static data-total="${gameCalc.total()}"`)}>
 </game-timer>
 
 <form
