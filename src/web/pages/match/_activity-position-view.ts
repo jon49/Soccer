@@ -1,10 +1,12 @@
 import html from "html-template-tag-stream"
 import { playerGameAllGet, positionGetAll } from "../../server/repo-player-game.js"
 import { teamGet } from "../../server/repo-team.js"
-import { isInPlayPlayer } from "./shared.js"
+import { isInPlayPlayer, isOnDeckPlayer, isOutPlayer } from "./shared.js"
 import { queryTeamIdGameIdValidator } from "../../server/validators.js"
 import { validateObject } from "promise-validation"
 import { createIdNumber, createString25 } from "../../server/validation.js"
+import { sort } from "../../server/utils.js"
+import { TeamPlayer } from "../../server/db.js"
 
 const queryActivityValidator = {
     ...queryTeamIdGameIdValidator,
@@ -22,6 +24,22 @@ export async function activityPlayerSelectorView(query: any) {
     ])
 
     let inPlayPlayers = players.filter(isInPlayPlayer)
+    let notPlayingPlayers =
+        sort(players.filter(x => !isInPlayPlayer(x) && (isOnDeckPlayer(x) || isOutPlayer(x)))
+        .map(x => ({
+            id: x.playerId,
+            name: team.players.find(y => y.id === x.playerId)?.name,
+        }))
+        .filter((x) : x is { id: number, name: string } => x.name != null),
+            x => x.name)
+
+    let playerViewOptions : SelectPlayerViewOptions = {
+        teamId,
+        gameId,
+        activityId,
+        action,
+        players: team.players
+    }
 
     return html`
 <x-dialog show-modal close-event="hf:completed">
@@ -42,21 +60,10 @@ ${function* activityTargetView() {
 
         yield p.map(() => {
             let player = inPlayPlayers.find(x => count === x.status.position)
+            playerViewOptions.playerId = player?.playerId
             let row
             if (player) {
-                row = html`<form
-                    method=post
-                    action="/web/match?position=${count}&teamId=${teamId}&gameId=${gameId}&handler=setPlayerActivity"
-                    $${ activityId === 1 ? `hf-target="#points"` : `hf-target="main"` }
-                    hf-scroll-to="#game-status">
-                    <input type=hidden name=activityId value="${activityId}">
-                    <input type=hidden name=playerId value="${player.playerId}">
-                    <input type=hidden name=operation value="${action}">
-                    <button>${team.players.find(x => {
-                        // @ts-ignore we already know the player is in play
-                        return x.id === player.playerId
-                    })?.name}</button>
-                    </form>`
+                row = selectPlayerView(playerViewOptions)
             } else {
                 row = html`<span></span>`
             }
@@ -66,9 +73,37 @@ ${function* activityTargetView() {
         })
         yield html`</div>`
     }
+
+    yield notPlayingPlayers.map(x => {
+        playerViewOptions.playerId = x.id
+        return selectPlayerView(playerViewOptions)
+    })
 }}
 </dialog>
 </x-dialog>`
+}
 
+interface SelectPlayerViewOptions {
+    teamId: number
+    gameId: number
+    activityId: number
+    playerId?: number
+    action: string
+    players: TeamPlayer[]
+}
+
+function selectPlayerView(o: SelectPlayerViewOptions) {
+    let action = `/web/match?teamId=${o.teamId}&gameId=${o.gameId}&handler=setPlayerActivity`
+    return html`
+    <form
+        method=post
+        action="${action}"
+        $${ o.activityId === 1 ? `hf-target="#points"` : `hf-target="main"` }
+        hf-scroll-to="#game-status">
+        <input type=hidden name=activityId value="${o.activityId}">
+        <input type=hidden name=playerId value="${o.playerId}">
+        <input type=hidden name=operation value="${o.action}">
+        <button>${o.players.find(x => x.id === o.playerId)?.name}</button>
+    </form>`
 }
 

@@ -35,6 +35,10 @@ export function isOnDeckPlayer(x: PlayerGame) : x is PlayerGameStatus<OnDeckPlay
     return x.status?._ === "onDeck"
 }
 
+export function isOutPlayer(x: PlayerGame) : x is PlayerGameStatus<OutPlayer> {
+    return x?.status?._ === "out"
+}
+
 export class PlayerGameTimeCalculator {
     times: PlayerGameTime[]
     player: PlayerGame
