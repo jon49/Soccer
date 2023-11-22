@@ -2,32 +2,21 @@
 
 (() => {
 
-    class UserMessage extends HTMLElement {
-        constructor() {
-            super()
-        }
+    class XToaster extends HTMLDialogElement {
+        constructor() { super() }
 
         connectedCallback() {
-            if (this.children.length) {
-                this._init()
-            }
-
-            // not yet available, watch it for _init
-            this._observer = new MutationObserver(this._init.bind(this))
-            this._observer.observe(this, { childList: true })
-        }
-
-        _init() {
-            this._observer?.disconnect()
-            this._observer = null
-
             let timeout = +(this.dataset.timeout || 3e3)
-            setTimeout(() => {
+            this.timeoutId = setTimeout(() => {
                 this.remove()
             }, timeout)
         }
+
+        disconnectedCallback() {
+            clearTimeout(this.timeoutId)
+        }
     }
 
-    customElements.define("user-message", UserMessage)
+    customElements.define("x-toaster", XToaster, { extends: "dialog" })
 
 })()

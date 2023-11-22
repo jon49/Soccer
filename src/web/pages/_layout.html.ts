@@ -72,7 +72,7 @@ const render = async (
         ${main}
     </main>
 
-    <template id=toast-template><user-message><dialog class=toast open><p class=message></p></dialog></user-message></template>
+    <template id=toast-template><dialog class=toast is=x-toaster open><p class=message></p></dialog></template>
     <div id=toasts></div>
     <div id=dialogs></div>
 
