@@ -96,7 +96,6 @@ function selectPlayerView(o: SelectPlayerViewOptions) {
     <form
         method=post
         action="$${action}"
-        $${ o.activityId === 1 ? `hf-target="#points"` : `hf-target="main"` }
         hf-scroll-to="#game-status">
         <input type=hidden name=activityId value="${o.activityId}">
         <input type=hidden name=playerId value="${o.playerId}">

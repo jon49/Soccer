@@ -242,10 +242,17 @@ const postHandlers : PostHandlers = {
 
         await playerGameSave(teamId, player)
 
-        if (pointsView) {
-            return pointsView
+        return {
+            body: null,
+            status: 204,
+            headers: {
+                "hf-events": {
+                    playerStatUpdated: {
+                        statId: activityId
+                    }
+                }
+            }
         }
-        return render(query)
     }
 
 }
@@ -261,6 +268,14 @@ const getHandlers : RouteGetHandler = {
 
     activityPlayerSelector({ query }) {
         return activityPlayerSelectorView(query)
+    },
+
+    async points({ query }) {
+        let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
+        let team = await teamGet(teamId)
+        let game = await required(team.games.find(x => x.id === gameId), "Could not find game!")
+
+        return getPointsView(game.points)
     },
 
     async get({ query }) {
@@ -289,6 +304,7 @@ const getHandlers : RouteGetHandler = {
             scripts: [
                 "/web/js/lib/elastic-textarea.js",
                 "/web/js/x-dialog.js",
+                "/web/js/x-subscribe.js",
             ],
             title: `Match — ${team.name} VS ${game.opponent}`,
         })
