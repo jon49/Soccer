@@ -90,7 +90,7 @@ const render = async (
         ${when(+new Date() - (lastSynced || 0) > /* 2 hours */ 1e3*60*60*2, _ => html`App.shouldSync = true`)}
     </script>
     <script src="/web/js/lib/htmf.min.js"></script>
-    <script src="/web/js/toaster.js"></script>
+    <script src="/web/js/x-toaster.js"></script>
     <script src="/web/js/app.js"></script>
 </body>
 </html>`
