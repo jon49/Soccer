@@ -51,9 +51,25 @@ const dataSetPlayerActivity = {
     operation: createString25("Action")
 }
 
+interface PlayerStatUpdatedArgs {
+    activityId: number
+    action: string
+    playerId: number
+    teamId: number
+    gameId: number
+}
+
+async function handlePlayerStatUpdated(data: PlayerStatUpdatedArgs) {
+    if (data.activityId === 1) {
+        let action : (query: any) => Promise<any> =
+            data.action === "inc"
+                ? setPoints(game => ++game.points)
+            : setPoints(game => --game.points)
+        await action({ query: data })
+    }
+}
+
 const postHandlers : PostHandlers = {
-    pointsInc: setPoints(game => ++game.points),
-    pointsDec: setPoints(game => --game.points),
     oPointsDec: setPoints(game => --game.opponentPoints),
     oPointsInc: setPoints(game => ++game.opponentPoints),
 
@@ -225,22 +241,21 @@ const postHandlers : PostHandlers = {
             player.stats.push(activity)
         }
 
-        let pointsView = null
         if (operation === "inc") {
             activity.count++
-            // This should use eventing to update instead of direct calls
-            if (activityId === 1) {
-                pointsView = await postHandlers.pointsInc(o)
-            }
         } else {
             activity.count--
-            // This should use eventing to update instead of direct calls
-            if (activityId === 1) {
-                pointsView = await postHandlers.pointsDec(o)
-            }
         }
 
         await playerGameSave(teamId, player)
+
+        await handlePlayerStatUpdated({
+            activityId,
+            action: operation,
+            playerId,
+            teamId,
+            gameId
+        })
 
         return {
             body: null,
