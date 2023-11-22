@@ -25,7 +25,12 @@ async function render(o: ActivityView) {
 <div class=row onchange="this.target.form.requestSubmit()">
     ${activities.filter(x => showAllActivities || x.active).map((x, i) => {
         return html`
-        <form class=form method=post action="/web/activities?teamId=${teamId}" hf-target=main>
+        <form
+            onchange="this.requestSubmit()"
+            class=form
+            method=post
+            action="/web/activities?teamId=${teamId}"
+            hf-target=main>
             <input type=hidden name=id value="${x.id}">
             ${() =>
                 i === 0
@@ -42,7 +47,12 @@ async function render(o: ActivityView) {
                 </div>`)}
         </form>`
     })}
-    <form class=form method=post action="/web/activities?teamId=${teamId}&handler=addActivity" hf-target=main>
+    <form
+        onchange="this.requestSubmit()"
+        class=form
+        method=post
+        action="/web/activities?teamId=${teamId}&handler=addActivity"
+        hf-target=main>
         <input id="_activity-new" name=name>
     </form>
 </div>
@@ -148,7 +158,7 @@ const route : Route = {
             main: await render(data),
             nav: teamNav(teamId),
             title: `Stats — ${team.name}`,
-            scripts: ["/web/js/submit-on-change.js", "/web/js/input-formatter.js"],
+            scripts: ["/web/js/input-formatter.js"],
         })
     },
     post: postHandlers,
