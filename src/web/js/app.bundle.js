@@ -20,12 +20,6 @@ doc.addEventListener("user-messages", e => {
     }
 })
 
-doc.addEventListener("hf:completed", e => {
-    if (e.detail?.method !== "post") return
-    let count = doc.getElementById('get-sync-count-form')
-    count.requestSubmit()
-})
-
 doc.addEventListener("app-theme", e => {
     let theme = e.detail.theme
     doc.body.classList.remove("light")

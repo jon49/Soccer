@@ -1,7 +1,6 @@
 const w = window,
     doc = document
 
-
 let loadedScripts = new Set()
 doc.addEventListener("hf:script:load", async e => {
     let detail = e.detail

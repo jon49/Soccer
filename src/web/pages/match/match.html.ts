@@ -319,7 +319,6 @@ const getHandlers : RouteGetHandler = {
             scripts: [
                 "/web/js/lib/elastic-textarea.js",
                 "/web/js/x-dialog.js",
-                "/web/js/x-subscribe.js",
             ],
             title: `Match — ${team.name} VS ${game.opponent}`,
         })

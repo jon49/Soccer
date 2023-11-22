@@ -81,7 +81,14 @@ const render = async (
     <form id=href hf-select="title,#head,#nav-main,main,#errors,#toasts,#scripts">
         <button id=href-nav class=hidden></button>
     </form>
-    <form id=get-sync-count-form action="/web/api/sync?handler=count" hf-ignore-scroll hf-target="#sync-count"></form>
+    <form
+        id=get-sync-count-form
+        action="/web/api/sync?handler=count"
+        is=x-subscribe
+        data-event="hf:completed"
+        data-match='{"method":"post"}'
+        hf-ignore-scroll
+        hf-target="#sync-count"></form>
 
     <div id=scripts>${(scripts ?? []).map(x => html`<script src="${x}"></script>`)}</div>
     <script>
@@ -91,6 +98,7 @@ const render = async (
     </script>
     <script src="/web/js/lib/htmf.min.js"></script>
     <script src="/web/js/x-toaster.js"></script>
+    <script src="/web/js/x-subscribe.js"></script>
     <script src="/web/js/app.js"></script>
 </body>
 </html>`
