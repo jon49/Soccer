@@ -45,19 +45,21 @@ ${when(!isGameEnded, () => html`
     <button>${isGameEnded ? "Restart" : "End"}</button>
 </form>
 
-<form id=team-points hf-target="#dialogs" hidden></form>
-<form
-    is=x-subscribe
-    data-event="playerStatUpdated"
-    data-match='{"statId":1}'
-    action="/web/match?$${queryTeamGame}&handler=points"
-    hf-target="#points"
-    hidden></form>
-<form id=opponent-points class=inline method=post hf-target="#o-points" hidden></form>
 
 <ul class=list>
     <li>
+
         <span>Points</span>
+
+        <form id=team-points hf-target="#dialogs" hidden></form>
+        <form
+            is=x-subscribe
+            data-event="playerStatUpdated"
+            data-match='{"statId":1}'
+            action="/web/match?$${queryTeamGame}&handler=points"
+            hf-target="#points"
+            hidden></form>
+
         ${() => {
             let action = `/web/match?${queryTeamGame}&activityId=1&handler=activityPlayerSelector`
             return html`
@@ -70,6 +72,9 @@ ${when(!isGameEnded, () => html`
     </li>
     <li>
         <span>Opponent</span>
+
+        <form id=opponent-points class=inline method=post hf-target="#o-points" hidden></form>
+
         ${when(!isGameEnded, () => html`<button formaction="/web/match?$${queryTeamGame}&handler=oPointsDec" form=opponent-points>-</button>`)}
         <span id=o-points>${getPointsView(game.opponentPoints)}</span>
         ${when(!isGameEnded, () => html`<button formaction="/web/match?$${queryTeamGame}&handler=oPointsInc" form=opponent-points>+</button>`)}

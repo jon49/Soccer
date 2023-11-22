@@ -228,7 +228,7 @@ header {
     display: table-row;
 }
 
-.list > li > * {
+.list > li > :not([hidden]) {
     display: table-cell;
     padding: 5px 10px!important;
 }
