@@ -77,7 +77,7 @@ async function post(url: URL, req: Request) : Promise<Response> {
             let result = await
                 (handler instanceof Function
                     ? handler
-                : handlePost(handler))({ req, data })
+                : handlePost(handler))({ req, data, query: searchParams(req) })
 
             if (result instanceof Response) {
                 return result
