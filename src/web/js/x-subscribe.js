@@ -1,5 +1,7 @@
 // @ts-check
 
+(() => {
+
 /**
 * @param {CustomEvent} event
 * @param {string} json
@@ -55,3 +57,4 @@ class XSubscribe extends HTMLFormElement {
 
 customElements.define("x-subscribe", XSubscribe, { extends: "form" })
 
+})()
