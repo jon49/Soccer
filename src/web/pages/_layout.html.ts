@@ -18,7 +18,7 @@ const render = async (
       title,
       bodyAttr,
     }: LayoutTemplateArguments) => {
-    const [isLoggedIn, updated, { lastSynced, theme }] = await Promise.all([
+    const [isLoggedIn, updated, { theme }] = await Promise.all([
         db.isLoggedIn(),
         db.updated(),
         db.settings()
@@ -48,6 +48,19 @@ const render = async (
 
        <form method=post action="/web/api/sync?handler=force" class=inline>
            <button id=sync-count class=bg>${syncCountView(updatedCount)}</button>
+       </form>
+       <form
+            id=soft-sync
+            is=x-subscribe
+            data-event="hf:completed"
+            data-match='{"method":"post"}'
+            data-match-not='{"form":{"id":"soft-sync"}}'
+            data-debounce="6e5"
+            data-immediate="true"
+
+            method=post
+            action="/web/api/sync"
+            hidden>
        </form>
 
         ${isLoggedIn
@@ -91,11 +104,6 @@ const render = async (
         hf-target="#sync-count"></form>
 
     <div id=scripts>${(scripts ?? []).map(x => html`<script src="${x}"></script>`)}</div>
-    <script>
-        App = window.App ?? {};
-        ${when(updatedCount, _ => html`App.shouldWaitToSync = true`)}
-        ${when(+new Date() - (lastSynced || 0) > /* 2 hours */ 1e3*60*60*2, _ => html`App.shouldSync = true`)}
-    </script>
     <script src="/web/js/lib/htmf.min.js"></script>
     <script src="/web/js/x-toaster.js"></script>
     <script src="/web/js/x-subscribe.js"></script>

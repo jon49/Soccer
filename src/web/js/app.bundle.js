@@ -1,5 +1,4 @@
 import "./_htmf-spa.js"
-import "./_sync.js"
 
 const w = window,
     doc = document
