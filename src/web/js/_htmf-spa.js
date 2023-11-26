@@ -2,7 +2,7 @@ const w = window,
     doc = document
 
 let loadedScripts = new Set()
-doc.addEventListener("hf:script:loaded", async e => {
+doc.addEventListener("hf:script-loaded", async e => {
     let detail = e.detail
     if (!detail.script) return
     let script = w.app.scripts.get(detail.script)
