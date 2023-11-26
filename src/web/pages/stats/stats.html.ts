@@ -21,6 +21,12 @@ async function render(query: any) {
     <div style="margin-bottom: 1em;">
         <form
             id=stat-buttons
+
+            is=x-subscribe
+            data-event="hf:completed"
+            data-match='{"form": {"id": "stat-buttons"}}'
+            data-action="event.target.remove()"
+
             hf-target="#stat-tables"
             hf-swap="prepend"
             >
@@ -34,25 +40,7 @@ async function render(query: any) {
         </form>
     </div>
 
-    <div id=stat-tables></div>
-    <script id="stats-page">
-    (() => {
-        function removeButton(e) {
-            if (e.detail.form.id === "stat-buttons") {
-                e.detail.submitter.remove()
-            }
-        }
-        window.app.scripts.set("stats-page", {
-            load() {
-                document.addEventListener("hf:completed", removeButton)
-            },
-            unload() {
-                document.removeEventListener("hf:completed", removeButton)
-            }
-        })
-    })()
-    </script>
-    `
+    <div id=stat-tables></div>`
 }
 
 const getHandler: RouteGetHandler = {
