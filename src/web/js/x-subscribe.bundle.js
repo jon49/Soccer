@@ -72,7 +72,12 @@ class XSubscribe extends HTMLFormElement {
             if (compare(e, notMatch)) return
         }
 
-        this.requestSubmit()
+        if (this.dataset.action) {
+            let action = new Function("event", this.dataset.action)
+            action(e)
+        } else {
+            this.requestSubmit()
+        }
     }
 
     disconnectedCallback() {
