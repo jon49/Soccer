@@ -12,11 +12,11 @@ interface Nav {
 
 const render = async (
     { main,
-      head,
-      scripts,
-      nav,
-      title,
-      bodyAttr,
+        head,
+        scripts,
+        nav,
+        title,
+        bodyAttr,
     }: LayoutTemplateArguments) => {
     const [isLoggedIn, updated, { theme }] = await Promise.all([
         db.isLoggedIn(),
@@ -65,7 +65,7 @@ const render = async (
 
         ${isLoggedIn
             ? html`<a href="/login?logout">Logout</a>`
-        : html`<a href="/login">Login</a>`}
+            : html`<a href="/login">Login</a>`}
 
     </div>
     <header>
@@ -75,9 +75,9 @@ const render = async (
         <nav id=nav-main>
             <ul>
                 <li><a href="/web/teams">Teams</a></li>
-                ${ !nav || nav.length === 0
-                    ? null
-                : nav.map(x => html`<li><a href="$${x.url}">${x.name}</a></li>`) }
+                ${!nav || nav.length === 0
+            ? null
+            : nav.map(x => html`<li><a href="$${x.url}">${x.name}</a></li>`)}
             </ul>
         </nav>
     </header>
@@ -100,22 +100,21 @@ const render = async (
         is=x-subscribe
         data-event="hf:completed"
         data-match='{"method":"post"}'
-        hf-ignore-scroll
+        hf-scroll-ignore
         hf-target="#sync-count"></form>
 
-    <div id=scripts>${(scripts ?? []).map(x => html`<script src="${x}"></script>`)}</div>
-    <script src="/web/js/lib/htmf.min.js"></script>
+    <script src="/web/js/app.js"></script>
     <script src="/web/js/x-toaster.js"></script>
     <script src="/web/js/x-subscribe.js"></script>
-    <script src="/web/js/app.js"></script>
+    <div id=scripts>${(scripts ?? []).map(x => html`<script src="${x}"></script>`)}</div>
 </body>
 </html>`
 }
 
 export default
     async function layout(o: LayoutTemplateArguments) {
-        return render(o)
-    }
+    return render(o)
+}
 
 export type Layout = typeof layout
 

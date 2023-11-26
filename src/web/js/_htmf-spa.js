@@ -2,7 +2,7 @@ const w = window,
     doc = document
 
 let loadedScripts = new Set()
-doc.addEventListener("hf:script:load", async e => {
+doc.addEventListener("hf:script:loaded", async e => {
     let detail = e.detail
     if (!detail.script) return
     let script = w.app.scripts.get(detail.script)
@@ -13,7 +13,7 @@ doc.addEventListener("hf:script:load", async e => {
     }
 })
 
-doc.addEventListener("hf:beforeRequest", e => {
+doc.addEventListener("hf:request-before", e => {
     let detail = e.detail
     if (detail.method === "get" && detail.form.id === "href") {
         for (let script of loadedScripts) {
@@ -61,7 +61,7 @@ function handleHash() {
     let location = w.location.hash.slice(1)
     if (!location.startsWith("/web/")) return
     button.setAttribute("formaction", location)
-    button.click()
+    button.form.requestSubmit(button)
 }
 
 if (location.hash) {

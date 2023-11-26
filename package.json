@@ -13,6 +13,7 @@
   "dependencies": {
     "@cloudfour/elastic-textarea": "^1.0.7",
     "@ungap/custom-elements": "^1.3.0",
+    "html-form": "^0.7.1",
     "html-template-tag-stream": "^2.1.1",
     "idb-keyval": "^6.2.1",
     "promise-validation": "^4.0.1",

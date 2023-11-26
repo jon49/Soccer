@@ -99,7 +99,13 @@ function getGamePartialView(teamId: number, game: Game) {
 </label>
 <input form=${formId} class=inline id="home-${game.id}" type=checkbox name=home $${when(game.home, "checked")}>
 <label for="home-${game.id}">Home</label>
-<form id=${formId} class=hidden method=post action="/web/games?${teamQuery}&handler=edit" onchange="this.requestSubmit()" hf-target=main></form>
+<form
+    id=${formId}
+    class=hidden
+    method=post
+    action="/web/games?${teamQuery}&handler=edit"
+    onchange="this.requestSubmit()"
+    hf-target=main></form>
 `
 }
 

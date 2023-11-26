@@ -1,3 +1,4 @@
+import "html-form"
 import "./_htmf-spa.js"
 
 const w = window,
