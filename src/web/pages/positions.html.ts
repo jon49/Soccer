@@ -39,11 +39,11 @@ function render({ team, positions, grid }: PositionView) {
 ${when(!!grid.length, () => html`
 <h3>Positions</h3>
 <form
+    id=positions-form
     class=form
     method=post
-    action="/web/positions?teamId=${team.id}"
-    onchange="this.requestSubmit()"
-    hf-target="main">
+    action="/web/positions?teamId=${team.id}&handler=editPositions"
+    onchange="this.requestSubmit()">
     ${function* positionViews() {
         let count = 0
         for (let width of grid) {
@@ -58,8 +58,7 @@ ${when(!!grid.length, () => html`
         }
     }}
 </form>
-`)}
-    `
+`)}`
 }
 
 const positionValidator = {
@@ -83,13 +82,13 @@ const postHandlers : PostHandlers = {
         return render(await start(query))
     },
 
-    async post({ query, data }) {
+    async editPositions({ query, data }) {
         let { teamId } = await validateObject(query, queryTeamIdValidator)
         let { names } = await validateObject(data, positionValidator)
         let o = await positionGetAll(teamId)
         o.positions = names.map(x => x || "")
         await positionsSave(teamId, o)
-        return render(await start(query))
+        return { body: null, status: 204 }
     }
 }
 
