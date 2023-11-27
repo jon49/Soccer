@@ -13,7 +13,7 @@ export async function gamesPlayedView(o: StatsView) {
     ])
 
     return html`
-    <h2>Number of Games Played</h2>
+    <h3>Number of Games Played</h3>
     <table>
         <thead>
             <tr> <th>Player</th> <th>Games</th> </tr>

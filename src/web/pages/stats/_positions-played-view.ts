@@ -17,7 +17,7 @@ export async function timePlayedView(o: StatsView) {
     let positions = positionList.flat()
 
     return html`
-    <h2>Positions Played (Hours:Minutes:Seconds)</h2>
+    <h3>Positions Played (Hours:Minutes:Seconds)</h3>
     <table>
     <thead>
         <tr>

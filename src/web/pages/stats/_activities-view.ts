@@ -37,7 +37,7 @@ export async function playerStatsView(o: StatsView) {
     }
 
     return html`
-    <h2>Activities</h2>
+    <h3>Activities</h3>
     <table>
         <thead>
             <tr>
