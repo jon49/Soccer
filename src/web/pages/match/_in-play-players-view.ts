@@ -71,7 +71,7 @@ export default async function inPlayPlayersView(o: PlayerStateView) {
     let inPlay = await o.inPlayPlayers(),
         onDeck = await o.onDeckPlayers(),
         isGameInPlay = await o.isGameInPlay(),
-        { grid, positions } = await o.positions(),
+        { positions } = await o.positions(),
         onDeckPlayers = await o.onDeckPlayers(),
         inPlayPlayers = await o.inPlayPlayers(),
         queryTeamGame = o.queryTeamGame,
@@ -81,13 +81,9 @@ export default async function inPlayPlayersView(o: PlayerStateView) {
 ${when(!inPlay && !onDeck, () => html`<p>No players are in play.</p>`)}
 ${when(inPlayPlayers.length || onDeckPlayers.length, function* positionViews() {
     let count = 0
-    for (let width of grid) {
+    for (let xs of positions) {
         yield html`<div class="flex">`
-        let p = positions.slice(count, count + width)
-        if (p.length < width) {
-            p = p.concat(new Array(width - p.length).fill("None"))
-        }
-        yield p.map(() => {
+        yield xs.map(() => {
             let player = inPlayPlayers.find(x => count === x.status.position)
             let sub = onDeckPlayers.find(x => x.status.targetPosition === count)
             let view = html`

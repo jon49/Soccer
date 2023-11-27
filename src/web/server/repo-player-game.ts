@@ -1,4 +1,4 @@
-import { Activities, Activity, get, getMany, PlayerGame, Positions, set } from "./db.js"
+import { Activities, Activity, get, getMany, PlayerGame, Positions, PositionsV0, set } from "./db.js"
 import { teamGet } from "./repo-team.js"
 import { reject } from "./repo.js"
 import { equals, getNewId } from "./utils.js"
@@ -37,27 +37,42 @@ function getPositionsId(teamId: number) {
     return ["positions", teamId]
 }
 
-export async function positionGetAll(teamId: number) : Promise<Positions> {
-    let positions = await get<Positions>(getPositionsId(teamId))
+export async function positionGetAll(teamId: number) : Promise<PositionsV0> {
+    let positions = await get<Positions | PositionsV0>(getPositionsId(teamId))
     if (!positions) {
         positions = {
             _rev: 0,
+            _v: 0,
             positions: [],
             grid: [],
         }
     }
-    if (!positions.grid) {
-        positions.grid = []
-    }
-    if ("name" in positions.positions) {
-        // @ts-ignore
-        posistions.positions = positions.positions.map(x => x.name)
-    }
-    return positions
+    return upgradePositions(positions)
 }
 
-export async function positionsSave(teamId: number, positions: Positions) {
-    await areUnique(positions.positions.filter(x => x))
+function upgradePositions(positions: any) {
+    return [positionsToV0]
+    .reduce((x, f) => f(x), positions)
+}
+
+function positionsToV0(positionsOld: Positions | PositionsV0) : PositionsV0 {
+    if ("_v" in positionsOld) {
+        return positionsOld
+    }
+    let positions: string[][] = []
+    for (let grid of positionsOld.grid) {
+        positions.push(positionsOld.positions.splice(0, grid))
+    }
+    return {
+        _rev: positionsOld._rev,
+        _v: 0,
+        positions,
+        grid: positionsOld.grid,
+    }
+}
+
+export async function positionsSave(teamId: number, positions: PositionsV0) {
+    await areUnique(positions.positions.flat().filter(x => x))
     await set(getPositionsId(teamId), positions)
 }
 

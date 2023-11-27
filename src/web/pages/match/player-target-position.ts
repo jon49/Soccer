@@ -36,8 +36,8 @@ async function _targetPosition(
         positionGetAll(team.id)
     ])
 
-    await swapWhenInGame(player, players, positions, team, targetPosition, game)
-    await swapToOnDeck(player, players, positions, team, targetPosition, game)
+    await swapWhenInGame(player, players, positions.flat(), team, targetPosition, game)
+    await swapToOnDeck(player, players, positions.flat(), team, targetPosition, game)
 }
 
 async function swapToOnDeck(

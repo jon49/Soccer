@@ -16,7 +16,7 @@ export default async function render(query: any) {
     let { teamId, gameId, playerId } = await validateObject(query, querySwapValidator)
     let team = await teamGet(teamId)
     team.players = team.players.filter(x => x.active)
-    let [ players, { grid, positions } ] = await Promise.all([
+    let [ players, { positions } ] = await Promise.all([
         playerGameAllGet(teamId, gameId, team.players.map(x => x.id)),
         positionGetAll(teamId),
     ])
@@ -41,13 +41,9 @@ export default async function render(query: any) {
 
 ${function* positionViews() {
     let count = 0
-    for (let width of grid) {
+    for (let xs of positions) {
         yield html`<div class="row grid-center">`
-        let p = positions.slice(count, count + width)
-        if (p.length < width) {
-            p = p.concat(new Array(width - p.length))
-        }
-        yield p.map((_, i) => {
+        yield xs.map((_, i) => {
             let player = inPlayPlayers.find(x => count === x.status.position)
             let playerOnDeck = onDeckPlayers.find(x => count === x.status.targetPosition)
             let isCurrentPlayer = player?.playerId === playerId
@@ -86,7 +82,7 @@ ${function* positionViews() {
                             $${when(isPaused, `data-static`)}>
                             ></game-timer></button>`
                 }
-                return html`<button>${p[i]}</button>`
+                return html`<button>${xs[i]}</button>`
             }
                 }</form>`
             count++

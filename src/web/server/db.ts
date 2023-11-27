@@ -63,12 +63,21 @@ export interface Revision {
     _rev: number
 }
 
+export interface Version {
+    _v: number
+}
+
 export interface Stats extends Revision {
     stats: { id: number, name: string }[]
 }
 
 export interface Positions extends Revision {
     positions: string[]
+    grid: number[]
+}
+
+export interface PositionsV0 extends Revision, Version {
+    positions: string[][]
     grid: number[]
 }
 
@@ -147,7 +156,7 @@ export interface TeamPlayer {
     name: string
 }
 
-export interface Team extends Revision, Positions {
+export interface Team extends Revision, PositionsV0 {
     id: number
     name: string
     active: boolean

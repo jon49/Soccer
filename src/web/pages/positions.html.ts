@@ -9,7 +9,7 @@ import { positionGetAll, positionsSave } from "../server/repo-player-game.js"
 import { teamNav } from "./_shared-views.js"
 
 interface PositionView {
-    positions: string[]
+    positions: string[][]
     grid: number[]
     team: Team
 }
@@ -36,7 +36,7 @@ function render({ team, positions, grid }: PositionView) {
     <input id="grid-1" type=number name="grid[]" ${when(!grid.length, () => "autofocus")}>
 </form>
 
-${when(!!grid.length, () => html`
+${when(grid.length, () => html`
 <h3>Positions</h3>
 <form
     id=positions-form
@@ -46,13 +46,9 @@ ${when(!!grid.length, () => html`
     onchange="this.requestSubmit()">
     ${function* positionViews() {
         let count = 0
-        for (let width of grid) {
+        for (let xs of positions) {
             yield html`<div class=row>`
-            let p = positions.slice(count, count + width)
-            if (p.length < width) {
-                p = p.concat(new Array(width - p.length).fill(""))
-            }
-            yield p.map(x =>
+            yield xs.map(x =>
                 html`<input id="position${count++}" name="names[]" value="${x}">`)
             yield html`</div>`
         }
@@ -62,7 +58,7 @@ ${when(!!grid.length, () => html`
 }
 
 const positionValidator = {
-    names: createArrayOf(maybe(createString25("Position Name")))
+    names: createArrayOf(maybe(createString25("Position Name"))),
 }
 
 const gridValidator = {
@@ -73,12 +69,31 @@ const postHandlers : PostHandlers = {
     async addGrid({ query, data }) {
         let { teamId } = await validateObject(query, queryTeamIdValidator)
         let { grid } = await validateObject(data, gridValidator)
+
         grid = grid.filter(x => x)
+
         let o = await positionGetAll(teamId)
+
+        let positions = o.positions
+        positions.length = grid.length
+        for (let i = 0; i < grid.length; i++) {
+            let count = grid[i]
+            let xs = positions[i]
+            if (xs) {
+                xs.length = count
+                for (let j = 0; j < count; j++) {
+                    xs[j] = xs[j] ?? ""
+                }
+            } else {
+                positions[i] = new Array(count).fill("")
+            }
+        }
+
         await positionsSave(teamId, {
+            ...o,
             grid,
-            positions: o.positions,
-            _rev: o._rev })
+            positions,
+        })
         return render(await start(query))
     },
 
@@ -86,7 +101,11 @@ const postHandlers : PostHandlers = {
         let { teamId } = await validateObject(query, queryTeamIdValidator)
         let { names } = await validateObject(data, positionValidator)
         let o = await positionGetAll(teamId)
-        o.positions = names.map(x => x || "")
+        let positions: string[][] = []
+        for (let grid of o.grid) {
+            positions.push(names.splice(0, grid).map(x => x || ""))
+        }
+        o.positions = positions
         await positionsSave(teamId, o)
         return { body: null, status: 204 }
     }

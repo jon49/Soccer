@@ -18,7 +18,7 @@ export async function activityPlayerSelectorView(query: any) {
     let { teamId, gameId, activityId, action } = await validateObject(query, queryActivityValidator)
     let team = await teamGet(teamId)
     team.players = team.players.filter(x => x.active)
-    let [ players, { grid, positions } ] = await Promise.all([
+    let [ players, { positions } ] = await Promise.all([
         playerGameAllGet(teamId, gameId, team.players.map(x => x.id)),
         positionGetAll(teamId),
     ])
@@ -50,22 +50,15 @@ export async function activityPlayerSelectorView(query: any) {
 
 ${function* activityTargetView() {
     let count = 0
-    for (let width of grid) {
+    for (let xs of positions) {
         yield html`<div class="row grid-center">`
-        let p = positions.slice(count, count + width)
-        if (p.length < width) {
-            p = p.concat(new Array(width - p.length))
-        }
-
-        yield p.map(() => {
+        yield xs.map(() => {
             let player = inPlayPlayers.find(x => count === x.status.position)
             playerViewOptions.playerId = player?.playerId
-            let row
-            if (player) {
-                row = selectPlayerView(playerViewOptions)
-            } else {
-                row = html`<span></span>`
-            }
+            let row =
+                player
+                    ? selectPlayerView(playerViewOptions)
+                : html`<span></span>`
 
             count++
             return row

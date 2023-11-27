@@ -5,7 +5,7 @@ export async function timePlayedView(o: StatsView) {
 
     let [ positionPlayerStats,
           playerIdList,
-          positions,
+          positionList,
           playerMap,
     ] = await Promise.all([
         o.positionPlayerStats(),
@@ -13,6 +13,8 @@ export async function timePlayedView(o: StatsView) {
         o.positions(),
         o.playerMap(),
     ])
+
+    let positions = positionList.flat()
 
     return html`
     <h2>Positions Played (Hours:Minutes:Seconds)</h2>
