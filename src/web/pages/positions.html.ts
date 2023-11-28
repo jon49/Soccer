@@ -82,7 +82,7 @@ const postHandlers : PostHandlers = {
             if (xs) {
                 xs.length = count
                 for (let j = 0; j < count; j++) {
-                    xs[j] = xs[j] ?? ""
+                    xs[j] ??= ""
                 }
             } else {
                 positions[i] = new Array(count).fill("")
