@@ -260,11 +260,9 @@ const postHandlers : PostHandlers = {
         return {
             body: null,
             status: 204,
-            headers: {
-                "hf-events": {
-                    playerStatUpdated: {
-                        statId: activityId
-                    }
+            events: {
+                playerStatUpdated: {
+                    statId: activityId
                 }
             }
         }

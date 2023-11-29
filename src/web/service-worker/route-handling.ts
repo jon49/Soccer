@@ -1,16 +1,12 @@
 import { findRoute, handleGet, handlePost, PostHandlers, RouteGet, RouteGetHandler, RoutePost } from "../server/route.js"
 import { version } from "../server/settings.js"
-import { options } from "../server/route.js"
-import { redirect, reject, searchParams } from "../server/utils.js"
+import { redirect, searchParams } from "../server/utils.js"
 import links from "../entry-points.js"
-import { isHtml } from "html-template-tag-stream"
 
-options.searchParams = searchParams
-options.reject = reject
-options.redirect = (req: Request) => Response.redirect(req.referrer, 303)
-
-export let errors : string[] = []
-export let messages : string[] = []
+// Test if value is Async Generator
+let isHtml = (value: any) =>
+    value?.next instanceof Function
+    && value.throw instanceof Function
 
 export async function getResponse(event: FetchEvent): Promise<Response>  {
     try {
@@ -56,28 +52,30 @@ function isHtmf(req: Request) {
     return req.headers.has("HF-Request")
 }
 
-function htmfHeader(req: Request, headers : any = {}) {
-    if (!isHtmf(req)) return headers
-    headers["hf-events"] = JSON.stringify({
-        "user-messages": messages,
-        ...(headers["hf-events"] || {})
-    })
-    messages = []
-    return headers
+function htmfHeader(req: Request, events: any = {}, messages: string[] = [])
+    : Record<string, string> {
+    if (!isHtmf(req)) return {}
+    return {
+        "hf-events": JSON.stringify({
+        "user-messages": messages ?? [],
+        ...(events || {})
+    }) ?? "{}" }
 }
 
 async function post(url: URL, req: Request) : Promise<Response> {
     let handler =
-        <RoutePost | PostHandlers |null>
+        <RoutePost | PostHandlers | null>
         findRoute(url, req.method.toLowerCase())
     // @ts-ignore
     if (handler) {
         try {
+            let messages: string[] = []
             const data = await getData(req)
-            let result = await
-                (handler instanceof Function
-                    ? handler
-                : handlePost(handler))({ req, data, query: searchParams(req) })
+            let args = { req, data, query: searchParams(req) }
+            let result = await (
+                handler instanceof Function
+                    ? handler(args)
+                : handlePost(handler, args))
 
             if (result instanceof Response) {
                 return result
@@ -90,9 +88,9 @@ async function post(url: URL, req: Request) : Promise<Response> {
             } else {
                 messages.push("Saved!")
             }
+
             if (result?.status) {
-                let headers = result.headers || {}
-                result.headers = htmfHeader(req, headers)
+                result.headers = htmfHeader(req, result.events ?? {}, messages ?? [])
                 if (isHtml(result.body)) {
                     result = streamResponse(result)
                 } else {
@@ -102,27 +100,31 @@ async function post(url: URL, req: Request) : Promise<Response> {
                     })
                 }
             }
+
             if (result?.response) {
                 result = result.response
             }
+
             if (isHtml(result)) {
                 result = {
                     body: result,
-                    headers: htmfHeader(req)
+                    headers: htmfHeader(req, {}, messages)
                 }
                 result = streamResponse(result)
             }
+
             if (result instanceof Response) {
                 return result
             }
+
             return redirect(req)
+
         } catch (error) {
             console.error("Post error:", error, "\nURL:", url);
-            messages.push(error?.toString() ?? "Unknown error!")
             if (!isHtmf(req)) {
                 return redirect(req)
             } else {
-                let headers = htmfHeader(req)
+                let headers = htmfHeader(req, {}, [ "Unknown error!" ])
                 return new Response(null, {
                     status: 400,
                     headers
@@ -130,7 +132,7 @@ async function post(url: URL, req: Request) : Promise<Response> {
             }
         }
     }
-    errors.push(`Unknown POST request "${url.pathname}"!`)
+
     return redirect(req)
 }
 

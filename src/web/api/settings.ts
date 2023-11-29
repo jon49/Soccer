@@ -32,7 +32,7 @@ const postHandlers : PostHandlers = {
             return {
                 status: 200,
                 body: themeView(theme),
-                headers: { "hf-events": { "app-theme": { theme } } }
+                events: { "app-theme": { theme } }
             }
         }
 
