@@ -51,13 +51,13 @@ const render = async (
        </form>
        <form
             id=soft-sync
-            is=x-subscribe
+            is=form-subscribe
             data-event="hf:completed"
-            data-match='{"method":"post"}'
-            data-match-not='{"form":{"id":"soft-sync"}}'
+            data-match="detail:{method:'post'}"
+            data-match-not="detail:{form:{id:'soft-sync'}}"
             data-debounce="6e5"
-            data-immediate="true"
 
+            onload="this.requestSubmit()"
             method=post
             action="/web/api/sync"
             hidden>
@@ -97,15 +97,16 @@ const render = async (
     <form
         id=get-sync-count-form
         action="/web/api/sync?handler=count"
-        is=x-subscribe
+
+        is=form-subscribe
         data-event="hf:completed"
-        data-match='{"method":"post"}'
+        data-match="detail: {method:'post'}"
+
         hf-scroll-ignore
         hf-target="#sync-count"></form>
 
     <script src="/web/js/app.js"></script>
     <script src="/web/js/x-toaster.js"></script>
-    <script src="/web/js/x-subscribe.js"></script>
     <div id=scripts>${(scripts ?? []).map(x => html`<script src="${x}"></script>`)}</div>
 </body>
 </html>`

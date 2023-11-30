@@ -1,4 +1,5 @@
 import "html-form"
+import "form-subscribe"
 import "./_htmf-spa.js"
 
 const w = window,

@@ -53,9 +53,10 @@ ${when(!isGameEnded, () => html`
 
         <form id=team-points hf-target="#dialogs" hidden></form>
         <form
-            is=x-subscribe
+            is=form-subscribe
             data-event="playerStatUpdated"
-            data-match='{"statId":1}'
+            data-match="detail:{statId:1}"
+
             action="/web/match?$${queryTeamGame}&handler=points"
             hf-target="#points"
             hidden></form>

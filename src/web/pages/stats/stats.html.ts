@@ -22,9 +22,9 @@ async function render(query: any) {
         <form
             id=stat-buttons
 
-            is=x-subscribe
+            is=form-subscribe
             data-event="hf:completed"
-            data-match='{"form": {"id": "stat-buttons"}}'
+            data-match="detail: {form:{id:'stat-buttons'}}"
             data-action="event.target.remove()"
 
             hf-target="#stat-tables"
