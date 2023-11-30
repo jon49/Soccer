@@ -12,24 +12,8 @@ const postHandlers : PostHandlers = {
                 return {
                     status: 302
                 }
-            case 204:
-                return {
-                    message: "Synced!",
-                    response: null
-                }
-            case 401:
-                return {
-                    status: 401,
-                    message: "You are not logged in!" }
-            case 403:
-                return {
-                    status: 403,
-                    message: "" }
             default:
-                return {
-                    status: 500,
-                    message: "Unknown error!"
-            }
+                return { status: 204, message: "" }
         }
     },
     async force() {

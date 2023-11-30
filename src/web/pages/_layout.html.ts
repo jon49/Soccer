@@ -56,12 +56,13 @@ const render = async (
             data-match="detail:{method:'post'}"
             data-match-not="detail:{form:{id:'soft-sync'}}"
             data-debounce="6e5"
+            data-onload
 
-            onload="this.requestSubmit()"
             method=post
             action="/web/api/sync"
             hidden>
-       </form>
+            <span></span>
+        </form>
 
         ${isLoggedIn
             ? html`<a href="/login?logout">Logout</a>`

@@ -154,7 +154,10 @@ function getPositionTemplates(teamId: number) {
     <form
         action="/web/positions?handler=getTemplates&teamId=${teamId}"
         onchange="this.requestSubmit()"
-        onload="this.requestSubmit()"
+
+        is=form-subscribe
+        data-onload
+
         hf-target="#templates"
         >
         <select name=numberOfPlayers>
