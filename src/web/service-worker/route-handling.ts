@@ -124,7 +124,11 @@ async function post(url: URL, req: Request) : Promise<Response> {
             if (!isHtmf(req)) {
                 return redirect(req)
             } else {
-                let headers = htmfHeader(req, {}, [ "Unknown error!" ])
+                let errors : string[] = []
+                if (typeof error === "string") {
+                    errors.push(error)
+                }
+                let headers = htmfHeader(req, {}, errors)
                 return new Response(null, {
                     status: 400,
                     headers
