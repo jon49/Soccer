@@ -24,6 +24,8 @@ function render({ team, positions, grid }: PositionView) {
     return html`
 <h2>${team.name} - Formation</h2>
 
+<p>Use a <button form=show-templates-form>template</button>.</p>
+
 <form
     id=show-templates-form
     action="/web/positions?handler=showTemplates&teamId=${team.id}"
@@ -31,7 +33,6 @@ function render({ team, positions, grid }: PositionView) {
     hidden>
 </form>
 <h3>Grid</h3>
-<p>Use a <button form=show-templates-form>template</button>.</p>
 <form
     id=add-grid
     class=row
@@ -44,7 +45,7 @@ function render({ team, positions, grid }: PositionView) {
 </form>
 
 ${when(grid.length, () => html`
-<h3>Positions</h3>
+<h3>Position Names</h3>
 <form
     id=positions-form
     class=form
@@ -110,8 +111,13 @@ function getCircles({ count, y, total }: { count: number, y: number, total: numb
 }
 
 function getTemplate(positions: number[]) {
+    let formationName =
+        positions.length === 3
+            ? [...positions].reverse().join("-")
+        : [...positions].reverse().slice(1).join(" - ")
     return html`
 <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
+    <text x="1%" y="10%" fill="#fd6b00" font-weight="bold" font-size="20">$${formationName}</text>
     $${
     function* rows() {
         let total = positions.length
