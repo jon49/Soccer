@@ -22,7 +22,7 @@ async function start(query: any) : Promise<PositionView> {
 
 function render({ team, positions, grid }: PositionView) {
     return html`
-<h2>${team.name} - Positions</h2>
+<h2>${team.name} - Formation</h2>
 
 <form
     id=show-templates-form
@@ -143,10 +143,13 @@ function getTemplates(teamId: number, numberOfPlayers: number) {
     )
 }
 
-function getPositionTemplates(teamId: number) {
+async function getPositionTemplates(teamId: number) {
+    let { grid } = await positionGetAll(teamId)
+    let positionCount = grid.reduce((a, b) => a + b, 0)
+
     return html`
     <dialog class=modal is=x-dialog show-modal close-event="user-messages">
-    <h2 class=inline>Position Templates</h2> 
+    <h2 class=inline>Formation Templates</h2> 
     <form class=inline method=dialog>
         <button value=cancel>Cancel</button>
     </form>
@@ -160,11 +163,11 @@ function getPositionTemplates(teamId: number) {
 
         hf-target="#templates"
         >
-        <select name=numberOfPlayers>
-            <option value=4>4</option>
-            <option value=7>7</option>
-            <option value=9>9</option>
-            <option value=11>11</option>
+        Number of players: <select class=inline name=numberOfPlayers>
+            <option value=4 ${when(positionCount === 4, "selected")}>4</option>
+            <option value=7 ${when(positionCount === 7, "selected")}>7</option>
+            <option value=9 ${when(positionCount === 9, "selected")}>9</option>
+            <option value=11 ${when(positionCount === 11, "selected")}>11</option>
         </select>
     </form>
     <div id=templates class=rows></div>
@@ -290,7 +293,7 @@ const getHandlers : RouteGetHandler = {
         return layout({
             main: render(result),
             nav: teamNav(result.team.id),
-            title: `Positions - ${result.team.name} (${result.team.year})`,
+            title: `Formation - ${result.team.name} (${result.team.year})`,
             scripts: [ "/web/js/x-dialog.js" ],
         })
     },

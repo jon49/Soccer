@@ -300,6 +300,7 @@ nav li {
 
 dialog.modal {
     background-color: var(--c2);
+    color: var(--c4);
     border-radius: 0.5em;
     padding: 1em;
     width: 100%;
