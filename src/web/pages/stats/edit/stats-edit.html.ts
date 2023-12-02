@@ -1,12 +1,12 @@
-import html from "../server/html.js"
-import layout from "./_layout.html.js"
-import { PostHandlers, Route } from "../server/route.js"
-import { teamGet } from "../server/repo-team.js"
-import { createCheckbox, createIdNumber, createString25, required, validateObject } from "../server/validation.js"
-import { queryTeamIdValidator } from "../server/validators.js"
-import { statsGetAll, statSave, getStatDescription } from "../server/repo-player-game.js"
-import { DbCache, when } from "../server/shared.js"
-import { teamNav } from "./_shared-views.js"
+import html from "../../../server/html.js"
+import layout from "../../_layout.html.js"
+import { PostHandlers, Route } from "../../../server/route.js"
+import { teamGet } from "../../../server/repo-team.js"
+import { createCheckbox, createIdNumber, createString25, required, validateObject } from "../../../server/validation.js"
+import { queryTeamIdValidator } from "../../../server/validators.js"
+import { statsGetAll, statSave, getStatDescription } from "../../../server/repo-player-game.js"
+import { DbCache, when } from "../../../server/shared.js"
+import { teamNav } from "../../_shared-views.js"
 
 async function render(o: StatsView) {
     let [{ stats }, team] = await Promise.all([o.stats(), o.team()])
