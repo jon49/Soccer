@@ -2,134 +2,76 @@ import html from "../server/html.js"
 import layout from "./_layout.html.js"
 import { PostHandlers, Route } from "../server/route.js"
 import { teamGet } from "../server/repo-team.js"
-import { createCheckbox, createIdNumber, createString25, maybe, required, validate, validateObject } from "../server/validation.js"
+import { createCheckbox, createIdNumber, createString25, required, validateObject } from "../server/validation.js"
 import { queryTeamIdValidator } from "../server/validators.js"
-import { activitiesSave, activityGetAll, activitySaveNew } from "../server/repo-player-game.js"
+import { statsGetAll, statSave, getStatDescription } from "../server/repo-player-game.js"
 import { DbCache, when } from "../server/shared.js"
 import { teamNav } from "./_shared-views.js"
-import { Activity } from "../server/db.js"
 
-function nameInputView(o: Activity) {
-    return html`<input id="name-${o.id}" name="name" value="${o.name}">`
-}
-
-async function render(o: ActivityView) {
-    let [{ activities }, team] = await Promise.all([o.activities(), o.team()])
+async function render(o: StatsView) {
+    let [{ stats }, team] = await Promise.all([o.stats(), o.team()])
     let teamId = o.teamId
-    let hasHiddenActivities = activities.some(x => !x.active)
-    let showAllActivities = o.query.all === ""
 
     return html`
 <h2>${team.name} - Stats</h2>
 
-<div class=row onchange="this.target.form.requestSubmit()">
-    ${activities.filter(x => showAllActivities || x.active).map((x, i) => {
+<div class=row>
+    ${stats.map(x => {
+        let description = getStatDescription(x.id)
         return html`
         <form
             onchange="this.requestSubmit()"
             class=form
             method=post
-            action="/web/activities?teamId=${teamId}"
-            hf-target=main>
+            action="/web/stats/edit?teamId=${teamId}&handler=updateStat">
             <input type=hidden name=id value="${x.id}">
-            ${() =>
-                i === 0
-                    ? html`<format-input data-format="app.noteFormatter">${nameInputView(x)}</format-input>`
-                : nameInputView(x)
-            }
-            ${when(showAllActivities, () => html`
-                <div id="active-${x.id}">
-                    <label class=toggle>
-                        <input name=active type=checkbox $${when(x.active, "checked")}>
-                        <span class="off button">Inactive</span>
-                        <span class="on button">Active</span>
-                    </label>
-                </div>`)}
+            <input type=text maxlength=25 name=name value="${x.name}">
+            <br>
+            <label class=toggle>
+                <input type=checkbox name=active $${when(x.active, "checked")}>
+                <span class="off button">Inactive</span>
+                <span class="on button">Active</span>
+            </label>
+            <br>
+            <br>
+            $${when(description, () => html`
+                <details>
+                    <summary>Description</summary>
+                    <p>${description}</p>
+                </details>`
+            )}
         </form>`
     })}
-    <form
-        onchange="this.requestSubmit()"
-        class=form
-        method=post
-        action="/web/activities?teamId=${teamId}&handler=addActivity"
-        hf-target=main>
-        <input id="_activity-new" name=name>
-    </form>
-</div>
-
-${when(hasHiddenActivities && !showAllActivities, () => html`<a href="/web/activities?teamId=${teamId}&all">Show all activities.</a>`)}
-${when(hasHiddenActivities && showAllActivities, () => html`<a href="/web/activities?teamId=${teamId}">Hide inactive activities.</a>`)}
-<p>* Always associated with making a goal.</p>
-
-<script id="activities-script">
-window.app.scripts.set("activities-script", {
-    load() {
-        window.app.noteFormatter = {
-            format(value) {
-                return value + " *"
-            },
-            isValid(value) {
-                return value?.trim().length > 0
-                    ? ""
-                : "Goal activity is required."
-            }
-        }
-    },
-    unload() {
-        delete window.app.noteFormatter
-    }
-})
-</script>`
+</div>`
 }
 
-const dataActivityValidator = {
-    name: createString25("Activity Name")
+const dataStatIdValidator = {
+    id: createIdNumber("Stat ID")
 }
 
-const dataActivityIdValidator = {
-    id: createIdNumber("Activity ID")
-}
-
-const activityValidator = {
-    ...dataActivityIdValidator,
-    name: maybe(createString25("Activity Name")),
-    active: maybe(createCheckbox),
-}
-
-function renderMain(data: ActivityView) {
-    return render(data)
+const statValidator = {
+    ...dataStatIdValidator,
+    name: createString25("Stat Name"),
+    active: createCheckbox,
 }
 
 const postHandlers : PostHandlers = {
-    async addActivity ({ data, query }) {
-        let [{ teamId }, { name }] =
-            await validate([
-                validateObject(query, queryTeamIdValidator),
-                validateObject(data, dataActivityValidator)])
-        await activitySaveNew(teamId, name)
-
-        return renderMain(new ActivityView(teamId, query))
-    },
-
-    async post({ query, data }) {
+    async updateStat({ query, data }) {
         let { teamId } = await validateObject(query, queryTeamIdValidator)
-        let editedActivity = await validateObject(data, activityValidator)
-        let activityData = await activityGetAll(teamId)
-        let { activities } = activityData
-        let o = await required(activities.find(x => x.id === editedActivity.id), "Could not find activity.")
-        if (!editedActivity.name) {
-            o.active = false
-        } else {
-            o.active = editedActivity.active != null ? editedActivity.active : true
-            o.name = editedActivity.name
-        }
-        await activitiesSave(teamId, activityData)
+        let { name, active, id } = await validateObject(data, statValidator)
+        let { stats } = await statsGetAll(teamId)
+        let o = await required(stats.find(x => x.id === id), "Could not find activity.")
 
-        return renderMain(new ActivityView(teamId, query))
+        o.name = name
+        o.active = active
+
+        await statSave(teamId, o)
+
+        return { status: 204 }
     }
 }
 
-class ActivityView {
+class StatsView {
     cache: DbCache
     teamId: number
     query: any
@@ -143,22 +85,21 @@ class ActivityView {
         return this.cache.get("team", () => teamGet(this.teamId))
     }
 
-    async activities() {
-        return this.cache.get("activities", () => activityGetAll(this.teamId))
+    async stats() {
+        return this.cache.get("stats", () => statsGetAll(this.teamId))
     }
 }
 
 const route : Route = {
-    route: /\/activities\/$/,
+    route: /\/stats\/edit\/$/,
     async get({ query }) {
         let { teamId } = await validateObject(query, queryTeamIdValidator)
-        let data = new ActivityView(teamId, query)
+        let data = new StatsView(teamId, query)
         let team = await data.team()
         return layout({
             main: await render(data),
             nav: teamNav(teamId),
             title: `Stats — ${team.name}`,
-            scripts: ["/web/js/input-formatter.js"],
         })
     },
     post: postHandlers,

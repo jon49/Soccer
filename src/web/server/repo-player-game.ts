@@ -1,8 +1,6 @@
-import { Activities, Activity, get, getMany, PlayerGame, Positions, PositionsV0, set } from "./db.js"
+import { Stats, Stat, get, getMany, PlayerGame, Positions, PositionsV0, set } from "./db.js"
 import { teamGet } from "./repo-team.js"
 import { reject } from "./repo.js"
-import { equals, getNewId } from "./utils.js"
-import { assert, required } from "./validation.js"
 
 function getPlayerGameKey(teamId: number, gameId: number, playerId: number) {
     return ['player-game', teamId, playerId, gameId]
@@ -76,69 +74,85 @@ export async function positionsSave(teamId: number, positions: PositionsV0) {
     await set(getPositionsId(teamId), positions)
 }
 
-/*** id/name ***/
+/*** Stats ***/
 
-interface IdName {
-    name: string
-    id: number
+export const statDescriptions = {
+    Goal: "The number of times a player scores.",
+    // Assist: "The number of passes or plays that directly lead to a goal.",
+    // SOG: "Shots Off Target: The number of shots that miss the goal frame.",
+    // SOT: "Shots on Target: The number of shots that hit the goal frame.",
+    // Shooting: "Shooting Accuracy: The percentage of shots on target out of total shots attempted.",
+    // Possession: "The percentage of time a team spends in control of the ball during a match.",
+    // Passing: "Passing Accuracy: The percentage of successful passes out of total attempted passes.",
+    // Tackle: "The number of defensive challenges made by players to win back possession.",
+    // "Foul Committed": "The number of fouls a team or player commits.",
+    // "Foul Received": "Fouls Received: The number of fouls a team or player commits or suffers.",
+    // "Yellow Card": "The number of disciplinary actions a team or player receives during a match.",
+    // "Red Card": "The number of disciplinary actions a team or player receives during a match.",
+    // Corner: "The number of corner kicks awarded to a team.",
+    // Offside: "The number of times a player is caught in an offside position.",
+    // Interception: "The number of times a player interrupts an opponent's pass or play.",
+    // "Clean Sheets": "The number of matches or periods in which a team does not concede any goals.",
+    // Saves: "The number of shots on target that a goalkeeper stops.",
+    // "Dribbles Completed": "The number of successful attempts to move past an opponent with the ball."
 }
 
-async function saveNew(xs: IdName[], name: string) : Promise<[IdName, IdName[]]> {
-    await checkDuplicates(xs, name)
-    let id = getNewId(xs.map(x => x.id))
-    let newValue = { id, name, active: true }
-    xs.push(newValue)
-    return [newValue, xs]
+export const statIds = Object.keys(statDescriptions).map((x, i) => ({
+    [x]: i + 1,
+}))
+
+export function getStatDescription(id: number) {
+    let statName = Object.keys(statDescriptions)[id - 1]
+    // @ts-ignore
+    return statDescriptions[statName]
 }
 
-async function save(xs: IdName[], x: IdName) {
-    await checkDuplicates(xs, x.name)
-    let oldValue = await required(xs.find(x => x.id === x.id), "Could not find old value!")
-    oldValue.name = x.name
-}
+export type StatName = keyof typeof statDescriptions
 
-/*** Activities ***/
-
-export async function activityGetAll(teamId: number) : Promise<Activities> {
-    return (await get<Activities>(getActivitiesId(teamId)))
-        ?? {
-            activities: [
-                { id: 1, name: "Goal", active: true },
-            ],
+export async function statsGetAll(teamId: number) : Promise<Stats> {
+    return (await get<Stats>(getStatsId(teamId)))
+        ?? { stats: Object.keys(statDescriptions)
+                .map((x, i) => ({
+                    id: i + 1,
+                    name: x,
+                    active: false,
+                })),
             _rev: 0 }
 }
 
-export async function activitySaveNew(teamId: number, name: string) {
-    let { activities, _rev } = await activityGetAll(teamId)
-    let [_, updatedActivities] = await saveNew(activities, name)
-    await set(getActivitiesId(teamId), { activities: updatedActivities, _rev } as Activities)
+export async function statSave(teamId: number, stat: Stat) {
+    let { stats, _rev } = await statsGetAll(teamId)
+
+    let index = stats.findIndex(x => x.id === stat.id)
+    if (index > -1) {
+        stats[index] = stat
+    } else {
+        return reject("Stat not found.")
+    }
+
+    await statsSave(teamId, { stats, _rev })
 }
 
-export async function activitySave(teamId: number, activity: Activity) {
-    let { activities, _rev } = await activityGetAll(teamId)
-    await save(activities, activity)
-    await set(getActivitiesId(teamId), { activities, _rev } as Activities)
+export async function statsSave(teamId: number, {stats, _rev}: Stats) {
+    await areUnique(stats.map(x => x.name))
+    await set(getStatsId(teamId), { stats, _rev } as Stats)
 }
 
-export async function activitiesSave(teamId: number, {activities, _rev}: Activities) {
-    await areUnique(activities.map(x => x.name))
-    await set(getActivitiesId(teamId), { activities, _rev } as Activities)
-}
-
-function getActivitiesId(teamId: number) {
-    return ["activities", teamId]
+function getStatsId(teamId: number) {
+    return ["stats", teamId]
 }
 
 /*** Utilities ***/
 
 function areUnique(xs: string[]) {
-    return assert.isTrue(xs.length === new Set(xs.map(x => x.toLowerCase())).size, "Must have unique values!")
+    let values = new Set(xs.map(x => x.toLowerCase()))
+    let result = xs.length === values.size
+    if (result) return
+    for (let x of xs) {
+        if (!values.has(x.toLowerCase())) {
+            return reject(`'${x}' already exists.`)
+        }
+    }
+    return reject("Unknown error.")
 }
 
-async function checkDuplicates(xs: {name: string}[], name: string) {
-    let o = xs.find(x => equals(x.name, name))
-    if (o) {
-        return reject(`'${o.name}' already exists.`)
-    }
-    return
-}

@@ -67,10 +67,6 @@ export interface Version {
     _v: number
 }
 
-export interface Stats extends Revision {
-    stats: { id: number, name: string }[]
-}
-
 export interface Positions extends Revision {
     positions: string[]
     grid: number[]
@@ -81,14 +77,14 @@ export interface PositionsV0 extends Revision, Version {
     grid: number[]
 }
 
-export interface Activity {
+export interface Stat {
     id: number
     name: string
     active: boolean
 }
 
-export interface Activities extends Revision {
-    activities: Activity[]
+export interface Stats extends Revision {
+    stats: Stat[]
 }
 
 export interface GameTime {
@@ -137,7 +133,7 @@ export type PlayerStatus = OnDeckPlayer | InPlayPlayer | OutPlayer | NotPlayingP
 export interface PlayerGame extends Revision {
     playerId: number
     gameId: number
-    stats: { statId: number, count: number }[]
+    stats: { id: number, count: number }[]
     gameTime: PlayerGameTime[]
     status?: PlayerStatus
 }

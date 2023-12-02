@@ -1,17 +1,17 @@
 import html from "../../server/html.js"
-import { activityGetAll } from "../../server/repo-player-game.js"
+import { statsGetAll } from "../../server/repo-player-game.js"
 import { StatsView } from "./shared.js"
 
 export async function playerStatsView(o: StatsView) {
     let [playerIdList,
         playerMap,
         playersGames,
-        { activities }
+        { stats: activities }
     ] = await Promise.all([
         o.playerIdList(),
         o.playerMap(),
         o.playerGames(),
-        activityGetAll(o.teamId),
+        statsGetAll(o.teamId),
     ])
 
     activities.sort((a, b) => a.name.localeCompare(b.name))
@@ -26,11 +26,11 @@ export async function playerStatsView(o: StatsView) {
                 activityMap.set(playerGame.playerId, activity)
             }
             for (let stat of playerGame.stats) {
-                let count = activity.get(stat.statId)
+                let count = activity.get(stat.id)
                 if (!count) {
-                    activity.set(stat.statId, stat.count)
+                    activity.set(stat.id, stat.count)
                 } else {
-                    activity.set(stat.statId, count + stat.count)
+                    activity.set(stat.id, count + stat.count)
                 }
             }
         }
