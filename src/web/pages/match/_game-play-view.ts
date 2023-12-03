@@ -128,7 +128,7 @@ function goalTrackingDisabledView(
 
 ) {
     return html`
-        <form id=team-points class=inline method=post hf-target="#points" hidden></form>
+        <form id=team-points method=post hf-target="#points" hidden></form>
         ${() => {
         let action = `/web/match?${queryTeamGame}`
         return html`
