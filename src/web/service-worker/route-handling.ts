@@ -25,6 +25,16 @@ export async function getResponse(event: FetchEvent): Promise<Response>  {
     }
 }
 
+function getErrors(errors: any): string[] {
+    if (typeof errors === "string") {
+        return [errors]
+    }
+    if (errors instanceof ValidationResult) {
+        return errors.reasons.map(x => x.reason)
+    }
+    return []
+}
+
 async function get(url: URL, req: Request, event: FetchEvent) : Promise<Response> {
     if (!url.pathname.endsWith("/")) return cacheResponse(url.pathname, event)
     let handler =
@@ -36,15 +46,27 @@ async function get(url: URL, req: Request, event: FetchEvent) : Promise<Response
             result = await result
             .catch(async (error: any) => {
                 console.error("GET page error:", error, "\nURL:", url.toString())
+                if (isHtmf(req)) {
+                    return new Response(null, {
+                        status: 500,
+                        headers: htmfHeader(req, null, getErrors(error))
+                    })
+                }
                 return new Response("Oops! Something happened which shouldn't have!")
             })
         }
 
-        if (result instanceof Response) {
+        if (isHtml(result)) {
+            return streamResponse({ body: result })
+        } else if (result instanceof Response) {
             return result
-        } else {
-            return streamResponse({ body: result, headers: {}})
         }
+    }
+    if (isHtmf(req)) {
+        return new Response(null, {
+            status: 404,
+            headers: htmfHeader(req, null, ["Not Found"])
+        })
     }
     return new Response("Not Found!")
 }
