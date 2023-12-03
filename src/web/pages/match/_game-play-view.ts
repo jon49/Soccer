@@ -74,7 +74,7 @@ ${when(!isGameEnded, () => html`
     <li>
         <span>Opponent</span>
 
-        <form id=opponent-points class=inline method=post hf-target="#o-points" hidden></form>
+        <form id=opponent-points method=post hf-target="#o-points" hidden></form>
 
         ${when(!isGameEnded, () => html`<button formaction="/web/match?$${queryTeamGame}&handler=oPointsDec" form=opponent-points>-</button>`)}
         <span id=o-points>${getPointsView(game.opponentPoints)}</span>
