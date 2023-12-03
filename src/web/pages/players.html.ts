@@ -1,4 +1,4 @@
-import { Team } from "../server/db.js"
+import { Team, TeamPlayer } from "../server/db.js"
 import html from "../server/html.js"
 import { PostHandlers, Route } from "../server/route.js"
 import { equals } from "../server/utils.js"
@@ -57,10 +57,10 @@ function render(o: PlayersEditView) {
 </form>
 
 <h3 id=players>Players Settings</h3>
-${team.players.length === 0 ? html`<p>No players have been added.</p>` : null}
+${when(!team.players.length, () => html`<p>No players have been added.</p>`)}
 
-<div id=player-cards  class=cards>
-    ${team.players.map(x => playerView(team, x.id))}
+<div id=player-cards  class=row>
+    ${team.players.map(x => playerView(x, team.id))}
 </div>
 
 <form
@@ -68,7 +68,9 @@ ${team.players.length === 0 ? html`<p>No players have been added.</p>` : null}
     class=form
     method=post
     action="/web/players?handler=addPlayer&teamId=${team.id}"
-    hf-target=main>
+    hf-target="#player-cards"
+    hf-swap=append
+    >
     <div>
         <label for=new-player>Player Name</label>
         <input id=new-player name=name type=text required ${when(!team.players.length, "autofocus")}>
@@ -78,22 +80,20 @@ ${team.players.length === 0 ? html`<p>No players have been added.</p>` : null}
 `
 }
 
-function playerView(team: Team, playerId: number) {
-    let player = team.players.find(x => x.id === playerId)
-    if (!player) return html`<p>Could not find player "${playerId}"</p>`
-    let teamPlayerQuery = `teamId=${team.id}&playerId=${playerId}`
-    let playerId_: string = `edit-player${playerId}`
+function playerView(player: TeamPlayer, teamId: number) {
+    let teamPlayerQuery = `teamId=${teamId}&playerId=${player.id}`
+    let playerId_: string = `edit-player${player.id}`
 
     return html`
 <div id="active-${playerId_}">
     <form
         onchange="this.requestSubmit()"
+        class=form
         method=post
         action="/web/players?handler=editPlayer&$${teamPlayerQuery}"
-        hf-target=main>
+        >
         <div>
-            <input id=${playerId_} class=editable name=name type=text value="${player.name}">
-            <label for=${playerId_}><a href="/web/players?$${teamPlayerQuery}">${player.name}</a> <span class="editable-pencil float-right">&#9998;</span></label>
+            <input id=${playerId_} name=name type=text value="${player.name}">
         </div>
         <div>
             <label class=toggle>
@@ -107,10 +107,6 @@ function playerView(team: Team, playerId: number) {
         </div>
     </form>
 </div>`
-}
-
-async function renderMain(query: any) {
-    return render(await start(query))
 }
 
 const postHandlers: PostHandlers = {
@@ -136,7 +132,7 @@ const postHandlers: PostHandlers = {
         // Player name will also need to be updated for the individual player when implemented!
         await teamSave(team)
 
-        return renderMain(q)
+        return { status: 204 }
     },
 
     async addPlayer({ data, query }) {
@@ -150,8 +146,15 @@ const postHandlers: PostHandlers = {
         let existingPlayer = team.players.find(x => equals(x.name, name))
         await assert.isFalse(!!existingPlayer, `The player name "${existingPlayer?.name}" has already been chosen.`)
 
-        await playerCreate(teamId, name)
-        return renderMain(query)
+        let player = await playerCreate(teamId, name)
+
+        return {
+            status: 200,
+            body: playerView(player, teamId),
+            headers: {
+                "hf-reset": ""
+            }
+        }
     },
 
     async editTeam({ data, query }) {
@@ -165,7 +168,7 @@ const postHandlers: PostHandlers = {
         team.year = year
         team.name = newTeamName
         await teamSave(team)
-        return renderMain(query)
+        return { status: 204 }
     }
 }
 

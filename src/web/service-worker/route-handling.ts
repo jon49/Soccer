@@ -90,7 +90,10 @@ async function post(url: URL, req: Request) : Promise<Response> {
             }
 
             if (result?.status) {
-                result.headers = htmfHeader(req, result.events ?? {}, messages ?? [])
+                result.headers = {
+                    ...htmfHeader(req, result.events ?? {}, messages ?? []),
+                    ...result.headers
+                }
                 if (isHtml(result.body)) {
                     result = streamResponse(result)
                 } else {
@@ -108,7 +111,10 @@ async function post(url: URL, req: Request) : Promise<Response> {
             if (isHtml(result)) {
                 result = {
                     body: result,
-                    headers: htmfHeader(req, {}, messages)
+                    headers: {
+                        ...htmfHeader(req, {}, messages),
+                        ...result.headers
+                    }
                 }
                 result = streamResponse(result)
             }

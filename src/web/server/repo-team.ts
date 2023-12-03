@@ -1,4 +1,4 @@
-import { get, set, update, getMany, Team, Teams, TeamSingle, Revision } from "./db.js"
+import { get, set, update, getMany, Team, Teams, TeamSingle, Revision, TeamPlayer } from "./db.js"
 import { reject } from "./repo.js"
 import { equals, getNewId } from "./utils.js"
 import { requiredAsync } from "./validation.js"
@@ -128,19 +128,20 @@ export async function teamsCreate(o: TeamNew) : Promise<number> {
     return id
 }
 
-export async function playerCreate(teamId: number, name: string) : Promise<number> {
+export async function playerCreate(teamId: number, name: string) : Promise<TeamPlayer> {
     let team = await teamGet(teamId)
     let id = getNewId(team.players.map(x => x.id))
 
-    team.players.push({
+    let player = {
         active: true,
         name,
         id,
-    })
+    }
+    team.players.push(player)
 
     await teamSave(team)
 
-    return id
+    return player
 }
 
 function getTeamDbId(teamId: number) {
