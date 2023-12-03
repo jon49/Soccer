@@ -2,6 +2,7 @@ import { findRoute, handleGet, handlePost, PostHandlers, RouteGet, RouteGetHandl
 import { version } from "../server/settings.js"
 import { redirect, searchParams } from "../server/utils.js"
 import links from "../entry-points.js"
+import { ValidationResult } from "promise-validation"
 
 // Test if value is Async Generator
 let isHtml = (value: any) =>
@@ -77,53 +78,38 @@ async function post(url: URL, req: Request) : Promise<Response> {
                     ? handler(args)
                 : handlePost(handler, args))
 
-            if (result instanceof Response) {
-                return result
+            if (!result) {
+                return redirect(req)
             }
 
-            if (result?.message != null) {
-                if (result.message.length > 0) {
-                    messages.push(result.message)
-                }
-            } else {
+            if (result.message == null) {
                 messages.push("Saved!")
             }
 
-            if (result?.status) {
-                result.headers = {
-                    ...htmfHeader(req, result.events ?? {}, messages ?? []),
-                    ...result.headers
-                }
-                if (isHtml(result.body)) {
-                    result = streamResponse(result)
-                } else {
-                    result = new Response(result.body, {
-                        status: result.status,
-                        headers: result.headers
-                    })
-                }
-            }
-
-            if (result?.response) {
-                result = result.response
-            }
-
             if (isHtml(result)) {
-                result = {
+                return streamResponse({
                     body: result,
-                    headers: {
-                        ...htmfHeader(req, {}, messages),
-                        ...result.headers
-                    }
-                }
-                result = streamResponse(result)
+                    headers: htmfHeader(req, null, messages)
+                })
             }
 
-            if (result instanceof Response) {
-                return result
+            if (result.message?.length > 0) {
+                messages.push(result.message)
+            } else if (result.messages?.length > 0) {
+                messages.push(...result.messages)
             }
 
-            return redirect(req)
+            result.headers = {
+                ...htmfHeader(req, result.events, messages),
+                ...result.headers
+            }
+
+            return isHtml(result.body)
+                ? streamResponse(result)
+            : new Response(result.body, {
+                    status: result.status ?? 200,
+                    headers: result.headers
+                })
 
         } catch (error) {
             console.error("Post error:", error, "\nURL:", url);
@@ -133,6 +119,9 @@ async function post(url: URL, req: Request) : Promise<Response> {
                 let errors : string[] = []
                 if (typeof error === "string") {
                     errors.push(error)
+                }
+                if (error instanceof ValidationResult) {
+                    errors.push(...error.reasons.map(x => x.reason))
                 }
                 let headers = htmfHeader(req, {}, errors)
                 return new Response(null, {

@@ -3,11 +3,12 @@ import html from "../server/html.js"
 import { PostHandlers, Route } from "../server/route.js"
 import { equals } from "../server/utils.js"
 import layout from "./_layout.html.js"
-import { assert, validate, validateObject } from "../server/validation.js"
+import { assert } from "../server/validation.js"
 import { when } from "../server/shared.js"
 import { dataPlayerNameActiveValidator, dataPlayerNameValidator, dataTeamNameYearActiveValidator, queryTeamIdPlayerIdValidator, queryTeamIdValidator } from "../server/validators.js"
 import { playerCreate, teamGet, teamSave } from "../server/repo-team.js"
 import { teamNav } from "./_shared-views.js"
+import { validate, validateObject } from "promise-validation"
 
 interface PlayersEditView {
     team: Team

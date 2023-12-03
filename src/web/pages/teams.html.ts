@@ -2,10 +2,10 @@ import html from "../server/html.js"
 import layout from "./_layout.html.js"
 import { Team } from "../server/db.js"
 import { PostHandlers, Route } from "../server/route.js"
-import { validateObject } from "../server/validation.js"
 import { when } from "../server/shared.js"
 import { dataTeamNameYearValidator } from "../server/validators.js"
 import { teamGetAll, teamsCreate, WasFiltered } from "../server/repo-team.js"
+import { validateObject } from "promise-validation"
 
 interface TeamsView {
     teams: Team[] | undefined

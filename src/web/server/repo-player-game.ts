@@ -147,14 +147,27 @@ function getStatsId(teamId: number) {
 /*** Utilities ***/
 
 function areUnique(xs: string[]) {
-    let values = new Set(xs.map(x => x.toLowerCase()))
-    let result = xs.length === values.size
-    if (result) return
-    for (let x of xs) {
-        if (!values.has(x.toLowerCase())) {
-            return reject(`'${x}' already exists.`)
-        }
+    let result = findDuplicateCaseInsensitive(xs)
+    if (result) {
+        return reject(`'${result[0]}' and '${result[1]}' are the same. Values must be unique!`)
     }
-    return reject("Unknown error.")
+    return
 }
 
+function findDuplicateCaseInsensitive(arr: string[]) {
+  const lowercaseMap = new Map();
+
+  for (const value of arr) {
+    const lowercaseValue = value.toLowerCase();
+
+    if (lowercaseMap.has(lowercaseValue)) {
+      // Found a duplicate
+      return [value, lowercaseMap.get(lowercaseValue)];
+    } else {
+      lowercaseMap.set(lowercaseValue, value);
+    }
+  }
+
+  // No duplicates found
+  return null;
+}

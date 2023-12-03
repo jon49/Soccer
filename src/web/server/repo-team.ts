@@ -1,10 +1,10 @@
 import { get, set, update, getMany, Team, Teams, TeamSingle, Revision, TeamPlayer } from "./db.js"
 import { reject } from "./repo.js"
 import { equals, getNewId } from "./utils.js"
-import { requiredAsync } from "./validation.js"
+import { required } from "./validation.js"
 
-export function teamGet(teamId: number) : Promise<Team> {
-    return requiredAsync(get<Team>(getTeamDbId(teamId)), `Could not find team with id: "${teamId}".`)
+export async function teamGet(teamId: number) : Promise<Team> {
+    return required(await get<Team>(getTeamDbId(teamId)), `Could not find team with id: "${teamId}".`)
 }
 
 export interface WasFiltered {
@@ -87,6 +87,8 @@ export function teamNew(o: TeamSingle): Team {
         games: [],
         positions: [],
         _rev: 0,
+        grid: [],
+        _v: 0,
     }
 }
 
