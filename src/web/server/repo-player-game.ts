@@ -97,9 +97,11 @@ export const statDescriptions = {
     // "Dribbles Completed": "The number of successful attempts to move past an opponent with the ball."
 }
 
-export const statIds = Object.keys(statDescriptions).map((x, i) => ({
-    [x]: i + 1,
-}))
+export const statIds: Record<StatName, number> = <any>Object.keys(statDescriptions)
+    .reduce((acc, key, i) => {
+        acc[key] = i + 1
+        return acc
+    }, {} as {[key: string]: number})
 
 export function getStatDescription(id: number) {
     let statName = Object.keys(statDescriptions)[id - 1]

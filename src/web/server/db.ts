@@ -133,7 +133,7 @@ export type PlayerStatus = OnDeckPlayer | InPlayPlayer | OutPlayer | NotPlayingP
 export interface PlayerGame extends Revision {
     playerId: number
     gameId: number
-    stats: { id: number, count: number }[]
+    stats: { statId: number, count: number }[]
     gameTime: PlayerGameTime[]
     status?: PlayerStatus
 }

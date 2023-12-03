@@ -14,6 +14,7 @@ import targetPositionView from "./_target-position-view.js"
 import targetPosition from "./player-target-position.js"
 import { teamNav } from "../_shared-views.js"
 import { activityPlayerSelectorView } from "./_activity-position-view.js"
+import { reject } from "../../server/repo.js"
 
 const queryTeamGamePlayerValidator = {
     ...queryTeamIdGameIdValidator,
@@ -29,7 +30,7 @@ function setPoints(f: (game: Game) => number) {
         if (points >= 0) {
             await teamSave(team)
         } else {
-            points = 0
+            return reject("Points cannot be negative!")
         }
         return getPointsView(points)
     }
@@ -72,6 +73,8 @@ async function handlePlayerStatUpdated(data: PlayerStatUpdatedArgs) {
 const postHandlers : PostHandlers = {
     oPointsDec: setPoints(game => --game.opponentPoints),
     oPointsInc: setPoints(game => ++game.opponentPoints),
+    pointsDec: setPoints(game => --game.points),
+    pointsInc: setPoints(game => ++game.points),
 
     async updateNote ({ query, data }) {
         let { gameId, teamId } = await validateObject(query, queryTeamIdGameIdValidator)
@@ -232,10 +235,10 @@ const postHandlers : PostHandlers = {
         let { activityId, playerId, operation } = await validateObject(data, dataSetPlayerActivity)
         let [player] = await playerGameAllGet(teamId, gameId, [playerId])
 
-        let activity = player.stats.find(x => x.statId === activityId)
+        let activity = player.stats.find(x => x.id === activityId)
         if (!activity) {
             activity = {
-                statId: activityId,
+                id: activityId,
                 count: 0
             }
             player.stats.push(activity)

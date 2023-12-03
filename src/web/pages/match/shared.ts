@@ -1,6 +1,6 @@
 import { validateObject } from "promise-validation"
 import { PlayerGameTime, InPlayPlayer, OnDeckPlayer, PlayerGame, PlayerGameStatus, PlayerStatus, TeamPlayer, GameTime, Game, OutPlayer, NotPlayingPlayer } from "../../server/db.js"
-import { playerGameAllGet, playerGameSave, positionGetAll } from "../../server/repo-player-game.js"
+import { playerGameAllGet, playerGameSave, positionGetAll, statsGetAll } from "../../server/repo-player-game.js"
 import { getGameNotes, teamGet } from "../../server/repo-team.js"
 import { tail } from "../../server/utils.js"
 import { required } from "../../server/validation.js"
@@ -213,6 +213,11 @@ export class PlayerStateView {
         this.#teamId = teamId
         this.#gameId = gameId
         this.#cache = new DbCache()
+    }
+
+    async stats() {
+        return this.#cache.get("stats", async () =>
+            await statsGetAll(this.#teamId))
     }
 
     async team() {

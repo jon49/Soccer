@@ -2,6 +2,8 @@ import { when } from "../../server/html.js"
 import html from "html-template-tag-stream"
 import { PlayerStateView } from "./shared.js"
 import playerStateView from "./_player-state-view.js"
+import { statIds } from "../../server/repo-player-game.js"
+import { Game } from "../../server/db.js"
 
 export function getPointsView(points: number) {
     return html`&nbsp;${points || "0"}&nbsp;`
@@ -9,14 +11,27 @@ export function getPointsView(points: number) {
 
 export default async function render(query: any) {
     let o = await PlayerStateView.create(query),
-        notes = await o.notes(),
-        game = await o.game(),
-        team = await o.team(),
+        [
+            notes,
+            game,
+            team,
+            gameCalc,
+            isGameInPlay,
+            isGameEnded,
+            isGamePaused,
+            { stats }
+        ] = await Promise.all([
+            o.notes(),
+            o.game(),
+            o.team(),
+            o.gameCalc(),
+            o.isGameInPlay(),
+            o.isGameEnded(),
+            o.isGamePaused(),
+            o.stats()
+        ]),
         queryTeamGame = o.queryTeamGame,
-        gameCalc = await o.gameCalc(),
-        isGameInPlay = await o.isGameInPlay(),
-        isGameEnded = await o.isGameEnded(),
-        isGamePaused = await o.isGamePaused()
+        isGoalTrackingEnabled = stats.find(x => x.id === statIds.Goal)?.active
 
     return html`
 <h2>${team.name} ($${game.home ? "Home" : "Away"}) vs ${game.opponent}</h2>
@@ -51,25 +66,10 @@ ${when(!isGameEnded, () => html`
 
         <span>Points</span>
 
-        <form id=team-points hf-target="#dialogs" hidden></form>
-        <form
-            is=form-subscribe
-            data-event="playerStatUpdated"
-            data-match="detail:{statId:1}"
+        ${isGoalTrackingEnabled
+            ? goalTrackingEnabledView(queryTeamGame, isGameEnded, game)
+        : goalTrackingDisabledView(queryTeamGame, isGameEnded, game)}
 
-            action="/web/match?$${queryTeamGame}&handler=points"
-            hf-target="#points"
-            hidden></form>
-
-        ${() => {
-            let action = `/web/match?${queryTeamGame}&activityId=1&handler=activityPlayerSelector`
-            return html`
-            ${when(!isGameEnded, () =>
-                   html`<button formaction="$${action}&action=dec" form=team-points>-</button>`)}
-            <span id=points>${getPointsView(game.points)}</span>
-            ${when(!isGameEnded, () =>
-                   html`<button formaction="$${action}&action=inc" form=team-points>+</button>`)}`
-        }}
     </li>
     <li>
         <span>Opponent</span>
@@ -93,3 +93,50 @@ ${when(!isGameEnded, () => html`
 </form>
 `
 }
+
+function goalTrackingEnabledView(
+    queryTeamGame: string,
+    isGameEnded: boolean,
+    game: Game
+) {
+    return html`
+    <form id=team-points hf-target="#dialogs" hidden></form>
+    <form
+        is=form-subscribe
+        data-event="playerStatUpdated"
+        data-match="detail:{statId:1}"
+
+        action="/web/match?$${queryTeamGame}&handler=points"
+        hf-target="#points"
+        hidden></form>
+
+    ${() => {
+    let action = `/web/match?${queryTeamGame}&activityId=1&handler=activityPlayerSelector`
+    return html`
+    ${when(!isGameEnded, () =>
+       html`<button formaction="$${action}&action=dec" form=team-points>-</button>`)}
+    <span id=points>${getPointsView(game.points)}</span>
+    ${when(!isGameEnded, () =>
+       html`<button formaction="$${action}&action=inc" form=team-points>+</button>`)}`
+    }}`
+}
+
+function goalTrackingDisabledView(
+    queryTeamGame: string,
+    isGameEnded: boolean,
+    game: Game
+
+) {
+    return html`
+        <form id=team-points class=inline method=post hf-target="#points" hidden></form>
+        ${() => {
+        let action = `/web/match?${queryTeamGame}`
+        return html`
+        ${when(!isGameEnded, () =>
+           html`<button formaction="$${action}&handler=pointsDec" form=team-points>-</button>`)}
+        <span id=points>${getPointsView(game.points)}</span>
+        ${when(!isGameEnded, () =>
+           html`<button formaction="$${action}&handler=pointsInc" form=team-points>+</button>`)}`
+        }}`
+}
+
