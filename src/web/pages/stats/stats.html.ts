@@ -16,8 +16,8 @@ async function render(query: any) {
         `formaction="/web/stats?teamId=${teamId}&handler=${handler}"`
 
     return html`
-    <h2>Stats</h2>
-    
+    <h2 class=inline>Stats</h2> <a href="/web/stats/edit?teamId=${teamId}">Edit</a>
+
     <div style="margin-bottom: 1em;">
         <form
             id=stat-buttons
