@@ -1,7 +1,7 @@
 import html, { when } from "../server/html.js"
 import layout from "./_layout.html.js"
 import { Team } from "../server/db.js"
-import { PostHandlers, Route, RouteGetHandler } from "../server/route.js"
+import { PostHandlers, Route, RouteGetHandler } from "@jon49/sw/src/routes.js"
 import { teamGet } from "../server/repo-team.js"
 import { createArrayOf, createPositiveWholeNumber, createString25, maybe, required } from "../server/validation.js"
 import { queryTeamIdValidator } from "../server/validators.js"

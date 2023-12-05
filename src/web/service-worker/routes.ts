@@ -1,4 +1,3 @@
-import { addRoutes } from "../server/route.js"
 import index from "../pages/index.html.js"
 import teams from "../pages/teams.html.js"
 import players from "../pages/players.html.js"
@@ -10,7 +9,7 @@ import sync from "../api/sync.js"
 import settings from "../api/settings.js"
 import stats from "../pages/stats/stats.html.js"
 
-addRoutes([
+export const routes = [
     index,
     settings,
     stats,
@@ -21,5 +20,5 @@ addRoutes([
     games,
     positions,
     activities,
-])
+]
 

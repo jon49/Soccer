@@ -2,7 +2,9 @@ import "./service-worker/routes.js"
 import links from "./entry-points.js"
 import staticFiles from "./static-files.js"
 import { version } from "./server/settings.js"
-import { getResponse } from "./service-worker/route-handling.js"
+import { ValidationResult } from "promise-validation"
+import { getResponse, options } from "@jon49/sw/src/routes.js"
+import { routes } from "./service-worker/routes.js"
 
 // check in here for service worker updates
 // fetch('/web/sw.js', { cache: 'no-cache', method: 'HEAD' })
@@ -22,8 +24,25 @@ self.addEventListener("install", async (e: Event) => {
         .then((cache: any) => cache.addAll(links.map(x => x.file).concat(staticFiles))))
 })
 
+function handleErrors(errors: any) {
+    if (errors instanceof ValidationResult) {
+        // @ts-ignore
+        return errors.reasons.map(x => x.reason)
+    }
+    return []
+}
+
+
 // @ts-ignore
-self.addEventListener("fetch", (e: FetchEvent) => e.respondWith(getResponse(e)))
+self.addEventListener("fetch", (e: FetchEvent) => {
+    if (!options.links) {
+        options.handleErrors = handleErrors
+        options.version = version
+        options.links = links
+        options.routes = routes
+    }
+    e.respondWith(getResponse(e))
+})
 
 // @ts-ignore
 self.addEventListener("activate", async (e: ExtendableEvent) => {

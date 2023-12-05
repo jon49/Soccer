@@ -1,4 +1,4 @@
-import { PostHandlers, Route, RouteGetHandler } from "../../server/route.js"
+import { PostHandlers, Route, RouteGetHandler } from "@jon49/sw/src/routes.js"
 import layout from "../_layout.html.js"
 import { queryTeamIdGameIdValidator } from "../../server/validators.js"
 import { validateObject } from "promise-validation"

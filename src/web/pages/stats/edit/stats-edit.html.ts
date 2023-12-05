@@ -1,6 +1,6 @@
 import html from "../../../server/html.js"
 import layout from "../../_layout.html.js"
-import { PostHandlers, Route } from "../../../server/route.js"
+import { PostHandlers, Route } from "@jon49/sw/src/routes.js"
 import { teamGet } from "../../../server/repo-team.js"
 import { createCheckbox, createIdNumber, createString25, required } from "../../../server/validation.js"
 import { queryTeamIdValidator } from "../../../server/validators.js"

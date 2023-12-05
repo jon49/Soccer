@@ -1,5 +1,5 @@
 import html from "../server/html.js"
-import { Route } from "../server/route.js"
+import { Route } from "@jon49/sw/src/routes.js"
 import layout from "./_layout.html.js"
 import db from "../server/global-model.js"
 
