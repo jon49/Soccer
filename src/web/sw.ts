@@ -6,22 +6,23 @@ import { ValidationResult } from "promise-validation"
 import { getResponse, options } from "@jon49/sw/src/routes.js"
 import { routes } from "./service-worker/routes.js"
 
-// check in here for service worker updates
-// fetch('/web/sw.js', { cache: 'no-cache', method: 'HEAD' })
-// .then(x => console.log(x.headers.get('etag')))
-// compare new and old service worker. Keep the old etag value in-memory
-// and check for an update every 10 minutes or so with just the head call.
-// Maybe if it is localhost check all the time? Or have a button to check for updates.
-// See:
-// https://github.com/richardanaya/wasm-service/pull/3/files
+self.addEventListener('message', async function (event) {
+    if (event.data === "skipWaiting") {
+        // @ts-ignore
+        self.skipWaiting()
+    }
+})
 
-self.addEventListener("install", async (e: Event) => {
+self.addEventListener("install", (e: Event) => {
+    console.log("Service worker installed.")
+
     // @ts-ignore
-    self.skipWaiting()
-    // @ts-ignore
-    e.waitUntil(
-        caches.open(version)
-        .then((cache: any) => cache.addAll(links.map(x => x.file).concat(staticFiles))))
+    e.waitUntil(caches.open(version).then(async cache => {
+        console.log("Caching files.")
+        // @ts-ignore
+        return cache.addAll(links.map(x => x.file).concat(staticFiles))
+    }))
+
 })
 
 function handleErrors(errors: any) {
@@ -31,7 +32,6 @@ function handleErrors(errors: any) {
     }
     return []
 }
-
 
 // @ts-ignore
 self.addEventListener("fetch", (e: FetchEvent) => {

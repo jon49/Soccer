@@ -41,7 +41,7 @@ const render = async (
 <body $${when(theme, x => `class=${x}`)} $${bodyAttr}>
     <script> window.app = { scripts: new Map() } </script>
     <div id=head>$${head}</div>
-    <div class=top-nav>
+    <div id=top-nav class=top-nav>
         <form method=post action="/web/api/settings?handler=theme" class=inline>
             ${themeView(theme)}
         </form>
