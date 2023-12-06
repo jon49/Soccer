@@ -21,7 +21,7 @@ export const dataPlayerNameActiveValidator = {
 }
 
 export const queryAllValidator = {
-    all: async (val: any) : Promise<null | ""> => {
+    all: async (val: any): Promise<null | ""> => {
         if (val === null || val === "") return val
         return reject(`The value "${val}" must be 'null' or and empty string.`)
     }
