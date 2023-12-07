@@ -3,7 +3,7 @@ import "form-subscribe"
 import "@jon49/web/html-form-spa.js"
 import "./_sw-loader.js"
 import "@jon49/web/x-dialog.js"
-import "@jon49/web/x-toast.js"
+import "@jon49/web/x-toaster.js"
 
 const w = window,
     doc = document
