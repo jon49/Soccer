@@ -301,7 +301,6 @@ const getHandlers : RouteGetHandler = {
             main: render(result),
             nav: teamNav(result.team.id),
             title: `Formation - ${result.team.name} (${result.team.year})`,
-            scripts: [ "/web/js/x-dialog.js" ],
         })
     },
 

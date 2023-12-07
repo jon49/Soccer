@@ -319,7 +319,6 @@ const getHandlers : RouteGetHandler = {
             nav: teamNav(+query.teamId),
             scripts: [
                 "/web/js/lib/elastic-textarea.js",
-                "/web/js/x-dialog.js",
             ],
             title: `Match — ${team.name} VS ${game.opponent}`,
         })

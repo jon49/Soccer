@@ -107,7 +107,6 @@ const render = async (
         hf-target="#sync-count"></form>
 
     <script src="/web/js/app.js"></script>
-    <script src="/web/js/x-toaster.js"></script>
     <div id=scripts>${(scripts ?? []).map(x => html`<script src="${x}"></script>`)}</div>
 </body>
 </html>`
