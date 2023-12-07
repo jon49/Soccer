@@ -1,14 +1,11 @@
 import "html-form"
 import "form-subscribe"
-import "./_htmf-spa.js"
+import "@jon49/web/html-form-spa"
 import "./_sw-loader.js"
+import "@jon49/web/x-dialog.js"
 
 const w = window,
     doc = document
-
-// navigator.serviceWorker.addEventListener('controllerchange', () => {
-//   w.location.reload()
-// })
 
 doc.addEventListener("user-messages", e => {
     let template = doc.getElementById("toast-template")
