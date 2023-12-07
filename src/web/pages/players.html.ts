@@ -1,6 +1,6 @@
 import { Team, TeamPlayer } from "../server/db.js"
 import html from "../server/html.js"
-import { PostHandlers, Route } from "@jon49/sw/src/routes.js"
+import { PostHandlers, Route } from "@jon49/sw/routes"
 import { equals } from "../server/utils.js"
 import layout from "./_layout.html.js"
 import { assert } from "../server/validation.js"

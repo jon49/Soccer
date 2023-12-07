@@ -1,6 +1,6 @@
 import { validateObject } from "promise-validation"
 import html from "../../server/html.js"
-import { Route, RouteGetHandler } from "@jon49/sw/src/routes.js"
+import { Route, RouteGetHandler } from "@jon49/sw/routes"
 import layout from "../_layout.html.js"
 import { queryTeamIdValidator } from "../../server/validators.js"
 import { teamNav } from "../_shared-views.js"

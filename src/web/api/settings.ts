@@ -1,5 +1,5 @@
 import html from "html-template-tag-stream"
-import { PostHandlers, Route } from "@jon49/sw/src/routes.js"
+import { PostHandlers, Route } from "@jon49/sw/routes"
 import db from "../server/global-model.js"
 import { Theme } from "../server/db.js"
 
