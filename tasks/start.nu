@@ -45,6 +45,9 @@ def main [build: string = "dev"] {
         ) $hashName
     }
 
+    # copy html file
+    cp node_modules/@jon49/sw/lib/app-loader.html $"($targetDir)/web/index.html"
+
     # copy css files
     ls src/**/css/**/*.css
     | each $addHash
@@ -135,14 +138,12 @@ def main [build: string = "dev"] {
     # copy html files
     let appCss = (ls $"($targetDir)/**/app.*.css" | get name | first | str replace $targetDir "")
     let indexCss = (ls $"($targetDir)/**/index.*.css" | get name | first | str replace $targetDir "")
-    let apploaderjs = (ls $"($targetDir)/**/app-loader*.js" | get name | first | str replace $targetDir "")
     let appJs = (ls $"($targetDir)/js/app.*.js" | get name | first | str replace $targetDir "")
     ls src/**/*.html
     | each { |x|
         mkdir ($x.name | path dirname | str replace '^src/' $"($targetDir)/")
         open $x.name
         | str replace '{{indexCss}}' $indexCss
-        | str replace '{{apploaderjs}}' $apploaderjs
         | str replace '{{appCss}}' $appCss
         | str replace '{{appJs}}' $appJs
         | save -f ($x.name | str replace '^src/' $"($targetDir)/")
