@@ -3,7 +3,7 @@ import links from "./entry-points.js"
 import staticFiles from "./static-files.js"
 import { version } from "./server/settings.js"
 import { ValidationResult } from "promise-validation"
-import { getResponse, options } from "@jon49/sw/routes"
+import { getResponse, options } from "@jon49/sw/routes.js"
 import { routes } from "./service-worker/routes.js"
 
 self.addEventListener('message', async function (event) {

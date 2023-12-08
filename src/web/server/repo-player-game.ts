@@ -1,6 +1,6 @@
 import { Stats, Stat, get, getMany, PlayerGame, Positions, PositionsV0, set } from "./db.js"
 import { teamGet } from "./repo-team.js"
-import { reject } from "./repo.js"
+import { reject } from "@jon49/sw/validation.js"
 
 function getPlayerGameKey(teamId: number, gameId: number, playerId: number) {
     return ['player-game', teamId, playerId, gameId]

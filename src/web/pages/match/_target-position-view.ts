@@ -4,7 +4,7 @@ import { teamGet } from "../../server/repo-team.js"
 import { createPlayersView, isInPlayPlayer, isOnDeckPlayer, GameTimeCalculator, PlayerGameTimeCalculator } from "./shared.js"
 import { when } from "../../server/html.js"
 import { queryTeamIdGameIdValidator } from "../../server/validators.js"
-import { createIdNumber, required } from "../../server/validation.js"
+import { createIdNumber, required } from "@jon49/sw/validation.js"
 import { validateObject } from "promise-validation"
 
 const querySwapValidator = {

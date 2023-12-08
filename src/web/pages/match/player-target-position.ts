@@ -2,8 +2,8 @@ import { validateObject } from "promise-validation";
 import { Game, PlayerGame, Team } from "../../server/db.js";
 import { playerGameAllGet, playerGameSave, positionGetAll } from "../../server/repo-player-game.js";
 import { teamGet } from "../../server/repo-team.js";
-import { createIdNumber, required } from "../../server/validation.js";
-import { queryTeamIdGameIdValidator } from "../../server/validators.js";
+import { createIdNumber, required } from "@jon49/sw/validation.js"
+import { queryTeamIdGameIdValidator } from "../../server/validators.js"
 import { GameTimeCalculator, PlayerGameTimeCalculator, isInPlayPlayer, isOnDeckPlayer } from "./shared.js";
 
 const queryTeamGamePlayerValidator = {

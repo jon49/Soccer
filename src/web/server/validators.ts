@@ -1,5 +1,4 @@
-import { reject } from "./repo.js"
-import { createCheckbox, createIdNumber, createString25 } from "./validation.js"
+import { reject, createCheckbox, createIdNumber, createString25 } from "@jon49/sw/validation.js"
 
 export const dataTeamNameYearValidator = {
     name: createString25("Team Name"),

@@ -4,7 +4,7 @@ import { teamGet } from "../../server/repo-team.js"
 import { isInPlayPlayer, isOnDeckPlayer, isOutPlayer } from "./shared.js"
 import { queryTeamIdGameIdValidator } from "../../server/validators.js"
 import { validateObject } from "promise-validation"
-import { createIdNumber, createString25 } from "../../server/validation.js"
+import { createIdNumber, createString25 } from "@jon49/sw/validation.js"
 import { sort } from "../../server/utils.js"
 import { TeamPlayer } from "../../server/db.js"
 

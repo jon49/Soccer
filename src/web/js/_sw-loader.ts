@@ -1,4 +1,4 @@
-import { notifier } from "@jon49/sw/new-app-notifier"
+import { notifier } from "@jon49/sw/new-app-notifier.js"
 
 notifier(notifyUserAboutNewVersion)
 

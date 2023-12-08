@@ -26,11 +26,11 @@ export async function playerStatsView(o: StatsView) {
                 activityMap.set(playerGame.playerId, activity)
             }
             for (let stat of playerGame.stats) {
-                let count = activity.get(stat.id)
+                let count = activity.get(stat.statId)
                 if (!count) {
-                    activity.set(stat.id, stat.count)
+                    activity.set(stat.statId, stat.count)
                 } else {
-                    activity.set(stat.id, count + stat.count)
+                    activity.set(stat.statId, count + stat.count)
                 }
             }
         }

@@ -2,7 +2,7 @@ import { validateObject } from "promise-validation";
 import { PlayerGame } from "../../server/db.js";
 import { playerGameAllGet } from "../../server/repo-player-game.js";
 import { teamGet } from "../../server/repo-team.js";
-import { createIdNumber, createPositiveWholeNumber, maybe, required } from "../../server/validation.js";
+import { createIdNumber, createPositiveWholeNumber, maybe, required } from "@jon49/sw/validation.js";
 import { queryTeamIdGameIdValidator } from "../../server/validators.js";
 import { GameTimeCalculator, PlayerGameTimeCalculator, isInPlayPlayer, isOnDeckPlayer } from "./shared.js";
 

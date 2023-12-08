@@ -3,7 +3,7 @@ import { PlayerGameTime, InPlayPlayer, OnDeckPlayer, PlayerGame, PlayerGameStatu
 import { playerGameAllGet, playerGameSave, positionGetAll, statsGetAll } from "../../server/repo-player-game.js"
 import { getGameNotes, teamGet } from "../../server/repo-team.js"
 import { tail } from "../../server/utils.js"
-import { required } from "../../server/validation.js"
+import { required } from "@jon49/sw/validation.js"
 import { queryTeamIdGameIdValidator } from "../../server/validators.js"
 import { DbCache } from "../../server/shared.js"
 

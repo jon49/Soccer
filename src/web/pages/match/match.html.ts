@@ -1,9 +1,9 @@
-import { PostHandlers, Route, RouteGetHandler } from "@jon49/sw/routes"
+import { PostHandlers, Route, RouteGetHandler } from "@jon49/sw/routes.js"
 import layout from "../_layout.html.js"
 import { queryTeamIdGameIdValidator } from "../../server/validators.js"
 import { validateObject } from "promise-validation"
 import { saveGameNotes, teamGet, teamSave } from "../../server/repo-team.js"
-import { createIdNumber, createPositiveWholeNumber, createString25, createStringInfinity, required } from "../../server/validation.js"
+import { reject, createIdNumber, createPositiveWholeNumber, createString25, createStringInfinity, required } from "@jon49/sw/validation.js"
 import { Game } from "../../server/db.js"
 import { playerGameAllGet, playerGameSave } from "../../server/repo-player-game.js"
 import { GameTimeCalculator, PlayerGameTimeCalculator, PlayerStateView, isInPlayPlayer } from "./shared.js"
@@ -14,7 +14,6 @@ import targetPositionView from "./_target-position-view.js"
 import targetPosition from "./player-target-position.js"
 import { teamNav } from "../_shared-views.js"
 import { activityPlayerSelectorView } from "./_activity-position-view.js"
-import { reject } from "../../server/repo.js"
 
 const queryTeamGamePlayerValidator = {
     ...queryTeamIdGameIdValidator,
@@ -235,10 +234,10 @@ const postHandlers : PostHandlers = {
         let { activityId, playerId, operation } = await validateObject(data, dataSetPlayerActivity)
         let [player] = await playerGameAllGet(teamId, gameId, [playerId])
 
-        let activity = player.stats.find(x => x.id === activityId)
+        let activity = player.stats.find(x => x.statId === activityId)
         if (!activity) {
             activity = {
-                id: activityId,
+                statId: activityId,
                 count: 0
             }
             player.stats.push(activity)
