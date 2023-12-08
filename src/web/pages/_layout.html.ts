@@ -71,7 +71,8 @@ const render = async (
     </div>
     <header>
         <div class=sync>
-            <h1 class=inline>Soccer</h1>
+            <h1>Soccer</h1>
+            <img style="max-height:2.5em;" src="/web/images/soccer.svg"></img>
         </div>
         <nav id=nav-main>
             <ul>
