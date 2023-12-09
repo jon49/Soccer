@@ -3,12 +3,12 @@ import { Game, Team } from "../server/db.js"
 import html from "../server/html.js"
 import { teamGet, teamSave } from "../server/repo-team.js"
 import { PostHandlers, Route } from "@jon49/sw/routes.js"
-import { when } from "../server/shared.js"
 import { equals, getNewId } from "../server/utils.js"
 import { assert, createCheckbox, createDateTimeString, createIdNumber, createString50, required } from "@jon49/sw/validation.js"
 import { queryTeamIdValidator } from "../server/validators.js"
 import layout from "./_layout.html.js"
 import { teamNav } from "./_shared-views.js"
+import { when } from "@jon49/sw/utils.js"
 
 interface GameView {
     team: Team

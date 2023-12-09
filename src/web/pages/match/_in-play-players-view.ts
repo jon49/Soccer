@@ -1,7 +1,7 @@
 import html from "html-template-tag-stream"
 import { GamePlayerStatusView, PlayerStateView } from "./shared.js"
-import { when } from "../../server/shared.js"
 import { InPlayPlayer, OnDeckPlayer } from "../../server/db.js"
+import { when } from "@jon49/sw/utils.js"
 
 function twoPlayerView(
         player: GamePlayerStatusView<InPlayPlayer>,

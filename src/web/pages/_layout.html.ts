@@ -1,9 +1,9 @@
 import html from "../server/html.js"
 import { version } from "../server/settings.js"
-import { when } from "../server/shared.js"
 import db from "../server/global-model.js"
 import { syncCountView } from "../api/sync.js"
 import { themeView } from "../api/settings.js"
+import { when } from "@jon49/sw/utils.js"
 
 interface Nav {
     name: string

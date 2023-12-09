@@ -5,9 +5,9 @@ import { teamGet } from "../../../server/repo-team.js"
 import { createCheckbox, createIdNumber, createString25, required } from "@jon49/sw/validation.js"
 import { queryTeamIdValidator } from "../../../server/validators.js"
 import { statsGetAll, statSave, getStatDescription } from "../../../server/repo-player-game.js"
-import { DbCache, when } from "../../../server/shared.js"
 import { teamNav } from "../../_shared-views.js"
 import { validateObject } from "promise-validation"
+import { DbCache, when } from "@jon49/sw/utils.js"
 
 async function render(o: StatsView) {
     let [{ stats }, team] = await Promise.all([o.stats(), o.team()])

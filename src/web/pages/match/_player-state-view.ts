@@ -1,8 +1,8 @@
 import html from "html-template-tag-stream"
 import { PlayerStateView } from "./shared.js"
 import inPlayPlayersView from "./_in-play-players-view.js"
-import { when } from "../../server/shared.js"
 import { outPlayersView } from "./_out-player-view.js"
+import { when } from "@jon49/sw/utils.js"
 
 export default async function playerStateView(o: PlayerStateView) {
     let onDeckPlayers = await o.onDeckPlayers()

@@ -4,11 +4,11 @@ import { PostHandlers, Route } from "@jon49/sw/routes.js"
 import { equals } from "../server/utils.js"
 import layout from "./_layout.html.js"
 import { assert } from "@jon49/sw/validation.js"
-import { when } from "../server/shared.js"
 import { dataPlayerNameActiveValidator, dataPlayerNameValidator, dataTeamNameYearActiveValidator, queryTeamIdPlayerIdValidator, queryTeamIdValidator } from "../server/validators.js"
 import { playerCreate, teamGet, teamSave } from "../server/repo-team.js"
 import { teamNav } from "./_shared-views.js"
 import { validate, validateObject } from "promise-validation"
+import { when } from "@jon49/sw/utils.js"
 
 interface PlayersEditView {
     team: Team

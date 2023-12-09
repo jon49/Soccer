@@ -1,8 +1,8 @@
 import { validateObject } from "promise-validation";
 import { queryTeamIdValidator } from "../../server/validators.js";
-import { DbCache } from "../../server/shared.js";
 import { teamGet } from "../../server/repo-team.js";
 import { playerGameAllGet } from "../../server/repo-player-game.js";
+import { DbCache } from "@jon49/sw/utils.js";
 
 export class StatsView {
     #cache: DbCache
