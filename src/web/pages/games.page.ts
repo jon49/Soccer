@@ -1,14 +1,18 @@
-import { validate, validateObject } from "promise-validation"
 import { Game, Team } from "../server/db.js"
-import html from "../server/html.js"
-import { teamGet, teamSave } from "../server/repo-team.js"
-import { PostHandlers, Route } from "@jon49/sw/routes.js"
-import { equals, getNewId } from "../server/utils.js"
-import { assert, createCheckbox, createDateTimeString, createIdNumber, createString50, required } from "@jon49/sw/validation.js"
-import { queryTeamIdValidator } from "../server/validators.js"
-import layout from "./_layout.html.js"
-import { teamNav } from "./_shared-views.js"
-import { when } from "@jon49/sw/utils.js"
+import { RoutePostHandler, RoutePage } from "@jon49/sw/routes.js"
+
+const {
+    html,
+    layout,
+    repo: { teamGet, teamSave },
+    utils: { when, equals, getNewId },
+    validation: {
+        assert, createCheckbox, createDateTimeString, createIdNumber, createString50, required,
+        queryTeamIdValidator,
+        validate, validateObject,
+    },
+    views: { teamNav },
+} = self.app
 
 interface GameView {
     team: Team
@@ -121,7 +125,7 @@ let editGameValidator = {
     gameId: createIdNumber("Game ID")
 }
 
-const postHandlers: PostHandlers = {
+const postHandlers: RoutePostHandler = {
     async post({ data, query }) {
         let [{ date: datetime, opponent, home }, { teamId }] = await validate([
             validateObject(data, addGameValidator),
@@ -183,8 +187,7 @@ const postHandlers: PostHandlers = {
     },
 }
 
-const router: Route = {
-    route: /\/games\/$/,
+const router: RoutePage = {
     async get({ query }) {
         return layout({
             main: await renderMain(query),

@@ -1,8 +1,8 @@
 import html from "../server/html.js"
 import { version } from "../server/settings.js"
-import db from "../server/global-model.js"
-import { syncCountView } from "../api/sync.js"
-import { themeView } from "../api/settings.js"
+import * as db from "../server/global-model.js"
+import { syncCountView } from "../api/_shared-views.js"
+import { themeView } from "../api/_shared-views.js"
 import { when } from "@jon49/sw/utils.js"
 
 interface Nav {
@@ -107,7 +107,7 @@ const render = async (
         hf-scroll-ignore
         hf-target="#sync-count"></form>
 
-    <script src="/web/js/app.js"></script>
+    <script src="/web/js/app.bundle.js"></script>
     <div id=scripts>${(scripts ?? []).map(x => html`<script src="${x}"></script>`)}</div>
 </body>
 </html>`

@@ -1,19 +1,25 @@
-import { PostHandlers, Route, RouteGetHandler } from "@jon49/sw/routes.js"
-import layout from "../_layout.html.js"
-import { queryTeamIdGameIdValidator } from "../../server/validators.js"
-import { validateObject } from "promise-validation"
-import { saveGameNotes, teamGet, teamSave } from "../../server/repo-team.js"
-import { reject, createIdNumber, createPositiveWholeNumber, createString25, createStringInfinity, required } from "@jon49/sw/validation.js"
+import { RoutePostHandler, RoutePage, RouteGetHandler } from "@jon49/sw/routes.js"
 import { Game } from "../../server/db.js"
-import { playerGameAllGet, playerGameSave } from "../../server/repo-player-game.js"
 import { GameTimeCalculator, PlayerGameTimeCalculator, PlayerStateView, isInPlayPlayer } from "./shared.js"
 import render, { getPointsView } from "./_game-play-view.js"
 import playerStateView from "./_player-state-view.js"
 import { swapAll } from "./player-swap.js"
 import targetPositionView from "./_target-position-view.js"
 import targetPosition from "./player-target-position.js"
-import { teamNav } from "../_shared-views.js"
 import { activityPlayerSelectorView } from "./_activity-position-view.js"
+
+const {
+    layout,
+    repo: {
+        playerGameAllGet,
+        playerGameSave,
+        saveGameNotes,
+        teamGet,
+        teamSave,
+    },
+    views: { teamNav },
+    validation: { queryTeamIdGameIdValidator, validateObject,  reject, createIdNumber, createPositiveWholeNumber, createString25, createStringInfinity, required },
+} = self.app
 
 const queryTeamGamePlayerValidator = {
     ...queryTeamIdGameIdValidator,
@@ -69,7 +75,7 @@ async function handlePlayerStatUpdated(data: PlayerStatUpdatedArgs) {
     }
 }
 
-const postHandlers : PostHandlers = {
+const postHandlers : RoutePostHandler = {
     oPointsDec: setPoints(game => --game.opponentPoints),
     oPointsInc: setPoints(game => ++game.opponentPoints),
     pointsDec: setPoints(game => --game.points),
@@ -324,8 +330,7 @@ const getHandlers : RouteGetHandler = {
     }
 }
 
-const route : Route = {
-    route: /\/match\/$/,
+const route : RoutePage = {
     get: getHandlers,
     post: postHandlers,
 }

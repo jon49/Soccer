@@ -1,13 +1,15 @@
-import { validateObject } from "promise-validation"
-import html from "../../server/html.js"
-import { Route, RouteGetHandler } from "@jon49/sw/routes.js"
-import layout from "../_layout.html.js"
-import { queryTeamIdValidator } from "../../server/validators.js"
-import { teamNav } from "../_shared-views.js"
+import { RoutePage, RouteGetHandler } from "@jon49/sw/routes.js"
 import { StatsView } from "./shared.js"
 import { timePlayedView } from "./_positions-played-view.js"
 import { gamesPlayedView } from "./_number-of-games-played-view.js"
 import { playerStatsView } from "./_activities-view.js"
+
+const {
+    html,
+    layout,
+    validation: { validateObject, queryTeamIdValidator },
+    views: { teamNav },
+} = self.app
 
 async function render(query: any) {
     let { teamId } = await validateObject(query, queryTeamIdValidator)
@@ -68,8 +70,7 @@ const getHandler: RouteGetHandler = {
     }
 }
 
-const router: Route = {
-    route: /\/stats\/$/,
+const router: RoutePage = {
     get: getHandler
 }
 

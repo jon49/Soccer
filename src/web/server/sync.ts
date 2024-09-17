@@ -1,5 +1,9 @@
-import { getMany, setMany, set, update } from "./db.js"
-import db from "./global-model.js"
+// import { getMany, setMany, set, update } from "./db.js"
+// import * as db from "./global-model.js"
+const {
+    db,
+    db: { getMany, setMany, set, update }
+} = self.app
 
 export default async function sync() {
     let isLoggedIn = await db.isLoggedIn()
@@ -13,7 +17,7 @@ export default async function sync() {
         let d = items[index]
         data[index] = { key, data: d, id: d._rev ?? 0 }
     }
-    const lastSyncedId = (await db.settings()).lastSyncedId
+    const lastSyncedId = (await db.settings()).lastSyncedId ?? 0
 
     let postData : PostData = { lastSyncedId, data }
     const res = await fetch("/api/data", {
@@ -72,7 +76,10 @@ export default async function sync() {
 }
 
 function parse(value: any) {
-    return JSON.parse(value)
+    return typeof value === "string"
+        && (["{", "[", `"`].includes(value[0]))
+        ? JSON.parse(value)
+    : value
 }
 
 interface Data {
@@ -104,4 +111,6 @@ interface ConflictedDto {
     id: number
     timestamp: string
 }
+
+
 

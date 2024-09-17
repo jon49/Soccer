@@ -1,10 +1,8 @@
-import "./service-worker/routes.js"
-import links from "./entry-points.js"
-import staticFiles from "./static-files.js"
-import { version } from "./server/settings.js"
 import { ValidationResult } from "promise-validation"
 import { getResponse, options } from "@jon49/sw/routes.js"
-import { routes } from "./service-worker/routes.js"
+
+// @ts-ignore
+let version: string = self.app?.version ?? "unknown"
 
 self.addEventListener('message', async function (event) {
     if (event.data === "skipWaiting") {
@@ -20,7 +18,7 @@ self.addEventListener("install", (e: Event) => {
     e.waitUntil(caches.open(version).then(async cache => {
         console.log("Caching files.")
         // @ts-ignore
-        return cache.addAll(links.map(x => x.file).concat(staticFiles))
+        return cache.addAll(self.app.links.map(x => x.file))
     }))
 
 })
@@ -35,11 +33,8 @@ function handleErrors(errors: any) {
 
 // @ts-ignore
 self.addEventListener("fetch", (e: FetchEvent) => {
-    if (!options.links) {
+    if (!options.handleErrors) {
         options.handleErrors = handleErrors
-        options.version = version
-        options.links = links
-        options.routes = routes
     }
     e.respondWith(getResponse(e))
 })
@@ -55,7 +50,6 @@ self.addEventListener("activate", async (e: ExtendableEvent) => {
         .filter(x => x)
     if (deleteMe.length === 0) return
     e.waitUntil(Promise.all(deleteMe))
-
 })
 
 self.addEventListener('message', event => {

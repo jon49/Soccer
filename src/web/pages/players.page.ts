@@ -1,14 +1,17 @@
 import { Team, TeamPlayer } from "../server/db.js"
-import html from "../server/html.js"
-import { PostHandlers, Route } from "@jon49/sw/routes.js"
-import { equals } from "../server/utils.js"
-import layout from "./_layout.html.js"
-import { assert } from "@jon49/sw/validation.js"
-import { dataPlayerNameActiveValidator, dataPlayerNameValidator, dataTeamNameYearActiveValidator, queryTeamIdPlayerIdValidator, queryTeamIdValidator } from "../server/validators.js"
-import { playerCreate, teamGet, teamSave } from "../server/repo-team.js"
-import { teamNav } from "./_shared-views.js"
-import { validate, validateObject } from "promise-validation"
-import { when } from "@jon49/sw/utils.js"
+import { RoutePostHandler, RoutePage } from "@jon49/sw/routes.js"
+
+const {
+    html,
+    layout,
+    repo: { teamGet, playerCreate, teamSave },
+    utils: { equals, when },
+    validation: {
+        assert, validate, validateObject,
+        dataPlayerNameActiveValidator, dataPlayerNameValidator, dataTeamNameYearActiveValidator, queryTeamIdPlayerIdValidator, queryTeamIdValidator 
+    },
+    views: { teamNav },
+} = self.app
 
 interface PlayersEditView {
     team: Team
@@ -110,7 +113,7 @@ function playerView(player: TeamPlayer, teamId: number) {
 </div>`
 }
 
-const postHandlers: PostHandlers = {
+const postHandlers: RoutePostHandler = {
     async editPlayer({ data: d, query: q }) {
         let [{ teamId, playerId }, { name: playerName, active }] = await validate([
             validateObject(q, queryTeamIdPlayerIdValidator),
@@ -173,8 +176,7 @@ const postHandlers: PostHandlers = {
     }
 }
 
-const route: Route = {
-    route: /\/players\/$/,
+const route: RoutePage = {
     async get({ query }) {
         let result = await start(query)
         return layout({

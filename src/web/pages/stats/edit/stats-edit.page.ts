@@ -1,13 +1,14 @@
-import html from "../../../server/html.js"
-import layout from "../../_layout.html.js"
-import { PostHandlers, Route } from "@jon49/sw/routes.js"
-import { teamGet } from "../../../server/repo-team.js"
-import { createCheckbox, createIdNumber, createString25, required } from "@jon49/sw/validation.js"
-import { queryTeamIdValidator } from "../../../server/validators.js"
-import { statsGetAll, statSave, getStatDescription } from "../../../server/repo-player-game.js"
-import { teamNav } from "../../_shared-views.js"
-import { validateObject } from "promise-validation"
-import { DbCache, when } from "@jon49/sw/utils.js"
+import { RoutePostHandler, RoutePage } from "@jon49/sw/routes.js"
+import { DbCache } from "@jon49/sw/utils.js"
+
+const {
+    html,
+    layout,
+    repo: { teamGet, statSave, getStatDescription, statsGetAll },
+    utils: { when },
+    validation: { validateObject, createCheckbox, createIdNumber, createString25, required, queryTeamIdValidator },
+    views: { teamNav },
+} = self.app
 
 async function render(o: StatsView) {
     let [{ stats }, team] = await Promise.all([o.stats(), o.team()])
@@ -56,7 +57,7 @@ const statValidator = {
     active: createCheckbox,
 }
 
-const postHandlers : PostHandlers = {
+const postHandlers : RoutePostHandler = {
     async updateStat({ query, data }) {
         let { teamId } = await validateObject(query, queryTeamIdValidator)
         let { name, active, id } = await validateObject(data, statValidator)
@@ -91,8 +92,7 @@ class StatsView {
     }
 }
 
-const route : Route = {
-    route: /\/stats\/edit\/$/,
+const route : RoutePage = {
     async get({ query }) {
         let { teamId } = await validateObject(query, queryTeamIdValidator)
         let data = new StatsView(teamId, query)

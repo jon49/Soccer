@@ -1,13 +1,22 @@
-import html, { when } from "../server/html.js"
-import layout from "./_layout.html.js"
 import { Team } from "../server/db.js"
-import { PostHandlers, Route, RouteGetHandler } from "@jon49/sw/routes.js"
-import { teamGet } from "../server/repo-team.js"
-import { createArrayOf, createPositiveWholeNumber, createString25, maybe, required } from "@jon49/sw/validation.js"
-import { queryTeamIdValidator } from "../server/validators.js"
-import { positionGetAll, positionsSave } from "../server/repo-player-game.js"
-import { teamNav } from "./_shared-views.js"
-import { validateObject } from "promise-validation"
+import { RoutePostHandler, RoutePage, RouteGetHandler } from "@jon49/sw/routes.js"
+
+const {
+    html,
+    layout,
+    repo: { teamGet, positionGetAll, positionsSave },
+    validation: {
+        createArrayOf,
+        createPositiveWholeNumber,
+        createString25,
+        maybe,
+        required,
+        queryTeamIdValidator,
+        validateObject,
+    },
+    views: { teamNav },
+    utils: { when },
+} = self.app
 
 interface PositionView {
     positions: string[][]
@@ -227,7 +236,7 @@ const gridValidator = {
     grid: createArrayOf(createPositiveWholeNumber("Grid"))
 }
 
-const postHandlers : PostHandlers = {
+const postHandlers : RoutePostHandler = {
     async addGrid({ query, data }) {
         let { teamId } = await validateObject(query, queryTeamIdValidator)
         let { grid } = await validateObject(data, gridValidator)
@@ -319,8 +328,7 @@ const getHandlers : RouteGetHandler = {
     }
 }
 
-const route : Route = {
-    route: /\/positions\/$/,
+const route : RoutePage = {
     get: getHandlers,
     post: postHandlers,
 }

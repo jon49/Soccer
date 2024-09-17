@@ -12,32 +12,26 @@ const settingDefaults : Settings = {
     theme: null
 }
 
-class GlobalDB {
-    async updated() : Promise<(string | number)[]> {
-        return Array.from((await get("updated")) ?? new Set).map(parseKey)
-    }
-
-    async setLoggedIn(loggedIn: boolean) : Promise<void> {
-        await set("loggedIn", loggedIn, false)
-    }
-
-    async isLoggedIn() : Promise<boolean> {
-        return (await get("loggedIn")) ?? false
-    }
-
-    async settings() : Promise<Settings> {
-        return { ...settingDefaults, ...((await get("settings")) ?? {}) }
-    }
-
-    async setTheme(theme: Theme) : Promise<void> {
-        await update(
-            "settings",
-            v => ({ ...(v ?? settingDefaults), theme }),
-            { sync: false })
-    }
-
+export async function updated() : Promise<(string | number)[]> {
+    return Array.from((await get("updated")) ?? new Set).map(parseKey)
 }
 
-const globalDB = new GlobalDB
-export default globalDB
+export async function setLoggedIn(loggedIn: boolean) : Promise<void> {
+    await set("loggedIn", loggedIn, false)
+}
+
+export async function isLoggedIn() : Promise<boolean> {
+    return (await get("loggedIn")) ?? false
+}
+
+export async function settings() : Promise<Settings> {
+    return { ...settingDefaults, ...((await get("settings")) ?? {}) }
+}
+
+export async function setTheme(theme: Theme) : Promise<void> {
+    await update(
+        "settings",
+        v => ({ ...(v ?? settingDefaults), theme }),
+        { sync: false })
+}
 

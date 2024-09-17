@@ -1,11 +1,14 @@
-import html from "../server/html.js"
-import layout from "./_layout.html.js"
 import { Team } from "../server/db.js"
-import { PostHandlers, Route } from "@jon49/sw/routes.js"
-import { dataTeamNameYearValidator } from "../server/validators.js"
-import { teamGetAll, teamsCreate, WasFiltered } from "../server/repo-team.js"
-import { validateObject } from "promise-validation"
-import { when } from "@jon49/sw/utils.js"
+import { RoutePage, RoutePostHandler } from "@jon49/sw/routes.js"
+import { WasFiltered } from "../server/repo-team.js"
+
+const {
+    html,
+    layout,
+    repo: { teamGetAll, teamsCreate },
+    utils: { when },
+    validation: { dataTeamNameYearValidator, validateObject },
+} = self.app
 
 interface TeamsView {
     teams: Team[] | undefined
@@ -66,7 +69,7 @@ function getTeamView(team: Team) {
     </li>`
 }
 
-const postHandlers: PostHandlers = {
+const postHandlers: RoutePostHandler = {
     post: async function post({ query, data }) {
         let d = await validateObject(data, dataTeamNameYearValidator)
         await teamsCreate(d)
@@ -74,8 +77,7 @@ const postHandlers: PostHandlers = {
     },
 }
 
-const route: Route = {
-    route: /\/teams\/$/,
+const route: RoutePage = {
     async get({ query }) {
         const result = await start(query)
         return layout({
