@@ -102,7 +102,7 @@ function getGamePartialView(teamId: number, game: Game) {
     <a href="/web/match?$${teamQuery}&gameId=${game.id}">${game.opponent}</a>
     <span class=editable-pencil>&#9998;</span>
 </label>
-<label class="toggle inline">
+<label class=toggle>
     <input form=${formId} id="home-${game.id}" type=checkbox name=home $${when(game.home, "checked")}>
     <span class="off button full-width">Visiting</span>
     <span class="on button full-width">Home</span>
