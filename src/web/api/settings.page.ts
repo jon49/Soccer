@@ -1,4 +1,4 @@
-import { RoutePostHandler, RoutePage } from "@jon49/sw/routes.js"
+import { RoutePostHandler, RoutePage } from "@jon49/sw/routes.middleware.js"
 
 const {
     db: { settings, setTheme },

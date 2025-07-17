@@ -2,12 +2,24 @@ import html from "../server/html.js"
 import { version } from "../server/settings.js"
 import * as db from "../server/global-model.js"
 import { syncCountView } from "../api/_shared-views.js"
-import { themeView } from "../api/_shared-views.js"
 import { when } from "@jon49/sw/utils.js"
+import { Theme } from "../server/db.js"
 
 interface Nav {
     name: string
     url: string
+}
+
+const defaultTheme = "⛅",
+    lightTheme = "&#127774;",
+    darkTheme = "&#127762;"
+
+export function themeImage(theme: Theme | undefined) {
+    return html`$${theme === "light"
+        ? lightTheme
+        : theme === "dark"
+            ? darkTheme
+            : defaultTheme}`
 }
 
 const render = async (
@@ -34,47 +46,56 @@ const render = async (
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${title} - Soccer</title>
     <link rel="icon" type="image/x-icon" href="/web/images/soccer.ico">
-    <link href="/web/css/index.css" rel=stylesheet>
+    <style> @import url("/web/css/pico.blue.min.css") layer(base); </style>
     <link href="/web/css/app.css" rel=stylesheet>
     <link rel="manifest" href="/web/manifest.json">
 </head>
 <body $${when(theme, x => `class=${x}`)} $${bodyAttr}>
-    <script> window.app = { scripts: new Map() } </script>
-    <div id=head>$${head}</div>
-    <div id=top-nav class=top-nav>
-        <form method=post action="/web/api/settings?handler=theme" class=inline>
-            ${themeView(theme)}
-        </form>
-
-       <form method=post action="/web/api/sync?handler=force" class=inline>
-           <button id=sync-count class=bg>${syncCountView(updatedCount)}</button>
-       </form>
-       <form
-            id=soft-sync
-            is=form-subscribe
-            data-event="hf:completed"
-            data-match="detail:{method:'post'}"
-            data-match-not="detail:{form:{id:'soft-sync'}}"
-            data-debounce="6e5"
-            data-onload
-
-            method=post
-            action="/web/api/sync"
-            hidden>
-            <span></span>
-        </form>
-
-        ${isLoggedIn
-            ? html`<a href="/login?logout">Logout</a>`
-            : html`<a href="/login">Login</a>`}
-
-    </div>
+<div id=head>$${head}</div>
+    <div class=container>
+    <div id=sw-message></div>
     <header>
-        <div class=sync>
-            <h1>Soccer</h1>
-            <img style="max-height:2.5em;" src="/web/images/soccer.svg"></img>
-        </div>
-        <nav id=nav-main>
+        <nav role=navigation>
+            <ul>
+                <li>
+                    <a href="/web/">
+                        <img style="height:2.5em;" src="/web/images/soccer.svg"></img>
+                    </a>
+                </li>
+            </ul>
+            <ul>
+                <li>
+                    <button form=post-form formaction="/web/api/settings?handler=theme" class="bg">$${themeImage(theme)}</button>
+
+                    <button
+                        form=post-form
+                        formaction="/web/api/sync?handler=count"
+                        formmethod=get
+                        hidden
+
+                        traits=x-subscribe
+                        data-event="hf:completed"
+                        data-match="detail: {method:'post'}"
+
+                        hf-scroll-ignore
+                        hf-target="#sync-count">
+                    </button>
+
+                    <button
+                        id=sync-count
+                        form=post-form
+                        formaction="/web/api/sync?handler=force"
+                        class=bg
+                        >${syncCountView(updatedCount)}</button>
+
+                    ${isLoggedIn
+            ? html`<a id=auth-link href="/login?logout" role=button>Logout</a>`
+            : loginView()}
+                </li>
+            </ul>
+        </nav>
+
+        <nav role=navigation>
             <ul>
                 <li><a href="/web/teams">Teams</a></li>
                 ${!nav || nav.length === 0
@@ -83,35 +104,27 @@ const render = async (
             </ul>
         </nav>
     </header>
+
     <main>
         ${main}
     </main>
 
-    <template id=toast-template><dialog class=toast is=x-toaster open><p class=message></p></dialog></template>
+    <template id=toast-template><dialog class="toast" traits=x-toaster open><p class=message></p></dialog></template>
     <div id=toasts></div>
     <div id=dialogs></div>
 
     <footer><p>${version}</p></footer>
 
-    <form id=href hf-select="title,#head,#nav-main,main,#errors,#toasts,#scripts">
-        <button id=href-nav class=hidden></button>
-    </form>
-    <form
-        id=get-sync-count-form
-        action="/web/api/sync?handler=count"
-
-        is=form-subscribe
-        data-event="hf:completed"
-        data-match="detail: {method:'post'}"
-
-        hf-scroll-ignore
-        hf-target="#sync-count"></form>
-
     <script src="/web/js/app.bundle.js"></script>
     <div id=scripts>${(scripts ?? []).map(x => html`<script src="${x}"></script>`)}</div>
+    </div>
 </body>
 </html>`
 }
+
+export function loginView() {
+    return html`<a id=auth-link href="/login">Login</a>`
+}    
 
 export default
     async function layout(o: LayoutTemplateArguments) {

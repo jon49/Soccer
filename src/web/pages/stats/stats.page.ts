@@ -1,4 +1,4 @@
-import { RoutePage, RouteGetHandler } from "@jon49/sw/routes.js"
+import { RoutePage, RouteGetHandler } from "@jon49/sw/routes.middleware.js"
 import { StatsView } from "./shared.js"
 import { timePlayedView } from "./_positions-played-view.js"
 import { gamesPlayedView } from "./_number-of-games-played-view.js"
@@ -24,7 +24,7 @@ async function render(query: any) {
         <form
             id=stat-buttons
 
-            is=form-subscribe
+            traits=x-subscribe
             data-event="hf:completed"
             data-match="detail: {form:{id:'stat-buttons'}}"
             data-action="event.target.remove()"

@@ -1,8 +1,15 @@
 import { ValidationResult } from "promise-validation"
-import { getResponse, options } from "@jon49/sw/routes.js"
+import { useRoutes, options } from "@jon49/sw/routes.middleware.js"
+import { useHtmf } from "@jon49/sw/htmf.middleware.js"
+import { useResponse } from "@jon49/sw/response.middleware.js"
+import { swFramework } from "@jon49/sw/web-framework.js"
 
 // @ts-ignore
 let version: string = self.app?.version ?? "unknown"
+
+swFramework.use(useRoutes)
+swFramework.use(useHtmf)
+swFramework.use(useResponse)
 
 self.addEventListener('message', async function (event) {
     if (event.data === "skipWaiting") {
@@ -36,7 +43,7 @@ self.addEventListener("fetch", (e: FetchEvent) => {
     if (!options.handleErrors) {
         options.handleErrors = handleErrors
     }
-    e.respondWith(getResponse(e))
+    e.respondWith(swFramework.start(e))
 })
 
 // @ts-ignore

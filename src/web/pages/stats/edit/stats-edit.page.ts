@@ -1,4 +1,4 @@
-import { RoutePostHandler, RoutePage } from "@jon49/sw/routes.js"
+import { RoutePostHandler, RoutePage } from "@jon49/sw/routes.middleware.js"
 import { DbCache } from "@jon49/sw/utils.js"
 
 const {

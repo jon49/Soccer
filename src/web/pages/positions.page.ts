@@ -1,5 +1,5 @@
 import { Team } from "../server/db.js"
-import { RoutePostHandler, RoutePage, RouteGetHandler } from "@jon49/sw/routes.js"
+import { RoutePostHandler, RoutePage, RouteGetHandler } from "@jon49/sw/routes.middleware.js"
 
 const {
     html,
@@ -24,7 +24,7 @@ interface PositionView {
     team: Team
 }
 
-async function start(query: any) : Promise<PositionView> {
+async function start(query: any): Promise<PositionView> {
     let { teamId } = await validateObject(query, queryTeamIdValidator)
     let [positions, team] = await Promise.all([positionGetAll(teamId), teamGet(teamId)])
     return { positions: positions.positions, team, grid: positions.grid }
@@ -63,14 +63,14 @@ ${when(grid.length, () => html`
     action="/web/positions?teamId=${team.id}&handler=editPositions"
     onchange="this.requestSubmit()">
     ${function* positionViews() {
-        let count = 0
-        for (let xs of positions) {
-            yield html`<div class=row>`
-            yield xs.map(x =>
-                html`<input id="position${count++}" name="names[]" value="${x}">`)
-            yield html`</div>`
-        }
-    }}
+            let count = 0
+            for (let xs of positions) {
+                yield html`<div class=row>`
+                yield xs.map(x =>
+                    html`<input id="position${count++}" name="names[]" value="${x}">`)
+                yield html`</div>`
+            }
+        }}
 </form>
 `)}`
 }
@@ -102,16 +102,16 @@ const templates = {
 
 type PossibleTemplatePlayerCounts = keyof typeof templates
 
-function getNumberOfPlayers(numberOfPlayers: number) : PossibleTemplatePlayerCounts {
-    if (["4", "7", "9", "11"].includes(""+numberOfPlayers)) {
+function getNumberOfPlayers(numberOfPlayers: number): PossibleTemplatePlayerCounts {
+    if (["4", "7", "9", "11"].includes("" + numberOfPlayers)) {
         // @ts-ignore
-        return ""+numberOfPlayers
+        return "" + numberOfPlayers
     }
     return "4"
 }
 
 function getCircles({ count, y, total }: { count: number, y: number, total: number }) {
-    let x = Math.round(1e4/(count + 1))/100
+    let x = Math.round(1e4 / (count + 1)) / 100
     let cy = 90 * (y / total)
     let circles = ""
     for (let i = 0; i < count; i++) {
@@ -124,20 +124,19 @@ function getTemplate(positions: number[]) {
     let formationName =
         positions.length === 3
             ? [...positions].reverse().join("-")
-        : [...positions].reverse().slice(1).join(" - ")
+            : [...positions].reverse().slice(1).join(" - ")
     return html`
 <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
     <text x="1%" y="10%" fill="#fd6b00" font-weight="bold" font-size="20">$${formationName}</text>
-    $${
-    function* rows() {
-        let total = positions.length
-        let y = 1
-        for (let count of positions) {
-            yield getCircles({ count, y, total })
-            y++
+    $${function* rows() {
+            let total = positions.length
+            let y = 1
+            for (let count of positions) {
+                yield getCircles({ count, y, total })
+                y++
+            }
         }
-    }
-}
+        }
 </svg>
 `
 }
@@ -164,29 +163,32 @@ async function getPositionTemplates(teamId: number) {
     let positionCount = grid.reduce((a, b) => a + b, 0)
 
     return html`
-    <dialog class=modal is=x-dialog show-modal close-event="user-messages">
-    <h2 class=inline>Formation Templates</h2> 
-    <form class=inline method=dialog>
-        <button value=cancel>Cancel</button>
-    </form>
+    <dialog class=modal traits=x-dialog show-modal close-event="user-messages">
+        <article data-box>
+            <header>
+                <button form=modalClose aria-label="Close" value="cancel" rel="prev"></button>
+                <h2>Formation Templates</h2> 
+            </header>
 
-    <form
-        action="/web/positions?handler=getTemplates&teamId=${teamId}"
-        onchange="this.requestSubmit()"
+            <form
+                action="/web/positions?handler=getTemplates&teamId=${teamId}"
+                onchange="this.requestSubmit()"
 
-        is=form-subscribe
-        data-onload
+                traits=x-subscribe
+                data-onload
 
-        hf-target="#templates"
-        >
-        Number of players: <select class=inline name=numberOfPlayers>
-            <option value=4 ${when(positionCount === 4, "selected")}>4</option>
-            <option value=7 ${when(positionCount === 7, "selected")}>7</option>
-            <option value=9 ${when(positionCount === 9, "selected")}>9</option>
-            <option value=11 ${when(positionCount === 11, "selected")}>11</option>
-        </select>
-    </form>
-    <div id=templates class=rows></div>
+                hf-target="#templates"
+                >
+                Number of players: <select class=inline name=numberOfPlayers>
+                    <option value=4 ${when(positionCount === 4, "selected")}>4</option>
+                    <option value=7 ${when(positionCount === 7, "selected")}>7</option>
+                    <option value=9 ${when(positionCount === 9, "selected")}>9</option>
+                    <option value=11 ${when(positionCount === 11, "selected")}>11</option>
+                </select>
+            </form>
+            <div id=templates class=rows></div>
+            <form hidden id=modalClose method=dialog></form>
+        </article>
     </dialog>`
 }
 
@@ -206,7 +208,7 @@ const positionNameSuffix = {
     "1": [""],
 }
 
-function setPositions(grid: number[]) : string[][] {
+function setPositions(grid: number[]): string[][] {
     let names = [...positionNames]
     if (grid.length === 4) {
         names.splice(0, 1)
@@ -219,7 +221,7 @@ function setPositions(grid: number[]) : string[][] {
         let name = names[i]
         let row = []
         // @ts-ignore
-        for (let suffix of positionNameSuffix[""+column]) {
+        for (let suffix of positionNameSuffix["" + column]) {
             row.push(`${name} ${suffix}`)
         }
         positions.push(row)
@@ -236,7 +238,7 @@ const gridValidator = {
     grid: createArrayOf(createPositiveWholeNumber("Grid"))
 }
 
-const postHandlers : RoutePostHandler = {
+const postHandlers: RoutePostHandler = {
     async addGrid({ query, data }) {
         let { teamId } = await validateObject(query, queryTeamIdValidator)
         let { grid } = await validateObject(data, gridValidator)
@@ -303,7 +305,7 @@ const postHandlers : RoutePostHandler = {
     },
 }
 
-const getHandlers : RouteGetHandler = {
+const getHandlers: RouteGetHandler = {
     async get({ query }) {
         const result = await start(query)
         return layout({
@@ -328,7 +330,7 @@ const getHandlers : RouteGetHandler = {
     }
 }
 
-const route : RoutePage = {
+const route: RoutePage = {
     get: getHandlers,
     post: postHandlers,
 }

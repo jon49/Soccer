@@ -1,5 +1,5 @@
 import { Team } from "../server/db.js"
-import { RoutePage, RoutePostHandler } from "@jon49/sw/routes.js"
+import { RoutePage, RoutePostHandler } from "@jon49/sw/routes.middleware.js"
 import { WasFiltered } from "../server/repo-team.js"
 
 const {

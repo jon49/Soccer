@@ -1,4 +1,4 @@
-import { RoutePostHandler, RoutePage, RouteGetHandler } from "@jon49/sw/routes.js"
+import { RoutePostHandler, RoutePage, RouteGetHandler } from "@jon49/sw/routes.middleware.js"
 import { Game } from "../../server/db.js"
 import { GameTimeCalculator, PlayerGameTimeCalculator, PlayerStateView, isInPlayPlayer } from "./shared.js"
 import render, { getPointsView } from "./_game-play-view.js"

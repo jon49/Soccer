@@ -1,5 +1,5 @@
 import { Team, TeamPlayer } from "../server/db.js"
-import { RoutePostHandler, RoutePage } from "@jon49/sw/routes.js"
+import { RoutePostHandler, RoutePage } from "@jon49/sw/routes.middleware.js"
 
 const {
     html,
@@ -68,7 +68,6 @@ ${when(!team.players.length, () => html`<p>No players have been added.</p>`)}
 </div>
 
 <form
-    onchange="this.requestSubmit()"
     class=form
     method=post
     action="/web/players?handler=addPlayer&teamId=${team.id}"
