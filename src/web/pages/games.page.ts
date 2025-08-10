@@ -80,30 +80,34 @@ function getGamePartialView(teamId: number, game: Game) {
     let d = new Date(datetime)
     return html`
 <input form=${formId} type=hidden name=gameId value="${game.id}" hf-target=main>
-<input
-    id="game-date-${game.id}"
-    form=${formId}
-    class=editable
-    type=datetime-local
-    name=date
-    required
-    value="$${datetime}"
-    >
-<label for="game-date-${game.id}">
-    <a href="/web/match?$${teamQuery}&gameId=${game.id}">${game.date} (${formatTime(d)})</a>
-    <span class=editable-pencil>&#9998;</span>
-</label>
-<input
-    id="game-opponent-${game.id}"
-    form=${formId}
-    class=editable
-    type=text
-    name=opponent
-    value="${game.opponent}">
-<label for="game-opponent-${game.id}">
-    <a href="/web/match?$${teamQuery}&gameId=${game.id}">${game.opponent}</a>
-    <span class=editable-pencil>&#9998;</span>
-</label>
+<div>
+    <input
+        id="game-date-${game.id}"
+        form=${formId}
+        class=editable
+        type=datetime-local
+        name=date
+        required
+        value="$${datetime}"
+        >
+    <label for="game-date-${game.id}">
+        <a href="/web/match?$${teamQuery}&gameId=${game.id}">${game.date} (${formatTime(d)})</a>
+        <span class=editable-pencil>&#9998;</span>
+    </label>
+</div>
+<div>
+    <input
+        id="game-opponent-${game.id}"
+        form=${formId}
+        class=editable
+        type=text
+        name=opponent
+        value="${game.opponent}">
+    <label for="game-opponent-${game.id}">
+        <a href="/web/match?$${teamQuery}&gameId=${game.id}">${game.opponent}</a>
+        <span class=editable-pencil>&#9998;</span>
+    </label>
+</div>
 <label class=toggle>
     <input form=${formId} id="home-${game.id}" type=checkbox name=home $${when(game.home, "checked")}>
     <span class="off full-width condense-padding" role="button">Visiting</span>
