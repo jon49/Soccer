@@ -59,3 +59,77 @@ body {
 .toast p {
     margin-top: var(--pico-typography-spacing-vertical);
 }
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(var(--grid-item-width), 1fr));
+    grid-gap: 0.5em;
+}
+
+.condense-padding {
+    padding: 0.25em;
+}
+
+/** Fancy Checkbox **/
+
+.toggle > [type="checkbox"],
+.on,
+input:checked ~ .off,
+input:indeterminate ~ .off,
+.none {
+  display: none;
+  border: none;;
+}
+
+.off {
+  display: inline-block;
+  background-color: firebrick;
+  border: none;;
+}
+
+input:checked ~ .on {
+  display: inline-block;
+  background-color: green;
+}
+
+input:indeterminate ~ .none {
+  display: inline-block;
+}
+
+/** List of items **/
+
+.list {
+    list-style-type: none;
+    display: table;
+    padding: 0;
+}
+
+.list > li {
+    display: table-row;
+}
+
+.list > li > * {
+    display: table-cell;
+    padding: 5px 10px;
+}
+
+/** Editable text area that looks normal **/
+
+.editable:not(:focus) {
+    position: absolute;
+    right: 100%;
+}
+
+.editable:focus + label {
+    position: absolute;
+    right: 100%;
+}
+
+.editable + label {
+    cursor: pointer;
+}
+
+.editable-pencil {
+    display: inline-block;
+    transform: rotate(90deg);
+}

@@ -23,6 +23,8 @@ async function render(query: any) {
     <div style="margin-bottom: 1em;">
         <form
             id=stat-buttons
+            class=grid
+            style="--grid-item-width: 150px;"
 
             traits=x-subscribe
             data-event="hf:completed"

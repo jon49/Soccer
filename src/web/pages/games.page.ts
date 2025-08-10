@@ -34,7 +34,7 @@ function render({ team }: GameView) {
 </ul>
 
 <form class="form" method=post action="/web/games?teamId=${team.id}" hf-target=main>
-    <div class=row>
+    <div class=grid>
         <div>
             <label for=game-date>Name</label>
             <input id=game-date type=datetime-local name=date required ${when(team.games.length === 0, "autofocus")}>
@@ -45,7 +45,7 @@ function render({ team }: GameView) {
         </div>
     </div>
 
-    <div class=row>
+    <div class=grid>
         <div>
             <input class=inline id=home type=checkbox name=home>
             <label for=home>Home</label>
@@ -63,7 +63,9 @@ async function renderMain(query: any) {
 }
 
 function getGameView(teamId: number, game: Game) {
-    return html`<li onchange="event.target.form.requestSubmit()" id=game-${game.id}>${getGamePartialView(teamId, game)}</li>`
+    return html`<li onchange="event.target.form.requestSubmit()" id=game-${game.id}>
+        ${getGamePartialView(teamId, game)}
+    </li>`
 }
 
 function formatTime(date: Date | undefined) {
@@ -104,12 +106,12 @@ function getGamePartialView(teamId: number, game: Game) {
 </label>
 <label class=toggle>
     <input form=${formId} id="home-${game.id}" type=checkbox name=home $${when(game.home, "checked")}>
-    <span class="off button full-width">Visiting</span>
-    <span class="on button full-width">Home</span>
+    <span class="off full-width condense-padding" role="button">Visiting</span>
+    <span class="on full-width condense-padding" role="button">Home</span>
 </label>
 <form
     id=${formId}
-    class=hidden
+    hidden
     method=post
     action="/web/games?${teamQuery}&handler=edit"
     onchange="this.requestSubmit()"

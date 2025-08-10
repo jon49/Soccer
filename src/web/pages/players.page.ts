@@ -54,8 +54,8 @@ function render(o: PlayersEditView) {
     <div id=team-active>
         <label class=toggle>
             <input name=active type=checkbox $${when(team.active, "checked")}>
-            <span class="off button">Inactive</span>
-            <span class="on button">Active</span>
+            <span class="off" role="button">Inactive</span>
+            <span class="on" role="button">Active</span>
         </label>
     </div>
 </form>
@@ -63,7 +63,7 @@ function render(o: PlayersEditView) {
 <h3 id=players>Players Settings</h3>
 ${when(!team.players.length, () => html`<p>No players have been added.</p>`)}
 
-<div id=player-cards  class=row>
+<div id=player-cards  class=grid style="--grid-item-width: 200px;">
     ${team.players.map(x => playerView(x, team.id))}
 </div>
 
@@ -75,10 +75,9 @@ ${when(!team.players.length, () => html`<p>No players have been added.</p>`)}
     hf-swap=append
     >
     <div>
-        <label for=new-player>Player Name</label>
+        <label for=new-player>Add Player Name</label>
         <input id=new-player name=name type=text required ${when(!team.players.length, "autofocus")}>
     </div>
-    <button>Save</button>
 </form>
 `
 }
@@ -88,7 +87,7 @@ function playerView(player: TeamPlayer, teamId: number) {
     let playerId_: string = `edit-player${player.id}`
 
     return html`
-<div id="active-${playerId_}">
+<article id="active-${playerId_}" class="player-card">
     <form
         onchange="this.requestSubmit()"
         class=form
@@ -104,12 +103,12 @@ function playerView(player: TeamPlayer, teamId: number) {
                     name=active
                     type=checkbox
                     $${when(player.active, "checked")}>
-                <span class="off button full-width">Inactive</span>
-                <span class="on button full-width">Active</span>
+                <span class="off full-width" role="button">Inactive</span>
+                <span class="on full-width" role="button">Active</span>
             </label>
         </div>
     </form>
-</div>`
+</article>`
 }
 
 const postHandlers: RoutePostHandler = {

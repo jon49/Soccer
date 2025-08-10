@@ -186,7 +186,11 @@ async function getPositionTemplates(teamId: number) {
                     <option value=11 ${when(positionCount === 11, "selected")}>11</option>
                 </select>
             </form>
-            <div id=templates class=rows></div>
+            <div
+                id=templates
+                class=grid
+                style="--grid-item-width: 250px;"
+                ></div>
             <form hidden id=modalClose method=dialog></form>
         </article>
     </dialog>`

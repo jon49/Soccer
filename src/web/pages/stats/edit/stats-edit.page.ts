@@ -31,8 +31,8 @@ async function render(o: StatsView) {
             <br>
             <label class=toggle>
                 <input type=checkbox name=active $${when(x.active, "checked")}>
-                <span class="off button">Inactive</span>
-                <span class="on button">Active</span>
+                <span class="off" role="button">Inactive</span>
+                <span class="on" role="button">Active</span>
             </label>
             <br>
             <br>
