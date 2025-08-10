@@ -1,0 +1,7 @@
+{
+    "appPath":"/home/jon/r/soccer-server/app",
+    "port": 8001,
+    "staticFiles": "/home/jon/r/soccer-server/public",
+    "salt": "asdfasdf"
+}
+
