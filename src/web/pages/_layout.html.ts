@@ -115,6 +115,7 @@ const render = async (
 
     <footer><p>${version}</p></footer>
 
+    <form id=post-form method=post hidden></form>
     <script src="/web/js/app.bundle.js"></script>
     <div id=scripts>${(scripts ?? []).map(x => html`<script src="${x}"></script>`)}</div>
     </div>
@@ -124,7 +125,7 @@ const render = async (
 
 export function loginView() {
     return html`<a id=auth-link href="/login">Login</a>`
-}    
+}
 
 export default
     async function layout(o: LayoutTemplateArguments) {
