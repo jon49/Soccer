@@ -36,13 +36,14 @@ export default async function render(query: any) {
     return html`
 <h2>${team.name} ($${game.home ? "Home" : "Away"}) vs ${game.opponent}</h2>
 
+<div class="pb-1">
 ${when(!isGameEnded, () => html`
 <form id=game-status
       class=inline
       method=post
       action="/web/match?$${queryTeamGame}&handler=${isGameInPlay ? "pauseGame" : "startGame"}"
       hf-target=main >
-    <button>${isGameInPlay ? "Pause" : "Start"}</button>
+    <button class=condense-padding>${isGameInPlay ? "Pause" : "Start"}</button>
 </form>`)}
 
 <game-timer
@@ -57,8 +58,9 @@ ${when(!isGameEnded, () => html`
     action="/web/match?$${queryTeamGame}&handler=${isGameEnded ? "restartGame" : "endGame"}"
     hf-target="main"
     >
-    <button>${isGameEnded ? "Restart" : "End"}</button>
+    <button class=condense-padding>${isGameEnded ? "Restart" : "End"}</button>
 </form>
+</div>
 
 
 <ul class=list>
@@ -114,10 +116,10 @@ function goalTrackingEnabledView(
     let action = `/web/match?${queryTeamGame}&activityId=1&handler=activityPlayerSelector`
     return html`
     ${when(!isGameEnded, () =>
-       html`<button formaction="$${action}&action=dec" form=team-points>-</button>`)}
+       html`<button class=condense-padding formaction="$${action}&action=dec" form=team-points>-</button>`)}
     <span id=points>${getPointsView(game.points)}</span>
     ${when(!isGameEnded, () =>
-       html`<button formaction="$${action}&action=inc" form=team-points>+</button>`)}`
+       html`<button class=condense-padding formaction="$${action}&action=inc" form=team-points>+</button>`)}`
     }}`
 }
 
@@ -125,7 +127,6 @@ function goalTrackingDisabledView(
     queryTeamGame: string,
     isGameEnded: boolean,
     game: Game
-
 ) {
     return html`
         <form id=team-points method=post hf-target="#points" hidden></form>
