@@ -313,10 +313,7 @@ const getHandlers : RouteGetHandler = {
                     margin: 2rem;
                     border: 3px solid #ccc;
                 }
-            </style>
-            <script src="/web/js/game-timer.js" type="module"></script>
-            <script src="/web/js/game-shader.js" type="module"></script>
-            <script src="/web/js/auto-rotate.js" type="module"></script>`
+            </style>`
         let team = await teamGet(+query.teamId)
         let game = await required(team.games.find(x => x.id === +query.gameId), `Could not find game! ${query.gameId}`)
         return layout({
@@ -324,7 +321,10 @@ const getHandlers : RouteGetHandler = {
             main: await render(query),
             nav: teamNav(+query.teamId),
             scripts: [
-                "/web/js/lib/elastic-textarea.js",
+                "/web/js/game-timer.js",
+                "/web/js/game-shader.js",
+                "/web/js/elastic-textarea.js",
+                "/web/js/auto-rotate.js",
             ],
             title: `Match — ${team.name} VS ${game.opponent}`,
         })
