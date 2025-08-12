@@ -314,8 +314,9 @@ const getHandlers : RouteGetHandler = {
                     border: 3px solid #ccc;
                 }
             </style>
-            <script src="/web/js/game-timer.js"></script>
-            <script src="/web/js/game-shader.js"></script>`
+            <script src="/web/js/game-timer.js" type="module"></script>
+            <script src="/web/js/game-shader.js" type="module"></script>
+            <script src="/web/js/auto-rotate.js" type="module"></script>`
         let team = await teamGet(+query.teamId)
         let game = await required(team.games.find(x => x.id === +query.gameId), `Could not find game! ${query.gameId}`)
         return layout({

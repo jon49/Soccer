@@ -33,16 +33,17 @@ export default async function render(query: any) {
     let isPaused = game.status === "paused" || (!isInPlay && !isEnded)
 
     return html`
-<dialog class=modal traits=x-dialog show-modal close-event="hf:completed">
-<h2 id=game-swap-top class=inline>Swap for ${player.name}</h2>
-<form class=inline>
-    <button value=cancel formmethod="dialog">Cancel</button>
-</form>
+<dialog class=modal traits="x-dialog auto-rotate" show-modal>
+    <article class="dialog-full-screen" style="--grid-item-width: 100px;">
+        <header>
+            <button form=modalClose aria-label="Close" value="cancel" rel="prev"></button>
+            <h2>Swap for ${player.name}</h2>
+        </header>
 
 ${function* positionViews() {
     let count = 0
     for (let xs of positions) {
-        yield html`<div class="row grid-center">`
+        yield html`<div class="grid grid-center pb-1">`
         yield xs.map((_, i) => {
             let player = inPlayPlayers.find(x => count === x.status.position)
             let playerOnDeck = onDeckPlayers.find(x => count === x.status.targetPosition)
@@ -91,6 +92,9 @@ ${function* positionViews() {
         yield html`</div>`
     }
 }}
+
+<form hidden id=modalClose method=dialog></form>
+</article>
 </dialog>`
 
 }
