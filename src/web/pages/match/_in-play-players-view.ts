@@ -91,19 +91,20 @@ ${when(inPlayPlayers.length || onDeckPlayers.length, function* positionViews() {
             let player = inPlayPlayers.find(x => count === x.status.position)
             let sub = onDeckPlayers.find(x => x.status.targetPosition === count)
             let view = html`
-            <div traits="game-shader"
+            <ul traits="game-shader"
                 data-total="${gameCalc.currentTotal()}"
-                data-value="${player?.calc.currentTotal()}">
+                data-value="${player?.calc.currentTotal()}"
+                class="list m-0
             ${
             () => 
                 player && sub
                     ? twoPlayerView(player, sub, isGameInPlay, queryTeamGame)
                 : player
-                    ? html`<ul class="list m-0">${playerView(player, isGameInPlay, queryTeamGame)}</ul>`
+                    ? html`">${playerView(player, isGameInPlay, queryTeamGame)}`
                 : sub
-                    ? html`<ul class="list m-0">${subPlayerView(sub, queryTeamGame)}</ul>`
-                : html`<ul class="list empty m-0"><li></li><li></li><li></li></ul>`
-            }</div>`
+                    ? html`">${subPlayerView(sub, queryTeamGame)}`
+                : html` empty"><li></li><li></li><li></li>`
+            }</ul>`
             count++
             return view
         })
