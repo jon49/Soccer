@@ -33,7 +33,7 @@ export default async function render(query: any) {
     let isPaused = game.status === "paused" || (!isInPlay && !isEnded)
 
     return html`
-<dialog class=modal traits="x-dialog auto-rotate" show-modal>
+<dialog class=modal traits="x-dialog" show-modal>
     <article class="dialog-full-screen" style="--grid-item-width: 100px;">
         <header>
             <button form=modalClose aria-label="Close" value="cancel" rel="prev"></button>

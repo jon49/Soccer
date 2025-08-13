@@ -324,7 +324,6 @@ const getHandlers : RouteGetHandler = {
                 "/web/js/game-timer.js",
                 "/web/js/game-shader.js",
                 "/web/js/elastic-textarea.js",
-                "/web/js/auto-rotate.js",
             ],
             title: `Match — ${team.name} VS ${game.opponent}`,
         })
