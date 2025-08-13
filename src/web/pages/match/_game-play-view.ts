@@ -46,11 +46,12 @@ ${when(!isGameEnded, () => html`
     <button class=condense-padding>${isGameInPlay ? "Pause" : "Start"}</button>
 </form>`)}
 
-<game-timer
+<span traits="game-timer"
     $${when(isGamePaused, () => `data-flash data-start="${gameCalc.getLastEndTime()}"`)}
     $${when(isGameInPlay, `data-start="${gameCalc.getLastStartTime()}" data-total="${gameCalc.total()}"`)}
     $${when(isGameEnded, `data-static data-total="${gameCalc.total()}"`)}>
-</game-timer>
+    00:00
+</span>
 
 <form
     class=inline

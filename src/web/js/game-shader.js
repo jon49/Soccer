@@ -1,7 +1,3 @@
-(() => {
-
-if (customElements.get('game-shader')) return
-
 document.head.appendChild(document.createElement('style')).textContent = `
 <style>
 :root {
@@ -41,28 +37,15 @@ function invert(array) {
     return array.map(x => 255 - x)
 }
 
-class GameShader extends HTMLElement {
-    constructor() {
-        super()
-    }
-    connectedCallback() {
-        if (this.children.length) {
-            this._init()
-        }
-
-        // not yet available, watch it for init
-        this._observer = new MutationObserver(this._init.bind(this))
-        this._observer.observe(this, { childList: true })
-    }
-
-    _init() {
-        this._observer?.disconnect()
-        this._observer = null
-
+class GameShader {
+    /**
+     * @param {HTMLButtonElement} el 
+     */
+    constructor(el) {
+        if (!(el instanceof HTMLElement)) console.error('Invalid element type', el)
         this.background = invert(getRGB(document.body, 'backgroundColor'))
 
-        let el = this.el = this.firstElementChild
-        if (!el) return
+        this.el = el
         el.classList.add('game-shader')
 
         this.update()
@@ -74,17 +57,16 @@ class GameShader extends HTMLElement {
     }
 
     update() {
-        if (!this.el) return
-        const total = this.dataset.total || 0
-        if (!total) return
-        const value = this.dataset.value || 0
+        let el = this.el
+        if (!el) return
+        const total = el.dataset.total || 0
+        if (!+total) return
+        const value = el.dataset.value || 0
         this.background[3] = value / total
-        this.el.style.setProperty('--game-shader-background', `rgba(${this.background.join(',')})`)
+        el.style.setProperty('--game-shader-background', `rgba(${this.background.join(',')})`)
         let color = invertRGBA(this.background)
-        this.el.style.setProperty('--game-shader-color', `rgb(${color.join(',')})`)
+        el.style.setProperty('--game-shader-color', `rgb(${color.join(',')})`)
     }
 }
 
-customElements.define('game-shader', GameShader)
-
-})()
+window.defineTrait('game-shader', GameShader)

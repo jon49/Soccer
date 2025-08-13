@@ -1,10 +1,8 @@
 import html from "html-template-tag-stream"
-import { playerGameAllGet } from "../../server/repo-player-game.js"
-import { teamGet } from "../../server/repo-team.js"
-import { isInPlayPlayer, GameTimeCalculator, PlayerGameTimeCalculator } from "./shared.js"
+import { isInPlayPlayer, GameTimeCalculator, PlayerGameTimeCalculator, PlayerStateView } from "./shared.js"
 import { when } from "../../server/html.js"
 import { queryTeamIdGameIdValidator } from "../../server/validators.js"
-import { createIdNumber, required } from "@jon49/sw/validation.js"
+import { createIdNumber } from "@jon49/sw/validation.js"
 import { validateObject } from "promise-validation"
 import { playerPositionsView } from "./_player-position-view.js"
 
@@ -15,22 +13,19 @@ const querySwapValidator = {
 
 export default async function render(query: any) {
     let { teamId, gameId, playerId } = await validateObject(query, querySwapValidator)
-    let team = await teamGet(teamId)
-    team.players = team.players.filter(x => x.active)
-    let players = await playerGameAllGet(teamId, gameId, team.players.map(x => x.id))
 
-    let game = await required(team.games.find(x => x.id === gameId), "Could not find game ID!")
+    let playerStateView = new PlayerStateView(teamId, gameId)
+    let [ isPaused, player, playerGame, game ] = await Promise.all([
+        playerStateView.isGamePaused(),
+        playerStateView.player(playerId),
+        playerStateView.playerGame(playerId),
+        playerStateView.game(),
+    ])
+
     let gameTimeCalculator = new GameTimeCalculator(game)
-    let player = await required(team.players.find(x => x.id === playerId), "Could not find player ID!")
-    let playerGame = await required(players.find(x => x.playerId === playerId), "Could not find player!")
-
-    let isInPlay = game.status === "play"
-    let isEnded = game.status === "ended"
-    let isPaused = game.status === "paused" || (!isInPlay && !isEnded)
 
     return playerPositionsView({
-        gameId,
-        teamId,
+        playerStateView,
         title: `Swap for ${player.name}`,
         playerView: ({ player, playerOnDeck, position, count }) => {
             let isCurrentPlayer = player?.playerId === playerId
@@ -45,18 +40,21 @@ export default async function render(query: any) {
                 if (player) {
                     let playerGameCalc = new PlayerGameTimeCalculator(player, gameTimeCalculator)
                     return html`
-                <game-shader data-total="${gameTimeCalculator.currentTotal()}" data-value="${playerGameCalc.currentTotal()}">
                     <button
-                    ${when(isCurrentPlayer, "disabled")}
-                    title="${when(playerOnDeck, "Player is on deck already.")}${when(isCurrentPlayer, "You cannot swap the same player!")}">
-                        ${player.name}${when(playerOnDeck, p => html` (${p.name})`)}
-                        <game-timer
+                        traits=game-shader
+                        data-total="${gameTimeCalculator.currentTotal()}"
+                        data-value="${playerGameCalc.currentTotal()}"
+                        ${when(isCurrentPlayer, "disabled")}
+                        title="${when(playerOnDeck, "Player is on deck already.")}
+                        ${when(isCurrentPlayer, "You cannot swap the same player!")}">
+                        ${player.name}
+                        ${when(playerOnDeck, p => html` (${p.name})`)}
+                        <span traits="game-timer"
                             data-start="${player.calc.getLastStartTime()}"
                             data-total="${player.calc.total()}"
                             $${when(isPaused, `data-static`)}>
-                            ></game-timer>
-                    </button>
-                </game-shader>`
+                        </span>
+                    </button>`
                 }
                 if (playerOnDeck) {
                     let playerOnDeckGameCalc = new PlayerGameTimeCalculator(playerOnDeck, gameTimeCalculator)

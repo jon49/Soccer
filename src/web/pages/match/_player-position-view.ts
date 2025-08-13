@@ -1,14 +1,10 @@
 import html from "html-template-tag-stream"
-import { playerGameAllGet, positionGetAll } from "../../server/repo-player-game.js"
-import { teamGet } from "../../server/repo-team.js"
-import { createPlayersView, isInPlayPlayer, isOnDeckPlayer, GamePlayerStatusView } from "./shared.js"
+import { GamePlayerStatusView, PlayerStateView } from "./shared.js"
 import { InPlayPlayer, OnDeckPlayer } from "../../server/db.js"
-import { required } from "@jon49/sw/validation.js"
 
 interface RenderArgs {
-    teamId: number
-    gameId: number
     title: string
+    playerStateView: PlayerStateView
     playerView(options: {
         player: GamePlayerStatusView<InPlayPlayer> | undefined,
         playerOnDeck: GamePlayerStatusView<OnDeckPlayer> | undefined
@@ -17,17 +13,12 @@ interface RenderArgs {
     }): AsyncGenerator<any, void, unknown>
 }
 
-export async function playerPositionsView({ gameId, teamId, title, playerView }: RenderArgs) {
-    let team = await teamGet(teamId)
-    team.players = team.players.filter(x => x.active)
-    let [ players, { positions } ] = await Promise.all([
-        playerGameAllGet(teamId, gameId, team.players.map(x => x.id)),
-        positionGetAll(teamId),
+export async function playerPositionsView({ playerStateView, title, playerView }: RenderArgs) {
+    let [inPlayPlayers, onDeckPlayers, { positions }] = await Promise.all([
+        playerStateView.inPlayPlayers(),
+        playerStateView.onDeckPlayers(),
+        playerStateView.positions(),
     ])
-
-    let game = await required(team.games.find(x => x.id === gameId), "Could not find game ID!")
-    let inPlayPlayers = await createPlayersView(isInPlayPlayer, team.players, players, game)
-    let onDeckPlayers = await createPlayersView(isOnDeckPlayer, team.players, players, game)
 
     return html`
 <dialog class=modal traits="x-dialog" show-modal>

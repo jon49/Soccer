@@ -206,42 +206,62 @@ function filterNotPlayingPlayers(x: PlayerGame) : x is PlayerGameStatus<NotPlayi
 }
 
 export class PlayerStateView {
-    #teamId: number
-    #gameId: number
+    teamId: number
+    gameId: number
     #cache: DbCache
     constructor(teamId: number, gameId: number) {
-        this.#teamId = teamId
-        this.#gameId = gameId
+        this.teamId = teamId
+        this.gameId = gameId
         this.#cache = new DbCache()
     }
 
     async stats() {
         return this.#cache.get("stats", async () =>
-            await statsGetAll(this.#teamId))
+            await statsGetAll(this.teamId))
     }
 
     async team() {
         return this.#cache.get("team", async () => {
-            let team = await teamGet(this.#teamId)
+            let team = await teamGet(this.teamId)
             team.players = team.players.filter(x => x.active)
             return team
         })
     }
 
+    async player(playerId: number) {
+        return this.#cache.get(
+            `player-${playerId}`,
+            async () => {
+                let team = await this.team()
+                return required(team.players.find(x => x.id === playerId), "Could not find player ID!")
+            }
+        )
+    }
+
+    async playerGame(playerId: number) {
+        return this.#cache.get(
+            `playerGame-${playerId}`,
+            async () => {
+                let gamePlayers = await this.gamePlayers()
+                return required(gamePlayers.find(x => x.playerId === playerId), "Could not find player game!")
+            }
+        )
+    }
+
     async notes() {
         return this.#cache.get("notes", async () =>
-            (await getGameNotes(this.#teamId, this.#gameId)).notes)
+            (await getGameNotes(this.teamId, this.gameId)).notes)
     }
 
     async game() {
         return this.#cache.get("game", async () =>
             required(
-                (await this.team()).games.find(x => x.id === this.#gameId),
+                (await this.team()).games.find(x => x.id === this.gameId),
                 "Could not find game ID!"))
     }
 
     get queryTeamGame() {
-        return `teamId=${this.#teamId}&gameId=${this.#gameId}`
+        return `teamId=${this.teamId}&gameId=${this.gameId}`
     }
 
     async gameCalc() {
@@ -271,17 +291,26 @@ export class PlayerStateView {
     async gamePlayers() {
         return this.#cache.get("gamePlayers", async () => {
             let team = await this.team()
-            return await playerGameAllGet(this.#teamId, this.#gameId, team.players.map(x => x.id))
+            return await playerGameAllGet(this.teamId, this.gameId, team.players.map(x => x.id))
         })
     }
 
     async positions() {
-        return this.#cache.get("positions", () => positionGetAll(this.#teamId))
+        return this.#cache.get("positions", () => positionGetAll(this.teamId))
+    }
+
+    async players() {
+        return this.#cache.get("players", async () => (await this.team()).players)
     }
 
     async inPlayPlayers() {
         return this.#cache.get("inPlayPlayers", async () =>
-            createPlayersView(isInPlayPlayer, (await this.team()).players, (await this.gamePlayers()), await this.game())
+            createPlayersView(
+                isInPlayPlayer,
+                (await this.players()),
+                (await this.gamePlayers()),
+                await this.game()
+            )
         )
     }
 

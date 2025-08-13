@@ -27,7 +27,9 @@ export async function outPlayersView(o: PlayerStateView) {
         hf-target="#dialogs" >
         <button>${x.name}</button>
     </form>
-    <game-timer data-total="${x.calc.total()}" data-static></game-timer>
+    <span data-total="${x.calc.total()}" data-static>
+        00:00
+    </span>
 </li>`)}
 
 </ul>`

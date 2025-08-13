@@ -27,10 +27,12 @@ function playerView(
             hf-target="#dialogs" >
             <button>${player?.name}</button>
         </form>
-        <game-timer
+        <span traits="game-timer"
             data-start="${player.calc.getLastStartTime()}"
             data-total="${player.calc.total()}"
-            ${when(!isGameInPlay, "data-static")}></game-timer>
+            ${when(!isGameInPlay, "data-static")}>
+            00:00
+        </span>
         <form
             method=post
             action="/web/match?${queryTeamGame}&playerId=${player.playerId}&handler=playerNowOut"
@@ -53,10 +55,12 @@ function subPlayerView(
         >
         <button>(${sub.name})</button>
     </form>
-    <game-timer
+    <span traits="game-timer"
         data-start="${sub.calc.getLastStartTime()}"
         data-total="${sub.calc.total()}"
-        data-static></game-timer>
+        data-static>
+    00:00
+    </span>
     <form
         method=post
         action="/web/match?$${queryTeamGame}&playerId=${sub.playerId}&handler=cancelOnDeck"
@@ -87,7 +91,7 @@ ${when(inPlayPlayers.length || onDeckPlayers.length, function* positionViews() {
             let player = inPlayPlayers.find(x => count === x.status.position)
             let sub = onDeckPlayers.find(x => x.status.targetPosition === count)
             let view = html`
-            <game-shader
+            <div traits="game-shader"
                 data-total="${gameCalc.currentTotal()}"
                 data-value="${player?.calc.currentTotal()}">
             ${
@@ -95,11 +99,11 @@ ${when(inPlayPlayers.length || onDeckPlayers.length, function* positionViews() {
                 player && sub
                     ? twoPlayerView(player, sub, isGameInPlay, queryTeamGame)
                 : player
-                    ? html`<ul class=list>${playerView(player, isGameInPlay, queryTeamGame)}</ul>`
+                    ? html`<ul class="list m-0">${playerView(player, isGameInPlay, queryTeamGame)}</ul>`
                 : sub
-                    ? html`<ul class=list>${subPlayerView(sub, queryTeamGame)}</ul>`
-                : html`<ul class="list empty"><li></li><li></li><li></li></ul>`
-            }</game-shader>`
+                    ? html`<ul class="list m-0">${subPlayerView(sub, queryTeamGame)}</ul>`
+                : html`<ul class="list empty m-0"><li></li><li></li><li></li></ul>`
+            }</div>`
             count++
             return view
         })
