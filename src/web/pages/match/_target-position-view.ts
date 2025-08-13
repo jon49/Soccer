@@ -1,11 +1,12 @@
 import html from "html-template-tag-stream"
-import { playerGameAllGet, positionGetAll } from "../../server/repo-player-game.js"
+import { playerGameAllGet } from "../../server/repo-player-game.js"
 import { teamGet } from "../../server/repo-team.js"
-import { createPlayersView, isInPlayPlayer, isOnDeckPlayer, GameTimeCalculator, PlayerGameTimeCalculator } from "./shared.js"
+import { isInPlayPlayer, GameTimeCalculator, PlayerGameTimeCalculator } from "./shared.js"
 import { when } from "../../server/html.js"
 import { queryTeamIdGameIdValidator } from "../../server/validators.js"
 import { createIdNumber, required } from "@jon49/sw/validation.js"
 import { validateObject } from "promise-validation"
+import { playerPositionsView } from "./_player-position-view.js"
 
 const querySwapValidator = {
     ...queryTeamIdGameIdValidator,
@@ -16,15 +17,10 @@ export default async function render(query: any) {
     let { teamId, gameId, playerId } = await validateObject(query, querySwapValidator)
     let team = await teamGet(teamId)
     team.players = team.players.filter(x => x.active)
-    let [ players, { positions } ] = await Promise.all([
-        playerGameAllGet(teamId, gameId, team.players.map(x => x.id)),
-        positionGetAll(teamId),
-    ])
+    let players = await playerGameAllGet(teamId, gameId, team.players.map(x => x.id))
 
     let game = await required(team.games.find(x => x.id === gameId), "Could not find game ID!")
     let gameTimeCalculator = new GameTimeCalculator(game)
-    let inPlayPlayers = await createPlayersView(isInPlayPlayer, team.players, players, game)
-    let onDeckPlayers = await createPlayersView(isOnDeckPlayer, team.players, players, game)
     let player = await required(team.players.find(x => x.id === playerId), "Could not find player ID!")
     let playerGame = await required(players.find(x => x.playerId === playerId), "Could not find player!")
 
@@ -32,24 +28,14 @@ export default async function render(query: any) {
     let isEnded = game.status === "ended"
     let isPaused = game.status === "paused" || (!isInPlay && !isEnded)
 
-    return html`
-<dialog class=modal traits="x-dialog" show-modal>
-    <article class="dialog-full-screen" style="--grid-item-width: 100px;">
-        <header>
-            <button form=modalClose aria-label="Close" value="cancel" rel="prev"></button>
-            <h2>Swap for ${player.name}</h2>
-        </header>
-
-${function* positionViews() {
-    let count = 0
-    for (let xs of positions) {
-        yield html`<div class="grid grid-center pb-1">`
-        yield xs.map((_, i) => {
-            let player = inPlayPlayers.find(x => count === x.status.position)
-            let playerOnDeck = onDeckPlayers.find(x => count === x.status.targetPosition)
+    return playerPositionsView({
+        gameId,
+        teamId,
+        title: `Swap for ${player.name}`,
+        playerView: ({ player, playerOnDeck, position, count }) => {
             let isCurrentPlayer = player?.playerId === playerId
-            let row =
-            html`<form
+            return html`
+            <form
                 method=post
                 action="/web/match?position=${count}&teamId=${teamId}&gameId=${gameId}&playerId=${playerId}&handler=updateUserPosition&playerSwap"
                 hf-target="#player-state"
@@ -83,18 +69,10 @@ ${function* positionViews() {
                             $${when(isPaused, `data-static`)}>
                             ></game-timer></button>`
                 }
-                return html`<button>${xs[i]}</button>`
+                return html`<button>${position[count]}</button>`
             }
-                }</form>`
-            count++
-            return row
-        })
-        yield html`</div>`
-    }
-}}
-
-<form hidden id=modalClose method=dialog></form>
-</article>
-</dialog>`
-
+                }</form>
+            `
+        },
+    })
 }
