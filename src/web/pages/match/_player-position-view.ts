@@ -29,8 +29,8 @@ export async function playerPositionsView({ playerStateView, title, playerView }
         </header>
 
 ${function* positionViews() {
-    let count = 0
     for (let position of positions) {
+        let count = 0
         yield html`<div class="grid grid-center pb-1">`
         yield position.map((_) => {
             let player = inPlayPlayers.find(x => count === x.status.position)
