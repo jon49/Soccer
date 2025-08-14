@@ -61,11 +61,12 @@ export default async function render(query: any) {
                     return html`
                     <button>
                         (${playerOnDeck.name})
-                        <game-timer
+                        <span traits=game-timer
                             data-start=${playerOnDeckGameCalc.start()}
                             data-total="${playerOnDeckGameCalc.total()}"
                             $${when(isPaused, `data-static`)}>
-                            ></game-timer></button>`
+                        </span>
+                    </button>`
                 }
                 return html`<button>${position[count]}</button>`
             }
