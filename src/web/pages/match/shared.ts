@@ -314,7 +314,7 @@ export class PlayerStateView {
         )
     }
 
-    async playersInPlay() {
+    async countInPlayPlayers() {
         return this.#cache.get("playersInPlay", async () =>
             (await this.inPlayPlayers()).length
         )
@@ -326,7 +326,7 @@ export class PlayerStateView {
         )
     }
 
-    async playersOnDeck() {
+    async countPlayersOnDeck() {
         return this.#cache.get("playersOnDeck", async () => (await this.onDeckPlayers()).length)
     }
 
@@ -350,6 +350,16 @@ export class PlayerStateView {
 
     async playersNotPlaying() {
         return this.#cache.get("playersNotPlaying", async () => (await this.notPlayingPlayers()).length)
+    }
+
+    isInPlayersFull() {
+        return this.#cache.get("isInPlayersFull", async () => {
+            let countPlayersOnDeck = await this.countPlayersOnDeck()
+            let countInPlayPlayers = await this.countInPlayPlayers()
+            let totalPositions = (await this.positions()).positions.flat().length
+            debugger;
+            return countInPlayPlayers + countPlayersOnDeck >= totalPositions
+        })
     }
 
     static async create(query: any) {

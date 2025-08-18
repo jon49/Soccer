@@ -11,10 +11,13 @@ export async function outPlayersView(o: PlayerStateView) {
     return html`
 <h3 id=out-players>Out</h3>
 
-<ul class=list>
+<ul id=out-players-view class=list>
+    ${outPlayers.map(x => {
 
-    ${outPlayers.map(x => html`
-<li>
+    let outPlayerId = `out-player-${x.playerId}`
+
+    return html`
+<li id="${outPlayerId}">
     <form
         method=post
         action="/web/match?$${queryTeamGame}&playerId=$${x.playerId}&handler=notPlaying"
@@ -23,14 +26,17 @@ export async function outPlayersView(o: PlayerStateView) {
         <button>X</button>
     </form>
     <form
-        action="/web/match?$${queryTeamGame}&playerId=${x.playerId}&handler=playerSwap"
-        hf-target="#dialogs" >
+        action="/web/match?$${queryTeamGame}&playerId=${x.playerId}&handler=playerOnDeck"
+        hf-target="#${outPlayerId}"
+        hf-swap=outerHTML
+        >
         <button>${x.name}</button>
     </form>
     <span data-total="${x.calc.total()}" data-static>
         00:00
     </span>
-</li>`)}
+</li>`
+})}
 
 </ul>`
 }

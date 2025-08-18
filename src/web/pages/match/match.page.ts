@@ -7,6 +7,9 @@ import { swapAll } from "./player-swap.js"
 import targetPositionView from "./_target-position-view.js"
 import targetPosition from "./player-target-position.js"
 import { activityPlayerSelectorView } from "./_activity-position-view.js"
+import inPlayPlayersView from "./_in-play-players-view.js"
+import html from "html-template-tag-stream"
+import { outPlayersView } from "./_out-player-view.js"
 
 const {
     layout,
@@ -89,24 +92,36 @@ const postHandlers : RoutePostHandler = {
         return { body: null, status: 204 }
     },
 
-    async swap ({ query }) {
+    async swap({ query }) {
+        let o = await validateObject(query, queryTeamIdGameIdValidator)
         // The query contains the player ID and so will only swap one player.
         await swapAll(query)
 
-        return playerStateView(await PlayerStateView.create(query))
+        return {
+            body: await inPlayPlayersView(new PlayerStateView(o.teamId, o.gameId)),
+            events: {
+                updatedOutPlayers: true
+            }
+        }
     },
 
-    async swapAll ({ query }) {
+    async swapAll({ query }) {
+        let o = await validateObject(query, queryTeamIdGameIdValidator)
         await swapAll(query)
 
-        return playerStateView(await PlayerStateView.create(query))
+        return inPlayPlayersView(new PlayerStateView(o.teamId, o.gameId))
     },
 
     async updateUserPosition({ query }) {
-        let { position } = await validateObject(query, queryPositionUpdateValidator)
-        await targetPosition(query, position)
+        let o = await validateObject(query, queryPositionUpdateValidator)
+        await targetPosition(query, o.position)
 
-        return playerStateView(await PlayerStateView.create(query))
+        return {
+            body: await inPlayPlayersView(new PlayerStateView(o.teamId, o.gameId)),
+            events: {
+                updatedOutPlayers: true
+            }
+        }
     },
 
     async playerNowOut ({ query }) {
@@ -122,17 +137,28 @@ const postHandlers : RoutePostHandler = {
         calc.playerOut()
         await calc.save(teamId)
 
-        return playerStateView(await PlayerStateView.create(query))
+        return {
+            body: await inPlayPlayersView(new PlayerStateView(teamId, gameId)),
+            events: {
+                updatedOutPlayers: true,
+            },
+        }
     },
 
     async cancelOnDeck ({ query }) {
         let { teamId, playerId, gameId } = await validateObject(query, queryTeamGamePlayerValidator)
-        let [player] = await playerGameAllGet(teamId, gameId, [playerId])
+        let state = new PlayerStateView(teamId, gameId)
+        let player = await state.playerGame(playerId)
         player.status = { _: "out" }
         player.gameTime.pop()
         await playerGameSave(teamId, player)
 
-        return playerStateView(await PlayerStateView.create(query))
+        return {
+            body: await inPlayPlayersView(new PlayerStateView(teamId, gameId)),
+            events: {
+                updatedOutPlayers: true
+            }
+        }
     },
 
     async notPlaying ({ query }) {
@@ -279,6 +305,29 @@ const postHandlers : RoutePostHandler = {
 }
 
 const getHandlers : RouteGetHandler = {
+    async playerOnDeck({ query }) {
+        let { teamId, playerId, gameId } = await validateObject(query, queryTeamGamePlayerValidator)
+        let state = new PlayerStateView(teamId, gameId)
+        let player = await state.playerGame(playerId)
+        player.status = { _: "onDeck", targetPosition: null }
+        await playerGameSave(teamId, player)
+
+        debugger;
+        let isInPlayersFull = await state.isInPlayersFull()
+
+        return {
+            body: html``,
+            events: {
+                loadInPlayPlayers: isInPlayersFull,
+            },
+        }
+    },
+
+    async reloadOutPlayersView({ query }) {
+        let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
+        return outPlayersView(new PlayerStateView(teamId, gameId))
+    },
+
     async cancelSwap ({ query }) {
         return playerStateView(await PlayerStateView.create(query))
     },
@@ -289,6 +338,10 @@ const getHandlers : RouteGetHandler = {
 
     activityPlayerSelector({ query }) {
         return activityPlayerSelectorView(query)
+    },
+
+    async showInPlay({ query }) {
+        return inPlayPlayersView(new PlayerStateView(+query.teamId, +query.gameId))
     },
 
     async points({ query }) {

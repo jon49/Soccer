@@ -26,14 +26,15 @@ export default async function render(query: any) {
 
     return playerPositionsView({
         playerStateView,
+        keepOpen: true,
         title: `Swap for ${player.name}`,
-        playerView: ({ player, playerOnDeck, position, count }) => {
+        playerView: ({ player, playerOnDeck, positionName, positionIndex }) => {
             let isCurrentPlayer = player?.playerId === playerId
             return html`
             <form
                 method=post
-                action="/web/match?position=${count}&teamId=${teamId}&gameId=${gameId}&playerId=${playerId}&handler=updateUserPosition&playerSwap"
-                hf-target="#player-state"
+                action="/web/match?position=${positionIndex}&teamId=${teamId}&gameId=${gameId}&playerId=${playerId}&handler=updateUserPosition&playerSwap"
+                hf-target="#dialogs"
                 $${when(!isInPlayPlayer(playerGame), `hf-scroll-to="#out-players"`)}
                 >${
             () => {
@@ -68,7 +69,7 @@ export default async function render(query: any) {
                         </span>
                     </button>`
                 }
-                return html`<button>${position[count]}</button>`
+                return html`<button>${positionName}</button>`
             }
                 }</form>
             `
