@@ -44,6 +44,28 @@ function setPoints(f: (game: Game) => number) {
     }
 }
 
+async function inPlayerOut(state: PlayerStateView, playerId: number) {
+    let [
+        player,
+        game,
+    ] = await Promise.all([
+        state.playerGame(playerId),
+        state.game(),
+    ])
+    let gameCalc = new GameTimeCalculator(game)
+    player.status = { _: "out" }
+    let calc = new PlayerGameTimeCalculator(player, gameCalc)
+    calc.playerOut()
+    await calc.save(state.teamId)
+}
+
+async function onDeckPlayerOut(state: PlayerStateView, playerId: number) {
+    let player = await state.playerGame(playerId)
+    player.status = { _: "out" }
+    player.gameTime.pop()
+    await playerGameSave(state.teamId, player)
+}
+
 const dataNotesValidator = {
     notes: createStringInfinity("Notes")
 }
@@ -112,6 +134,30 @@ const postHandlers : RoutePostHandler = {
         return inPlayPlayersView(new PlayerStateView(o.teamId, o.gameId))
     },
 
+    async allOut({ query }) {
+        let o = await validateObject(query, queryTeamIdGameIdValidator)
+        let state = new PlayerStateView(o.teamId, o.gameId)
+        let [
+            inPlayPlayers,
+            onDeckPlayers,
+        ] = await Promise.all([
+            state.inPlayPlayers(),
+            state.onDeckPlayers(),
+        ])
+
+        await Promise.all([
+            ...inPlayPlayers.map(player => inPlayerOut(state, player.playerId)),
+            ...onDeckPlayers.map(player => onDeckPlayerOut(state, player.playerId)),
+        ])
+
+        return {
+            body: html``,
+            events: {
+                updatedOutPlayers: true
+            }
+        }
+    },
+
     async updateUserPosition({ query }) {
         let o = await validateObject(query, queryPositionUpdateValidator)
         await targetPosition(query, o.position)
@@ -126,16 +172,9 @@ const postHandlers : RoutePostHandler = {
 
     async playerNowOut ({ query }) {
         let { teamId, playerId, gameId } = await validateObject(query, queryTeamGamePlayerValidator)
-        let [[p], team] = await Promise.all([
-            playerGameAllGet(teamId, gameId, [playerId]),
-            teamGet(teamId)
-        ]) 
-        let game = await required(team.games.find(x => x.id === gameId), "Could not find game!")
-        let gameCalc = new GameTimeCalculator(game)
-        p.status = { _: "out" }
-        let calc = new PlayerGameTimeCalculator(p, gameCalc)
-        calc.playerOut()
-        await calc.save(teamId)
+        let state = new PlayerStateView(teamId, gameId)
+
+        await inPlayerOut(state, playerId)
 
         return {
             body: await inPlayPlayersView(new PlayerStateView(teamId, gameId)),
@@ -148,10 +187,7 @@ const postHandlers : RoutePostHandler = {
     async cancelOnDeck ({ query }) {
         let { teamId, playerId, gameId } = await validateObject(query, queryTeamGamePlayerValidator)
         let state = new PlayerStateView(teamId, gameId)
-        let player = await state.playerGame(playerId)
-        player.status = { _: "out" }
-        player.gameTime.pop()
-        await playerGameSave(teamId, player)
+        await onDeckPlayerOut(state, playerId)
 
         return {
             body: await inPlayPlayersView(new PlayerStateView(teamId, gameId)),

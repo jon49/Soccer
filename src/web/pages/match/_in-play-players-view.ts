@@ -87,17 +87,25 @@ export default async function inPlayPlayersView(state: PlayerStateView) {
 
     let countOnDeckPlayers = playersOnDeck.length
     let onDeckWithoutPosition = playersOnDeck.filter(x => x.status.targetPosition == null)
+    let noPlayersExist = !inPlayPlayers.length && !countOnDeckPlayers
+    let playersExist = !noPlayersExist
 
     let view = playerPositionsView({
         playerStateView: state,
-        title: html`In-Play Players ${when(!inPlayPlayers.length, "(No Players) ")}
+        title: html`In-Play Players ${when(noPlayersExist, "(No Players) ")}
             ${when(countOnDeckPlayers > 0, () => html`
-    <button
-        form=post-form
-        formaction="/web/match?$${queryTeamGame}&handler=swapAll"
-        hf-target="#dialogs"
-    >Swap All</button>
-`)}`,
+<button
+    form=post-form
+    formaction="/web/match?$${queryTeamGame}&handler=swapAll"
+    hf-target="#dialogs">Swap All</button>
+`)}
+${when(playersExist, () => html`
+<button
+    form=post-form
+    formaction="/web/match?$${queryTeamGame}&handler=allOut"
+    hf-target="#dialogs">All Out</button>
+`)}
+`,
         keepOpen: true,
         playerView: ({ player, playerOnDeck: sub }) => {
             return html`
