@@ -7,8 +7,6 @@ document.head.appendChild(document.createElement('style')).textContent = `
 .game-shader {
     background: var(--game-shader-background);
     color: var(--game-shader-color);
-    padding: 0.5em;
-    border-radius: 1em;
 }
 .game-shader a {
     color: var(--game-shader-color);
@@ -47,6 +45,7 @@ class GameShader {
 
         this.el = el
         el.classList.add('game-shader')
+        el.classList.add('outline')
 
         this.update()
     }

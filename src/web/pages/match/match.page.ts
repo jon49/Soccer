@@ -182,6 +182,8 @@ const getHandlers : RouteGetHandler = {
                 .empty {
                     margin: 2rem;
                     border: 3px solid #ccc;
+                    padding: 0.5em;
+                    border-radius: 1em;
                 }
             </style>`
         let team = await teamGet(+query.teamId)
