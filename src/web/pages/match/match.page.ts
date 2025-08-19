@@ -358,7 +358,7 @@ const getHandlers : RouteGetHandler = {
         return {
             body: html``,
             events: {
-                loadInPlayPlayers: isInPlayersFull,
+                inPlayersFilled: isInPlayersFull,
             },
         }
     },

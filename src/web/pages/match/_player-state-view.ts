@@ -14,16 +14,15 @@ export default async function playerStateView(o: PlayerStateView) {
     let queryTeamGame = o.queryTeamGame
 
     return html`
-<button
+<form
     hidden
-    form=get-form
-    formaction="/web/match?${queryTeamGame}&handler=getInPlayTitle"
+    action="/web/match?${queryTeamGame}&handler=getInPlayTitle"
 
     hf-target="#in-play-title"
 
     traits=x-subscribe
     data-event="updatedOutPlayers"
-    data-match="detail: true"></button>
+    data-match="detail: true"></form>
 <h3 id="in-play-title" class=inline>${inPlayTitle(o)}</h3>
 
 <button
@@ -34,7 +33,7 @@ export default async function playerStateView(o: PlayerStateView) {
     hf-target="#dialogs"
 
     traits=x-subscribe
-    data-event="loadInPlayPlayers"
+    data-event="inPlayersFilled"
     data-match="detail: true"
     >
 </button>
