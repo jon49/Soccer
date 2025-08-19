@@ -19,6 +19,7 @@ function playerView(
         player: GamePlayerStatusView<InPlayPlayer>,
         isGameInPlay: boolean,
         queryTeamGame: string) {
+
     return html`
     <li>
         <form

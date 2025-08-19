@@ -1,6 +1,6 @@
 import { RoutePostHandler, RoutePage, RouteGetHandler } from "@jon49/sw/routes.middleware.js"
 import { Game } from "../../server/db.js"
-import { GameTimeCalculator, PlayerGameTimeCalculator, PlayerStateView, isInPlayPlayer } from "./shared.js"
+import { GameTimeCalculator, PlayerGameTimeCalculator, PlayerStateView, inPlayTitle, isInPlayPlayer } from "./shared.js"
 import render, { getPointsView } from "./_game-play-view.js"
 import playerStateView from "./_player-state-view.js"
 import { swapAll } from "./player-swap.js"
@@ -115,7 +115,7 @@ const postHandlers : RoutePostHandler = {
     },
 
     async swap({ query }) {
-        let o = await validateObject(query, queryTeamIdGameIdValidator)
+        let o = await validateObject(query, queryTeamGamePlayerValidator)
         // The query contains the player ID and so will only swap one player.
         await swapAll(query)
 
@@ -131,7 +131,12 @@ const postHandlers : RoutePostHandler = {
         let o = await validateObject(query, queryTeamIdGameIdValidator)
         await swapAll(query)
 
-        return inPlayPlayersView(new PlayerStateView(o.teamId, o.gameId))
+        return {
+            body: await inPlayPlayersView(new PlayerStateView(o.teamId, o.gameId)),
+            events: {
+                updatedOutPlayers: true
+            }
+        }
     },
 
     async allOut({ query }) {
@@ -348,7 +353,6 @@ const getHandlers : RouteGetHandler = {
         player.status = { _: "onDeck", targetPosition: null }
         await playerGameSave(teamId, player)
 
-        debugger;
         let isInPlayersFull = await state.isInPlayersFull()
 
         return {
@@ -357,6 +361,11 @@ const getHandlers : RouteGetHandler = {
                 loadInPlayPlayers: isInPlayersFull,
             },
         }
+    },
+
+    async getInPlayTitle({ query }) {
+        let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
+        return inPlayTitle(new PlayerStateView(teamId, gameId))
     },
 
     async reloadOutPlayersView({ query }) {

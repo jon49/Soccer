@@ -26,7 +26,11 @@ export async function playerPositionsView({
     slot,
     title,
 }: RenderArgs) {
-    let [inPlayPlayers, onDeckPlayers, { positions }] = await Promise.all([
+    let [
+        inPlayPlayers,
+        onDeckPlayers,
+        { positions }
+    ] = await Promise.all([
         playerStateView.inPlayPlayers(),
         playerStateView.onDeckPlayers(),
         playerStateView.positions(),

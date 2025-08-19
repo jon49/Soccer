@@ -1,15 +1,30 @@
 import html from "html-template-tag-stream"
-import { PlayerStateView } from "./shared.js"
+import { inPlayTitle, PlayerStateView } from "./shared.js"
 import { outPlayersView } from "./_out-player-view.js"
 import { when } from "@jon49/sw/utils.js"
 
 export default async function playerStateView(o: PlayerStateView) {
-    let notPlayingPlayers = await o.notPlayingPlayers()
-    let notPlaying = await o.playersNotPlaying()
+    let [
+        notPlayingPlayers,
+        countNotPlayingPlayers,
+    ] = await Promise.all([
+        o.notPlayingPlayers(),
+        o.countNotPlayingPlayers(),
+    ])
     let queryTeamGame = o.queryTeamGame
 
     return html`
-<h3 class=inline>In-Play</h3>
+<button
+    hidden
+    form=get-form
+    formaction="/web/match?${queryTeamGame}&handler=getInPlayTitle"
+
+    hf-target="#in-play-title"
+
+    traits=x-subscribe
+    data-event="updatedOutPlayers"
+    data-match="detail: true"></button>
+<h3 id="in-play-title" class=inline>${inPlayTitle(o)}</h3>
 
 <button
     hidden
@@ -46,7 +61,7 @@ export default async function playerStateView(o: PlayerStateView) {
 </button>
 <div id=out-view>${outPlayersView(o)}</div>
 
-${when(notPlaying, () => html`
+${when(countNotPlayingPlayers, () => html`
 <h3>Not Playing</h3>
 <ul class=list>
     ${notPlayingPlayers.map(x => html`

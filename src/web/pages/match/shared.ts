@@ -6,6 +6,7 @@ import { tail } from "../../server/utils.js"
 import { required } from "@jon49/sw/validation.js"
 import { queryTeamIdGameIdValidator } from "../../server/validators.js"
 import { DbCache } from "@jon49/sw/utils.js"
+import html from "html-template-tag-stream"
 
 export interface GamePlayerStatusView<T extends PlayerStatus> extends PlayerGameStatus<T> {
     name: string
@@ -17,6 +18,7 @@ export async function createPlayersView<T extends PlayerStatus>(
         teamPlayers: TeamPlayer[],
         players: PlayerGame[],
         game: Game) : Promise<GamePlayerStatusView<T>[]> {
+
     let typedPlayers_ = players.filter(filter)
     let typedPlayers = await Promise.all(typedPlayers_.map(async x => {
         let calc =
@@ -25,6 +27,7 @@ export async function createPlayersView<T extends PlayerStatus>(
         return { name, calc, ...x }
     }))
     return typedPlayers
+
 }
 
 export function isInPlayPlayer(x: PlayerGame) : x is PlayerGameStatus<InPlayPlayer> {
@@ -124,7 +127,14 @@ export class PlayerGameTimeCalculator {
     }
 
     async save(teamId: number) {
-        await playerGameSave(teamId, this.player)
+        await playerGameSave(teamId, {
+            playerId: this.player.playerId,
+            gameId: this.player.gameId,
+            gameTime: this.player.gameTime,
+            _rev: this.player._rev,
+            stats: this.player.stats,
+            status: this.player.status,
+        })
     }
 }
 
@@ -322,7 +332,11 @@ export class PlayerStateView {
 
     async onDeckPlayers() {
         return this.#cache.get("onDeckPlayers", async () =>
-            createPlayersView(isOnDeckPlayer, (await this.team()).players, (await this.gamePlayers()), await this.game())
+            createPlayersView(
+                isOnDeckPlayer,
+                await this.players(),
+                await this.gamePlayers(),
+                await this.game())
         )
     }
 
@@ -348,7 +362,7 @@ export class PlayerStateView {
         )
     }
 
-    async playersNotPlaying() {
+    async countNotPlayingPlayers() {
         return this.#cache.get("playersNotPlaying", async () => (await this.notPlayingPlayers()).length)
     }
 
@@ -357,7 +371,6 @@ export class PlayerStateView {
             let countPlayersOnDeck = await this.countPlayersOnDeck()
             let countInPlayPlayers = await this.countInPlayPlayers()
             let totalPositions = (await this.positions()).positions.flat().length
-            debugger;
             return countInPlayPlayers + countPlayersOnDeck >= totalPositions
         })
     }
@@ -369,3 +382,7 @@ export class PlayerStateView {
 
 }
 
+export async function inPlayTitle(o: PlayerStateView) {
+    let countInPlayPlayers = await o.countInPlayPlayers()
+    return html`In-Play (${countInPlayPlayers})`
+}
