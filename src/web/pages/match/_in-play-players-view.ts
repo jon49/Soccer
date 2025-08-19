@@ -75,16 +75,16 @@ export default async function inPlayPlayersView(state: PlayerStateView) {
     let [
         isGameInPlay,
         inPlayPlayers,
-        queryTeamGame,
         gameCalc,
         playersOnDeck
     ] = await Promise.all([
         state.isGameInPlay(),
         state.inPlayPlayers(),
-        state.queryTeamGame,
         state.gameCalc(),
         state.onDeckPlayers()
     ])
+
+    let queryTeamGame = state.queryTeamGame
 
     let countOnDeckPlayers = playersOnDeck.length
     let onDeckWithoutPosition = playersOnDeck.filter(x => x.status.targetPosition == null)
@@ -126,7 +126,13 @@ ${when(playersExist, () => html`
             }</ul>`
         },
         slot: onDeckWithoutPosition.length
-            ?  html`<h3>On Deck</h3>
+            ?  html`<h3 class=inline>On Deck</h3>
+            <button
+                class="condense-padding"
+                form="get-form"
+                formaction="/web/match?${queryTeamGame}&handler=rapidFire"
+                hf-target="#dialogs">Rapid Fire</button>
+
             <ul class=list>
                 ${onDeckWithoutPosition.map(x => html`
                 <li id="on-deck-${x.playerId}">

@@ -10,6 +10,7 @@ import { activityPlayerSelectorView } from "./_activity-position-view.js"
 import inPlayPlayersView from "./_in-play-players-view.js"
 import html from "html-template-tag-stream"
 import { outPlayersView } from "./_out-player-view.js"
+import * as db from "../../server/db.js"
 
 const {
     layout,
@@ -100,6 +101,105 @@ async function handlePlayerStatUpdated(data: PlayerStatUpdatedArgs) {
     }
 }
 
+const getHandlers : RouteGetHandler = {
+    async playerOnDeck({ query }) {
+        let { teamId, playerId, gameId } = await validateObject(query, queryTeamGamePlayerValidator)
+        let state = new PlayerStateView(teamId, gameId)
+        let player = await state.playerGame(playerId)
+        player.status = { _: "onDeck", targetPosition: null }
+        await playerGameSave(teamId, player)
+
+        let isInPlayersFull = await state.isInPlayersFull()
+
+        return {
+            body: html``,
+            events: {
+                inPlayersFilled: isInPlayersFull,
+            },
+        }
+    },
+
+    async getInPlayTitle({ query }) {
+        let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
+        return inPlayTitle(new PlayerStateView(teamId, gameId))
+    },
+
+    async reloadOutPlayersView({ query }) {
+        let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
+        return outPlayersView(new PlayerStateView(teamId, gameId))
+    },
+
+    async cancelSwap ({ query }) {
+        return playerStateView(await PlayerStateView.create(query))
+    },
+
+    async playerSwap({ query }) {
+        return targetPositionView(query)
+    },
+
+    async rapidFire({ query }) {
+        console.log("rapidFire")
+        let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
+        let state = new PlayerStateView(teamId, gameId)
+        let onDeckPlayers = await state.onDeckPlayers()
+
+        let firstPlayer = onDeckPlayers.find(x => x.status.targetPosition == null)
+        if (firstPlayer) {
+            await db.set("rapidFire", true, false)
+            return targetPositionView({ teamId, gameId, playerId: firstPlayer.playerId })
+        }
+
+        await db.set("rapidFire", false, false)
+        return inPlayPlayersView(state)
+    },
+
+    activityPlayerSelector({ query }) {
+        return activityPlayerSelectorView(query)
+    },
+
+    async showInPlay({ query }) {
+        return inPlayPlayersView(new PlayerStateView(+query.teamId, +query.gameId))
+    },
+
+    async points({ query }) {
+        let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
+        let team = await teamGet(teamId)
+        let game = await required(team.games.find(x => x.id === gameId), "Could not find game!")
+
+        return getPointsView(game.points)
+    },
+
+    async get({ query }) {
+        let head = `
+            <style>
+                .flex {
+                    display: flex;
+                    gap: 1rem;
+                }
+                .flex > * {
+                    margin: auto;
+                }
+                .empty {
+                    margin: 2rem;
+                    border: 3px solid #ccc;
+                }
+            </style>`
+        let team = await teamGet(+query.teamId)
+        let game = await required(team.games.find(x => x.id === +query.gameId), `Could not find game! ${query.gameId}`)
+        return layout({
+            head,
+            main: await render(query),
+            nav: teamNav(+query.teamId),
+            scripts: [
+                "/web/js/game-timer.js",
+                "/web/js/game-shader.js",
+                "/web/js/elastic-textarea.js",
+            ],
+            title: `Match — ${team.name} VS ${game.opponent}`,
+        })
+    }
+}
+
 const postHandlers : RoutePostHandler = {
     oPointsDec: setPoints(game => --game.opponentPoints),
     oPointsInc: setPoints(game => ++game.opponentPoints),
@@ -122,7 +222,7 @@ const postHandlers : RoutePostHandler = {
         return {
             body: await inPlayPlayersView(new PlayerStateView(o.teamId, o.gameId)),
             events: {
-                updatedOutPlayers: true
+                updatedOutPlayers: true,
             }
         }
     },
@@ -167,10 +267,17 @@ const postHandlers : RoutePostHandler = {
         let o = await validateObject(query, queryPositionUpdateValidator)
         await targetPosition(query, o.position)
 
+        let rapidFire = await db.get("rapidFire")
+
+        if (rapidFire) {
+            // @ts-expect-error
+            return getHandlers.rapidFire({ query })
+        }
+
         return {
             body: await inPlayPlayersView(new PlayerStateView(o.teamId, o.gameId)),
             events: {
-                updatedOutPlayers: true
+                updatedOutPlayers: true,
             }
         }
     },
@@ -343,89 +450,6 @@ const postHandlers : RoutePostHandler = {
         }
     }
 
-}
-
-const getHandlers : RouteGetHandler = {
-    async playerOnDeck({ query }) {
-        let { teamId, playerId, gameId } = await validateObject(query, queryTeamGamePlayerValidator)
-        let state = new PlayerStateView(teamId, gameId)
-        let player = await state.playerGame(playerId)
-        player.status = { _: "onDeck", targetPosition: null }
-        await playerGameSave(teamId, player)
-
-        let isInPlayersFull = await state.isInPlayersFull()
-
-        return {
-            body: html``,
-            events: {
-                inPlayersFilled: isInPlayersFull,
-            },
-        }
-    },
-
-    async getInPlayTitle({ query }) {
-        let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
-        return inPlayTitle(new PlayerStateView(teamId, gameId))
-    },
-
-    async reloadOutPlayersView({ query }) {
-        let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
-        return outPlayersView(new PlayerStateView(teamId, gameId))
-    },
-
-    async cancelSwap ({ query }) {
-        return playerStateView(await PlayerStateView.create(query))
-    },
-
-    async playerSwap({ query }) {
-        return targetPositionView(query)
-    },
-
-    activityPlayerSelector({ query }) {
-        return activityPlayerSelectorView(query)
-    },
-
-    async showInPlay({ query }) {
-        return inPlayPlayersView(new PlayerStateView(+query.teamId, +query.gameId))
-    },
-
-    async points({ query }) {
-        let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
-        let team = await teamGet(teamId)
-        let game = await required(team.games.find(x => x.id === gameId), "Could not find game!")
-
-        return getPointsView(game.points)
-    },
-
-    async get({ query }) {
-        let head = `
-            <style>
-                .flex {
-                    display: flex;
-                    gap: 1rem;
-                }
-                .flex > * {
-                    margin: auto;
-                }
-                .empty {
-                    margin: 2rem;
-                    border: 3px solid #ccc;
-                }
-            </style>`
-        let team = await teamGet(+query.teamId)
-        let game = await required(team.games.find(x => x.id === +query.gameId), `Could not find game! ${query.gameId}`)
-        return layout({
-            head,
-            main: await render(query),
-            nav: teamNav(+query.teamId),
-            scripts: [
-                "/web/js/game-timer.js",
-                "/web/js/game-shader.js",
-                "/web/js/elastic-textarea.js",
-            ],
-            title: `Match — ${team.name} VS ${game.opponent}`,
-        })
-    }
 }
 
 const route : RoutePage = {
