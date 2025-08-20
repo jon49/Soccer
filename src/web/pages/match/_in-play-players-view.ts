@@ -111,12 +111,14 @@ ${when(playersExist, () => html`
     form="get-form"
     formaction="/web/match?teamId=1&amp;gameId=1&amp;activityId=1&amp;handler=activityPlayerSelector&amp;action=inc"
     hf-target="#dialogs"
+    aria-label="Game points ${gameCalc.game.points}"
     >${gameCalc.game.points}</button>
     VS
 <button
     form=post-form
     formaction="/web/match?$${queryTeamGame}&handler=oPointsInc"
     hf-target="this"
+    aria-label="Opponent points ${gameCalc.game.opponentPoints}"
     >${gameCalc.game.opponentPoints}</button>
 `,
         keepOpen: true,

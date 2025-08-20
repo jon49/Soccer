@@ -43,7 +43,7 @@ export default async function playerStateView(o: PlayerStateView) {
         form=get-form
         formaction="/web/match?${queryTeamGame}&handler=showInPlay"
         hf-target="#dialogs"
-        >Show Players</button>
+        >Show Game Play View</button>
 </div>
 
 <button
