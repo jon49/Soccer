@@ -76,12 +76,16 @@ export default async function inPlayPlayersView(state: PlayerStateView) {
         isGameInPlay,
         inPlayPlayers,
         gameCalc,
-        playersOnDeck
+        playersOnDeck,
+        isGameEnded,
+        isGamePaused,
     ] = await Promise.all([
         state.isGameInPlay(),
         state.inPlayPlayers(),
         state.gameCalc(),
-        state.onDeckPlayers()
+        state.onDeckPlayers(),
+        state.isGameEnded(),
+        state.isGamePaused(),
     ])
 
     let queryTeamGame = state.queryTeamGame
@@ -94,7 +98,9 @@ export default async function inPlayPlayersView(state: PlayerStateView) {
     let view = playerPositionsView({
         playerStateView: state,
         title: html`In-Play Players ${when(noPlayersExist, "(No Players) ")}
-            ${when(countOnDeckPlayers > 0, () => html`
+<div class=flex>
+<div>
+${when(countOnDeckPlayers > 0, () => html`
 <button
     form=post-form
     formaction="/web/match?$${queryTeamGame}&handler=swapAll"
@@ -106,7 +112,34 @@ ${when(playersExist, () => html`
     formaction="/web/match?$${queryTeamGame}&handler=allOut"
     hf-target="#dialogs">All Out</button>
 `)}
-&nbsp;&nbsp;
+</div>
+
+<div>
+    ${when(!isGameEnded, () => html`
+    <button id=game-status
+        form=post-form
+        formaction="/web/match?$${queryTeamGame}&handler=${isGameInPlay ? "pauseGame" : "startGame"}"
+        hf-target="#dialogs" >
+        ${isGameInPlay ? "Pause" : "Start"}
+    </button>`)}
+
+    <span traits="game-timer"
+        $${when(isGamePaused, () => `data-flash data-start="${gameCalc.getLastEndTime()}"`)}
+        $${when(isGameInPlay, `data-start="${gameCalc.getLastStartTime()}" data-total="${gameCalc.total()}"`)}
+        $${when(isGameEnded, `data-static data-total="${gameCalc.total()}"`)}>
+        00:00
+    </span>
+
+    <button
+        form=post-form
+        formaction="/web/match?$${queryTeamGame}&handler=${isGameEnded ? "restartGame" : "endGame"}"
+        hf-target="#dialogs"
+        >
+        ${isGameEnded ? "Restart" : "End"}
+    </button>
+</div>
+
+<div>
 <button
     form="get-form"
     formaction="/web/match?teamId=1&amp;gameId=1&amp;activityId=1&amp;handler=activityPlayerSelector&amp;action=inc"
@@ -120,7 +153,8 @@ ${when(playersExist, () => html`
     hf-target="this"
     aria-label="Opponent points ${gameCalc.game.opponentPoints}"
     >${gameCalc.game.opponentPoints}</button>
-`,
+</div>
+</div>`,
         keepOpen: true,
         playerView: ({ player, playerOnDeck: sub }) => {
             return html`

@@ -15,19 +15,13 @@ export default async function render(query: any) {
             notes,
             game,
             team,
-            gameCalc,
-            isGameInPlay,
             isGameEnded,
-            isGamePaused,
             { stats }
         ] = await Promise.all([
             o.notes(),
             o.game(),
             o.team(),
-            o.gameCalc(),
-            o.isGameInPlay(),
             o.isGameEnded(),
-            o.isGamePaused(),
             o.stats()
         ]),
         queryTeamGame = o.queryTeamGame,
@@ -37,32 +31,6 @@ export default async function render(query: any) {
 <h2>${team.name} ($${game.home ? "Home" : "Away"}) vs ${game.opponent}</h2>
 
 <div class="pb-1">
-${when(!isGameEnded, () => html`
-<form id=game-status
-      class=inline
-      method=post
-      action="/web/match?$${queryTeamGame}&handler=${isGameInPlay ? "pauseGame" : "startGame"}"
-      hf-target=main >
-    <button class=condense-padding>${isGameInPlay ? "Pause" : "Start"}</button>
-</form>`)}
-
-<span traits="game-timer"
-    $${when(isGamePaused, () => `data-flash data-start="${gameCalc.getLastEndTime()}"`)}
-    $${when(isGameInPlay, `data-start="${gameCalc.getLastStartTime()}" data-total="${gameCalc.total()}"`)}
-    $${when(isGameEnded, `data-static data-total="${gameCalc.total()}"`)}>
-    00:00
-</span>
-
-<form
-    class=inline
-    method=post
-    action="/web/match?$${queryTeamGame}&handler=${isGameEnded ? "restartGame" : "endGame"}"
-    hf-target="main"
-    >
-    <button class=condense-padding>${isGameEnded ? "Restart" : "End"}</button>
-</form>
-</div>
-
 
 <ul class=list>
     <li>

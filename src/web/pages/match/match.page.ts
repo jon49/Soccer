@@ -344,7 +344,7 @@ const postHandlers : RoutePostHandler = {
             return calc.save(teamId)
         }))
 
-        return render(query)
+        return inPlayPlayersView(new PlayerStateView(teamId, gameId))
     },
 
     async pauseGame ({ query }) {
@@ -367,7 +367,7 @@ const postHandlers : RoutePostHandler = {
             return calc.save(teamId)
         }).filter(x => x))
 
-        return render(query)
+        return inPlayPlayersView(new PlayerStateView(teamId, gameId))
     },
 
     async endGame({ query }) {
@@ -392,7 +392,7 @@ const postHandlers : RoutePostHandler = {
                 return playerCalc.save(teamId)
             }))
 
-        return render(query)
+        return inPlayPlayersView(new PlayerStateView(teamId, gameId))
     },
 
     async restartGame({ query }) {
@@ -402,7 +402,7 @@ const postHandlers : RoutePostHandler = {
         game.status = "paused"
         await teamSave(team)
 
-        return render(query)
+        return inPlayPlayersView(new PlayerStateView(teamId, gameId))
     },
 
     async setPlayerStat(o) {
