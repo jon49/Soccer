@@ -106,6 +106,18 @@ ${when(playersExist, () => html`
     formaction="/web/match?$${queryTeamGame}&handler=allOut"
     hf-target="#dialogs">All Out</button>
 `)}
+&nbsp;&nbsp;
+<button
+    form="get-form"
+    formaction="/web/match?teamId=1&amp;gameId=1&amp;activityId=1&amp;handler=activityPlayerSelector&amp;action=inc"
+    hf-target="#dialogs"
+    >${gameCalc.game.points}</button>
+    VS
+<button
+    form=post-form
+    formaction="/web/match?$${queryTeamGame}&handler=oPointsInc"
+    hf-target="this"
+    >${gameCalc.game.opponentPoints}</button>
 `,
         keepOpen: true,
         playerView: ({ player, playerOnDeck: sub }) => {
@@ -115,7 +127,7 @@ ${when(playersExist, () => html`
                 data-value="${player?.calc.currentTotal()}"
                 class="list m-0
             ${
-            () => 
+            () =>
                 player && sub
                     ? html`">${twoPlayerView(player, sub, isGameInPlay, queryTeamGame)}`
                 : player
