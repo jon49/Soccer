@@ -381,8 +381,3 @@ export class PlayerStateView {
     }
 
 }
-
-export async function inPlayTitle(o: PlayerStateView) {
-    let countInPlayPlayers = await o.countInPlayPlayers()
-    return html`In-Play (${countInPlayPlayers})`
-}

@@ -1,6 +1,6 @@
 import { RoutePostHandler, RoutePage, RouteGetHandler } from "@jon49/sw/routes.middleware.js"
 import { Game } from "../../server/db.js"
-import { GameTimeCalculator, PlayerGameTimeCalculator, PlayerStateView, inPlayTitle, isInPlayPlayer } from "./shared.js"
+import { GameTimeCalculator, PlayerGameTimeCalculator, PlayerStateView, isInPlayPlayer } from "./shared.js"
 import render, { getPointsView } from "./_game-play-view.js"
 import playerStateView from "./_player-state-view.js"
 import { swapAll } from "./player-swap.js"
@@ -117,11 +117,6 @@ const getHandlers : RouteGetHandler = {
                 inPlayersFilled: isInPlayersFull,
             },
         }
-    },
-
-    async getInPlayTitle({ query }) {
-        let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
-        return inPlayTitle(new PlayerStateView(teamId, gameId))
     },
 
     async reloadOutPlayersView({ query }) {
