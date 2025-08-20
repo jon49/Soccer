@@ -6,7 +6,6 @@ import { tail } from "../../server/utils.js"
 import { required } from "@jon49/sw/validation.js"
 import { queryTeamIdGameIdValidator } from "../../server/validators.js"
 import { DbCache } from "@jon49/sw/utils.js"
-import html from "html-template-tag-stream"
 
 export interface GamePlayerStatusView<T extends PlayerStatus> extends PlayerGameStatus<T> {
     name: string
