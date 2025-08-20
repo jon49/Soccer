@@ -442,7 +442,7 @@ const postHandlers : RoutePostHandler = {
         })
 
         return {
-            body: null,
+            body: await inPlayPlayersView(new PlayerStateView(teamId, gameId)),
             status: 204,
             events: {
                 playerStatUpdated: {
