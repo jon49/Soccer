@@ -73,7 +73,7 @@ const render = async (
                         formmethod=get
                         hidden
 
-                        traits=x-subscribe
+                        traits=x-on
                         data-event="hf:completed"
                         data-match="detail: {method:'post'}"
 

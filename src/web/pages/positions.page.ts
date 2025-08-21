@@ -174,7 +174,7 @@ async function getPositionTemplates(teamId: number) {
                 action="/web/positions?handler=getTemplates&teamId=${teamId}"
                 onchange="this.requestSubmit()"
 
-                traits=x-subscribe
+                traits=x-on
                 data-onload
 
                 hf-target="#templates"

@@ -6,6 +6,7 @@ import { tail } from "../../server/utils.js"
 import { required } from "@jon49/sw/validation.js"
 import { queryTeamIdGameIdValidator } from "../../server/validators.js"
 import { DbCache } from "@jon49/sw/utils.js"
+import html from "html-template-tag-stream"
 
 export interface GamePlayerStatusView<T extends PlayerStatus> extends PlayerGameStatus<T> {
     name: string
@@ -379,4 +380,53 @@ export class PlayerStateView {
         return new PlayerStateView(teamId, gameId)
     }
 
+}
+
+export async function* positionPlayersView(
+    state: PlayerStateView,
+    playerView: (o: PlayerViewProps) => Promise<AsyncGenerator<any, void, unknown>> | AsyncGenerator<any, void, unknown>) {
+    let [
+        inPlayPlayers,
+        onDeckPlayers,
+        { positions }
+    ] = await Promise.all([
+        state.inPlayPlayers(),
+        state.onDeckPlayers(),
+        state.positions(),
+    ])
+
+    let positionIndex = 0
+    for (let position of positions) {
+        let count = 0
+        yield html`<div class="grid grid-center pb-1">`
+        yield position.map((_, index) => {
+            let player = inPlayPlayers.find(x => positionIndex === x.status.position)
+            let playerOnDeck = onDeckPlayers.find(x => positionIndex === x.status.targetPosition)
+            let row = playerView({
+                player,
+                playerOnDeck,
+                rowIndex: count,
+                position,
+                columnIndex: index,
+                positionIndex,
+                positionName: position[index],
+                state
+            })
+            count++
+            positionIndex++
+            return row
+        })
+        yield html`</div>`
+    }
+}
+
+interface PlayerViewProps {
+    rowIndex: number
+    player: GamePlayerStatusView<InPlayPlayer> | undefined
+    playerOnDeck: GamePlayerStatusView<OnDeckPlayer> | undefined
+    columnIndex: number
+    position: string[]
+    positionIndex: number
+    positionName: string
+    state: PlayerStateView
 }

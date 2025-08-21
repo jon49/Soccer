@@ -4,7 +4,7 @@ import { when } from "../../server/html.js"
 import { queryTeamIdGameIdValidator } from "../../server/validators.js"
 import { createIdNumber } from "@jon49/sw/validation.js"
 import { validateObject } from "promise-validation"
-import { playerPositionsView } from "./_player-position-view.js"
+import { dialogPlayerPositionsView } from "./_player-position-view.js"
 
 const querySwapValidator = {
     ...queryTeamIdGameIdValidator,
@@ -24,7 +24,7 @@ export default async function render(query: any) {
 
     let gameTimeCalculator = new GameTimeCalculator(game)
 
-    return playerPositionsView({
+    return dialogPlayerPositionsView({
         playerStateView,
         keepOpen: true,
         title: `Swap for ${player.name}`,

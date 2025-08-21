@@ -1,75 +1,9 @@
 import html from "html-template-tag-stream"
-import { GamePlayerStatusView, PlayerStateView } from "./shared.js"
-import { InPlayPlayer, OnDeckPlayer } from "../../server/db.js"
+import { PlayerStateView } from "./shared.js"
 import { when } from "@jon49/sw/utils.js"
-import { playerPositionsView } from "./_player-position-view.js"
-
-function twoPlayerView(
-        player: GamePlayerStatusView<InPlayPlayer>,
-        sub: GamePlayerStatusView<OnDeckPlayer>,
-        isGameInPlay: boolean,
-        queryTeamGame: string
-) {
-    return html`
-${playerView(player, isGameInPlay, queryTeamGame)}
-${subPlayerView(sub, queryTeamGame)}`
-}
-
-function playerView(
-        player: GamePlayerStatusView<InPlayPlayer>,
-        isGameInPlay: boolean,
-        queryTeamGame: string) {
-
-    return html`
-    <li>
-        <form
-            action="/web/match?$${queryTeamGame}&playerId=${player?.playerId}&handler=playerSwap"
-            hf-target="#dialogs" >
-            <button>${player?.name}</button>
-        </form>
-        <span traits="game-timer"
-            data-start="${player.calc.getLastStartTime()}"
-            data-total="${player.calc.total()}"
-            ${when(!isGameInPlay, "data-static")}>
-            00:00
-        </span>
-        <form
-            method=post
-            action="/web/match?${queryTeamGame}&playerId=${player.playerId}&handler=playerNowOut"
-            hf-target="#dialogs"
-            >
-            <button>X</button>
-        </form>
-    </li>`
-}
-
-function subPlayerView(
-        sub: GamePlayerStatusView<OnDeckPlayer>,
-        queryTeamGame: string) {
-    return html`
-<li>
-    <form
-        method=post
-        action="/web/match?$${queryTeamGame}&playerId=${sub.playerId}&handler=swap"
-        hf-target="#dialogs"
-        >
-        <button>(${sub.name})</button>
-    </form>
-    <span traits="game-timer"
-        data-start="${sub.calc.getLastStartTime()}"
-        data-total="${sub.calc.total()}"
-        data-static>
-    00:00
-    </span>
-    <form
-        method=post
-        action="/web/match?$${queryTeamGame}&playerId=${sub.playerId}&handler=cancelOnDeck"
-        hf-target="#dialogs"
-        >
-        <button class=danger>X</button>
-    </form>
-</li>`
-}
+import { dialogPlayerPositionsView } from "./_player-position-view.js"
+import { onDeckView } from "./_on-deck-view.js"
+import { outPlayersView } from "./_out-player-view.js"
 
 export default async function inPlayPlayersView(state: PlayerStateView) {
     let [
@@ -91,13 +25,12 @@ export default async function inPlayPlayersView(state: PlayerStateView) {
     let queryTeamGame = state.queryTeamGame
 
     let countOnDeckPlayers = playersOnDeck.length
-    let onDeckWithoutPosition = playersOnDeck.filter(x => x.status.targetPosition == null)
     let noPlayersExist = !inPlayPlayers.length && !countOnDeckPlayers
     let playersExist = !noPlayersExist
 
-    let view = playerPositionsView({
+    let view = dialogPlayerPositionsView({
         playerStateView: state,
-        title: html`In-Play Players ${when(noPlayersExist, "(No Players) ")}
+        title: html`
 <div class=flex>
 <div>
 ${when(countOnDeckPlayers > 0, () => html`
@@ -108,9 +41,13 @@ ${when(countOnDeckPlayers > 0, () => html`
 `)}
 ${when(playersExist, () => html`
 <button
+    traits="x-on"
+    data-event="updatedInPlayers"
+    data-action="this.hidden = !event.detail.count"
+
     form=post-form
     formaction="/web/match?$${queryTeamGame}&handler=allOut"
-    hf-target="#dialogs">All Out</button>
+    hf-target="this">All Out</button>
 `)}
 </div>
 
@@ -156,49 +93,70 @@ ${when(playersExist, () => html`
 </div>
 </div>`,
         keepOpen: true,
-        playerView: ({ player, playerOnDeck: sub }) => {
-            return html`
-            <ul traits="game-shader"
-                data-total="${gameCalc.currentTotal()}"
-                data-value="${player?.calc.currentTotal()}"
-                class="list m-0
-            ${
-            () =>
-                player && sub
-                    ? html`">${twoPlayerView(player, sub, isGameInPlay, queryTeamGame)}`
-                : player
-                    ? html`">${playerView(player, isGameInPlay, queryTeamGame)}`
-                : sub
-                    ? html`">${subPlayerView(sub, queryTeamGame)}`
-                : html` empty"><li></li><li></li><li></li>`
-            }</ul>`
-        },
-        slot: onDeckWithoutPosition.length
-            ?  html`<h3 class=inline>On Deck</h3>
+        playersView: inPlayPlayersView,
+        slot: [
+            html`
+            <form
+                traits="x-on"
+                data-event="updatedInPlayers"
+                action="/web/match?${queryTeamGame}&handler=inPlayerView"
+                hf-target="#in-player-view"
+                hf-swap="outerHTML"
+            ></form>
+            `
+            ,
+                html`
+            <h3
+                class="inline mt-2"
+                traits="x-on"
+                data-onload
+                data-event="onDeckListUpdated"
+                data-action="this.innerText = 'On Deck (' + Array.from($$('#on-deck-list li')).length + ')'"
+                ></h3>
             <button
                 class="condense-padding"
                 form="get-form"
                 formaction="/web/match?${queryTeamGame}&handler=rapidFire"
                 hf-target="#dialogs">Rapid Fire</button>
 
-            <ul class=list>
-                ${onDeckWithoutPosition.map(x => html`
-                <li id="on-deck-${x.playerId}">
-                    <form
-                        action="/web/match?${queryTeamGame}&playerId=${x.playerId}&handler=playerSwap"
-                        hf-target="#dialogs">
-                        <button>(${x.name})</button>
-                    </form>
-                    <form
-                        method=post
-                        action="/web/match?${queryTeamGame}&playerId=${x.playerId}&handler=cancelOnDeck"
-                        hf-target="#on-deck-${x.playerId}">
-                        <button>X</button>
-                    </form>
-                </li>
-            `)}
-            </ul>`
-            : null
+            <form
+                traits="x-on"
+                data-event="updatedOutPlayers"
+
+                action="/web/match?${queryTeamGame}&handler=onDeckList"
+                hf-target="#on-deck-list"
+                ></form>
+
+            <ul id=on-deck-list class=list>
+                ${onDeckView(state)}
+            </ul>
+            `,
+
+            html`
+            <form
+                traits="x-on"
+                data-event="updatedOutPlayers"
+
+                action="/web/match?${queryTeamGame}&handler=outPlayersList"
+                hf-target="#out-players-view"
+                ></form>
+            <details
+                class="mt-2"
+                id="out-players"
+                >
+                <summary>
+                    <h3
+                        traits="x-on"
+                        data-onload
+                        data-event="outPlayersListUpdated"
+                        data-action="this.innerText = 'Out Players (' + Array.from($$('#out-players-view li')).length + ')'"
+                    ></h3>
+                </summary>
+                <ul id=out-players-view class=list>
+                ${outPlayersView(state)}
+                </ul>
+            </details>`
+        ]
     })
 
     return view

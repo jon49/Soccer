@@ -1,6 +1,5 @@
 import html from "html-template-tag-stream"
 import { PlayerStateView } from "./shared.js"
-import { outPlayersView } from "./_out-player-view.js"
 import { when } from "@jon49/sw/utils.js"
 
 export default async function playerStateView(o: PlayerStateView) {
@@ -20,7 +19,7 @@ export default async function playerStateView(o: PlayerStateView) {
 
     hf-target="#dialogs"
 
-    traits=x-subscribe
+    traits=x-on
     data-event="inPlayersFilled"
     data-match="detail: true">
 </form>
@@ -32,20 +31,6 @@ export default async function playerStateView(o: PlayerStateView) {
         hf-target="#dialogs"
         >Show Game Play View</button>
 </div>
-
-<button
-    hidden
-    form=get-form
-    formaction="/web/match?${queryTeamGame}&handler=reloadOutPlayersView"
-
-    hf-target="#out-view"
-
-    traits=x-subscribe
-    data-event="updatedOutPlayers"
-    data-match="detail: true"
-    >
-</button>
-<div id=out-view>${outPlayersView(o)}</div>
 
 ${when(countNotPlayingPlayers, () => html`
 <h3>Not Playing</h3>

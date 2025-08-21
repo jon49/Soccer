@@ -73,7 +73,7 @@ function goalTrackingEnabledView(
     return html`
     <form id=team-points hf-target="#dialogs" hidden></form>
     <form
-        traits=x-subscribe
+        traits=x-on
         data-event="playerStatUpdated"
         data-match="detail:{statId:1}"
 

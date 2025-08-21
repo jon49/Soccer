@@ -11,6 +11,7 @@ import inPlayPlayersView from "./_in-play-players-view.js"
 import html from "html-template-tag-stream"
 import { outPlayersView } from "./_out-player-view.js"
 import * as db from "../../server/db.js"
+import { onDeckView } from "./_on-deck-view.js"
 
 const {
     layout,
@@ -102,28 +103,6 @@ async function handlePlayerStatUpdated(data: PlayerStatUpdatedArgs) {
 }
 
 const getHandlers : RouteGetHandler = {
-    async playerOnDeck({ query }) {
-        let { teamId, playerId, gameId } = await validateObject(query, queryTeamGamePlayerValidator)
-        let state = new PlayerStateView(teamId, gameId)
-        let player = await state.playerGame(playerId)
-        player.status = { _: "onDeck", targetPosition: null }
-        await playerGameSave(teamId, player)
-
-        let isInPlayersFull = await state.isInPlayersFull()
-
-        return {
-            body: html``,
-            events: {
-                inPlayersFilled: isInPlayersFull,
-            },
-        }
-    },
-
-    async reloadOutPlayersView({ query }) {
-        let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
-        return outPlayersView(new PlayerStateView(teamId, gameId))
-    },
-
     async cancelSwap ({ query }) {
         return playerStateView(await PlayerStateView.create(query))
     },
@@ -154,6 +133,26 @@ const getHandlers : RouteGetHandler = {
 
     async showInPlay({ query }) {
         return inPlayPlayersView(new PlayerStateView(+query.teamId, +query.gameId))
+    },
+
+    async outPlayersList({ query }) {
+        let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
+        return {
+            body: await outPlayersView(new PlayerStateView(teamId, gameId)),
+            events: {
+                outPlayersListUpdated: true
+            }
+        }
+    },
+
+    async onDeckList({ query }) {
+        let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
+        return {
+            body: await onDeckView(new PlayerStateView(teamId, gameId)),
+            events: {
+                onDeckListUpdated: true
+            }
+        }
     },
 
     async points({ query }) {
@@ -249,14 +248,17 @@ const postHandlers : RoutePostHandler = {
 
         await Promise.all([
             ...inPlayPlayers.map(player => inPlayerOut(state, player.playerId)),
-            ...onDeckPlayers.map(player => onDeckPlayerOut(state, player.playerId)),
+            ...onDeckPlayers
+            .filter(x => x.status.targetPosition != null)
+            .map(player => onDeckPlayerOut(state, player.playerId)),
         ])
 
         return {
-            body: html``,
             events: {
-                updatedOutPlayers: true
-            }
+                updatedOutPlayers: true,
+                updatedInPlayers: false,
+            },
+            status: 204,
         }
     },
 
@@ -279,16 +281,36 @@ const postHandlers : RoutePostHandler = {
         }
     },
 
+    async playerOnDeck({ query }) {
+        let { teamId, playerId, gameId } = await validateObject(query, queryTeamGamePlayerValidator)
+        let state = new PlayerStateView(teamId, gameId)
+        let player = await state.playerGame(playerId)
+        player.status = { _: "onDeck", targetPosition: null }
+        await playerGameSave(teamId, player)
+
+        return {
+            body: html``,
+            events: {
+                updatedOutPlayers: true,
+            }
+        }
+    },
+
     async playerNowOut ({ query }) {
         let { teamId, playerId, gameId } = await validateObject(query, queryTeamGamePlayerValidator)
         let state = new PlayerStateView(teamId, gameId)
 
         await inPlayerOut(state, playerId)
 
+        let inPlayerCount = await state.countInPlayPlayers()
+        let onDeckPlayers = await state.onDeckPlayers()
+        let totalPlayers = inPlayerCount + onDeckPlayers.filter(x => x.status.targetPosition != null).length
+
         return {
             body: await inPlayPlayersView(new PlayerStateView(teamId, gameId)),
             events: {
                 updatedOutPlayers: true,
+                updatedInPlayers: !!totalPlayers,
             },
         }
     },
@@ -299,7 +321,7 @@ const postHandlers : RoutePostHandler = {
         await onDeckPlayerOut(state, playerId)
 
         return {
-            body: await inPlayPlayersView(new PlayerStateView(teamId, gameId)),
+            body: html``,
             events: {
                 updatedOutPlayers: true
             }

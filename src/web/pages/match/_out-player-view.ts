@@ -9,34 +9,31 @@ export async function outPlayersView(o: PlayerStateView) {
     let queryTeamGame = o.queryTeamGame
 
     return html`
-<h3 id=out-players>Out</h3>
+<form id="out-players-form" method=post hf-swap=outerHTML></form>
 
-<ul id=out-players-view class=list>
     ${outPlayers.map(x => {
 
     let outPlayerId = `out-player-${x.playerId}`
 
     return html`
 <li id="${outPlayerId}">
-    <form
-        method=post
-        action="/web/match?$${queryTeamGame}&playerId=$${x.playerId}&handler=notPlaying"
-        hf-target="#player-state"
-        >
-        <button>X</button>
-    </form>
-    <form
-        action="/web/match?$${queryTeamGame}&playerId=${x.playerId}&handler=playerOnDeck"
-        hf-target="#${outPlayerId}"
-        hf-swap=outerHTML
-        >
-        <button>${x.name}</button>
-    </form>
-    <span data-total="${x.calc.total()}" data-static>
-        00:00
-    </span>
+    <div>
+        <button
+            form="out-players-form"
+            formaction="/web/match?$${queryTeamGame}&playerId=${x.playerId}&handler=playerOnDeck"
+            hf-target="#${outPlayerId}"
+        >${x.name}</button>
+    </div>
+    <div>
+        <span data-total="${x.calc.total()}" data-static>00:00</span>
+    </div>
+    <div>
+        <button
+            form="out-players-form"
+            formaction="/web/match?$${queryTeamGame}&playerId=$${x.playerId}&handler=notPlaying"
+            hf-target="#${outPlayerId}"
+        >X</button>
+    </div>
 </li>`
-})}
-
-</ul>`
+})}`
 }

@@ -18,6 +18,10 @@ body {
     margin: 0;
 }
 
+.mt-2 {
+    margin-top: 2em;
+}
+
 .w-auto {
     width: auto;
 }

@@ -26,7 +26,7 @@ async function render(query: any) {
             class=grid
             style="--grid-item-width: 150px;"
 
-            traits=x-subscribe
+            traits=x-on
             data-event="hf:completed"
             data-match="detail: {form:{id:'stat-buttons'}}"
             data-action="event.target.remove()"

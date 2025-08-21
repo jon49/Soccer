@@ -3,7 +3,7 @@ import { PlayerStateView } from "./shared.js"
 import { queryTeamIdGameIdValidator } from "../../server/validators.js"
 import { validateObject } from "promise-validation"
 import { createIdNumber, createString25 } from "@jon49/sw/validation.js"
-import { playerPositionsView } from "./_player-position-view.js"
+import { dialogPlayerPositionsView } from "./_player-position-view.js"
 
 const queryActivityValidator = {
     ...queryTeamIdGameIdValidator,
@@ -22,7 +22,7 @@ export async function activityPlayerSelectorView(query: any) {
 
     let action = `/web/match?teamId=${teamId}&gameId=${gameId}&handler=setPlayerStat`
 
-    return playerPositionsView({
+    return dialogPlayerPositionsView({
         playerStateView: o,
         keepOpen: true,
         title: `Player Goal`,
