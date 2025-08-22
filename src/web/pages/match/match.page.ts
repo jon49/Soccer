@@ -166,13 +166,6 @@ const getHandlers : RouteGetHandler = {
     async get({ query }) {
         let head = `
             <style>
-                .flex {
-                    display: flex;
-                    gap: 1rem;
-                }
-                .flex > * {
-                    margin: auto;
-                }
                 .empty {
                     margin: 2rem;
                     border: 3px solid #ccc;

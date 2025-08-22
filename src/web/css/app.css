@@ -98,6 +98,17 @@ input:indeterminate ~ .none {
   display: inline-block;
 }
 
+/** Flex **/
+
+.flex {
+    display: flex;
+    gap: 1rem;
+}
+
+.flex > * {
+    margin: auto;
+}
+
 /** List of items **/
 
 .list {
