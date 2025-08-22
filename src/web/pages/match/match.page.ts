@@ -7,7 +7,7 @@ import { swapAll } from "./player-swap.js"
 import targetPositionView from "./_target-position-view.js"
 import targetPosition from "./player-target-position.js"
 import { activityPlayerSelectorView } from "./_activity-position-view.js"
-import inPlayPlayersView from "./_in-play-players-view.js"
+import playMatchView from "./_play-match-view.js"
 import html from "html-template-tag-stream"
 import { outPlayersView } from "./_out-player-view.js"
 import * as db from "../../server/db.js"
@@ -124,7 +124,7 @@ const getHandlers : RouteGetHandler = {
         }
 
         await db.set("rapidFire", false, false)
-        return inPlayPlayersView(state)
+        return playMatchView(state)
     },
 
     activityPlayerSelector({ query }) {
@@ -132,7 +132,7 @@ const getHandlers : RouteGetHandler = {
     },
 
     async showInPlay({ query }) {
-        return inPlayPlayersView(new PlayerStateView(+query.teamId, +query.gameId))
+        return playMatchView(new PlayerStateView(+query.teamId, +query.gameId))
     },
 
     async outPlayersList({ query }) {
@@ -209,7 +209,7 @@ const postHandlers : RoutePostHandler = {
         await swapAll(query)
 
         return {
-            body: await inPlayPlayersView(new PlayerStateView(o.teamId, o.gameId)),
+            body: await playMatchView(new PlayerStateView(o.teamId, o.gameId)),
             events: {
                 updatedOutPlayers: true,
             }
@@ -221,7 +221,7 @@ const postHandlers : RoutePostHandler = {
         await swapAll(query)
 
         return {
-            body: await inPlayPlayersView(new PlayerStateView(o.teamId, o.gameId)),
+            body: await playMatchView(new PlayerStateView(o.teamId, o.gameId)),
             events: {
                 updatedOutPlayers: true
             }
@@ -267,7 +267,7 @@ const postHandlers : RoutePostHandler = {
         }
 
         return {
-            body: await inPlayPlayersView(new PlayerStateView(o.teamId, o.gameId)),
+            body: await playMatchView(new PlayerStateView(o.teamId, o.gameId)),
             events: {
                 updatedOutPlayers: true,
             }
@@ -300,7 +300,7 @@ const postHandlers : RoutePostHandler = {
         let totalPlayers = inPlayerCount + onDeckPlayers.filter(x => x.status.targetPosition != null).length
 
         return {
-            body: await inPlayPlayersView(new PlayerStateView(teamId, gameId)),
+            body: await playMatchView(new PlayerStateView(teamId, gameId)),
             events: {
                 updatedOutPlayers: true,
                 updatedInPlayers: !!totalPlayers,
@@ -359,7 +359,7 @@ const postHandlers : RoutePostHandler = {
             return calc.save(teamId)
         }))
 
-        return inPlayPlayersView(new PlayerStateView(teamId, gameId))
+        return playMatchView(new PlayerStateView(teamId, gameId))
     },
 
     async pauseGame ({ query }) {
@@ -382,7 +382,7 @@ const postHandlers : RoutePostHandler = {
             return calc.save(teamId)
         }).filter(x => x))
 
-        return inPlayPlayersView(new PlayerStateView(teamId, gameId))
+        return playMatchView(new PlayerStateView(teamId, gameId))
     },
 
     async endGame({ query }) {
@@ -407,7 +407,7 @@ const postHandlers : RoutePostHandler = {
                 return playerCalc.save(teamId)
             }))
 
-        return inPlayPlayersView(new PlayerStateView(teamId, gameId))
+        return playMatchView(new PlayerStateView(teamId, gameId))
     },
 
     async restartGame({ query }) {
@@ -417,7 +417,7 @@ const postHandlers : RoutePostHandler = {
         game.status = "paused"
         await teamSave(team)
 
-        return inPlayPlayersView(new PlayerStateView(teamId, gameId))
+        return playMatchView(new PlayerStateView(teamId, gameId))
     },
 
     async setPlayerStat(o) {
@@ -452,7 +452,7 @@ const postHandlers : RoutePostHandler = {
         })
 
         return {
-            body: await inPlayPlayersView(new PlayerStateView(teamId, gameId)),
+            body: await playMatchView(new PlayerStateView(teamId, gameId)),
             status: 204,
             events: {
                 playerStatUpdated: {

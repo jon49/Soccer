@@ -4,8 +4,9 @@ import { when } from "@jon49/sw/utils.js"
 import { dialogPlayerPositionsView } from "./_player-position-view.js"
 import { onDeckView } from "./_on-deck-view.js"
 import { outPlayersView } from "./_out-player-view.js"
+import { inPlayerView } from "./_in-play-player-view.js"
 
-export default async function inPlayPlayersView(state: PlayerStateView) {
+export default async function playMatchView(state: PlayerStateView) {
     let [
         isGameInPlay,
         inPlayPlayers,
@@ -93,7 +94,7 @@ ${when(playersExist, () => html`
 </div>
 </div>`,
         keepOpen: true,
-        playersView: inPlayPlayersView,
+        playersView: inPlayerView,
         slot: [
             html`
             <form

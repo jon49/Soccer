@@ -385,6 +385,7 @@ export class PlayerStateView {
 export async function* positionPlayersView(
     state: PlayerStateView,
     playerView: (o: PlayerViewProps) => Promise<AsyncGenerator<any, void, unknown>> | AsyncGenerator<any, void, unknown>) {
+
     let [
         inPlayPlayers,
         onDeckPlayers,
