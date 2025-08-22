@@ -5,6 +5,8 @@ self.app = self.app || {}
 const routes : Route[] = [
     { route: /\/match\/$/,
       file: "/web/pages/match/match.page.js" },
+    { route: /\/match\/active\/$/,
+      file: "/web/pages/match/active/match-active.page.js" },
     { route: /\/api\/sync\/$/,
       file: "/web/api/sync.page.js" },
     { route: /\/api\/settings\/$/,
