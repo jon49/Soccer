@@ -1,6 +1,6 @@
 import "html-traits"
 import "html-form"
-import "form-subscribe"
+import "html-traits-on"
 import "@jon49/web/x-toaster.js"
 import "@jon49/web/x-dialog.js"
 import "@jon49/web/user-messages.js"
