@@ -27,7 +27,7 @@ ${
         ? html`">${subPlayerView(sub, queryTeamGame)}`
     : html` empty"><li></li><li></li><li></li>`
 }</ul>`
-    })
+    }, { gridItemWidth: "15em" })
 }
 
 function twoPlayerView(

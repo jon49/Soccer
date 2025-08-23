@@ -53,7 +53,7 @@ ${when(playersExist, () => html`
 `)}
 </div>
 
-<div>
+<div class=flex>
     ${when(!isGameEnded, () => html`
     <button id=game-status
         form=post-form

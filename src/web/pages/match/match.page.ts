@@ -176,14 +176,18 @@ const getHandlers : RouteGetHandler = {
 
     async get({ query }) {
         let head = `
-            <style>
-                .empty {
-                    margin: 2rem;
-                    border: 3px solid #ccc;
-                    padding: 0.5em;
-                    border-radius: 1em;
-                }
-            </style>`
+<style>
+    .empty {
+        margin: 2rem;
+        border: 3px solid #ccc;
+        padding: 0.5em;
+        border-radius: 1em;
+    }
+    [traits="game-timer"] {
+        width: 5em;
+        text-align: center;
+    }
+</style>`
         let team = await teamGet(+query.teamId)
         let game = await required(team.games.find(x => x.id === +query.gameId), `Could not find game! ${query.gameId}`)
         return layout({

@@ -5,7 +5,7 @@ import { getGameNotes, teamGet } from "../../server/repo-team.js"
 import { tail } from "../../server/utils.js"
 import { required } from "@jon49/sw/validation.js"
 import { queryTeamIdGameIdValidator } from "../../server/validators.js"
-import { DbCache } from "@jon49/sw/utils.js"
+import { DbCache, when } from "@jon49/sw/utils.js"
 import html from "html-template-tag-stream"
 
 export interface GamePlayerStatusView<T extends PlayerStatus> extends PlayerGameStatus<T> {
@@ -384,7 +384,8 @@ export class PlayerStateView {
 
 export async function* positionPlayersView(
     state: PlayerStateView,
-    playerView: (o: PlayerViewProps) => Promise<AsyncGenerator<any, void, unknown>> | AsyncGenerator<any, void, unknown>) {
+    playerView: (o: PlayerViewProps) => Promise<AsyncGenerator<any, void, unknown>> | AsyncGenerator<any, void, unknown>,
+    { gridItemWidth }: { gridItemWidth?: string } = {}) {
 
     let [
         inPlayPlayers,
@@ -399,7 +400,7 @@ export async function* positionPlayersView(
     let positionIndex = 0
     for (let position of positions) {
         let count = 0
-        yield html`<div data-test="position-player-view" class="grid grid-center pb-1">`
+        yield html`<div ${when(gridItemWidth, () => html`style="--grid-item-width: $${gridItemWidth};"`)}  class="grid grid-center pb-1">`
         yield position.map((_, index) => {
             let player = inPlayPlayers.find(x => positionIndex === x.status.position)
             let playerOnDeck = onDeckPlayers.find(x => positionIndex === x.status.targetPosition)
