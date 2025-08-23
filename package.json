@@ -13,11 +13,11 @@
   "license": "ISC",
   "dependencies": {
     "@cloudfour/elastic-textarea": "^1.0.7",
-    "@jon49/sw": "^0.14.2",
+    "@jon49/sw": "^0.14.4",
     "@jon49/web": "^0.9.1",
     "@ungap/custom-elements": "^1.3.0",
     "html-form": "^0.11.0",
-    "html-template-tag-stream": "^3.0.1",
+    "html-template-tag-stream": "^3.0.2",
     "html-traits": "^0.0.2",
     "html-traits-on": "^0.0.0",
     "idb-keyval": "^6.2.2",
