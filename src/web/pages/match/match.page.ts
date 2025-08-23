@@ -12,6 +12,7 @@ import html from "html-template-tag-stream"
 import { outPlayersView } from "./_out-player-view.js"
 import * as db from "../../server/db.js"
 import { onDeckView } from "./_on-deck-view.js"
+import { notPlayingPlayersView } from "./_not-playing-players-view.js"
 
 const {
     layout,
@@ -142,6 +143,16 @@ const getHandlers : RouteGetHandler = {
             events: {
                 outPlayersListUpdated: true
             }
+        }
+    },
+
+    async notPlayingPlayersList({ query }) {
+        let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
+        return {
+            body: html`${notPlayingPlayersView(new PlayerStateView(teamId, gameId))}`,
+            events: {
+                notPlayingPlayersListUpdated: true,
+            },
         }
     },
 
@@ -310,25 +321,37 @@ const postHandlers : RoutePostHandler = {
         }
     },
 
-    async notPlaying ({ query }) {
+    async notPlaying({ query }) {
         let { teamId, playerId, gameId } = await validateObject(query, queryTeamGamePlayerValidator)
         let [player] = await playerGameAllGet(teamId, gameId, [playerId])
         player.status = { _: "notPlaying" }
         await playerGameSave(teamId, player)
 
-        return playerStateView(await PlayerStateView.create(query))
+        return {
+            body: html``,
+            events: {
+                outPlayersListUpdated: true,
+                updatedNotPlayingPlayers: true,
+            }
+        }
     },
 
-    async backIn ({ query }) {
+    async backIn({ query }) {
         let { teamId, playerId, gameId } = await validateObject(query, queryTeamGamePlayerValidator)
         let [player] = await playerGameAllGet(teamId, gameId, [playerId])
         player.status = { _: "out" }
         await playerGameSave(teamId, player)
 
-        return playerStateView(await PlayerStateView.create(query))
+        return {
+            body: html``,
+            events: {
+                notPlayingPlayersListUpdated: true,
+                updatedOutPlayers: true,
+            }
+        }
     },
 
-    async startGame ({ query }) {
+    async startGame({ query }) {
         let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
         let timestamp = +new Date()
         let team = await teamGet(teamId)

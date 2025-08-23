@@ -5,6 +5,7 @@ import { dialogPlayerPositionsView } from "./_player-position-view.js"
 import { onDeckView } from "./_on-deck-view.js"
 import { outPlayersView } from "./_out-player-view.js"
 import { inPlayersView } from "./_in-play-players-view.js"
+import { notPlayingPlayersView } from "./_not-playing-players-view.js"
 
 export default async function playMatchView(state: PlayerStateView) {
     let [
@@ -133,27 +134,31 @@ ${when(playersExist, () => html`
             </ul>
             `,
 
-            html`
-            <form
-                traits="x-on"
-                data-event="updatedOutPlayers"
+html`
+<h3
+    id="out-players"
+    class="mt-2"
 
-                action="/web/match?${queryTeamGame}&handler=outPlayersList"
-                hf-target="#out-players-view"
-                ></form>
-                <h3
-                    id="out-players"
-                    class="mt-2"
+    traits="x-on"
+    data-onload
+    data-event="outPlayersListUpdated"
+    data-action="this.innerText = 'Out Players (' + Array.from($$('#out-players-view li')).length + ')'"
+></h3>
+<ul id=out-players-view class=list>
+${outPlayersView(state)}
+</ul>`,
 
-                    traits="x-on"
-                    data-onload
-                    data-event="outPlayersListUpdated"
-                    data-action="this.innerText = 'Out Players (' + Array.from($$('#out-players-view li')).length + ')'"
-                ></h3>
-                <ul id=out-players-view class=list>
-                ${outPlayersView(state)}
-                </ul>
-            </details>`
+html`
+<h3
+    class="mt-2"
+    traits="x-on"
+    data-onload
+    data-event="notPlayingPlayersListUpdated"
+    data-action="this.innerText = 'Not Playing (' + notPlayingList.childElementCount + ')'"
+></h3>
+<ul id="notPlayingList" class=list>
+${notPlayingPlayersView(state)}
+</ul>`
         ]
     })
 
