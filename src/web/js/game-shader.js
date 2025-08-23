@@ -7,6 +7,7 @@ document.head.appendChild(document.createElement('style')).textContent = `
 .game-shader {
     background: var(--game-shader-background);
     color: var(--game-shader-color);
+    border-radius: 5px;
 }
 .game-shader a {
     color: var(--game-shader-color);
