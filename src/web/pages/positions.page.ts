@@ -32,7 +32,7 @@ async function start(query: any): Promise<PositionView> {
 
 function render({ team, positions, grid }: PositionView) {
     return html`
-<h2>${team.name} - Formation</h2>
+<h2>${team.name} — Formation</h2>
 
 <p>Use a <button form=show-templates-form>template</button>.</p>
 

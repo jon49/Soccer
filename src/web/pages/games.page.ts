@@ -27,7 +27,7 @@ async function start(query: any): Promise<GameView> {
 function render({ team }: GameView) {
     team.games.sort((a, b) => b.date.localeCompare(a.date))
     return html`
-<h2>${team.name} - Games</h2>
+<h2>${team.name} — Games</h2>
 
 <ul id=games class=list>
     ${team.games.map(x => getGameView(team.id, x))}

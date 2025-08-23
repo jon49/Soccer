@@ -15,7 +15,7 @@ async function render(o: StatsView) {
     let teamId = o.teamId
 
     return html`
-<h2>${team.name} - Stats</h2>
+<h2>${team.name} — Stats</h2>
 
 <div class=row>
     ${stats.map(x => {
