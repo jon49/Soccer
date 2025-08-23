@@ -116,6 +116,12 @@ ${when(playersExist, () => html`
     ></h3>
 <button
     class="condense-padding"
+
+    traits="x-on"
+    data-onload
+    data-event="onDeckListUpdated"
+    data-action="this.hidden = onDeckList.childElementCount < 2"
+
     form="get-form"
     formaction="/web/match?${queryTeamGame}&handler=rapidFire"
     hf-target="#dialogs">Rapid Fire</button>
