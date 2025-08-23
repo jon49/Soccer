@@ -9,25 +9,25 @@ export default async function playerStateView(o: PlayerStateView) {
     hidden
     action="/web/match?${queryTeamGame}&handler=showInPlay"
     hf-target="#dialogs"
-    traits=x-on
-    data-event="inPlayersFilled"></form>
+    traits=on
+    data-events="inPlayersFilled"></form>
 
 <form
-    traits="x-on"
-    data-event="updatedOnDeckPlayers"
+    traits="on"
+    data-events="updatedOnDeckPlayers"
     action="/web/match?${queryTeamGame}&handler=onDeckList"
     hf-target="#onDeckList"
     ></form>
 
 <form
-    traits="x-on"
-    data-event="updatedOutPlayers"
+    traits="on"
+    data-events="updatedOutPlayers"
     action="/web/match?${queryTeamGame}&handler=outPlayersList"
     hf-target="#outPlayersList"></form>
 
 <form
-    traits="x-on"
-    data-event="updatedNotPlayingPlayers"
+    traits="on"
+    data-events="updatedNotPlayingPlayers"
     action="/web/match?${queryTeamGame}&handler=notPlayingPlayersList"
     hf-target="#notPlayingList"></form>
 

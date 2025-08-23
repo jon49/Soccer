@@ -73,8 +73,8 @@ const render = async (
                         formmethod=get
                         hidden
 
-                        traits=x-on
-                        data-event="hf:completed"
+                        traits=on
+                        data-events="hf:completed"
                         data-match="detail: {method:'post'}"
 
                         hf-scroll-ignore

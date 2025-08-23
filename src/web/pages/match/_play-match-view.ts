@@ -43,8 +43,8 @@ ${when(countOnDeckPlayers > 0, () => html`
 `)}
 ${when(playersExist, () => html`
 <button
-    traits="x-on"
-    data-event="updatedInPlayers"
+    traits="on"
+    data-events="updatedInPlayers"
     data-action="this.hidden = !event.detail.count"
 
     form=post-form
@@ -99,8 +99,8 @@ ${when(playersExist, () => html`
             html`<div>${inPlayersView(state)}</div>`,
             html`
             <form
-                traits="x-on"
-                data-event="updatedInPlayers"
+                traits="on"
+                data-events="updatedInPlayers"
                 action="/web/match?${queryTeamGame}&handler=inPlayerView"
                 hf-target="#in-player-view"
                 hf-swap="outerHTML"
@@ -109,17 +109,15 @@ ${when(playersExist, () => html`
             ,
                 html`
 <h3 class="inline mt-2"
-    traits="x-on"
-    data-onload
-    data-event="onDeckListUpdated"
+    traits="on"
+    data-events="load onDeckListUpdated"
     data-action="this.innerText = 'On Deck (' + onDeckList.childElementCount + ')'"
     ></h3>
 <button
     class="condense-padding"
 
-    traits="x-on"
-    data-onload
-    data-event="onDeckListUpdated"
+    traits="on"
+    data-events="load onDeckListUpdated"
     data-action="this.hidden = onDeckList.childElementCount < 2"
 
     form="get-form"
@@ -132,9 +130,8 @@ ${when(playersExist, () => html`
 
 html`
 <h3 class="mt-2"
-    traits="x-on"
-    data-onload
-    data-event="outPlayersListUpdated"
+    traits="on"
+    data-events="load outPlayersListUpdated"
     data-action="this.innerText = 'Out Players (' + (outPlayersList.childElementCount - 1) + ')'"
 ></h3>
 <ul id=outPlayersList class=list>
@@ -143,9 +140,8 @@ ${outPlayersView(state)}
 
 html`
 <h3 class="mt-2"
-    traits="x-on"
-    data-onload
-    data-event="notPlayingPlayersListUpdated"
+    traits="on"
+    data-events="load notPlayingPlayersListUpdated"
     data-action="this.innerText = 'Not Playing (' + notPlayingList.childElementCount + ')'"
 ></h3>
 <ul id="notPlayingList" class=list>
