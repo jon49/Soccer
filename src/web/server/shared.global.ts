@@ -15,7 +15,8 @@ import * as apiSharedViews from "../api/_shared-views.js"
 self.app = self.app || {}
 
 let app = {
-    db: { ...db, ...globalDb },
+    db,
+    globalDb,
     html,
     layout,
     repo: { ...repo, ...repoPlayerGame },
