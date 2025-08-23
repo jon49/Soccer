@@ -17,14 +17,12 @@ interface RenderArgs {
             positionIndex: number
             positionName: string
         }) => AsyncGenerator<any, void, unknown>
-    playersView?: (state: PlayerStateView) => AsyncGenerator<any, void, unknown> | Promise<AsyncGenerator<any, void, unknown>>
 }
 
 export async function dialogPlayerPositionsView({
     keepOpen = false,
     playerStateView,
     playerView,
-    playersView,
     slot,
     title,
 }: RenderArgs) {
@@ -37,7 +35,6 @@ export async function dialogPlayerPositionsView({
         </header>
 
 ${when(playerView, view => positionPlayersView(playerStateView, view))}
-${when(playersView, view => view(playerStateView))}
 
 ${slot}
 

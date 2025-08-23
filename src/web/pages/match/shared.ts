@@ -399,7 +399,7 @@ export async function* positionPlayersView(
     let positionIndex = 0
     for (let position of positions) {
         let count = 0
-        yield html`<div class="grid grid-center pb-1">`
+        yield html`<div data-test="position-player-view" class="grid grid-center pb-1">`
         yield position.map((_, index) => {
             let player = inPlayPlayers.find(x => positionIndex === x.status.position)
             let playerOnDeck = onDeckPlayers.find(x => positionIndex === x.status.targetPosition)

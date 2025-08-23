@@ -3,7 +3,7 @@ import { GamePlayerStatusView, PlayerStateView, positionPlayersView } from "./sh
 import { InPlayPlayer, OnDeckPlayer } from "../../server/db.js";
 import { when } from "@jon49/sw/utils.js";
 
-export function inPlayerView(state: PlayerStateView) {
+export function inPlayersView(state: PlayerStateView) {
     return positionPlayersView(state, async ({
         player,
         playerOnDeck,

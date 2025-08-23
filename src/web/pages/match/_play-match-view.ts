@@ -4,7 +4,7 @@ import { when } from "@jon49/sw/utils.js"
 import { dialogPlayerPositionsView } from "./_player-position-view.js"
 import { onDeckView } from "./_on-deck-view.js"
 import { outPlayersView } from "./_out-player-view.js"
-import { inPlayerView } from "./_in-play-player-view.js"
+import { inPlayersView } from "./_in-play-players-view.js"
 
 export default async function playMatchView(state: PlayerStateView) {
     let [
@@ -48,7 +48,7 @@ ${when(playersExist, () => html`
 
     form=post-form
     formaction="/web/match?$${queryTeamGame}&handler=allOut"
-    hf-target="this">All Out</button>
+    hf-target="#dialogs">All Out</button>
 `)}
 </div>
 
@@ -94,8 +94,8 @@ ${when(playersExist, () => html`
 </div>
 </div>`,
         keepOpen: true,
-        playersView: inPlayerView,
         slot: [
+            html`<div>${inPlayersView(state)}</div>`,
             html`
             <form
                 traits="x-on"
@@ -141,18 +141,15 @@ ${when(playersExist, () => html`
                 action="/web/match?${queryTeamGame}&handler=outPlayersList"
                 hf-target="#out-players-view"
                 ></form>
-            <details
-                class="mt-2"
-                id="out-players"
-                >
-                <summary>
-                    <h3
-                        traits="x-on"
-                        data-onload
-                        data-event="outPlayersListUpdated"
-                        data-action="this.innerText = 'Out Players (' + Array.from($$('#out-players-view li')).length + ')'"
-                    ></h3>
-                </summary>
+                <h3
+                    id="out-players"
+                    class="mt-2"
+
+                    traits="x-on"
+                    data-onload
+                    data-event="outPlayersListUpdated"
+                    data-action="this.innerText = 'Out Players (' + Array.from($$('#out-players-view li')).length + ')'"
+                ></h3>
                 <ul id=out-players-view class=list>
                 ${outPlayersView(state)}
                 </ul>
