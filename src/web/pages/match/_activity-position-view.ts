@@ -45,9 +45,7 @@ export async function activityPlayerSelectorView(query: any) {
         slot: html`
         <div class=grid style="--grid-item-width: 75px;">
             ${[...onDeckPlayers, ...outPlayers]
-                .map(x => {
-                html`
-                <form
+                .map(x => html`<form
                     method=post
                     action="$${action}"
                     hf-target="#dialogs">
@@ -55,9 +53,7 @@ export async function activityPlayerSelectorView(query: any) {
                     <input type=hidden name=playerId value="${x.playerId}">
                     <input type=hidden name=operation value="${operation}">
                     <button>${x.name}</button>
-                </form>
-                `
-                })
+                </form>`)
             }
         </div>
         `,
