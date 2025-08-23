@@ -1,5 +1,5 @@
-import { Team, TeamPlayer } from "../server/db.js"
-import { RoutePostHandler, RoutePage } from "@jon49/sw/routes.middleware.js"
+import type { Team, TeamPlayer } from "../server/db.js"
+import type { RoutePostHandler, RoutePage } from "@jon49/sw/routes.middleware.js"
 
 const {
     html,

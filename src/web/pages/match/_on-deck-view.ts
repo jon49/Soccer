@@ -1,5 +1,8 @@
-import html from "html-template-tag-stream"
-import { PlayerStateView } from "./shared.js"
+import type { PlayerStateView } from "./shared.js"
+
+let {
+    html,
+} = self.app
 
 export async function onDeckView(state: PlayerStateView) {
     let playersOnDeck = await state.onDeckPlayers()

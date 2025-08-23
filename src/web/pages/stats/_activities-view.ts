@@ -1,6 +1,9 @@
-import html from "../../server/html.js"
-import { statsGetAll } from "../../server/repo-player-game.js"
-import { StatsView } from "./shared.js"
+import type { StatsView } from "./shared.js"
+
+const {
+    html,
+    repo: { statsGetAll },
+} = self.app
 
 export async function playerStatsView(o: StatsView) {
     let [playerIdList,

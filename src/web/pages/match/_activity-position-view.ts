@@ -1,9 +1,10 @@
-import html from "html-template-tag-stream"
 import { PlayerStateView } from "./shared.js"
-import { queryTeamIdGameIdValidator } from "../../server/validators.js"
-import { validateObject } from "promise-validation"
-import { createIdNumber, createString25 } from "@jon49/sw/validation.js"
 import { dialogPlayerPositionsView } from "./_player-position-view.js"
+
+let {
+    html,
+    validation: { createIdNumber, createString25, validateObject, queryTeamIdGameIdValidator },
+} = self.app
 
 const queryActivityValidator = {
     ...queryTeamIdGameIdValidator,

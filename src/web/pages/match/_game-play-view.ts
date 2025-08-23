@@ -1,9 +1,12 @@
-import { when } from "../../server/html.js"
-import html from "html-template-tag-stream"
 import { PlayerStateView } from "./shared.js"
 import playerStateView from "./_player-state-view.js"
-import { statIds } from "../../server/repo-player-game.js"
-import { Game } from "../../server/db.js"
+import type { Game } from "../../server/db.js"
+
+let {
+    html,
+    repo: { statIds },
+    utils: {when}
+} = self.app
 
 export function getPointsView(points: number) {
     return html`&nbsp;${points || "0"}&nbsp;`

@@ -1,11 +1,11 @@
-import { RoutePostHandler, RoutePage } from "@jon49/sw/routes.middleware.js"
-import { DbCache } from "@jon49/sw/utils.js"
+import type { RoutePostHandler, RoutePage } from "@jon49/sw/routes.middleware.js"
+import type { DbCache as DbCacheType } from "@jon49/sw/utils.js"
 
 const {
     html,
     layout,
     repo: { teamGet, statSave, getStatDescription, statsGetAll },
-    utils: { when },
+    utils: { when, DbCache },
     validation: { validateObject, createCheckbox, createIdNumber, createString25, required, queryTeamIdValidator },
     views: { teamNav },
 } = self.app
@@ -74,7 +74,7 @@ const postHandlers : RoutePostHandler = {
 }
 
 class StatsView {
-    cache: DbCache
+    cache: DbCacheType
     teamId: number
     query: any
     constructor(teamId: number, query: any) {

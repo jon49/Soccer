@@ -1,10 +1,17 @@
-import { validateObject } from "promise-validation";
-import { PlayerGame } from "../../server/db.js";
-import { playerGameAllGet } from "../../server/repo-player-game.js";
-import { teamGet } from "../../server/repo-team.js";
-import { createIdNumber, createPositiveWholeNumber, maybe, required } from "@jon49/sw/validation.js";
-import { queryTeamIdGameIdValidator } from "../../server/validators.js";
+import type { PlayerGame } from "../../server/db.js";
 import { GameTimeCalculator, PlayerGameTimeCalculator, isInPlayPlayer, isOnDeckPlayer } from "./shared.js";
+
+let {
+    repo: { playerGameAllGet, teamGet },
+    validation: {
+        createPositiveWholeNumber,
+        maybe,
+        required,
+        queryTeamIdGameIdValidator,
+        createIdNumber,
+        validateObject
+    }
+} = self.app
 
 const queryTeamGamePlayerValidator = {
     ...queryTeamIdGameIdValidator,

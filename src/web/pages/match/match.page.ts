@@ -1,5 +1,5 @@
-import { RoutePostHandler, RoutePage, RouteGetHandler } from "@jon49/sw/routes.middleware.js"
-import { Game } from "../../server/db.js"
+import type { RoutePostHandler, RoutePage, RouteGetHandler } from "@jon49/sw/routes.middleware.js"
+import type { Game } from "../../server/db.js"
 import { GameTimeCalculator, PlayerGameTimeCalculator, PlayerStateView, isInPlayPlayer } from "./shared.js"
 import render, { getPointsView } from "./_game-play-view.js"
 import playerStateView from "./_player-state-view.js"
@@ -8,13 +8,13 @@ import targetPositionView from "./_target-position-view.js"
 import targetPosition from "./player-target-position.js"
 import { activityPlayerSelectorView } from "./_activity-position-view.js"
 import playMatchView from "./_play-match-view.js"
-import html from "html-template-tag-stream"
 import { outPlayersView } from "./_out-player-view.js"
-import * as db from "../../server/db.js"
 import { onDeckView } from "./_on-deck-view.js"
 import { notPlayingPlayersView } from "./_not-playing-players-view.js"
 
 const {
+    db,
+    html,
     layout,
     repo: {
         playerGameAllGet,

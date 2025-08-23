@@ -1,7 +1,10 @@
-import html from "html-template-tag-stream"
 import { GamePlayerStatusView, PlayerStateView, positionPlayersView } from "./shared.js"
-import { InPlayPlayer, OnDeckPlayer } from "../../server/db.js"
-import { when } from "@jon49/sw/utils.js"
+import type { InPlayPlayer, OnDeckPlayer } from "../../server/db.js"
+
+let {
+    html,
+    utils: {when}
+} = self.app
 
 interface RenderArgs {
     slot?: AsyncGenerator<any, void, unknown> | undefined | null | (AsyncGenerator<any, void, unknown> | undefined | null)[]

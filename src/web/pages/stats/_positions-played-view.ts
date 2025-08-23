@@ -1,5 +1,8 @@
-import html from "../../server/html.js"
-import { StatsView } from "./shared.js"
+import type { StatsView } from "./shared.js"
+
+const {
+    html,
+} = self.app
 
 export async function timePlayedView(o: StatsView) {
 

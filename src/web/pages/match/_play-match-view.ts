@@ -1,11 +1,14 @@
-import html from "html-template-tag-stream"
 import { PlayerStateView } from "./shared.js"
-import { when } from "@jon49/sw/utils.js"
 import { dialogPlayerPositionsView } from "./_player-position-view.js"
 import { onDeckView } from "./_on-deck-view.js"
 import { outPlayersView } from "./_out-player-view.js"
 import { inPlayersView } from "./_in-play-players-view.js"
 import { notPlayingPlayersView } from "./_not-playing-players-view.js"
+
+let {
+    html,
+    utils: {when}
+} = self.app
 
 export default async function playMatchView(state: PlayerStateView) {
     let [

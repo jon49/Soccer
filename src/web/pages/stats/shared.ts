@@ -1,11 +1,13 @@
-import { validateObject } from "promise-validation";
-import { queryTeamIdValidator } from "../../server/validators.js";
-import { teamGet } from "../../server/repo-team.js";
-import { playerGameAllGet } from "../../server/repo-player-game.js";
-import { DbCache } from "@jon49/sw/utils.js";
+import type { DbCache as DbCacheType } from "@jon49/sw/utils.js";
+
+const {
+    repo: { teamGet, playerGameAllGet },
+    utils: { DbCache },
+    validation: { validateObject, queryTeamIdValidator }
+} = self.app
 
 export class StatsView {
-    #cache: DbCache
+    #cache: DbCacheType
     teamId: number
     constructor(teamId: number) {
         this.teamId = teamId

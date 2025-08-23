@@ -1,12 +1,29 @@
-import { validateObject } from "promise-validation"
-import { PlayerGameTime, InPlayPlayer, OnDeckPlayer, PlayerGame, PlayerGameStatus, PlayerStatus, TeamPlayer, GameTime, Game, OutPlayer, NotPlayingPlayer } from "../../server/db.js"
-import { playerGameAllGet, playerGameSave, positionGetAll, statsGetAll } from "../../server/repo-player-game.js"
-import { getGameNotes, teamGet } from "../../server/repo-team.js"
-import { tail } from "../../server/utils.js"
-import { required } from "@jon49/sw/validation.js"
-import { queryTeamIdGameIdValidator } from "../../server/validators.js"
-import { DbCache, when } from "@jon49/sw/utils.js"
-import html from "html-template-tag-stream"
+import { DbCache as DbCacheType } from "@jon49/sw/utils.js"
+import type {
+    PlayerGameTime,
+    InPlayPlayer,
+    OnDeckPlayer,
+    PlayerGame,
+    PlayerGameStatus,
+    PlayerStatus,
+    TeamPlayer,
+    GameTime,
+    Game,
+    OutPlayer,
+    NotPlayingPlayer
+} from "../../server/db.js"
+
+let {
+    html,
+    repo: { playerGameAllGet, teamGet, playerGameSave, positionGetAll, statsGetAll, getGameNotes },
+    utils: { DbCache, tail, when },
+    validation: {
+        required,
+        queryTeamIdGameIdValidator,
+        validateObject
+    }
+} = self.app
+
 
 export interface GamePlayerStatusView<T extends PlayerStatus> extends PlayerGameStatus<T> {
     name: string
@@ -218,7 +235,7 @@ function filterNotPlayingPlayers(x: PlayerGame) : x is PlayerGameStatus<NotPlayi
 export class PlayerStateView {
     teamId: number
     gameId: number
-    #cache: DbCache
+    #cache: DbCacheType
     constructor(teamId: number, gameId: number) {
         this.teamId = teamId
         this.gameId = gameId

@@ -1,5 +1,8 @@
-import html from "html-template-tag-stream"
 import { PlayerStateView } from "./shared.js"
+
+let {
+    html,
+} = self.app
 
 export default async function playerStateView(o: PlayerStateView) {
     let queryTeamGame = o.queryTeamGame

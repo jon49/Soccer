@@ -1,4 +1,4 @@
-import { RoutePage, RouteGetHandler } from "@jon49/sw/routes.middleware.js"
+import type { RoutePage, RouteGetHandler } from "@jon49/sw/routes.middleware.js"
 import { StatsView } from "./shared.js"
 import { timePlayedView } from "./_positions-played-view.js"
 import { gamesPlayedView } from "./_number-of-games-played-view.js"

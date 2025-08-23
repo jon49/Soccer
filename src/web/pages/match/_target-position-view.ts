@@ -1,10 +1,11 @@
-import html from "html-template-tag-stream"
 import { isInPlayPlayer, GameTimeCalculator, PlayerGameTimeCalculator, PlayerStateView } from "./shared.js"
-import { when } from "../../server/html.js"
-import { queryTeamIdGameIdValidator } from "../../server/validators.js"
-import { createIdNumber } from "@jon49/sw/validation.js"
-import { validateObject } from "promise-validation"
 import { dialogPlayerPositionsView } from "./_player-position-view.js"
+
+let {
+    html,
+    utils: { when },
+    validation: { queryTeamIdGameIdValidator, createIdNumber, validateObject }
+} = self.app
 
 const querySwapValidator = {
     ...queryTeamIdGameIdValidator,
