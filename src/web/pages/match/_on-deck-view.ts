@@ -6,19 +6,21 @@ export async function onDeckView(state: PlayerStateView) {
     let onDeckWithoutPosition = playersOnDeck.filter(x => x.status.targetPosition == null)
     let queryTeamGame = state.queryTeamGame
 
-    return html` ${onDeckWithoutPosition.map(x => html`
-    <li id="on-deck-${x.playerId}">
-        <form
-            action="/web/match?${queryTeamGame}&playerId=${x.playerId}&handler=playerSwap"
-            hf-target="#dialogs">
-            <button>(${x.name})</button>
-        </form>
-        <form
-            method=post
-            action="/web/match?${queryTeamGame}&playerId=${x.playerId}&handler=cancelOnDeck"
-            hf-target="#on-deck-${x.playerId}">
-            <button>X</button>
-        </form>
-    </li>
-`)}`
+    return onDeckWithoutPosition.map(x => {
+        let id = `on-deck-${x.playerId}`
+        return html`
+<li id="${id}">
+    <form
+        action="/web/match?${queryTeamGame}&playerId=${x.playerId}&handler=playerSwap"
+        hf-target="#dialogs">
+        <button>(${x.name})</button>
+    </form>
+    <form
+        method=post
+        action="/web/match?${queryTeamGame}&playerId=${x.playerId}&handler=cancelOnDeck"
+        hf-target="#${id}">
+        <button>X</button>
+    </form>
+</li>`
+    })
 }

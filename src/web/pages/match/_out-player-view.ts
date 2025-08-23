@@ -2,9 +2,6 @@ import html from "html-template-tag-stream"
 import { PlayerStateView } from "./shared.js"
 
 export async function outPlayersView(o: PlayerStateView) {
-    let out = await o.playersOut()
-    if (!out) return html``
-
     let outPlayers = await o.outPlayers()
     let queryTeamGame = o.queryTeamGame
 

@@ -159,7 +159,7 @@ const getHandlers : RouteGetHandler = {
     async onDeckList({ query }) {
         let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
         return {
-            body: await onDeckView(new PlayerStateView(teamId, gameId)),
+            body: html`${onDeckView(new PlayerStateView(teamId, gameId))}`,
             events: {
                 onDeckListUpdated: true
             }
@@ -284,7 +284,8 @@ const postHandlers : RoutePostHandler = {
         return {
             body: html``,
             events: {
-                updatedOutPlayers: true,
+                outPlayersListUpdated: true,
+                updatedOnDeckPlayers: true,
             }
         }
     },

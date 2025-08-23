@@ -108,49 +108,35 @@ ${when(playersExist, () => html`
             `
             ,
                 html`
-            <h3
-                class="inline mt-2"
-                traits="x-on"
-                data-onload
-                data-event="onDeckListUpdated"
-                data-action="this.innerText = 'On Deck (' + Array.from($$('#on-deck-list li')).length + ')'"
-                ></h3>
-            <button
-                class="condense-padding"
-                form="get-form"
-                formaction="/web/match?${queryTeamGame}&handler=rapidFire"
-                hf-target="#dialogs">Rapid Fire</button>
+<h3 class="inline mt-2"
+    traits="x-on"
+    data-onload
+    data-event="onDeckListUpdated"
+    data-action="this.innerText = 'On Deck (' + onDeckList.childElementCount + ')'"
+    ></h3>
+<button
+    class="condense-padding"
+    form="get-form"
+    formaction="/web/match?${queryTeamGame}&handler=rapidFire"
+    hf-target="#dialogs">Rapid Fire</button>
 
-            <form
-                traits="x-on"
-                data-event="updatedOutPlayers"
-
-                action="/web/match?${queryTeamGame}&handler=onDeckList"
-                hf-target="#on-deck-list"
-                ></form>
-
-            <ul id=on-deck-list class=list>
-                ${onDeckView(state)}
-            </ul>
-            `,
+<ul id=onDeckList class=list>
+    ${onDeckView(state)}
+</ul>`,
 
 html`
-<h3
-    id="out-players"
-    class="mt-2"
-
+<h3 class="mt-2"
     traits="x-on"
     data-onload
     data-event="outPlayersListUpdated"
-    data-action="this.innerText = 'Out Players (' + Array.from($$('#out-players-view li')).length + ')'"
+    data-action="this.innerText = 'Out Players (' + (outPlayersList.childElementCount - 1) + ')'"
 ></h3>
-<ul id=out-players-view class=list>
+<ul id=outPlayersList class=list>
 ${outPlayersView(state)}
 </ul>`,
 
 html`
-<h3
-    class="mt-2"
+<h3 class="mt-2"
     traits="x-on"
     data-onload
     data-event="notPlayingPlayersListUpdated"
