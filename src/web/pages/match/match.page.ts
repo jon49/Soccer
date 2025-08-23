@@ -309,7 +309,7 @@ const postHandlers : RoutePostHandler = {
         }
     },
 
-    async cancelOnDeck ({ query }) {
+    async cancelOnDeck({ query }) {
         let { teamId, playerId, gameId } = await validateObject(query, queryTeamGamePlayerValidator)
         let state = new PlayerStateView(teamId, gameId)
         await onDeckPlayerOut(state, playerId)
@@ -317,7 +317,8 @@ const postHandlers : RoutePostHandler = {
         return {
             body: html``,
             events: {
-                updatedOutPlayers: true
+                updatedOutPlayers: true,
+                onDeckListUpdated: true,
             }
         }
     },
