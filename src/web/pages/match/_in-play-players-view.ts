@@ -16,7 +16,8 @@ export function inPlayersView(state: PlayerStateView) {
         let sub = playerOnDeck
         let queryTeamGame = state.queryTeamGame
        return html`
-<ul traits="game-shader"
+<form
+    traits="game-shader"
     data-total="${gameCalc.currentTotal()}"
     data-value="${player?.calc.currentTotal()}"
     class="list m-0
@@ -28,9 +29,9 @@ ${
         ? html`">${playerView(player, isGameInPlay, queryTeamGame)}`
     : sub
         ? html`">${subPlayerView(sub, queryTeamGame)}`
-    : html` empty"><li></li><li></li><li></li>`
-}</ul>`
-    }, { gridItemWidth: "15em" })
+    : html` empty"><div></div><div></div><div></div>`
+}</form>`
+    }, { gridItemWidth: "8em" })
 }
 
 function twoPlayerView(
@@ -50,52 +51,49 @@ function playerView(
         queryTeamGame: string) {
 
     return html`
-    <li>
-        <form
-            action="/web/match?$${queryTeamGame}&playerId=${player?.playerId}&handler=playerSwap"
-            hf-target="#dialogs" >
-            <button>${player?.name}</button>
-        </form>
-        <span traits="game-timer"
-            data-start="${player.calc.getLastStartTime()}"
-            data-total="${player.calc.total()}"
-            ${when(!isGameInPlay, "data-static")}>
-            00:00
-        </span>
-        <form
-            method=post
-            action="/web/match?${queryTeamGame}&playerId=${player.playerId}&handler=playerNowOut"
-            hf-target="#dialogs"
-            >
-            <button>X</button>
-        </form>
-    </li>`
+<fieldset class="mb-0" role="group">
+    <button
+        class="in-play-button"
+        formmethod="get"
+        formaction="/web/match?$${queryTeamGame}&playerId=${player?.playerId}&handler=playerSwap"
+        hf-target="#dialogs">${player?.name}</button>
+    <button
+        class="in-play-button danger"
+        formmethod=post
+        formaction="/web/match?${queryTeamGame}&playerId=${player.playerId}&handler=playerNowOut"
+        hf-target="#dialogs">X</button>
+</fieldset>
+<div
+    class="in-play-timer"
+    traits="game-timer"
+    data-start="${player.calc.getLastStartTime()}"
+    data-total="${player.calc.total()}"
+    ${when(!isGameInPlay, "data-static")}>00:00</div>
+`
 }
-    
+
 function subPlayerView(
         sub: GamePlayerStatusView<OnDeckPlayer>,
         queryTeamGame: string) {
     return html`
-<li>
-    <form
-        method=post
-        action="/web/match?$${queryTeamGame}&playerId=${sub.playerId}&handler=swap"
-        hf-target="#dialogs"
-        >
-        <button>(${sub.name})</button>
-    </form>
-    <span traits="game-timer"
-        data-start="${sub.calc.getLastStartTime()}"
-        data-total="${sub.calc.total()}"
-        data-static>
-    00:00
-    </span>
-    <form
-        method=post
-        action="/web/match?$${queryTeamGame}&playerId=${sub.playerId}&handler=cancelOnDeck"
-        hf-target="#dialogs"
-        >
-        <button class=danger>X</button>
-    </form>
-</li>`
+<fieldset class="mb-0" role="group">
+    <button
+        class="in-play-button"
+        formmethod=post
+        formaction="/web/match?$${queryTeamGame}&playerId=${sub.playerId}&handler=swap"
+        hf-target="#dialogs">(${sub.name})</button>
+    <button
+        class="in-play-button danger"
+        formmethod=post
+        formaction="/web/match?$${queryTeamGame}&playerId=${sub.playerId}&handler=cancelOnDeck"
+        hf-target="#dialogs">X</button>
+</fieldset>
+<div
+    class="in-play-timer"
+    traits="game-timer"
+    data-start="${sub.calc.getLastStartTime()}"
+    data-total="${sub.calc.total()}"
+    data-static
+    >00:00</div>
+`
 }

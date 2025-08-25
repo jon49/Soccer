@@ -187,6 +187,13 @@ const getHandlers : RouteGetHandler = {
         width: 5em;
         text-align: center;
     }
+    .in-play-button {
+        padding: 0.75em;
+    }
+    .in-play-timer {
+        width: 100%;
+        text-align: center;
+    }
 </style>`
         let team = await teamGet(+query.teamId)
         let game = await required(team.games.find(x => x.id === +query.gameId), `Could not find game! ${query.gameId}`)

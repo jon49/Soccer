@@ -74,7 +74,9 @@ class GameTimer {
         this.start = +(start ?? 0) || +new Date()
         this.total = +(total ?? 0)
         this.interval = +(interval ?? 0) || 1e3
-        el.setAttribute("class", el.hasAttribute("data-flash") ? "flash" : "")
+        if (el.hasAttribute("data-flash")) {
+            el.classList.add("flash")
+        }
         if (static_ !== "") timer.add(this)
         this.update(+new Date())
     }
