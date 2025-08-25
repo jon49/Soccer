@@ -58,7 +58,7 @@ function playerView(
         formaction="/web/match?$${queryTeamGame}&playerId=${player?.playerId}&handler=playerSwap"
         hf-target="#dialogs">${player?.name}</button>
     <button
-        class="in-play-button danger"
+        class="in-play-button"
         formmethod=post
         formaction="/web/match?${queryTeamGame}&playerId=${player.playerId}&handler=playerNowOut"
         hf-target="#dialogs">X</button>
@@ -83,7 +83,7 @@ function subPlayerView(
         formaction="/web/match?$${queryTeamGame}&playerId=${sub.playerId}&handler=swap"
         hf-target="#dialogs">(${sub.name})</button>
     <button
-        class="in-play-button danger"
+        class="in-play-button"
         formmethod=post
         formaction="/web/match?$${queryTeamGame}&playerId=${sub.playerId}&handler=cancelOnDeck"
         hf-target="#dialogs">X</button>

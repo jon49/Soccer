@@ -189,6 +189,11 @@ const getHandlers : RouteGetHandler = {
     }
     .in-play-button {
         padding: 0.75em;
+        border-bottom-left-radius: unset;
+    }
+    .in-play-button + .in-play-button {
+        border-left: 1px solid var(--pico-color);
+        border-bottom-right-radius: unset;
     }
     .in-play-timer {
         width: 100%;
