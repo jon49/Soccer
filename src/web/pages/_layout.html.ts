@@ -65,7 +65,11 @@ const render = async (
             </ul>
             <ul>
                 <li>
-                    <button form=post-form formaction="/web/api/settings?handler=theme" class="bg">$${themeImage(theme)}</button>
+                    <button
+                        form=post-form
+                        formaction="/web/api/settings?handler=theme"
+                        hf-target
+                        class="bg">$${themeImage(theme)}</button>
 
                     <button
                         form=post-form
@@ -86,6 +90,7 @@ const render = async (
                         form=post-form
                         formaction="/web/api/sync?handler=force"
                         class=bg
+                        hf-target
                         >${syncCountView(updatedCount)}</button>
 
                     ${isLoggedIn

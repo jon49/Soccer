@@ -1,15 +1,15 @@
 // import { getMany, setMany, set, update } from "./db.js"
 // import * as db from "./global-model.js"
 const {
-    db,
-    db: { getMany, setMany, set, update }
+    db: { getMany, setMany, set, update },
+    globalDb,
 } = self.app
 
 export default async function sync() {
-    let isLoggedIn = await db.isLoggedIn()
+    let isLoggedIn = await globalDb.isLoggedIn()
     if (!isLoggedIn) return { status: 403 }
 
-    let keys = await db.updated()
+    let keys = await globalDb.updated()
     const items = await getMany(keys)
     const data : Data[] = new Array(keys.length)
     for (let index = 0; index < items.length; index++) {
@@ -17,7 +17,7 @@ export default async function sync() {
         let d = items[index]
         data[index] = { key, data: d, id: d._rev ?? 0 }
     }
-    const lastSyncedId = (await db.settings()).lastSyncedId ?? 0
+    const lastSyncedId = (await globalDb.settings()).lastSyncedId ?? 0
 
     let postData : PostData = { lastSyncedId, data }
     const res = await fetch("/api/data", {
@@ -36,7 +36,7 @@ export default async function sync() {
         newData = await res.json()
     } else {
         if (res.status === 401) {
-            await db.setLoggedIn(false)
+            await globalDb.setLoggedIn(false)
             return { status: 401 }
         }
         return { status: res.status }

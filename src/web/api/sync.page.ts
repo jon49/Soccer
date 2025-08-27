@@ -2,7 +2,7 @@ import type { RoutePostHandler, RoutePage } from "@jon49/sw/routes.middleware.js
 import sync from "../server/sync.js"
 
 const {
-    db: { updated },
+    globalDb: db,
     views: { syncCountView },
 } = self.app
 
@@ -19,6 +19,7 @@ const postHandlers : RoutePostHandler = {
         }
     },
     async force() {
+        debugger
         let result = await sync()
         switch (result.status) {
             case 200:
@@ -51,7 +52,7 @@ const postHandlers : RoutePostHandler = {
 
 const router: RoutePage = {
     get: async () => {
-        let x = await updated()
+        let x = await db.updated()
         return syncCountView(x.length)
     },
     post: postHandlers
