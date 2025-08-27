@@ -306,21 +306,16 @@ const postHandlers : RoutePostHandler = {
         }
     },
 
-    async playerNowOut ({ query }) {
+    async playerNowOut({ query }) {
         let { teamId, playerId, gameId } = await validateObject(query, queryTeamGamePlayerValidator)
         let state = new PlayerStateView(teamId, gameId)
 
         await inPlayerOut(state, playerId)
 
-        let inPlayerCount = await state.countInPlayPlayers()
-        let onDeckPlayers = await state.onDeckPlayers()
-        let totalPlayers = inPlayerCount + onDeckPlayers.filter(x => x.status.targetPosition != null).length
-
         return {
-            body: await playMatchView(new PlayerStateView(teamId, gameId)),
+            body: html``,
             events: {
                 updatedOutPlayers: true,
-                updatedInPlayers: !!totalPlayers,
             },
         }
     },
@@ -334,7 +329,6 @@ const postHandlers : RoutePostHandler = {
             body: html``,
             events: {
                 updatedOutPlayers: true,
-                onDeckListUpdated: true,
             }
         }
     },

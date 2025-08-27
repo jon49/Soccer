@@ -15,8 +15,12 @@ export function inPlayersView(state: PlayerStateView) {
         let isGameInPlay = await state.isGameInPlay()
         let sub = playerOnDeck
         let queryTeamGame = state.queryTeamGame
+        let id = `in-player-${player?.playerId}`
+        let subPlayerId = `sub-player-${sub?.playerId}`
        return html`
 <form
+    $${when(!sub, () => `id="${id}"`)}
+    $${when(sub && !player, () => `id="${subPlayerId}"`)}
     traits="game-shader"
     data-total="${gameCalc.currentTotal()}"
     data-value="${player?.calc.currentTotal()}"
@@ -24,12 +28,12 @@ export function inPlayersView(state: PlayerStateView) {
 ${
 () =>
     player && sub
-        ? html`">${twoPlayerView(player, sub, isGameInPlay, queryTeamGame)}`
+        ? html`">${twoPlayerView(player, sub, isGameInPlay, queryTeamGame, id, subPlayerId)}`
     : player
-        ? html`">${playerView(player, isGameInPlay, queryTeamGame)}`
+        ? html`">${playerView(player, isGameInPlay, queryTeamGame, id)}`
     : sub
-        ? html`">${subPlayerView(sub, queryTeamGame)}`
-    : html` empty"><div></div><div></div><div></div>`
+        ? html`">${subPlayerView(sub, queryTeamGame, subPlayerId)}`
+    : html` empty">`
 }</form>`
     }, { gridItemWidth: "8em" })
 }
@@ -38,17 +42,24 @@ function twoPlayerView(
         player: GamePlayerStatusView<InPlayPlayer>,
         sub: GamePlayerStatusView<OnDeckPlayer>,
         isGameInPlay: boolean,
-        queryTeamGame: string
+        queryTeamGame: string,
+        inPlayerId: string,
+        subPlayerId: string
 ) {
     return html`
-${playerView(player, isGameInPlay, queryTeamGame)}
-${subPlayerView(sub, queryTeamGame)}`
+<div id="${inPlayerId}">
+${playerView(player, isGameInPlay, queryTeamGame, inPlayerId)}
+</div>
+<div id="${subPlayerId}">
+${subPlayerView(sub, queryTeamGame, subPlayerId)}
+</div>`
 }
 
 function playerView(
         player: GamePlayerStatusView<InPlayPlayer>,
         isGameInPlay: boolean,
-        queryTeamGame: string) {
+        queryTeamGame: string,
+        id: string) {
 
     return html`
 <fieldset class="mb-0" role="group">
@@ -61,7 +72,9 @@ function playerView(
         class="in-play-button"
         formmethod=post
         formaction="/web/match?${queryTeamGame}&playerId=${player.playerId}&handler=playerNowOut"
-        hf-target="#dialogs">X</button>
+        hf-target="#$${id}"
+        hf-swap="outerHTML"
+        >X</button>
 </fieldset>
 <div
     class="in-play-timer"
@@ -74,7 +87,8 @@ function playerView(
 
 function subPlayerView(
         sub: GamePlayerStatusView<OnDeckPlayer>,
-        queryTeamGame: string) {
+        queryTeamGame: string,
+        id: string) {
     return html`
 <fieldset class="mb-0" role="group">
     <button
@@ -86,7 +100,9 @@ function subPlayerView(
         class="in-play-button"
         formmethod=post
         formaction="/web/match?$${queryTeamGame}&playerId=${sub.playerId}&handler=cancelOnDeck"
-        hf-target="#dialogs">X</button>
+        hf-target="#$${id}"
+        hf-swap="outerHTML"
+        >X</button>
 </fieldset>
 <div
     class="in-play-timer"
