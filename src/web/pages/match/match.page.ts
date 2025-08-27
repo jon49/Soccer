@@ -178,7 +178,7 @@ const getHandlers : RouteGetHandler = {
         let head = `
 <style>
     .empty {
-        margin: 2rem;
+        margin: 1rem;
         border: 3px solid #ccc;
         padding: 0.5em;
         border-radius: 1em;
@@ -188,7 +188,7 @@ const getHandlers : RouteGetHandler = {
         text-align: center;
     }
     .in-play-button {
-        padding: 0.75em;
+        padding: 0 0.75em;
         border-bottom-left-radius: unset;
     }
     .in-play-button + .in-play-button {
