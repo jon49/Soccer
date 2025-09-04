@@ -73,7 +73,6 @@ function playerView(
         formmethod=post
         formaction="/web/match?${queryTeamGame}&playerId=${player.playerId}&handler=playerNowOut"
         hf-target="#$${id}"
-        hf-swap="outerHTML"
         >X</button>
 </fieldset>
 <div
@@ -101,7 +100,6 @@ function subPlayerView(
         formmethod=post
         formaction="/web/match?$${queryTeamGame}&playerId=${sub.playerId}&handler=cancelOnDeck"
         hf-target="#$${id}"
-        hf-swap="outerHTML"
         >X</button>
 </fieldset>
 <div
