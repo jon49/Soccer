@@ -30,10 +30,11 @@ export async function dialogPlayerPositionsView({
     title,
 }: RenderArgs) {
     return html`
-<dialog class=modal traits="x-dialog" show-modal>
-    <article ${when(keepOpen, 'data-box')} class="dialog-full-screen" style="--grid-item-width: 100px;">
+<!-- <dialog class=modal traits="x-dialog" show-modal> -->
+<!-- class="dialog-full-screen"  -->
+    <!-- <article ${when(keepOpen, 'data-box')} style="--grid-item-width: 100px;"> -->
         <header>
-            <button form=modalClose aria-label="Close" value="cancel" rel="prev"></button>
+            <!-- <button form=modalClose aria-label="Close" value="cancel" rel="prev"></button> -->
             <h2>${title}</h2>
         </header>
 
@@ -41,9 +42,10 @@ ${when(playerView, view => positionPlayersView(playerStateView, view))}
 
 ${slot}
 
-<form hidden id=modalClose method=dialog></form>
+<!-- <form hidden id=modalClose method=dialog></form>
 </article>
-</dialog>`
+</dialog> -->
+`
 
 }
 
