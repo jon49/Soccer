@@ -39,7 +39,7 @@ function render({ team, positions, grid }: PositionView) {
 <form
     id=show-templates-form
     action="/web/positions?handler=showTemplates&teamId=${team.id}"
-    hf-target="#dialogs"
+    hf-target="#app"
     hidden>
 </form>
 <h3>Grid</h3>

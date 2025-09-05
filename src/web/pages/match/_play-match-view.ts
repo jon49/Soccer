@@ -38,11 +38,12 @@ export default async function playMatchView(state: PlayerStateView) {
         title: html`
 <div class=flex>
 <div>
+<a href="/web/match?${queryTeamGame}">Back</a>
 ${when(countOnDeckPlayers > 0, () => html`
 <button
     form=post-form
     formaction="/web/match?$${queryTeamGame}&handler=swapAll"
-    hf-target="#dialogs">Swap All</button>
+    hf-target="#app">Swap All</button>
 `)}
 ${when(playersExist, () => html`
 <button
@@ -52,7 +53,7 @@ ${when(playersExist, () => html`
 
     form=post-form
     formaction="/web/match?$${queryTeamGame}&handler=allOut"
-    hf-target="#dialogs">All Out</button>
+    hf-target="#app">All Out</button>
 `)}
 </div>
 
@@ -61,7 +62,7 @@ ${when(playersExist, () => html`
     <button id=game-status
         form=post-form
         formaction="/web/match?$${queryTeamGame}&handler=${isGameInPlay ? "pauseGame" : "startGame"}"
-        hf-target="#dialogs" >
+        hf-target="#app" >
         ${isGameInPlay ? "Pause" : "Start"}
     </button>`)}
 
@@ -75,7 +76,7 @@ ${when(playersExist, () => html`
     <button
         form=post-form
         formaction="/web/match?$${queryTeamGame}&handler=${isGameEnded ? "restartGame" : "endGame"}"
-        hf-target="#dialogs"
+        hf-target="#app"
         >
         ${isGameEnded ? "Restart" : "End"}
     </button>
@@ -85,7 +86,7 @@ ${when(playersExist, () => html`
 <button
     form="get-form"
     formaction="/web/match?teamId=1&amp;gameId=1&amp;activityId=1&amp;handler=activityPlayerSelector&amp;action=inc"
-    hf-target="#dialogs"
+    hf-target="#app"
     aria-label="Game points ${gameCalc.game.points}"
     >${gameCalc.game.points}</button>
     VS
@@ -125,7 +126,7 @@ ${when(playersExist, () => html`
 
     form="get-form"
     formaction="/web/match?${queryTeamGame}&handler=rapidFire"
-    hf-target="#dialogs">Rapid Fire</button>
+    hf-target="#app">Rapid Fire</button>
 
 <ul id=onDeckList class=list>
     ${onDeckView(state)}

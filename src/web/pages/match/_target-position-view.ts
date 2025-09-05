@@ -35,7 +35,7 @@ export default async function render(query: any) {
             <form
                 method=post
                 action="/web/match?position=${positionIndex}&teamId=${teamId}&gameId=${gameId}&playerId=${playerId}&handler=updateUserPosition&playerSwap"
-                hf-target="#dialogs"
+                hf-target="#app"
                 $${when(!isInPlayPlayer(playerGame), `hf-scroll-to="#out-players"`)}
                 >${
             () => {

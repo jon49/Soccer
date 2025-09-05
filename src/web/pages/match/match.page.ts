@@ -11,6 +11,7 @@ import playMatchView from "./_play-match-view.js"
 import { outPlayersView } from "./_out-player-view.js"
 import { onDeckView } from "./_on-deck-view.js"
 import { notPlayingPlayersView } from "./_not-playing-players-view.js"
+import { play } from "./_play.js"
 
 const {
     db,
@@ -113,7 +114,6 @@ const getHandlers : RouteGetHandler = {
     },
 
     async rapidFire({ query }) {
-        console.log("rapidFire")
         let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
         let state = new PlayerStateView(teamId, gameId)
         let onDeckPlayers = await state.onDeckPlayers()
@@ -173,6 +173,8 @@ const getHandlers : RouteGetHandler = {
 
         return getPointsView(game.points)
     },
+
+    play: play,
 
     async get({ query }) {
         let head = `
@@ -285,7 +287,7 @@ const postHandlers : RoutePostHandler = {
         return {
             body: await playMatchView(new PlayerStateView(o.teamId, o.gameId)),
             events: {
-                updatedOutPlayers: true,
+                updatedOutPlayers: rapidFire,
             }
         }
     },

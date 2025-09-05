@@ -35,7 +35,7 @@ export async function activityPlayerSelectorView(query: any) {
             <form
                 method=post
                 action="$${action}"
-                hf-target="#dialogs">
+                hf-target="#app">
                 <input type=hidden name=activityId value="${activityId}">
                 <input type=hidden name=playerId value="${player.playerId}">
                 <input type=hidden name=operation value="${operation}">
@@ -48,7 +48,7 @@ export async function activityPlayerSelectorView(query: any) {
                 .map(x => html`<form
                     method=post
                     action="$${action}"
-                    hf-target="#dialogs">
+                    hf-target="#app">
                     <input type=hidden name=activityId value="${activityId}">
                     <input type=hidden name=playerId value="${x.playerId}">
                     <input type=hidden name=operation value="${operation}">

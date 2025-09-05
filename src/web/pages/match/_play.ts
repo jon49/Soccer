@@ -7,8 +7,9 @@ let {
     validation: { queryTeamIdGameIdValidator, validateObject }
 } = self.app
 
-export async function play2({ query }: RouteGetArgs) {
+export async function play({ query }: RouteGetArgs) {
     let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
+    let queryTeamGame = `teamId=${teamId}&gameId=${gameId}`
     let state = new PlayerStateView(teamId, gameId)
     return html`
 <!DOCTYPE html>
@@ -52,7 +53,41 @@ export async function play2({ query }: RouteGetArgs) {
     <script src="/web/js/morphdom.bundle.js" type="module"></script>
 </head>
 <body>
-${playMatchView(state)}
+
+<div id=app>
+    ${playMatchView(state)}
+</div>
+
+<form
+    hidden
+    action="/web/match?${queryTeamGame}&handler=showInPlay"
+    hf-target="#app"
+    traits=on
+    data-events="inPlayersFilled"></form>
+
+<form
+    traits="on"
+    data-events="updatedOnDeckPlayers"
+    action="/web/match?${queryTeamGame}&handler=onDeckList"
+    hf-target="#onDeckList"
+    ></form>
+
+<form
+    traits="on"
+    data-events="updatedOutPlayers"
+    action="/web/match?${queryTeamGame}&handler=outPlayersList"
+    hf-target="#outPlayersList"></form>
+
+<form
+    traits="on"
+    data-events="updatedNotPlayingPlayers"
+    action="/web/match?${queryTeamGame}&handler=notPlayingPlayersList"
+    hf-target="#notPlayingList"></form>
+
+
+<form id=post-form method=post hidden></form>
+<form id=get-form hidden></form>
+
 </body>
 </html>
 `

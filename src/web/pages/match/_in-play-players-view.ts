@@ -67,7 +67,7 @@ function playerView(
         class="in-play-button"
         formmethod="get"
         formaction="/web/match?$${queryTeamGame}&playerId=${player?.playerId}&handler=playerSwap"
-        hf-target="#dialogs">${player?.name}</button>
+        hf-target="#app">${player?.name}</button>
     <button
         class="in-play-button"
         formmethod=post
@@ -94,7 +94,7 @@ function subPlayerView(
         class="in-play-button"
         formmethod=post
         formaction="/web/match?$${queryTeamGame}&playerId=${sub.playerId}&handler=swap"
-        hf-target="#dialogs">(${sub.name})</button>
+        hf-target="#app">(${sub.name})</button>
     <button
         class="in-play-button"
         formmethod=post

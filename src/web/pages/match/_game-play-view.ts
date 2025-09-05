@@ -74,7 +74,7 @@ function goalTrackingEnabledView(
     game: Game
 ) {
     return html`
-    <form id=team-points hf-target="#dialogs" hidden></form>
+    <form id=team-points hf-target="#app" hidden></form>
     <form
         traits=on
         data-events="playerStatUpdated"

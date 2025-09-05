@@ -15,7 +15,7 @@ export async function onDeckView(state: PlayerStateView) {
 <li id="${id}">
     <form
         action="/web/match?${queryTeamGame}&playerId=${x.playerId}&handler=playerSwap"
-        hf-target="#dialogs">
+        hf-target="#app">
         <button>(${x.name})</button>
     </form>
     <form
