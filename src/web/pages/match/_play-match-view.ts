@@ -43,7 +43,9 @@ ${when(countOnDeckPlayers > 0, () => html`
 <button
     form=post-form
     formaction="/web/match?$${queryTeamGame}&handler=swapAll"
-    hf-target="#app">Swap All</button>
+    hf-target="#app"
+    hf-swap="merge"
+    >Swap All</button>
 `)}
 ${when(playersExist, () => html`
 <button
@@ -116,7 +118,7 @@ ${when(playersExist, () => html`
     traits="on"
     data-events="load onDeckListUpdated"
     data-action="this.innerText = 'On Deck (' + onDeckList.childElementCount + ')'"
-    ></h3>
+    >On Deck (${playersOnDeck.filter(x => x.status.targetPosition == null).length})</h3>
 <button
     class="condense-padding"
 

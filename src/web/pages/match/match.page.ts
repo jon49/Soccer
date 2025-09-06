@@ -238,10 +238,10 @@ const postHandlers : RoutePostHandler = {
         await swapAll(query)
 
         return {
-            body: await playMatchView(new PlayerStateView(o.teamId, o.gameId)),
-            events: {
-                updatedOutPlayers: true,
-            }
+            body: html`<div id=app>${playMatchView(new PlayerStateView(o.teamId, o.gameId))}</div>`,
+            // events: {
+            //     updatedOutPlayers: true,
+            // }
         }
     },
 
@@ -249,7 +249,8 @@ const postHandlers : RoutePostHandler = {
         let o = await validateObject(query, queryTeamIdGameIdValidator)
         await swapAll(query)
 
-        return playMatchView(new PlayerStateView(o.teamId, o.gameId))
+        // return playMatchView(new PlayerStateView(o.teamId, o.gameId))
+        return html`<div id=app>${playMatchView(new PlayerStateView(o.teamId, o.gameId))}</div>`
     },
 
     async allOut({ query }) {
