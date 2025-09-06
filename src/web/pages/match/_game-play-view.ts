@@ -13,7 +13,7 @@ export function getPointsView(points: number) {
 }
 
 export default async function render(query: any) {
-    let o = await PlayerStateView.create(query),
+    let state = await PlayerStateView.create(query),
         [
             notes,
             game,
@@ -21,13 +21,13 @@ export default async function render(query: any) {
             isGameEnded,
             { stats }
         ] = await Promise.all([
-            o.notes(),
-            o.game(),
-            o.team(),
-            o.isGameEnded(),
-            o.stats()
+            state.notes(),
+            state.game(),
+            state.team(),
+            state.isGameEnded(),
+            state.stats()
         ]),
-        queryTeamGame = o.queryTeamGame,
+        queryTeamGame = state.queryTeamGame,
         isGoalTrackingEnabled = stats.find(x => x.id === statIds.Goal)?.active
 
     return html`
@@ -56,7 +56,7 @@ export default async function render(query: any) {
     </li>
 </ul>
 
-<div id="player-state">${playerStateView(o)}</div>
+<div id="player-state">${playerStateView(state)}</div>
 
 <h3>Notes</h3>
 
