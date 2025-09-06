@@ -21,8 +21,8 @@ export async function onDeckView(state: PlayerStateView) {
     <form
         method=post
         action="/web/match?${queryTeamGame}&playerId=${x.playerId}&handler=cancelOnDeck"
-        hf-target="#${id}"
-        hf-swap="outerHTML"
+        hf-target="#app"
+        hf-swap="merge"
         >
         <button>X</button>
     </form>

@@ -3,7 +3,7 @@ import type { InPlayPlayer, OnDeckPlayer } from "../../server/db.js";
 
 let {
     html,
-    utils: {when}
+    utils: { when }
 } = self.app
 
 export function inPlayersView(state: PlayerStateView) {
@@ -17,7 +17,7 @@ export function inPlayersView(state: PlayerStateView) {
         let queryTeamGame = state.queryTeamGame
         let id = `in-player-${player?.playerId}`
         let subPlayerId = `sub-player-${sub?.playerId}`
-       return html`
+        return html`
 <form
     $${when(!sub, () => `id="${id}"`)}
     $${when(sub && !player, () => `id="${subPlayerId}"`)}
@@ -30,9 +30,9 @@ ${
     player && sub
         ? html`">${twoPlayerView(player, sub, isGameInPlay, queryTeamGame, id, subPlayerId)}`
     : player
-        ? html`">${playerView(player, isGameInPlay, queryTeamGame, id)}`
+        ? html`">${playerView(player, isGameInPlay, queryTeamGame)}`
     : sub
-        ? html`">${subPlayerView(sub, queryTeamGame, subPlayerId)}`
+        ? html`">${subPlayerView(sub, queryTeamGame)}`
     : html` empty">`
 }</form>`
     }, { gridItemWidth: "8em" })
@@ -48,18 +48,17 @@ function twoPlayerView(
 ) {
     return html`
 <div id="${inPlayerId}">
-${playerView(player, isGameInPlay, queryTeamGame, inPlayerId)}
+${playerView(player, isGameInPlay, queryTeamGame)}
 </div>
 <div id="${subPlayerId}">
-${subPlayerView(sub, queryTeamGame, subPlayerId)}
+${subPlayerView(sub, queryTeamGame)}
 </div>`
 }
 
 function playerView(
         player: GamePlayerStatusView<InPlayPlayer>,
         isGameInPlay: boolean,
-        queryTeamGame: string,
-        id: string) {
+        queryTeamGame: string) {
 
     return html`
 <fieldset class="mb-0" role="group">
@@ -72,7 +71,8 @@ function playerView(
         class="in-play-button"
         formmethod=post
         formaction="/web/match?${queryTeamGame}&playerId=${player.playerId}&handler=playerNowOut"
-        hf-target="#$${id}"
+        hf-swap="merge"
+        hf-target="#app"
         >X</button>
 </fieldset>
 <div
@@ -86,20 +86,21 @@ function playerView(
 
 function subPlayerView(
         sub: GamePlayerStatusView<OnDeckPlayer>,
-        queryTeamGame: string,
-        id: string) {
+        queryTeamGame: string) {
     return html`
 <fieldset class="mb-0" role="group">
     <button
         class="in-play-button"
         formmethod=post
         formaction="/web/match?$${queryTeamGame}&playerId=${sub.playerId}&handler=swap"
+        hf-swap="merge"
         hf-target="#app">(${sub.name})</button>
     <button
         class="in-play-button"
         formmethod=post
         formaction="/web/match?$${queryTeamGame}&playerId=${sub.playerId}&handler=cancelOnDeck"
-        hf-target="#$${id}"
+        hf-swap="merge"
+        hf-target="#app"
         >X</button>
 </fieldset>
 <div

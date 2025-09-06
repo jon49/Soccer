@@ -18,8 +18,8 @@ export async function notPlayingPlayersView(state: PlayerStateView) {
     <form
         method=post
         action="/web/match?${state.queryTeamGame}&playerId=${x.playerId}&handler=backIn"
-        hf-target="#${id}"
-        hf-swap="outerHTML"
+        hf-target="#app"
+        hf-swap="merge"
         aria-label="Place ${x.name} back into the game."
         >
         <button>${x.name}</button>

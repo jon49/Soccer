@@ -19,7 +19,6 @@ const postHandlers : RoutePostHandler = {
         }
     },
     async force() {
-        debugger
         let result = await sync()
         switch (result.status) {
             case 200:

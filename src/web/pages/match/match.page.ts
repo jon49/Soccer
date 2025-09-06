@@ -2,15 +2,11 @@ import type { RoutePostHandler, RoutePage, RouteGetHandler } from "@jon49/sw/rou
 import type { Game } from "../../server/db.js"
 import { GameTimeCalculator, PlayerGameTimeCalculator, PlayerStateView, isInPlayPlayer } from "./shared.js"
 import render, { getPointsView } from "./_game-play-view.js"
-import playerStateView from "./_player-state-view.js"
 import { swapAll } from "./player-swap.js"
 import targetPositionView from "./_target-position-view.js"
 import targetPosition from "./player-target-position.js"
 import { activityPlayerSelectorView } from "./_activity-position-view.js"
 import playMatchView from "./_play-match-view.js"
-import { outPlayersView } from "./_out-player-view.js"
-import { onDeckView } from "./_on-deck-view.js"
-import { notPlayingPlayersView } from "./_not-playing-players-view.js"
 import { play } from "./_play.js"
 
 const {
@@ -106,7 +102,7 @@ async function handlePlayerStatUpdated(data: PlayerStatUpdatedArgs) {
 
 const getHandlers : RouteGetHandler = {
     async cancelSwap ({ query }) {
-        return playerStateView(await PlayerStateView.create(query))
+        return getApp(new PlayerStateView(query.teamId, query.gameId))
     },
 
     async playerSwap({ query }) {
@@ -133,37 +129,7 @@ const getHandlers : RouteGetHandler = {
     },
 
     async showInPlay({ query }) {
-        return playMatchView(new PlayerStateView(+query.teamId, +query.gameId))
-    },
-
-    async outPlayersList({ query }) {
-        let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
-        return {
-            body: await outPlayersView(new PlayerStateView(teamId, gameId)),
-            events: {
-                outPlayersListUpdated: true
-            }
-        }
-    },
-
-    async notPlayingPlayersList({ query }) {
-        let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
-        return {
-            body: html`${notPlayingPlayersView(new PlayerStateView(teamId, gameId))}`,
-            events: {
-                notPlayingPlayersListUpdated: true,
-            },
-        }
-    },
-
-    async onDeckList({ query }) {
-        let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
-        return {
-            body: html`${onDeckView(new PlayerStateView(teamId, gameId))}`,
-            events: {
-                onDeckListUpdated: true
-            }
-        }
+        return getApp(new PlayerStateView(query.teamId, query.gameId))
     },
 
     async points({ query }) {
@@ -218,6 +184,10 @@ const getHandlers : RouteGetHandler = {
     }
 }
 
+function getApp(state: PlayerStateView) {
+    return html`<div id=app>${playMatchView(state)}</div>`
+}
+
 const postHandlers : RoutePostHandler = {
     oPointsDec: setPoints(game => --game.opponentPoints),
     oPointsInc: setPoints(game => ++game.opponentPoints),
@@ -237,20 +207,13 @@ const postHandlers : RoutePostHandler = {
         // The query contains the player ID and so will only swap one player.
         await swapAll(query)
 
-        return {
-            body: html`<div id=app>${playMatchView(new PlayerStateView(o.teamId, o.gameId))}</div>`,
-            // events: {
-            //     updatedOutPlayers: true,
-            // }
-        }
+        return getApp(new PlayerStateView(o.teamId, o.gameId))
     },
 
     async swapAll({ query }) {
         let o = await validateObject(query, queryTeamIdGameIdValidator)
         await swapAll(query)
-
-        // return playMatchView(new PlayerStateView(o.teamId, o.gameId))
-        return html`<div id=app>${playMatchView(new PlayerStateView(o.teamId, o.gameId))}</div>`
+        return getApp(new PlayerStateView(o.teamId, o.gameId))
     },
 
     async allOut({ query }) {
@@ -271,7 +234,7 @@ const postHandlers : RoutePostHandler = {
             .map(player => onDeckPlayerOut(state, player.playerId)),
         ])
 
-        return playMatchView(new PlayerStateView(o.teamId, o.gameId))
+        return getApp(new PlayerStateView(o.teamId, o.gameId))
     },
 
     async updateUserPosition({ query }) {
@@ -285,12 +248,7 @@ const postHandlers : RoutePostHandler = {
             return getHandlers.rapidFire({ query })
         }
 
-        return {
-            body: await playMatchView(new PlayerStateView(o.teamId, o.gameId)),
-            events: {
-                updatedOutPlayers: rapidFire,
-            }
-        }
+        return playMatchView(new PlayerStateView(o.teamId, o.gameId))
     },
 
     async playerOnDeck({ query }) {
@@ -300,13 +258,7 @@ const postHandlers : RoutePostHandler = {
         player.status = { _: "onDeck", targetPosition: null }
         await playerGameSave(teamId, player)
 
-        return {
-            body: html``,
-            events: {
-                outPlayersListUpdated: true,
-                updatedOnDeckPlayers: true,
-            }
-        }
+        return getApp(new PlayerStateView(teamId, gameId))
     },
 
     async playerNowOut({ query }) {
@@ -315,12 +267,7 @@ const postHandlers : RoutePostHandler = {
 
         await inPlayerOut(state, playerId)
 
-        return {
-            body: html``,
-            events: {
-                updatedOutPlayers: true,
-            },
-        }
+        return getApp(new PlayerStateView(teamId, gameId))
     },
 
     async cancelOnDeck({ query }) {
@@ -328,12 +275,7 @@ const postHandlers : RoutePostHandler = {
         let state = new PlayerStateView(teamId, gameId)
         await onDeckPlayerOut(state, playerId)
 
-        return {
-            body: html``,
-            events: {
-                updatedOutPlayers: true,
-            }
-        }
+        return getApp(new PlayerStateView(teamId, gameId))
     },
 
     async notPlaying({ query }) {
@@ -342,13 +284,7 @@ const postHandlers : RoutePostHandler = {
         player.status = { _: "notPlaying" }
         await playerGameSave(teamId, player)
 
-        return {
-            body: html``,
-            events: {
-                outPlayersListUpdated: true,
-                updatedNotPlayingPlayers: true,
-            }
-        }
+        return getApp(new PlayerStateView(teamId, gameId))
     },
 
     async backIn({ query }) {
@@ -357,13 +293,7 @@ const postHandlers : RoutePostHandler = {
         player.status = { _: "out" }
         await playerGameSave(teamId, player)
 
-        return {
-            body: html``,
-            events: {
-                notPlayingPlayersListUpdated: true,
-                updatedOutPlayers: true,
-            }
-        }
+        return getApp(new PlayerStateView(teamId, gameId))
     },
 
     async startGame({ query }) {
@@ -386,7 +316,7 @@ const postHandlers : RoutePostHandler = {
             return calc.save(teamId)
         }))
 
-        return playMatchView(new PlayerStateView(teamId, gameId))
+        return getApp(new PlayerStateView(teamId, gameId))
     },
 
     async pauseGame ({ query }) {
@@ -409,7 +339,7 @@ const postHandlers : RoutePostHandler = {
             return calc.save(teamId)
         }).filter(x => x))
 
-        return playMatchView(new PlayerStateView(teamId, gameId))
+        return getApp(new PlayerStateView(teamId, gameId))
     },
 
     async endGame({ query }) {
@@ -434,7 +364,7 @@ const postHandlers : RoutePostHandler = {
                 return playerCalc.save(teamId)
             }))
 
-        return playMatchView(new PlayerStateView(teamId, gameId))
+        return getApp(new PlayerStateView(teamId, gameId))
     },
 
     async restartGame({ query }) {
@@ -444,7 +374,7 @@ const postHandlers : RoutePostHandler = {
         game.status = "paused"
         await teamSave(team)
 
-        return playMatchView(new PlayerStateView(teamId, gameId))
+        return getApp(new PlayerStateView(teamId, gameId))
     },
 
     async setPlayerStat(o) {

@@ -1,5 +1,4 @@
 import { PlayerStateView } from "./shared.js"
-import { dialogPlayerPositionsView } from "./_player-position-view.js"
 import { onDeckView } from "./_on-deck-view.js"
 import { outPlayersView } from "./_out-player-view.js"
 import { inPlayersView } from "./_in-play-players-view.js"
@@ -16,6 +15,8 @@ export default async function playMatchView(state: PlayerStateView) {
         inPlayPlayers,
         gameCalc,
         playersOnDeck,
+        outPlayers,
+        notPlayingPlayers,
         isGameEnded,
         isGamePaused,
     ] = await Promise.all([
@@ -23,23 +24,23 @@ export default async function playMatchView(state: PlayerStateView) {
         state.inPlayPlayers(),
         state.gameCalc(),
         state.onDeckPlayers(),
+        state.outPlayers(),
+        state.notPlayingPlayers(),
         state.isGameEnded(),
         state.isGamePaused(),
     ])
 
     let queryTeamGame = state.queryTeamGame
 
-    let countOnDeckPlayers = playersOnDeck.length
-    let noPlayersExist = !inPlayPlayers.length && !countOnDeckPlayers
+    let countOnDeckPlayersWithPosition = playersOnDeck.filter(x => x.status.targetPosition != null).length
+    let noPlayersExist = !inPlayPlayers.length && !countOnDeckPlayersWithPosition
     let playersExist = !noPlayersExist
 
-    let view = dialogPlayerPositionsView({
-        playerStateView: state,
-        title: html`
-<div class=flex>
+    return html`
+<header class=flex>
 <div>
 <a href="/web/match?${queryTeamGame}">Back</a>
-${when(countOnDeckPlayers > 0, () => html`
+${when(countOnDeckPlayersWithPosition > 0, () => html`
 <button
     form=post-form
     formaction="/web/match?$${queryTeamGame}&handler=swapAll"
@@ -49,21 +50,20 @@ ${when(countOnDeckPlayers > 0, () => html`
 `)}
 ${when(playersExist, () => html`
 <button
-    traits="on"
-    data-events="updatedInPlayers"
-    data-action="this.hidden = !event.detail.count"
-
     form=post-form
     formaction="/web/match?$${queryTeamGame}&handler=allOut"
+    hf-swap="merge"
     hf-target="#app">All Out</button>
 `)}
 </div>
 
 <div class=flex>
     ${when(!isGameEnded, () => html`
-    <button id=game-status
+    <button
+        id=game-status
         form=post-form
         formaction="/web/match?$${queryTeamGame}&handler=${isGameInPlay ? "pauseGame" : "startGame"}"
+        hf-swap="merge"
         hf-target="#app" >
         ${isGameInPlay ? "Pause" : "Start"}
     </button>`)}
@@ -79,6 +79,7 @@ ${when(playersExist, () => html`
         form=post-form
         formaction="/web/match?$${queryTeamGame}&handler=${isGameEnded ? "restartGame" : "endGame"}"
         hf-target="#app"
+        hf-swap="merge"
         >
         ${isGameEnded ? "Restart" : "End"}
     </button>
@@ -99,62 +100,31 @@ ${when(playersExist, () => html`
     aria-label="Opponent points ${gameCalc.game.opponentPoints}"
     >${gameCalc.game.opponentPoints}</button>
 </div>
-</div>`,
-        keepOpen: true,
-        slot: [
-            html`<div>${inPlayersView(state)}</div>`,
-            html`
-            <form
-                traits="on"
-                data-events="updatedInPlayers"
-                action="/web/match?${queryTeamGame}&handler=inPlayerView"
-                hf-target="#in-player-view"
-                hf-swap="outerHTML"
-            ></form>
-            `
-            ,
-                html`
-<h3 class="inline mt-2"
-    traits="on"
-    data-events="load onDeckListUpdated"
-    data-action="this.innerText = 'On Deck (' + onDeckList.childElementCount + ')'"
-    >On Deck (${playersOnDeck.filter(x => x.status.targetPosition == null).length})</h3>
+</header>
+<br>
+<div>${inPlayersView(state)}</div>
+
+<h3 class="inline mt-2">On Deck (${playersOnDeck.filter(x => x.status.targetPosition == null).length})</h3>
+${when(playersOnDeck.length > 1, () => html`
 <button
     class="condense-padding"
-
-    traits="on"
-    data-events="load onDeckListUpdated"
-    data-action="this.hidden = onDeckList.childElementCount < 2"
-
     form="get-form"
     formaction="/web/match?${queryTeamGame}&handler=rapidFire"
     hf-target="#app">Rapid Fire</button>
+`)}
 
 <ul id=onDeckList class=list>
     ${onDeckView(state)}
-</ul>`,
+</ul>
 
-html`
-<h3 class="mt-2"
-    traits="on"
-    data-events="load outPlayersListUpdated"
-    data-action="this.innerText = 'Out Players (' + (outPlayersList.childElementCount - 1) + ')'"
-></h3>
+<h3 class="mt-2">Out Players (${outPlayers.length})</h3>
 <ul id=outPlayersList class=list>
 ${outPlayersView(state)}
-</ul>`,
+</ul>
 
-html`
-<h3 class="mt-2"
-    traits="on"
-    data-events="load notPlayingPlayersListUpdated"
-    data-action="this.innerText = 'Not Playing (' + notPlayingList.childElementCount + ')'"
-></h3>
+<h3 class="mt-2">Not Playing (${notPlayingPlayers.length})</h3>
 <ul id="notPlayingList" class=list>
 ${notPlayingPlayersView(state)}
 </ul>`
-        ]
-    })
 
-    return view
 }

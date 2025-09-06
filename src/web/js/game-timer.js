@@ -44,7 +44,8 @@ class Timer {
 
 let timer = new Timer()
 
-document.head.appendChild(document.createElement('style')).textContent = `
+document.head.insertAdjacentHTML("beforeend",
+`<style>
 .flash {
     background-color: yellow;
     animation: 2s flash infinite;
@@ -57,7 +58,8 @@ span {
     50% {
         background-color: transparent;
     }
-}`
+}
+</style>`)
 
 class GameTimer {
     /**
@@ -67,17 +69,14 @@ class GameTimer {
         if (!(el instanceof HTMLElement)) console.error('Invalid element type', el)
         this.el = el
 
-        this.start = this.total = this.interval = 0
-        this.flash = false
+        this.interval = +(el.dataset.interval ?? 0) || 1e3
 
-        let { start, total, interval, static: static_ } = el.dataset
-        this.start = +(start ?? 0) || +new Date()
-        this.total = +(total ?? 0)
-        this.interval = +(interval ?? 0) || 1e3
-        if (el.hasAttribute("data-flash")) {
-            el.classList.add("flash")
-        }
-        if (static_ !== "") timer.add(this)
+        this.update(+new Date())
+        // @ts-ignore
+        document.addEventListener("hf:completed", this)
+    }
+
+    handleEvent() {
         this.update(+new Date())
     }
 
@@ -89,7 +88,18 @@ class GameTimer {
      * @param {number} currentTime
      */
     update(currentTime) {
-        this.el.textContent = formatTime(currentTime, this.start, this.total)
+        let el = this.el
+
+        let { start, total, static: static_ } = el.dataset
+        let start_ = +(start ?? 0) || +new Date()
+        let total_ = +(total ?? 0)
+        if (el.hasAttribute("data-flash")) {
+            el.classList.add("flash")
+        } else {
+            el.classList.remove("flash")
+        }
+        if (static_ !== "") timer.add(this)
+        this.el.textContent = formatTime(currentTime, start_, total_)
     }
 }
 

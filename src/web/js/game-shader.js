@@ -1,5 +1,5 @@
-document.head.appendChild(document.createElement('style')).textContent = `
-<style>
+document.head.insertAdjacentHTML("beforeend",
+`<style>
 :root {
     --game-shader-background: #000;
     --game-shader-color: #fff;
@@ -12,7 +12,7 @@ document.head.appendChild(document.createElement('style')).textContent = `
 .game-shader a {
     color: var(--game-shader-color);
 }
-</style>`
+</style>`)
 
 function getRGB(el, prop) {
     let computed = window.getComputedStyle(el, null)[prop]
@@ -45,9 +45,12 @@ class GameShader {
         this.background = invert(getRGB(document.body, 'backgroundColor'))
 
         this.el = el
-        el.classList.add('game-shader')
-        el.classList.add('outline')
 
+        this.update()
+        document.addEventListener("hf:completed", this)
+    }
+
+    handleEvent() {
         this.update()
     }
 
@@ -59,6 +62,8 @@ class GameShader {
     update() {
         let el = this.el
         if (!el) return
+        el.classList.add('game-shader')
+        el.classList.add('outline')
         const total = el.dataset.total || 0
         if (!+total) return
         const value = el.dataset.value || 0

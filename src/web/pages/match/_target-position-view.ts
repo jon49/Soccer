@@ -1,5 +1,4 @@
-import { isInPlayPlayer, GameTimeCalculator, PlayerGameTimeCalculator, PlayerStateView } from "./shared.js"
-import { dialogPlayerPositionsView } from "./_player-position-view.js"
+import { GameTimeCalculator, PlayerGameTimeCalculator, PlayerStateView, positionPlayersView } from "./shared.js"
 
 let {
     html,
@@ -15,28 +14,31 @@ const querySwapValidator = {
 export default async function render(query: any) {
     let { teamId, gameId, playerId } = await validateObject(query, querySwapValidator)
 
-    let playerStateView = new PlayerStateView(teamId, gameId)
-    let [ isPaused, player, playerGame, game ] = await Promise.all([
-        playerStateView.isGamePaused(),
-        playerStateView.player(playerId),
-        playerStateView.playerGame(playerId),
-        playerStateView.game(),
+    let state = new PlayerStateView(teamId, gameId)
+    let [ isPaused, player, game ] = await Promise.all([
+        state.isGamePaused(),
+        state.player(playerId),
+        state.game(),
     ])
 
     let gameTimeCalculator = new GameTimeCalculator(game)
+    let queryTeamGame = state.queryTeamGame
 
-    return dialogPlayerPositionsView({
-        playerStateView,
-        keepOpen: true,
-        title: `Swap for ${player.name}`,
-        playerView: ({ player, playerOnDeck, positionName, positionIndex }) => {
+    return html`
+<header>
+    <a href="/web/match?${queryTeamGame}&handler=play">Back</a>&nbsp;
+    <h2 class="inline">Swap for ${player.name}</h2>
+</header>
+
+    ${positionPlayersView(
+        state,
+        ({ player, playerOnDeck, positionName, positionIndex }) => {
             let isCurrentPlayer = player?.playerId === playerId
             return html`
             <form
                 method=post
                 action="/web/match?position=${positionIndex}&teamId=${teamId}&gameId=${gameId}&playerId=${playerId}&handler=updateUserPosition&playerSwap"
                 hf-target="#app"
-                $${when(!isInPlayPlayer(playerGame), `hf-scroll-to="#out-players"`)}
                 >${
             () => {
                 if (player) {
@@ -75,5 +77,6 @@ export default async function render(query: any) {
                 }</form>
             `
         },
-    })
+        {gridItemWidth: "50px"}
+    )}`
 }

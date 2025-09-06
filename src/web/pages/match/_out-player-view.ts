@@ -21,7 +21,8 @@ export async function outPlayersView(o: PlayerStateView) {
         <button
             form="out-players-form"
             formaction="/web/match?$${queryTeamGame}&playerId=${x.playerId}&handler=playerOnDeck"
-            hf-target="#${outPlayerId}"
+            hf-swap="merge"
+            hf-target="#app"
         >${x.name}</button>
     </div>
     <div>
@@ -31,7 +32,8 @@ export async function outPlayersView(o: PlayerStateView) {
         <button
             form="out-players-form"
             formaction="/web/match?$${queryTeamGame}&playerId=$${x.playerId}&handler=notPlaying"
-            hf-target="#${outPlayerId}"
+            hf-swap="merge"
+            hf-target="#app"
         >X</button>
     </div>
 </li>`
