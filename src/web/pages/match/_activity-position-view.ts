@@ -2,17 +2,31 @@ import { PlayerStateView, positionPlayersView } from "./shared.js"
 
 let {
     html,
-    validation: { createIdNumber, createString25, validateObject, queryTeamIdGameIdValidator },
+    validation: {
+        createIdNumber,
+        createString25,
+        createStringInfinity,
+        maybe,
+        validateObject,
+        queryTeamIdGameIdValidator
+    },
 } = self.app
 
 const queryActivityValidator = {
     ...queryTeamIdGameIdValidator,
     activityId: createIdNumber("Activity ID"),
-    action: createString25("Action")
+    action: createString25("Action"),
+    returnUrl: maybe(createStringInfinity("Return URL"))
 }
 
 export async function activityPlayerSelectorView(query: any) {
-    let { teamId, gameId, activityId, action: operation } = await validateObject(query, queryActivityValidator)
+    let {
+        teamId,
+        gameId,
+        activityId,
+        action: operation,
+        returnUrl,
+    } = await validateObject(query, queryActivityValidator)
 
     let state = new PlayerStateView(teamId, gameId)
     let [ onDeckPlayers, outPlayers ] = await Promise.all([
@@ -25,7 +39,7 @@ export async function activityPlayerSelectorView(query: any) {
 
     return html`
 <header>
-    <a href="/web/match?${queryTeamGame}&handler=play">Back</a>&nbsp;
+    <a href="$${returnUrl ? returnUrl : `/web/match?${queryTeamGame}&handler=play`}">Cancel</a>&nbsp;
     <h2 class="inline">Player Goal</h2>
 </header>
     ${positionPlayersView(
@@ -42,6 +56,7 @@ export async function activityPlayerSelectorView(query: any) {
                 <input type=hidden name=activityId value="${activityId}">
                 <input type=hidden name=playerId value="${player.playerId}">
                 <input type=hidden name=operation value="${operation}">
+                <input type=hidden name=returnUrl value="${returnUrl}">
                 <button>${player.name}</button>
             </form>`
         },
@@ -56,6 +71,7 @@ export async function activityPlayerSelectorView(query: any) {
             <input type=hidden name=activityId value="${activityId}">
             <input type=hidden name=playerId value="${x.playerId}">
             <input type=hidden name=operation value="${operation}">
+            <input type=hidden name=returnUrl value="${returnUrl}">
             <button>${x.name}</button>
         </form>`)
     }

@@ -1,15 +1,12 @@
 import { PlayerStateView } from "./shared.js"
 import playerStateView from "./_player-state-view.js"
-import type { Game } from "../../server/db.js"
 
 let {
     html,
-    repo: { statIds },
-    utils: {when}
 } = self.app
 
 export function getPointsView(points: number) {
-    return html`&nbsp;${points || "0"}&nbsp;`
+    return html`${points || "0"}`
 }
 
 export default async function render(query: any) {
@@ -18,17 +15,15 @@ export default async function render(query: any) {
             notes,
             game,
             team,
-            isGameEnded,
-            { stats }
         ] = await Promise.all([
             state.notes(),
             state.game(),
             state.team(),
-            state.isGameEnded(),
-            state.stats()
         ]),
-        queryTeamGame = state.queryTeamGame,
-        isGoalTrackingEnabled = stats.find(x => x.id === statIds.Goal)?.active
+        queryTeamGame = state.queryTeamGame
+
+        let pointAction = `/web/match?${queryTeamGame}&activityId=1&handler=points`
+        let opponentPointAction = `/web/match?${queryTeamGame}&handler=oPoints`
 
     return html`
 <h2>${team.name} ($${game.home ? "Home" : "Away"}) vs ${game.opponent}</h2>
@@ -39,20 +34,21 @@ export default async function render(query: any) {
     <li>
 
         <span>Points</span>
-
-        ${isGoalTrackingEnabled
-            ? goalTrackingEnabledView(queryTeamGame, isGameEnded, game)
-        : goalTrackingDisabledView(queryTeamGame, isGameEnded, game)}
+        <form method="post" hf-target="#points">
+            <button class=condense-padding formaction="$${pointAction}&action=dec">-</button>
+            <span id=points>${getPointsView(game.points)}</span>
+            <button class=condense-padding formaction="$${pointAction}&action=inc">+</button>
+        </form>
 
     </li>
     <li>
         <span>Opponent</span>
 
-        <form id=opponent-points method=post hf-target="#o-points" hidden></form>
-
-        ${when(!isGameEnded, () => html`<button formaction="/web/match?$${queryTeamGame}&handler=oPointsDec" form=opponent-points>-</button>`)}
-        <span id=o-points>${getPointsView(game.opponentPoints)}</span>
-        ${when(!isGameEnded, () => html`<button formaction="/web/match?$${queryTeamGame}&handler=oPointsInc" form=opponent-points>+</button>`)}
+        <form method="post" hf-target="#o-points">
+            <button class=condense-padding formaction="${opponentPointAction}Dec">-</button>
+            <span id=o-points>${getPointsView(game.opponentPoints)}</span>
+            <button class=condense-padding formaction="${opponentPointAction}Inc">+</button>
+        </form>
     </li>
 </ul>
 
@@ -67,49 +63,3 @@ export default async function render(query: any) {
 </form>
 `
 }
-
-function goalTrackingEnabledView(
-    queryTeamGame: string,
-    isGameEnded: boolean,
-    game: Game
-) {
-    return html`
-    <form id=team-points hf-target="#app" hidden></form>
-    <form
-        traits=on
-        data-events="playerStatUpdated"
-        data-match="detail:{statId:1}"
-
-        action="/web/match?$${queryTeamGame}&handler=points"
-        hf-target="#points"
-        hidden></form>
-
-    ${() => {
-    let action = `/web/match?${queryTeamGame}&activityId=1&handler=activityPlayerSelector`
-    return html`
-    ${when(!isGameEnded, () =>
-       html`<button class=condense-padding formaction="$${action}&action=dec" form=team-points>-</button>`)}
-    <span id=points>${getPointsView(game.points)}</span>
-    ${when(!isGameEnded, () =>
-       html`<button class=condense-padding formaction="$${action}&action=inc" form=team-points>+</button>`)}`
-    }}`
-}
-
-function goalTrackingDisabledView(
-    queryTeamGame: string,
-    isGameEnded: boolean,
-    game: Game
-) {
-    return html`
-        <form id=team-points method=post hf-target="#points" hidden></form>
-        ${() => {
-        let action = `/web/match?${queryTeamGame}`
-        return html`
-        ${when(!isGameEnded, () =>
-           html`<button formaction="$${action}&handler=pointsDec" form=team-points>-</button>`)}
-        <span id=points>${getPointsView(game.points)}</span>
-        ${when(!isGameEnded, () =>
-           html`<button formaction="$${action}&handler=pointsInc" form=team-points>+</button>`)}`
-        }}`
-}
-

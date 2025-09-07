@@ -17,11 +17,22 @@ const {
         playerGameAllGet,
         playerGameSave,
         saveGameNotes,
+        statIds,
         teamGet,
         teamSave,
     },
     views: { teamNav },
-    validation: { queryTeamIdGameIdValidator, validateObject,  reject, createIdNumber, createPositiveWholeNumber, createString25, createStringInfinity, required },
+    validation: {
+        queryTeamIdGameIdValidator,
+        validateObject,
+        reject,
+        createIdNumber,
+        createPositiveWholeNumber,
+        createString25,
+        createStringInfinity,
+        maybe,
+        required,
+        },
 } = self.app
 
 const queryTeamGamePlayerValidator = {
@@ -79,7 +90,8 @@ const queryPositionUpdateValidator = {
 const dataSetPlayerActivity = {
     activityId: createIdNumber("Activity ID"),
     playerId: createIdNumber("Player ID"),
-    operation: createString25("Action")
+    operation: createString25("Action"),
+    returnUrl: maybe(createStringInfinity("Return URL"))
 }
 
 interface PlayerStatUpdatedArgs {
@@ -124,7 +136,10 @@ const getHandlers : RouteGetHandler = {
         return playMatchView(state)
     },
 
-    activityPlayerSelector({ query }) {
+    activityPlayerSelector({ query, req }) {
+        if (!req.headers.has("hf-request")) {
+            return play({ app: activityPlayerSelectorView(query), query, req })
+        }
         return activityPlayerSelectorView(query)
     },
 
@@ -188,11 +203,38 @@ function getApp(state: PlayerStateView) {
     return html`<div id=app>${playMatchView(state)}</div>`
 }
 
+const queryActionValidatory = {
+    ...queryTeamIdGameIdValidator,
+    action: createString25("Action")
+}
+
 const postHandlers : RoutePostHandler = {
     oPointsDec: setPoints(game => --game.opponentPoints),
     oPointsInc: setPoints(game => ++game.opponentPoints),
     pointsDec: setPoints(game => --game.points),
     pointsInc: setPoints(game => ++game.points),
+
+    async points(o) {
+        let { query, req } = o
+        let { action, teamId, gameId } = await validateObject(query, queryActionValidatory)
+        let state = new PlayerStateView(teamId, gameId)
+        let { stats } = await state.stats()
+
+        if (stats.find(x => x.id === statIds.Goal)?.active) {
+            return {
+                status: 302,
+                headers: {
+                    Location: `/web/match?${state.queryTeamGame}&activityId=1&action=${action}&handler=activityPlayerSelector&returnUrl=${encodeURIComponent(req.referrer)}`
+                }
+            }
+        }
+
+        if (action === "inc") {
+            return postHandlers.pointsInc(o)
+        } else if (action === "dec") {
+            return postHandlers.pointsDec(o)
+        }
+    },
 
     async updateNote ({ query, data }) {
         let { gameId, teamId } = await validateObject(query, queryTeamIdGameIdValidator)
@@ -377,10 +419,9 @@ const postHandlers : RoutePostHandler = {
         return getApp(new PlayerStateView(teamId, gameId))
     },
 
-    async setPlayerStat(o) {
-        let { query, data } = o
+    async setPlayerStat({ query, data }) {
         let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
-        let { activityId, playerId, operation } = await validateObject(data, dataSetPlayerActivity)
+        let { activityId, playerId, operation, returnUrl } = await validateObject(data, dataSetPlayerActivity)
         let [player] = await playerGameAllGet(teamId, gameId, [playerId])
 
         let activity = player.stats.find(x => x.statId === activityId)
@@ -408,6 +449,14 @@ const postHandlers : RoutePostHandler = {
             gameId
         })
 
+        if (returnUrl) {
+            return {
+                status: 302,
+                headers: {
+                    Location: returnUrl
+                }
+            }
+        }
         return {
             body: await playMatchView(new PlayerStateView(teamId, gameId)),
             status: 204,

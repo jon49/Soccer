@@ -87,9 +87,9 @@ ${when(playersExist, () => html`
 
 <div>
 <button
-    form="get-form"
-    formaction="/web/match?${queryTeamGame}&activityId=1&handler=activityPlayerSelector&action=inc"
-    hf-target="#app"
+    form="post-form"
+    formaction="/web/match?${queryTeamGame}&activityId=1&handler=points&action=inc"
+    hf-target="this"
     aria-label="Game points ${gameCalc.game.points}"
     >${gameCalc.game.points}</button>
     VS

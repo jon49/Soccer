@@ -7,7 +7,7 @@ let {
     validation: { queryTeamIdGameIdValidator, validateObject }
 } = self.app
 
-export async function play({ query }: RouteGetArgs) {
+export async function play({ app, query }: RouteGetArgs & { app?: Promise<AsyncGenerator<any, void, unknown>> }) {
     let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
     let state = new PlayerStateView(teamId, gameId)
     return html`
@@ -53,7 +53,7 @@ export async function play({ query }: RouteGetArgs) {
 </head>
 <body>
 
-<div id=app>${playMatchView(state)}</div>
+<div id=app>${app ? app :  playMatchView(state)}</div>
 
 <form id=post-form method=post hidden></form>
 <form id=get-form hidden></form>
