@@ -56,10 +56,13 @@ export default async function render(query: any) {
 
 <h3>Notes</h3>
 
-<form method=post action="/web/match?${queryTeamGame}&handler=updateNote" onchange="this.requestSubmit()">
-    <elastic-textarea>
-        <textarea name=notes>${notes}</textarea>
-    </elastic-textarea>
+<form
+    method=post
+    action="/web/match?${queryTeamGame}&handler=updateNote"
+    onchange="this.requestSubmit()"
+    hf
+    >
+    <textarea name=notes>${notes}</textarea>
 </form>
 `
 }
