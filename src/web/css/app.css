@@ -177,3 +177,8 @@ input:indeterminate ~ .none {
 .danger {
     background-color: slategray;
 }
+
+.bg {
+    background-color: var(--pico-card-sectioning-background-color);
+    border-color: gray;
+}
