@@ -3,16 +3,19 @@ import playMatchView from "./_play-match-view.js"
 import { PlayerStateView } from "./shared.js"
 
 let {
+    globalDb: db,
     html,
+    utils: { when },
     validation: { queryTeamIdGameIdValidator, validateObject }
 } = self.app
 
 export async function play({ app, query }: RouteGetArgs & { app?: Promise<AsyncGenerator<any, void, unknown>> }) {
     let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
     let state = new PlayerStateView(teamId, gameId)
+    let { theme } = await db.settings()
     return html`
 <!DOCTYPE html>
-<html>
+<html $${when(theme, x => x == null ? null : `data-theme=${x}`)}>
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">

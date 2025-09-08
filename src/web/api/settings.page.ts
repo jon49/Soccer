@@ -1,13 +1,12 @@
-import { RoutePostHandler, RoutePage } from "@jon49/sw/routes.middleware.js"
+import type { RoutePostHandler, RoutePage } from "@jon49/sw/routes.middleware.js"
 
 const {
-    db: { settings, setTheme },
-    views: { themeView },
+    globalDb: db,
 } = self.app
 
 const postHandlers : RoutePostHandler = {
     async theme({ req }) {
-        let { theme } = await settings()
+        let { theme } = await db.settings()
         theme =
             theme === "light"
                 ? "dark"
@@ -15,13 +14,12 @@ const postHandlers : RoutePostHandler = {
                 ? null
             : "light"
 
-        await setTheme(theme)
+        await db.setTheme(theme)
 
         if (req.headers.get("hf-request") === "true") {
             return {
-                status: 200,
-                body: themeView(theme),
-                events: { "app-theme": { theme } }
+                status: 302,
+                headers: { Location: req.referrer }
             }
         }
 

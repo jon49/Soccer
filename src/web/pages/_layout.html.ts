@@ -39,7 +39,7 @@ const render = async (
 
     return html`
 <!DOCTYPE html>
-<html>
+<html $${when(theme, x => x == null ? null : `data-theme=${x}`)}>
  <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
