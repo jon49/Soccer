@@ -9,7 +9,7 @@ export async function outPlayersView(o: PlayerStateView) {
     let queryTeamGame = o.queryTeamGame
 
     return html`
-<form id="out-players-form" method=post hf-swap=outerHTML></form>
+<form id="out-players-form" method=post hf-swap="merge" hf-target="#app"></form>
 
     ${outPlayers.map(x => {
 
@@ -21,8 +21,6 @@ export async function outPlayersView(o: PlayerStateView) {
         <button
             form="out-players-form"
             formaction="/web/match?$${queryTeamGame}&playerId=${x.playerId}&handler=playerOnDeck"
-            hf-swap="merge"
-            hf-target="#app"
         >${x.name}</button>
     </div>
     <div>
@@ -32,8 +30,6 @@ export async function outPlayersView(o: PlayerStateView) {
         <button
             form="out-players-form"
             formaction="/web/match?$${queryTeamGame}&playerId=$${x.playerId}&handler=notPlaying"
-            hf-swap="merge"
-            hf-target="#app"
         >X</button>
     </div>
 </li>`
