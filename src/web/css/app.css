@@ -165,6 +165,10 @@ input:indeterminate ~ .none {
     padding: 0.3em;
 }
 
+.p-1 {
+    padding: 1em;
+}
+
 .pb-1 {
     padding-bottom: 1em;
 }
@@ -181,4 +185,10 @@ input:indeterminate ~ .none {
 .bg {
     background-color: var(--pico-card-sectioning-background-color);
     border-color: gray;
+}
+
+.fieldset-outline {
+    border: 2px solid gray;
+    border-radius: 0.5em;
+    padding: 1em;
 }

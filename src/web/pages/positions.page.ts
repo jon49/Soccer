@@ -171,15 +171,28 @@ async function getPositionTemplates(teamId: number) {
 
             <form
                 action="/web/positions?handler=getTemplates&teamId=${teamId}"
+                hf-target="#templates"
                 onchange="this.requestSubmit()"
-                hf-target="#templates">
-                Number of players:
-                <select name=numberOfPlayers>
-                    <option value=4 ${when(positionCount === 4, "selected")}>4</option>
-                    <option value=7 ${when(positionCount === 7, "selected")}>7</option>
-                    <option value=9 ${when(positionCount === 9, "selected")}>9</option>
-                    <option value=11 ${when(positionCount === 11, "selected")}>11</option>
-                </select>
+                >
+                <fieldset class=fieldset-outline>
+                    <legend>Number of players</legend>
+                    <label class="inline p-1">
+                        <input type=radio name=numberOfPlayers value=4 ${when(positionCount === 4, "checked")}>
+                        &nbsp;4
+                    </label>
+                    <label class="inline p-1">
+                        <input type=radio name=numberOfPlayers value=7 ${when(positionCount === 7, "checked")}>
+                        &nbsp;7
+                    </label>
+                    <label class="inline p-1">
+                        <input type=radio name=numberOfPlayers value=9 ${when(positionCount === 9, "checked")}>
+                        &nbsp;9
+                    </label>
+                    <label class="inline p-1">
+                        <input type=radio name=numberOfPlayers value=11 ${when(positionCount === 11, "checked")}>
+                        &nbsp;11
+                    </label>
+                </fieldset>
             </form>
 
             <div
