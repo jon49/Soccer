@@ -34,14 +34,13 @@ function render({ team, positions, grid }: PositionView) {
     return html`
 <h2>${team.name} — Formation</h2>
 
-<p>Use a <button form=show-templates-form>template</button>.</p>
+<p>Use a
+    <button
+        form=get-form
+        hf-target="#dialogs"
+        formaction="/web/positions?handler=showTemplates&teamId=${team.id}"
+    >template</button>.</p>
 
-<form
-    id=show-templates-form
-    action="/web/positions?handler=showTemplates&teamId=${team.id}"
-    hf-target="#app"
-    hidden>
-</form>
 <h3>Grid</h3>
 <form
     id=add-grid
@@ -173,24 +172,22 @@ async function getPositionTemplates(teamId: number) {
             <form
                 action="/web/positions?handler=getTemplates&teamId=${teamId}"
                 onchange="this.requestSubmit()"
-
-                traits=on
-                data-events=load
-
-                hf-target="#templates"
-                >
-                Number of players: <select class=inline name=numberOfPlayers>
+                hf-target="#templates">
+                Number of players:
+                <select name=numberOfPlayers>
                     <option value=4 ${when(positionCount === 4, "selected")}>4</option>
                     <option value=7 ${when(positionCount === 7, "selected")}>7</option>
                     <option value=9 ${when(positionCount === 9, "selected")}>9</option>
                     <option value=11 ${when(positionCount === 11, "selected")}>11</option>
                 </select>
             </form>
+
             <div
                 id=templates
                 class=grid
-                style="--grid-item-width: 250px;"
-                ></div>
+                style="--grid-item-width: 250px;">
+                ${getTemplates(teamId, positionCount)}
+            </div>
             <form hidden id=modalClose method=dialog></form>
         </article>
     </dialog>`
