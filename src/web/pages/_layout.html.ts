@@ -1,5 +1,4 @@
 import html from "../server/html.js"
-import { version } from "../server/settings.js"
 import * as db from "../server/global-model.js"
 import { syncCountView } from "../api/_shared-views.js"
 import { when } from "@jon49/sw/utils.js"
@@ -116,8 +115,6 @@ const render = async (
     <template id=toast-template><dialog class="toast" traits=x-toaster open><p class=message></p></dialog></template>
     <div id=toasts></div>
     <div id=dialogs></div>
-
-    <footer><p>${version}</p></footer>
 
     <form id=post-form method=post hidden></form>
     <form id=get-form method=get hidden></form>
