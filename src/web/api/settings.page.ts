@@ -1,8 +1,18 @@
 import type { RoutePostHandler, RoutePage } from "@jon49/sw/routes.middleware.js"
+import type { Theme } from "../server/db.js"
 
 const {
     globalDb: db,
+    html,
 } = self.app
+
+function getTheme(x: unknown): Theme {
+    return x === "light"
+        ? "light"
+    : x === "dark"
+        ? "dark"
+    : "light"
+}
 
 const postHandlers : RoutePostHandler = {
     async theme({ req }) {
@@ -24,6 +34,13 @@ const postHandlers : RoutePostHandler = {
         }
 
         return null
+    },
+
+    async defaultTheme({ data }) {
+        let settings = await db.settings()
+        settings.defaultTheme = getTheme(data.defaultTheme) || "light"
+        await db.setSettings(settings)
+        return html``
     }
 }
 

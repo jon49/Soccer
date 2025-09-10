@@ -29,7 +29,7 @@ const render = async (
         title,
         bodyAttr,
     }: LayoutTemplateArguments) => {
-    const [isLoggedIn, updated, { theme }] = await Promise.all([
+    const [isLoggedIn, updated, { theme, defaultTheme }] = await Promise.all([
         db.isLoggedIn(),
         db.updated(),
         db.settings()
@@ -49,7 +49,7 @@ const render = async (
     <link href="/web/css/app.css" rel=stylesheet>
     <link rel="manifest" href="/web/manifest.json">
 </head>
-<body $${when(theme, x => `class=${x}`)} $${bodyAttr}>
+<body $${bodyAttr}>
 <div id=head>$${head}</div>
     <div class=container>
     <div id=sw-message></div>
@@ -115,6 +115,21 @@ const render = async (
     <template id=toast-template><dialog class="toast" traits=x-toaster open><p class=message></p></dialog></template>
     <div id=toasts></div>
     <div id=dialogs></div>
+
+${() => {
+    if (defaultTheme) return
+
+    return html`<form
+    id="default-theme"
+    method=post
+    action="/web/api/settings?handler=defaultTheme"
+    hf-target="#default-theme"
+    hf-swap="outerHTML">
+    <input
+        name=defaultTheme
+        onload="this.value = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; this.form.requestSubmit();">
+</form>`
+}}
 
     <form id=post-form method=post hidden></form>
     <form id=get-form method=get hidden></form>

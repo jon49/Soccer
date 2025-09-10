@@ -158,40 +158,13 @@ const getHandlers : RouteGetHandler = {
     play: play,
 
     async get({ query }) {
-        let head = `
-<style>
-    .empty {
-        margin: 1rem;
-        border: 3px solid #ccc;
-        padding: 0.5em;
-        border-radius: 1em;
-    }
-    [traits="game-timer"] {
-        width: 5em;
-        text-align: center;
-    }
-    .in-play-button {
-        padding: 0 0.75em;
-        border-bottom-left-radius: unset;
-    }
-    .in-play-button + .in-play-button {
-        border-left: 1px solid var(--pico-color);
-        border-bottom-right-radius: unset;
-    }
-    .in-play-timer {
-        width: 100%;
-        text-align: center;
-    }
-</style>`
         let team = await teamGet(+query.teamId)
         let game = await required(team.games.find(x => x.id === +query.gameId), `Could not find game! ${query.gameId}`)
         return layout({
-            head,
             main: await render(query),
             nav: teamNav(+query.teamId),
             scripts: [
                 "/web/js/game-timer.js",
-                "/web/js/game-shader.js",
             ],
             title: `Match — ${team.name} VS ${game.opponent}`,
         })

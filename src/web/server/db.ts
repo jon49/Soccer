@@ -57,6 +57,7 @@ export interface Settings {
     lastSyncedId: number
     lastSynced?: number
     theme: Theme
+    defaultTheme: Theme
 }
 
 export interface Revision {

@@ -14,6 +14,7 @@ import type {
 } from "../../server/db.js"
 
 let {
+    globalDb: db,
     html,
     repo: { playerGameAllGet, teamGet, playerGameSave, positionGetAll, statsGetAll, getGameNotes },
     utils: { DbCache, tail, when },
@@ -242,6 +243,46 @@ export class PlayerStateView {
         this.#cache = new DbCache()
     }
 
+    async theme() {
+        return this.#cache.get("theme", async () => {
+            let settings = await db.settings()
+            return settings.theme ?? settings.defaultTheme ?? "light"
+        })
+    }
+
+    async shadeBackgroundStyle(playerId: number) {
+        let background = await this.shadeBackground(playerId)
+        return `--game-shader-background: rgba(${background.join(",")})`
+    }
+
+    async shadeBackground(playerId: number) {
+        let theme = await this.theme()
+        let rgb = theme === "dark" ? [255, 255, 255] : [19, 23, 31]
+        let playerCalc = await this.playerCalc(playerId)
+        rgb.push(playerCalc.currentTotal() / playerCalc.gameCalc.total())
+        return rgb
+    }
+
+    async shadeColor(playerId: number) {
+        let shadeBackground = await this.shadeBackground(playerId)
+        let color = invertRGBA(shadeBackground)
+        return color
+    }
+
+    async shadeColorStyle(playerId: number) {
+        let color = await this.shadeColor(playerId)
+        return `--game-shader-color: rgb(${color.join(',')})`
+    }
+
+    async playerCalc(playerId: number) {
+        return this.#cache.get(`playerCalc${playerId}`, async () => {
+            let gameCalc = await this.gameCalc()
+            let player = await this.playerGame(playerId)
+            let playerCalc = new PlayerGameTimeCalculator(player, gameCalc)
+            return playerCalc
+        })
+    }
+
     async stats() {
         return this.#cache.get("stats", async () =>
             await statsGetAll(this.teamId))
@@ -438,6 +479,23 @@ export async function* positionPlayersView(
         yield html`</div>`
     }
 }
+
+
+function calcInversion(color: number, alpha: number) {
+    if (alpha >= .4) return 255 - color
+    return color
+}
+
+function invertRGBA(rgba: number[]) {
+    let [r, g, b, a] = rgba
+    return [calcInversion(r, a), calcInversion(g, a), calcInversion(b, a)]
+}
+
+// function invert(array: number[]) {
+//     array.length = 3
+//     return array.map(x => 255 - x)
+// }
+
 
 interface PlayerViewProps {
     rowIndex: number

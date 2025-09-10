@@ -46,12 +46,25 @@ export async function play({ app, query }: RouteGetArgs & { app?: Promise<AsyncG
         .in-play-timer {
             width: 100%;
             text-align: center;
+            border-radius: 0 0 5px 5px;
+        }
+        
+        /* Game Shader CSS */
+        :root {
+            --game-shader-background: #000;
+            --game-shader-color: #fff;
+        }
+        .game-shader {
+            background: var(--game-shader-background);
+            color: var(--game-shader-color);
+        }
+        .game-shader a {
+            color: var(--game-shader-color);
         }
     </style>
 
     <script src="/web/js/app.bundle.js" type="module"></script>
     <script src="/web/js/game-timer.js" type="module"></script>
-    <script src="/web/js/game-shader.js" type="module"></script>
     <script src="/web/js/morphdom.bundle.js" type="module"></script>
 </head>
 <body>

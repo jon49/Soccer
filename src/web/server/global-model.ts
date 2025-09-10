@@ -9,7 +9,8 @@ function parseKey(key: unknown): string | number {
 const settingDefaults: Settings = {
     lastSyncedId: 0,
     lastSynced: 0,
-    theme: null
+    theme: null,
+    defaultTheme: null,
 }
 
 export async function updated(): Promise<(string | number)[]> {
@@ -35,3 +36,6 @@ export async function setTheme(theme: Theme): Promise<void> {
         { sync: false })
 }
 
+export function setSettings(settings: Settings) {
+    return set("settings", settings, false)
+}

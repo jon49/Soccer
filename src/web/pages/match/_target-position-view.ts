@@ -40,14 +40,14 @@ export default async function render(query: any) {
                 action="/web/match?position=${positionIndex}&teamId=${teamId}&gameId=${gameId}&playerId=${playerId}&handler=updateUserPosition&playerSwap"
                 hf-target="#app"
                 >${
-            () => {
+            async () => {
                 if (player) {
-                    let playerGameCalc = new PlayerGameTimeCalculator(player, gameTimeCalculator)
+                    let shadeBackground = await state.shadeBackgroundStyle(player.playerId)
+                    let shadeColor = await state.shadeColorStyle(player.playerId)
                     return html`
                     <button
-                        traits=game-shader
-                        data-total="${gameTimeCalculator.currentTotal()}"
-                        data-value="${playerGameCalc.currentTotal()}"
+                        class="game-shader"
+                        style="${shadeBackground}; ${shadeColor};"
                         ${when(isCurrentPlayer, "disabled")}
                         title="${when(playerOnDeck, "Player is on deck already.")}
                         ${when(isCurrentPlayer, "You cannot swap the same player!")}">
