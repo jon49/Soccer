@@ -120,14 +120,18 @@ ${() => {
     if (defaultTheme) return
 
     return html`<form
-    id="default-theme"
+    hidden
+    traits=on
+    data-action="
+        this.defaultTheme.value = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        this.requestSubmit();"
+    data-events="load"
+
     method=post
     action="/web/api/settings?handler=defaultTheme"
-    hf-target="#default-theme"
+    hf-target
     hf-swap="outerHTML">
-    <input
-        name=defaultTheme
-        onload="this.value = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; this.form.requestSubmit();">
+    <input name=defaultTheme>
 </form>`
 }}
 
