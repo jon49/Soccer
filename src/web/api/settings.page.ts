@@ -3,7 +3,6 @@ import type { Theme } from "../server/db.js"
 
 const {
     globalDb: db,
-    html,
 } = self.app
 
 function getTheme(x: unknown): Theme {
@@ -15,7 +14,7 @@ function getTheme(x: unknown): Theme {
 }
 
 const postHandlers : RoutePostHandler = {
-    async theme({ req }) {
+    async theme({ req, data }) {
         let { theme } = await db.settings()
         theme =
             theme === "light"
@@ -24,7 +23,7 @@ const postHandlers : RoutePostHandler = {
                 ? null
             : "light"
 
-        await db.setTheme(theme)
+        await db.setTheme(theme, data.defaultTheme)
 
         if (req.headers.get("hf-request") === "true") {
             return {
@@ -35,13 +34,6 @@ const postHandlers : RoutePostHandler = {
 
         return null
     },
-
-    async defaultTheme({ data }) {
-        let settings = await db.settings()
-        settings.defaultTheme = getTheme(data.defaultTheme) || "light"
-        await db.setSettings(settings)
-        return html``
-    }
 }
 
 const route : RoutePage = {

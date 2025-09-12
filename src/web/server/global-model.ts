@@ -29,10 +29,10 @@ export async function settings(): Promise<Settings> {
     return { ...settingDefaults, ...((await get("settings")) ?? {}) }
 }
 
-export async function setTheme(theme: Theme): Promise<void> {
+export async function setTheme(theme: Theme, defaultTheme: Theme): Promise<void> {
     await update(
         "settings",
-        v => ({ ...(v ?? settingDefaults), theme }),
+        v => ({ ...(v ?? settingDefaults), theme, defaultTheme }),
         { sync: false })
 }
 

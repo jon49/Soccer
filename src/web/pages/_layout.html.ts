@@ -29,7 +29,7 @@ const render = async (
         title,
         bodyAttr,
     }: LayoutTemplateArguments) => {
-    const [isLoggedIn, updated, { theme, defaultTheme }] = await Promise.all([
+    const [isLoggedIn, updated, { theme }] = await Promise.all([
         db.isLoggedIn(),
         db.updated(),
         db.settings()
@@ -62,10 +62,14 @@ const render = async (
                     </a>
                 </li>
             </ul>
+            <form id=theme method=post hidden><input name="defaultTheme"></form>
             <ul>
                 <li>
                     <button
-                        form=post-form
+                        traits=on
+                        data-action="this.form.defaultTheme.value = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';"
+                        data-events="click"
+                        form=theme
                         formaction="/web/api/settings?handler=theme"
                         hf
                         >$${themeImage(theme)}</button>
@@ -115,25 +119,6 @@ const render = async (
     <template id=toast-template><dialog class="toast" traits=x-toaster open><p class=message></p></dialog></template>
     <div id=toasts></div>
     <div id=dialogs></div>
-
-${() => {
-    if (defaultTheme) return
-
-    return html`<form
-    hidden
-    traits=on
-    data-action="
-        this.defaultTheme.value = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-        this.requestSubmit();"
-    data-events="load"
-
-    method=post
-    action="/web/api/settings?handler=defaultTheme"
-    hf-target
-    hf-swap="outerHTML">
-    <input name=defaultTheme>
-</form>`
-}}
 
     <form id=post-form method=post hidden></form>
     <form id=get-form method=get hidden></form>
