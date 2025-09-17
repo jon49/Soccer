@@ -151,6 +151,7 @@ export interface TeamPlayer {
     id: number
     active: boolean
     name: string
+    number?: number
 }
 
 export interface Team extends Revision, PositionsV0 {

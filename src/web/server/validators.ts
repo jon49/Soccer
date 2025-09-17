@@ -1,4 +1,4 @@
-import { reject, createCheckbox, createIdNumber, createString25 } from "@jon49/sw/validation.js"
+import { reject, createCheckbox, createIdNumber, createString25, maybe, createPositiveWholeNumber } from "@jon49/sw/validation.js"
 
 export const dataTeamNameYearValidator = {
     name: createString25("Team Name"),
@@ -16,7 +16,8 @@ export const dataPlayerNameValidator = {
 
 export const dataPlayerNameActiveValidator = {
     ...dataPlayerNameValidator,
-    active: createCheckbox
+    active: createCheckbox,
+    number: maybe(createPositiveWholeNumber("Player Number"))
 }
 
 export const queryAllValidator = {

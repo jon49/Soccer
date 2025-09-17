@@ -24,7 +24,7 @@ export async function outPlayersView(o: PlayerStateView) {
         <button
             form="out-players-form"
             formaction="/web/match?$${queryTeamGame}&playerId=${x.playerId}&handler=playerOnDeck"
-        >${x.name}</button>
+        >${x.name} ${x.number}</button>
     </div>
     <div>
         <span traits="game-timer" data-total="${x.calc.total()}" data-static>00:00</span>

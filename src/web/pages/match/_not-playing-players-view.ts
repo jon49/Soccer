@@ -22,7 +22,7 @@ export async function notPlayingPlayersView(state: PlayerStateView) {
         hf-swap="merge"
         aria-label="Place ${x.name} back into the game."
         >
-        <button>${x.name}</button>
+        <button>${x.name} ${x.number}</button>
     </form>
 </li>`})
 

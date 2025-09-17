@@ -26,8 +26,7 @@ let {
 } = self.app
 
 
-export interface GamePlayerStatusView<T extends PlayerStatus> extends PlayerGameStatus<T> {
-    name: string
+export interface GamePlayerStatusView<T extends PlayerStatus> extends PlayerGameStatus<T>, TeamPlayer {
     calc: PlayerGameTimeCalculator
 }
 
@@ -41,8 +40,8 @@ export async function createPlayersView<T extends PlayerStatus>(
     let typedPlayers = await Promise.all(typedPlayers_.map(async x => {
         let calc =
             new PlayerGameTimeCalculator(x, new GameTimeCalculator(game))
-        let name = await required(teamPlayers.find(y => y.id === x.playerId)?.name, "Could not find player ID!")
-        return { name, calc, ...x }
+        let player = await required(teamPlayers.find(y => y.id === x.playerId), "Could not find player ID!")
+        return { ...player, calc, ...x }
     }))
     return typedPlayers
 

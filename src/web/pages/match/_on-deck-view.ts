@@ -2,6 +2,7 @@ import type { PlayerStateView } from "./shared.js"
 
 let {
     html,
+    utils: { when }
 } = self.app
 
 export async function onDeckView(state: PlayerStateView) {
@@ -16,7 +17,7 @@ export async function onDeckView(state: PlayerStateView) {
     <form
         action="/web/match?${queryTeamGame}&playerId=${x.playerId}&handler=playerSwap"
         hf-target="#app">
-        <button>(${x.name})</button>
+        <button>(${x.name}${when(x.number, x => ` ${x}`)})</button>
     </form>
     <form
         method=post

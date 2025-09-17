@@ -94,9 +94,10 @@ function playerView(player: TeamPlayer, teamId: number) {
         method=post
         action="/web/players?handler=editPlayer&$${teamPlayerQuery}"
         >
-        <div>
-            <input id=${playerId_} name=name type=text value="${player.name}">
-        </div>
+        <fieldset role=group>
+            <input class="basis-175" name=name type=text value="${player.name}" placeholder="Player name">
+            <input name=number type=number value="${player.number}" placeholder="#">
+        </fieldset>
         <div>
             <label class=toggle>
                 <input
@@ -113,7 +114,7 @@ function playerView(player: TeamPlayer, teamId: number) {
 
 const postHandlers: RoutePostHandler = {
     async editPlayer({ data: d, query: q }) {
-        let [{ teamId, playerId }, { name: playerName, active }] = await validate([
+        let [{ teamId, playerId }, { name: playerName, active, number }] = await validate([
             validateObject(q, queryTeamIdPlayerIdValidator),
             validateObject(d, dataPlayerNameActiveValidator)
         ])
@@ -131,6 +132,7 @@ const postHandlers: RoutePostHandler = {
 
         player.name = playerName
         player.active = active
+        player.number = number
         // Player name will also need to be updated for the individual player when implemented!
         await teamSave(team)
 
@@ -178,7 +180,14 @@ const route: RoutePage = {
     async get({ query }) {
         let result = await start(query)
         return layout({
-            head: "<style>.player-card { min-width: 200px; }</style>",
+            head: `<style>
+.player-card {
+    min-width: 200px;
+}
+.basis-175 {
+    flex-basis: 175%;
+}
+</style>`,
             main: render(result),
             nav: teamNav(result.team.id),
             title: `Players - ${result.team.name} (${result.team.year})}`
