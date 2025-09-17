@@ -259,7 +259,8 @@ export class PlayerStateView {
         let theme = await this.theme()
         let rgb = theme === "dark" ? [255, 255, 255] : [19, 23, 31]
         let playerCalc = await this.playerCalc(playerId)
-        rgb.push(playerCalc.currentTotal() / playerCalc.gameCalc.total())
+        rgb.push(+(playerCalc.currentTotal() / (playerCalc.gameCalc.currentTotal() || 1)).toFixed(3))
+
         return rgb
     }
 
