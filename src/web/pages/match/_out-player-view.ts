@@ -24,6 +24,7 @@ export async function outPlayersView(o: PlayerStateView) {
         <button
             form="out-players-form"
             formaction="/web/match?$${queryTeamGame}&playerId=${x.playerId}&handler=playerOnDeck"
+            hf-scroll-target="#out-players-form"
         >${x.name} ${x.number}</button>
     </div>
     <div>
