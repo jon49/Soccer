@@ -71,8 +71,8 @@ export async function play({ app, query }: RouteGetArgs & { app?: Promise<AsyncG
 
 <div id=app>${app ? app :  playMatchView(state)}</div>
 
-<form id=post-form method=post hidden></form>
-<form id=get-form hidden></form>
+<form id=post method=post hidden></form>
+<form id=get hidden></form>
 
 </body>
 </html>

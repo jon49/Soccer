@@ -42,7 +42,7 @@ export default async function playMatchView(state: PlayerStateView) {
 <a href="/web/match?${queryTeamGame}">Back</a>
 ${when(countOnDeckPlayersWithPosition > 0, () => html`
 <button
-    form=post-form
+    form=post
     formaction="/web/match?$${queryTeamGame}&handler=swapAll"
     hf-target="#app"
     hf-swap="merge"
@@ -50,7 +50,7 @@ ${when(countOnDeckPlayersWithPosition > 0, () => html`
 `)}
 ${when(playersExist, () => html`
 <button
-    form=post-form
+    form=post
     formaction="/web/match?$${queryTeamGame}&handler=allOut"
     hf-swap="merge"
     hf-target="#app">All Out</button>
@@ -61,7 +61,7 @@ ${when(playersExist, () => html`
     ${when(!isGameEnded, () => html`
     <button
         id=game-status
-        form=post-form
+        form=post
         formaction="/web/match?$${queryTeamGame}&handler=${isGameInPlay ? "pauseGame" : "startGame"}"
         hf-swap="merge"
         hf-target="#app" >
@@ -76,7 +76,7 @@ ${when(playersExist, () => html`
     </span>
 
     <button
-        form=post-form
+        form=post
         formaction="/web/match?$${queryTeamGame}&handler=${isGameEnded ? "restartGame" : "endGame"}"
         hf-target="#app"
         hf-swap="merge"
@@ -87,14 +87,14 @@ ${when(playersExist, () => html`
 
 <div>
 <button
-    form="post-form"
+    form="post"
     formaction="/web/match?${queryTeamGame}&activityId=1&handler=points&action=inc"
     hf-target="this"
     aria-label="Game points ${gameCalc.game.points}"
     >${gameCalc.game.points}</button>
     VS
 <button
-    form=post-form
+    form=post
     formaction="/web/match?$${queryTeamGame}&handler=oPointsInc"
     hf-target="this"
     aria-label="Opponent points ${gameCalc.game.opponentPoints}"
@@ -108,7 +108,7 @@ ${when(playersExist, () => html`
 ${when(playersOnDeck.length > 1, () => html`
 <button
     class="condense-padding"
-    form="get-form"
+    form="get"
     formaction="/web/match?${queryTeamGame}&handler=rapidFire"
     hf-target="#app">Rapid Fire</button>
 `)}

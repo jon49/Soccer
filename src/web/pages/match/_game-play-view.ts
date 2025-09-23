@@ -1,5 +1,4 @@
 import { PlayerStateView } from "./shared.js"
-import playerStateView from "./_player-state-view.js"
 
 let {
     html,
@@ -28,22 +27,18 @@ export default async function render(query: any) {
     return html`
 <h2>${team.name} ($${game.home ? "Home" : "Away"}) vs ${game.opponent}</h2>
 
-<div class="pb-1">
-
 <ul class=list>
     <li>
-
         <span>Points</span>
         <form method="post" hf-target="#points">
             <button class=condense-padding formaction="$${pointAction}&action=dec">-</button>
             <span id=points>${getPointsView(game.points)}</span>
             <button class=condense-padding formaction="$${pointAction}&action=inc">+</button>
         </form>
-
     </li>
+
     <li>
         <span>Opponent</span>
-
         <form method="post" hf-target="#o-points">
             <button class=condense-padding formaction="${opponentPointAction}Dec">-</button>
             <span id=o-points>${getPointsView(game.opponentPoints)}</span>
@@ -52,7 +47,9 @@ export default async function render(query: any) {
     </li>
 </ul>
 
-<div id="player-state">${playerStateView(state)}</div>
+<div>
+    <a href="/web/match?${queryTeamGame}&handler=play">Show Game Play View</a>
+</div>
 
 <h3>Notes</h3>
 

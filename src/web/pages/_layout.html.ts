@@ -75,7 +75,7 @@ const render = async (
                         >$${themeImage(theme)}</button>
 
                     <button
-                        form=post-form
+                        form=post
                         formaction="/web/api/sync?handler=count"
                         formmethod=get
                         hidden
@@ -90,7 +90,7 @@ const render = async (
 
                     <button
                         id=sync-count
-                        form=post-form
+                        form=post
                         formaction="/web/api/sync?handler=force"
                         hf-target
                         >${syncCountView(updatedCount)}</button>
@@ -120,8 +120,8 @@ const render = async (
     <div id=toasts></div>
     <div id=dialogs></div>
 
-    <form id=post-form method=post hidden></form>
-    <form id=get-form method=get hidden></form>
+    <form id=post method=post hidden></form>
+    <form id=get method=get hidden></form>
     <script src="/web/js/app.bundle.js" type="module"></script>
     <div id=scripts>${(scripts ?? []).map(x => html`<script src="${x}" type="module"></script>`)}</div>
     </div>
