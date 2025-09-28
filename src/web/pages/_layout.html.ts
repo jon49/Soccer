@@ -49,7 +49,7 @@ const render = async (
     <link href="/web/css/app.css" rel=stylesheet>
     <link rel="manifest" href="/web/manifest.json">
 </head>
-<body $${bodyAttr}>
+<body hf-swap="innerHTML" $${bodyAttr}>
 <div id=head>$${head}</div>
     <div class=container>
     <div id=sw-message></div>
@@ -120,8 +120,8 @@ const render = async (
     <div id=toasts></div>
     <div id=dialogs></div>
 
-    <form id=post method=post hidden></form>
-    <form id=get method=get hidden></form>
+    <form id=post method=post hf hidden></form>
+    <form id=get method=get hf hidden></form>
     <script src="/web/js/app.bundle.js" type="module"></script>
     <div id=scripts>${(scripts ?? []).map(x => html`<script src="${x}" type="module"></script>`)}</div>
     </div>

@@ -1,6 +1,2 @@
-// @ts-nocheck
-import morphdom from "morphdom";
-
-window.htmf.swapOption.merge = (target, text) => {
-    morphdom(target, text);
-}
+import "html-form-merge"
+import "html-form-confirm"

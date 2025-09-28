@@ -67,12 +67,12 @@ export async function play({ app, query }: RouteGetArgs & { app?: Promise<AsyncG
     <script src="/web/js/game-timer.js" type="module"></script>
     <script src="/web/js/morphdom.bundle.js" type="module"></script>
 </head>
-<body>
+<body hf-swap="innerHTML">
 
 <div id=app>${app ? app :  playMatchView(state)}</div>
 
-<form id=post method=post hidden></form>
-<form id=get hidden></form>
+<form id=post method=post hidden hf></form>
+<form id=get hidden hf></form>
 
 </body>
 </html>

@@ -52,6 +52,7 @@ ${when(playersExist, () => html`
 <button
     form=post
     formaction="/web/match?$${queryTeamGame}&handler=allOut"
+    hf-confirm="Are you sure you want to take all players out?"
     hf-swap="merge"
     hf-target="#app">All Out</button>
 `)}
@@ -80,6 +81,7 @@ ${when(playersExist, () => html`
         formaction="/web/match?$${queryTeamGame}&handler=${isGameEnded ? "restartGame" : "endGame"}"
         hf-target="#app"
         hf-swap="merge"
+        hf-confirm="Are you sure you would like to end the game?"
         >
         ${isGameEnded ? "Restart" : "End"}
     </button>
@@ -89,14 +91,12 @@ ${when(playersExist, () => html`
 <button
     form="post"
     formaction="/web/match?${queryTeamGame}&activityId=1&handler=points&action=inc"
-    hf-target="this"
     aria-label="Game points ${gameCalc.game.points}"
     >${gameCalc.game.points}</button>
     VS
 <button
     form=post
     formaction="/web/match?$${queryTeamGame}&handler=oPointsInc"
-    hf-target="this"
     aria-label="Opponent points ${gameCalc.game.opponentPoints}"
     >${gameCalc.game.opponentPoints}</button>
 </div>

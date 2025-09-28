@@ -136,11 +136,13 @@ const getHandlers : RouteGetHandler = {
         return playMatchView(state)
     },
 
-    activityPlayerSelector({ query, req }) {
-        if (!req.headers.has("hf-request")) {
-            return play({ app: activityPlayerSelectorView(query), query, req })
+    async activityPlayerSelector({ query }) {
+        return {
+            body: await activityPlayerSelectorView(query),
+            headers: {
+                "hf-target": "#app"
+            }
         }
-        return activityPlayerSelectorView(query)
     },
 
     async showInPlay({ query }) {

@@ -34,7 +34,7 @@ async function render(query: any) {
             data-action="event.target.remove()"
 
             hf-target="#stat-tables"
-            hf-swap="prepend"
+            hf-swap="afterbegin"
             >
             ${[
                 ["timePlayed", "Time Played"],

@@ -72,7 +72,7 @@ ${when(!team.players.length, () => html`<p>No players have been added.</p>`)}
     method=post
     action="/web/players?handler=addPlayer&teamId=${team.id}"
     hf-target="#player-cards"
-    hf-swap=append
+    hf-swap=beforeend
     >
     <div>
         <label for=new-player>Add Player Name</label>
@@ -93,7 +93,7 @@ function playerView(player: TeamPlayer, teamId: number) {
         class=form
         method=post
         action="/web/players?handler=editPlayer&$${teamPlayerQuery}"
-        >
+        hf>
         <fieldset role=group>
             <input class="basis-175" name=name type=text value="${player.name}" placeholder="Player name">
             <input name=number type=number value="${player.number}" placeholder="#">
