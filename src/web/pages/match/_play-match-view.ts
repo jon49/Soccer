@@ -81,7 +81,7 @@ ${when(playersExist, () => html`
         formaction="/web/match?$${queryTeamGame}&handler=${isGameEnded ? "restartGame" : "endGame"}"
         hf-target="#app"
         hf-swap="merge"
-        hf-confirm="Are you sure you would like to end the game?"
+        hf-confirm="Are you sure you would like to ${isGameEnded ? 'restart' : 'end'} the game?"
         >
         ${isGameEnded ? "Restart" : "End"}
     </button>
