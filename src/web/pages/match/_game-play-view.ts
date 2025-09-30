@@ -25,7 +25,7 @@ export default async function render(query: any) {
         let opponentPointAction = `/web/match?${queryTeamGame}&handler=oPoints`
 
     return html`
-<h2>${team.name} ($${game.home ? "Home" : "Away"}) vs ${game.opponent}</h2>
+<h2 class=inline>${team.name} ($${game.home ? "Home" : "Away"}) vs ${game.opponent}</h2>
 <button
     class=condense-padding
     form=post
