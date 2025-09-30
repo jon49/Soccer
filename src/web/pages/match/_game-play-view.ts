@@ -26,6 +26,15 @@ export default async function render(query: any) {
 
     return html`
 <h2>${team.name} ($${game.home ? "Home" : "Away"}) vs ${game.opponent}</h2>
+<button
+    class=condense-padding
+    form=post
+    formaction="/web/match?${queryTeamGame}&handler=deleteGame"
+    hf-confirm="Are you sure you would like to delete this game?"
+    >Delete</button>
+
+<br>
+<br>
 
 <ul class=list>
     <li>
