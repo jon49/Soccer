@@ -73,10 +73,14 @@ ${when(!team.players.length, () => html`<p>No players have been added.</p>`)}
     action="?handler=addPlayer&teamId=${team.id}"
     hf-target="#player-cards"
     hf-swap=beforeend
+
+    traits="on"
+    data-events="submit"
+    data-action="newPlayer.removeAttribute('autofocus'); this.removeAttribute('traits');"
     >
     <div>
-        <label for=new-player>Add Player Name</label>
-        <input id=new-player name=newPlayerName type=text required ${when(!team.players.length, "autofocus")}>
+        <label for=newPlayer>Add Player Name</label>
+        <input id=newPlayer name=newPlayerName type=text required ${when(!team.players.length, "autofocus")}>
     </div>
 </form>
 `
