@@ -91,7 +91,7 @@ function getGamePartialView(teamId: number, game: Game) {
         value="$${datetime}"
         >
     <label for="game-date-${game.id}">
-        <a href="?$${teamQuery}&gameId=${game.id}">${game.date} (${formatTime(d)})</a>
+        <a href="/web/match?$${teamQuery}&gameId=${game.id}">${game.date} (${formatTime(d)})</a>
         <span class=editable-pencil>&#9998;</span>
     </label>
 </div>
@@ -104,7 +104,7 @@ function getGamePartialView(teamId: number, game: Game) {
         name=opponent
         value="${game.opponent}">
     <label for="game-opponent-${game.id}">
-        <a href="?$${teamQuery}&gameId=${game.id}">${game.opponent}</a>
+        <a href="/web/match?$${teamQuery}&gameId=${game.id}">${game.opponent}</a>
         <span class=editable-pencil>&#9998;</span>
     </label>
 </div>
