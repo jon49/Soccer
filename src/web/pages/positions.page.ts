@@ -157,7 +157,7 @@ async function getPositionTemplates(teamId: number) {
     let positionCount = grid.reduce((a, b) => a + b, 0)
 
     return html`
-        <a href="/web/positions?teamId=1">Cancel</a>
+        <a href="/web/positions?teamId=${teamId}">Cancel</a>
         <h2>Formation Templates</h2> 
 
         <form
