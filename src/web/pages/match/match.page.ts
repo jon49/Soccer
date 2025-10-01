@@ -136,13 +136,20 @@ const getHandlers : RouteGetHandler = {
         return playMatchView(state)
     },
 
-    async activityPlayerSelector({ query }) {
-        return {
-            body: await activityPlayerSelectorView(query),
-            headers: {
-                "hf-target": "#app"
+    async activityPlayerSelector(o) {
+        let { req, query } = o
+        let url = new URL(req.referrer)
+        if (url.searchParams.get("handler") === "play") {
+            return {
+                body: await activityPlayerSelectorView(query),
+                headers: {
+                    "hf-target": "#app",
+                },
             }
+        } else if (req.headers.has("hf-request")) {
+            return { status: 204 }
         }
+        return play({ ...o, app: await activityPlayerSelectorView(query) })
     },
 
     async showInPlay({ query }) {
@@ -423,21 +430,14 @@ const postHandlers : RoutePostHandler = {
             gameId
         })
 
-        if (returnUrl) {
-            return {
-                status: 302,
-                headers: {
-                    Location: returnUrl
-                }
-            }
+        if (returnUrl?.includes("handler=play")) {
+            return playMatchView(new PlayerStateView(teamId, gameId))
         }
+
         return {
-            body: await playMatchView(new PlayerStateView(teamId, gameId)),
-            status: 204,
-            events: {
-                playerStatUpdated: {
-                    statId: activityId
-                }
+            status: 302,
+            headers: {
+                Location: returnUrl
             }
         }
     }
