@@ -98,7 +98,11 @@ class GameTimer {
         } else {
             el.classList.remove("flash")
         }
-        if (static_ !== "") timer.add(this)
+        if (static_ !== "") {
+            timer.add(this)
+        } else {
+            timer.remove(this)
+        }
         this.el.textContent = formatTime(currentTime, start_, total_)
     }
 }
