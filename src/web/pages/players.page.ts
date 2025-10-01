@@ -8,7 +8,7 @@ const {
     utils: { equals, when },
     validation: {
         assert, validate, validateObject,
-        dataPlayerNameActiveValidator, dataPlayerNameValidator, dataTeamNameYearActiveValidator, queryTeamIdPlayerIdValidator, queryTeamIdValidator 
+        createString25, dataPlayerNameActiveValidator, dataTeamNameYearActiveValidator, queryTeamIdPlayerIdValidator, queryTeamIdValidator 
     },
     views: { teamNav },
 } = self.app
@@ -43,7 +43,7 @@ function render(o: PlayersEditView) {
     onchange="this.requestSubmit()"
     class=form
     method=post
-    action="/web/players?handler=editTeam&teamId=${team.id}"
+    action="?handler=editTeam&teamId=${team.id}"
     hf-target=main>
     <div class=inline>
         <label for=team-input>Team Name:</label><input id=team-input name=name type=text value="${team.name}">
@@ -70,13 +70,13 @@ ${when(!team.players.length, () => html`<p>No players have been added.</p>`)}
 <form
     class=form
     method=post
-    action="/web/players?handler=addPlayer&teamId=${team.id}"
+    action="?handler=addPlayer&teamId=${team.id}"
     hf-target="#player-cards"
     hf-swap=beforeend
     >
     <div>
         <label for=new-player>Add Player Name</label>
-        <input id=new-player name=name type=text required ${when(!team.players.length, "autofocus")}>
+        <input id=new-player name=newPlayerName type=text required ${when(!team.players.length, "autofocus")}>
     </div>
 </form>
 `
@@ -92,7 +92,7 @@ function playerView(player: TeamPlayer, teamId: number) {
         onchange="this.requestSubmit()"
         class=form
         method=post
-        action="/web/players?handler=editPlayer&$${teamPlayerQuery}"
+        action="?handler=editPlayer&$${teamPlayerQuery}"
         hf>
         <fieldset role=group>
             <input class="basis-175" name=name type=text value="${player.name}" placeholder="Player name">
@@ -140,17 +140,17 @@ const postHandlers: RoutePostHandler = {
     },
 
     async addPlayer({ data, query }) {
-        let [{ teamId }, { name }] = await validate([
+        let [{ teamId }, { newPlayerName }] = await validate([
             validateObject(query, queryTeamIdValidator),
-            validateObject(data, dataPlayerNameValidator)
+            validateObject(data, {  newPlayerName: createString25("Player Name") })
         ])
 
         let team = await teamGet(teamId)
 
-        let existingPlayer = team.players.find(x => equals(x.name, name))
+        let existingPlayer = team.players.find(x => equals(x.name, newPlayerName))
         await assert.isFalse(!!existingPlayer, `The player name "${existingPlayer?.name}" has already been chosen.`)
 
-        let player = await playerCreate(teamId, name)
+        let player = await playerCreate(teamId, newPlayerName)
 
         return {
             status: 200,

@@ -17,7 +17,7 @@ export async function outPlayersView(o: PlayerStateView) {
 
     return html`
 <li id="${outPlayerId}">
-    <form action="/web/match?${queryTeamGame}&playerId=${x.playerId}&handler=playerSwap" hf-target="#app">
+    <form action="?${queryTeamGame}&playerId=${x.playerId}&handler=playerSwap" hf-target="#app">
         <button aria-label="Immediately Swap Player" title="Immediately Swap Player">&#10166;</button>
     </form>
     <div>

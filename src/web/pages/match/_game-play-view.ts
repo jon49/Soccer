@@ -64,7 +64,7 @@ export default async function render(query: any) {
 
 <form
     method=post
-    action="/web/match?${queryTeamGame}&handler=updateNote"
+    action="?${queryTeamGame}&handler=updateNote"
     onchange="this.requestSubmit()"
     hf
     >

@@ -33,7 +33,7 @@ function render({ team }: GameView) {
     ${team.games.map(x => getGameView(team.id, x))}
 </ul>
 
-<form class="form" method=post action="/web/games?teamId=${team.id}" hf-target=main>
+<form class="form" method=post action="?teamId=${team.id}" hf-target=main>
     <div class=grid>
         <div>
             <label for=game-date>Name</label>
@@ -117,7 +117,7 @@ function getGamePartialView(teamId: number, game: Game) {
     id=${formId}
     hidden
     method=post
-    action="/web/games?${teamQuery}&handler=edit"
+    action="?${teamQuery}&handler=edit"
     onchange="this.requestSubmit()"
     hf-target=main></form>
 `

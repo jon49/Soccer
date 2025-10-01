@@ -17,7 +17,7 @@ export async function notPlayingPlayersView(state: PlayerStateView) {
 <li id="${id}">
     <form
         method=post
-        action="/web/match?${state.queryTeamGame}&playerId=${x.playerId}&handler=backIn"
+        action="?${state.queryTeamGame}&playerId=${x.playerId}&handler=backIn"
         hf-target="#app"
         hf-swap="merge"
         aria-label="Place ${x.name} back into the game."

@@ -25,7 +25,7 @@ async function render(o: StatsView) {
             onchange="this.requestSubmit()"
             class=form
             method=post
-            action="/web/stats/edit?teamId=${teamId}&handler=updateStat">
+            action="?teamId=${teamId}&handler=updateStat">
             <input type=hidden name=id value="${x.id}">
             <input type=text maxlength=25 name=name value="${x.name}">
             <br>

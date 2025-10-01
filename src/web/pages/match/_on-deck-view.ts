@@ -15,13 +15,13 @@ export async function onDeckView(state: PlayerStateView) {
         return html`
 <li id="${id}">
     <form
-        action="/web/match?${queryTeamGame}&playerId=${x.playerId}&handler=playerSwap"
+        action="?${queryTeamGame}&playerId=${x.playerId}&handler=playerSwap"
         hf-target="#app">
         <button>(${x.name}${when(x.number, x => ` ${x}`)})</button>
     </form>
     <form
         method=post
-        action="/web/match?${queryTeamGame}&playerId=${x.playerId}&handler=cancelOnDeck"
+        action="?${queryTeamGame}&playerId=${x.playerId}&handler=cancelOnDeck"
         hf-target="#app"
         hf-swap="merge"
         >

@@ -37,7 +37,7 @@ export default async function render(query: any) {
             return html`
             <form
                 method=post
-                action="/web/match?position=${positionIndex}&teamId=${teamId}&gameId=${gameId}&playerId=${playerId}&handler=updateUserPosition&playerSwap"
+                action="?position=${positionIndex}&teamId=${teamId}&gameId=${gameId}&playerId=${playerId}&handler=updateUserPosition&playerSwap"
                 hf-target="#app"
                 >${
             async () => {

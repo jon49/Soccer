@@ -34,7 +34,7 @@ ${teams ? html`
             : html`<p>No teams found. Please add one!</p>`
         }
 
-${wasFiltered ? html`<p><a href="/web/teams?all">Show all teams.</a></p>` : null}
+${wasFiltered ? html`<p><a href="?all">Show all teams.</a></p>` : null}
 
 <h3>Add a team</h3>
 

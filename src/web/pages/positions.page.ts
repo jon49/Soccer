@@ -47,7 +47,7 @@ function render({ team, positions, grid }: PositionView) {
     class=row
     style="--card-width:3.5em;"
     method=post
-    action="/web/positions?handler=addGrid&teamId=${team.id}" onchange="this.requestSubmit()"
+    action="?handler=addGrid&teamId=${team.id}" onchange="this.requestSubmit()"
     hf-target="main" >
     ${grid.map((x, i) => html`<input id="grid${i}" class=inline type=number name="grid[]" value="${x}">`)}
     <input id="grid-1" type=number name="grid[]" ${when(!grid.length, () => "autofocus")}>
@@ -59,7 +59,7 @@ ${when(grid.length, () => html`
     id=positions-form
     class=form
     method=post
-    action="/web/positions?teamId=${team.id}&handler=editPositions"
+    action="?teamId=${team.id}&handler=editPositions"
     onchange="this.requestSubmit()">
     ${function* positionViews() {
             let count = 0
@@ -147,7 +147,7 @@ function getTemplates(teamId: number, numberOfPlayers: number) {
 <form
     method=post
     class=inline
-    action="/web/positions?teamId=${teamId}&handler=createFormation"
+    action="?teamId=${teamId}&handler=createFormation"
     hf-target="main"
     >
 <button class=bg>${getTemplate(x)}</button>
@@ -170,7 +170,7 @@ async function getPositionTemplates(teamId: number) {
             </header>
 
             <form
-                action="/web/positions?handler=getTemplates&teamId=${teamId}"
+                action="?handler=getTemplates&teamId=${teamId}"
                 hf-target="#templates"
                 onchange="this.requestSubmit()"
                 >
