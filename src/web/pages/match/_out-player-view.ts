@@ -23,7 +23,7 @@ export async function outPlayersView(o: PlayerStateView) {
     <div>
         <button
             form="out-players-form"
-            formaction="/web/match?$${queryTeamGame}&playerId=${x.playerId}&handler=playerOnDeck"
+            formaction="?$${queryTeamGame}&playerId=${x.playerId}&handler=playerOnDeck"
             hf-scroll-target="#out-players-form"
         >${x.name} ${x.number}</button>
     </div>
@@ -33,7 +33,7 @@ export async function outPlayersView(o: PlayerStateView) {
     <div>
         <button
             form="out-players-form"
-            formaction="/web/match?$${queryTeamGame}&playerId=$${x.playerId}&handler=notPlaying"
+            formaction="?$${queryTeamGame}&playerId=$${x.playerId}&handler=notPlaying"
         >X</button>
     </div>
 </li>`

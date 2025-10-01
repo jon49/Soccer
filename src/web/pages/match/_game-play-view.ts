@@ -21,15 +21,15 @@ export default async function render(query: any) {
         ]),
         queryTeamGame = state.queryTeamGame
 
-        let pointAction = `/web/match?${queryTeamGame}&activityId=1&handler=points`
-        let opponentPointAction = `/web/match?${queryTeamGame}&handler=oPoints`
+        let pointAction = `?${queryTeamGame}&activityId=1&handler=points`
+        let opponentPointAction = `?${queryTeamGame}&handler=oPoints`
 
     return html`
 <h2 class=inline>${team.name} ($${game.home ? "Home" : "Away"}) vs ${game.opponent}</h2>
 <button
     class=condense-padding
     form=post
-    formaction="/web/match?${queryTeamGame}&handler=deleteGame"
+    formaction="?${queryTeamGame}&handler=deleteGame"
     hf-confirm="Are you sure you would like to delete this game?"
     >Delete</button>
 
@@ -57,7 +57,7 @@ export default async function render(query: any) {
 </ul>
 
 <div>
-    <a href="/web/match?${queryTeamGame}&handler=play">Show Game Play View</a>
+    <a href="?${queryTeamGame}&handler=play">Show Game Play View</a>
 </div>
 
 <h3>Notes</h3>

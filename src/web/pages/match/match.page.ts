@@ -198,7 +198,7 @@ const postHandlers : RoutePostHandler = {
             return {
                 status: 302,
                 headers: {
-                    Location: `/web/match?${state.queryTeamGame}&activityId=1&action=${action}&handler=activityPlayerSelector&returnUrl=${encodeURIComponent(req.referrer)}`
+                    Location: `?${state.queryTeamGame}&activityId=1&action=${action}&handler=activityPlayerSelector&returnUrl=${encodeURIComponent(req.referrer)}`
                 }
             }
         }

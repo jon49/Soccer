@@ -38,7 +38,7 @@ function render({ team, positions, grid }: PositionView) {
     <button
         form=get
         hf-target="#dialogs"
-        formaction="/web/positions?handler=showTemplates&teamId=${team.id}"
+        formaction="?handler=showTemplates&teamId=${team.id}"
     >template</button>.</p>
 
 <h3>Grid</h3>

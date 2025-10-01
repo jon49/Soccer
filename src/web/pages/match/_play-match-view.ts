@@ -39,11 +39,11 @@ export default async function playMatchView(state: PlayerStateView) {
     return html`
 <header class=flex>
 <div>
-<a href="/web/match?${queryTeamGame}">Back</a>
+<a href="?${queryTeamGame}">Back</a>
 ${when(countOnDeckPlayersWithPosition > 0, () => html`
 <button
     form=post
-    formaction="/web/match?$${queryTeamGame}&handler=swapAll"
+    formaction="?$${queryTeamGame}&handler=swapAll"
     hf-target="#app"
     hf-swap="merge"
     >Swap All</button>
@@ -51,7 +51,7 @@ ${when(countOnDeckPlayersWithPosition > 0, () => html`
 ${when(playersExist, () => html`
 <button
     form=post
-    formaction="/web/match?$${queryTeamGame}&handler=allOut"
+    formaction="?$${queryTeamGame}&handler=allOut"
     hf-confirm="Are you sure you want to take all players out?"
     hf-swap="merge"
     hf-target="#app">All Out</button>
@@ -63,7 +63,7 @@ ${when(playersExist, () => html`
     <button
         id=game-status
         form=post
-        formaction="/web/match?$${queryTeamGame}&handler=${isGameInPlay ? "pauseGame" : "startGame"}"
+        formaction="?$${queryTeamGame}&handler=${isGameInPlay ? "pauseGame" : "startGame"}"
         hf-swap="merge"
         hf-target="#app" >
         ${isGameInPlay ? "Pause" : "Start"}
@@ -78,7 +78,7 @@ ${when(playersExist, () => html`
 
     <button
         form=post
-        formaction="/web/match?$${queryTeamGame}&handler=${isGameEnded ? "restartGame" : "endGame"}"
+        formaction="?$${queryTeamGame}&handler=${isGameEnded ? "restartGame" : "endGame"}"
         hf-target="#app"
         hf-swap="merge"
         hf-confirm="Are you sure you would like to ${isGameEnded ? 'restart' : 'end'} the game?"
@@ -90,13 +90,13 @@ ${when(playersExist, () => html`
 <div>
 <button
     form="post"
-    formaction="/web/match?${queryTeamGame}&activityId=1&handler=points&action=inc"
+    formaction="?${queryTeamGame}&activityId=1&handler=points&action=inc"
     aria-label="Game points ${gameCalc.game.points}"
     >${gameCalc.game.points}</button>
     VS
 <button
     form=post
-    formaction="/web/match?$${queryTeamGame}&handler=oPointsInc"
+    formaction="?$${queryTeamGame}&handler=oPointsInc"
     aria-label="Opponent points ${gameCalc.game.opponentPoints}"
     >${gameCalc.game.opponentPoints}</button>
 </div>
@@ -109,7 +109,7 @@ ${when(playersOnDeck.length > 1, () => html`
 <button
     class="condense-padding"
     form="get"
-    formaction="/web/match?${queryTeamGame}&handler=rapidFire"
+    formaction="?${queryTeamGame}&handler=rapidFire"
     hf-target="#app">Rapid Fire</button>
 `)}
 

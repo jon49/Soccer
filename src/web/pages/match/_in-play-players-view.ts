@@ -83,12 +83,12 @@ function playerView(
     <button
         class="in-play-button"
         formmethod="get"
-        formaction="/web/match?$${queryTeamGame}&playerId=${player?.playerId}&handler=playerSwap"
+        formaction="?$${queryTeamGame}&playerId=${player?.playerId}&handler=playerSwap"
         hf-target="#app">${player?.name}</button>
     <button
         class="in-play-button"
         formmethod=post
-        formaction="/web/match?${queryTeamGame}&playerId=${player.playerId}&handler=playerNowOut"
+        formaction="?${queryTeamGame}&playerId=${player.playerId}&handler=playerNowOut"
         hf-swap="merge"
         hf-target="#app"
         >X</button>
@@ -114,14 +114,14 @@ function subPlayerView(
         class="in-play-button"
         style="border-top-left-radius: unset;"
         formmethod=post
-        formaction="/web/match?$${queryTeamGame}&playerId=${sub.playerId}&handler=swap"
+        formaction="?$${queryTeamGame}&playerId=${sub.playerId}&handler=swap"
         hf-swap="merge"
         hf-target="#app">(${sub.name})</button>
     <button
         class="in-play-button"
         style="border-top-right-radius: unset;"
         formmethod=post
-        formaction="/web/match?$${queryTeamGame}&playerId=${sub.playerId}&handler=cancelOnDeck"
+        formaction="?$${queryTeamGame}&playerId=${sub.playerId}&handler=cancelOnDeck"
         hf-swap="merge"
         hf-target="#app"
         >X</button>

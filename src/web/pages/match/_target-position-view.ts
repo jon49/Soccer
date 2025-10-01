@@ -26,7 +26,7 @@ export default async function render(query: any) {
 
     return html`
 <header>
-    <a href="/web/match?${queryTeamGame}&handler=play">Cancel</a>&nbsp;
+    <a href="?${queryTeamGame}&handler=play">Cancel</a>&nbsp;
     <h2 class="inline">Swap for ${player.name}</h2>
 </header>
 

@@ -34,12 +34,12 @@ export async function activityPlayerSelectorView(query: any) {
         state.outPlayers(),
     ])
 
-    let action = `/web/match?teamId=${teamId}&gameId=${gameId}&handler=setPlayerStat`
+    let action = `?teamId=${teamId}&gameId=${gameId}&handler=setPlayerStat`
     let queryTeamGame = state.queryTeamGame
 
     return html`
 <header>
-    <a href="$${returnUrl ? returnUrl : `/web/match?${queryTeamGame}&handler=play`}">Cancel</a>&nbsp;
+    <a href="$${returnUrl ? returnUrl : `?${queryTeamGame}&handler=play`}">Cancel</a>&nbsp;
     <h2 class="inline">Player Goal</h2>
 </header>
     ${positionPlayersView(

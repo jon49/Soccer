@@ -17,7 +17,7 @@ async function render(query: any) {
     let team = await teamGet(teamId)
 
     let formAction = (handler: string) =>
-        `formaction="/web/stats?teamId=${teamId}&handler=${handler}"`
+        `formaction="?teamId=${teamId}&handler=${handler}"`
 
     return html`
     <h2 class=inline>${team.name} — Stats</h2> <a href="/web/stats/edit?teamId=${teamId}">Edit</a>
