@@ -34,12 +34,7 @@ function render({ team, positions, grid }: PositionView) {
     return html`
 <h2>${team.name} — Formation</h2>
 
-<p>Use a
-    <button
-        form=get
-        hf-target="#dialogs"
-        formaction="?handler=showTemplates&teamId=${team.id}"
-    >template</button>.</p>
+<p><a href="?handler=showTemplates&teamId=${team.id}">Use a template.</a></p>
 
 <h3>Grid</h3>
 <form
@@ -162,48 +157,41 @@ async function getPositionTemplates(teamId: number) {
     let positionCount = grid.reduce((a, b) => a + b, 0)
 
     return html`
-    <dialog class=modal traits=x-dialog show-modal close-event="user-messages">
-        <article data-box>
-            <header>
-                <button form=modalClose aria-label="Close" value="cancel" rel="prev"></button>
-                <h2>Formation Templates</h2> 
-            </header>
+        <a href="/web/positions?teamId=1">Cancel</a>
+        <h2>Formation Templates</h2> 
 
-            <form
-                action="?handler=getTemplates&teamId=${teamId}"
-                hf-target="#templates"
-                onchange="this.requestSubmit()"
-                >
-                <fieldset class=fieldset-outline>
-                    <legend>Number of players</legend>
-                    <label class="inline p-1">
-                        <input type=radio name=numberOfPlayers value=4 ${when(positionCount === 4, "checked")}>
-                        &nbsp;4
-                    </label>
-                    <label class="inline p-1">
-                        <input type=radio name=numberOfPlayers value=7 ${when(positionCount === 7, "checked")}>
-                        &nbsp;7
-                    </label>
-                    <label class="inline p-1">
-                        <input type=radio name=numberOfPlayers value=9 ${when(positionCount === 9, "checked")}>
-                        &nbsp;9
-                    </label>
-                    <label class="inline p-1">
-                        <input type=radio name=numberOfPlayers value=11 ${when(positionCount === 11, "checked")}>
-                        &nbsp;11
-                    </label>
-                </fieldset>
-            </form>
+        <form
+            action="?handler=getTemplates&teamId=${teamId}"
+            hf-target="#templates"
+            onchange="this.requestSubmit()"
+            >
+            <fieldset class=fieldset-outline>
+                <legend>Number of players</legend>
+                <label class="inline p-1">
+                    <input type=radio name=numberOfPlayers value=4 ${when(positionCount === 4, "checked")}>
+                    &nbsp;4
+                </label>
+                <label class="inline p-1">
+                    <input type=radio name=numberOfPlayers value=7 ${when(positionCount === 7, "checked")}>
+                    &nbsp;7
+                </label>
+                <label class="inline p-1">
+                    <input type=radio name=numberOfPlayers value=9 ${when(positionCount === 9, "checked")}>
+                    &nbsp;9
+                </label>
+                <label class="inline p-1">
+                    <input type=radio name=numberOfPlayers value=11 ${when(positionCount === 11, "checked")}>
+                    &nbsp;11
+                </label>
+            </fieldset>
+        </form>
 
-            <div
-                id=templates
-                class=grid
-                style="--grid-item-width: 250px;">
-                ${getTemplates(teamId, positionCount)}
-            </div>
-            <form hidden id=modalClose method=dialog></form>
-        </article>
-    </dialog>`
+        <div
+            id=templates
+            class=grid
+            style="--grid-item-width: 250px;">
+            ${getTemplates(teamId, positionCount)}
+        </div>`
 }
 
 const positionNames = [
@@ -331,7 +319,12 @@ const getHandlers: RouteGetHandler = {
 
     async showTemplates({ query }) {
         let { teamId } = await validateObject(query, queryTeamIdValidator)
-        return getPositionTemplates(teamId)
+        const result = await start(query)
+        return layout({
+            main: await getPositionTemplates(teamId),
+            nav: teamNav(result.team.id),
+            title: `Formation Picker - ${result.team.name} (${result.team.year})`,
+        }) 
     },
 
     async getTemplates({ query }) {

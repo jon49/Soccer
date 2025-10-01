@@ -118,7 +118,6 @@ const render = async (
 
     <template id=toast-template><dialog class="toast" traits=x-toaster open><p class=message></p></dialog></template>
     <div id=toasts></div>
-    <div id=dialogs></div>
 
     <form id=post method=post hf hidden></form>
     <form id=get method=get hf hidden></form>

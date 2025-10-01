@@ -149,7 +149,7 @@ const getHandlers : RouteGetHandler = {
         } else if (req.headers.has("hf-request")) {
             return { status: 204 }
         }
-        return play({ ...o, app: await activityPlayerSelectorView(query) })
+        return play({ ...o, app: activityPlayerSelectorView(query) })
     },
 
     async showInPlay({ query }) {

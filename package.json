@@ -20,7 +20,7 @@
     "html-form-events": "^0.0.1",
     "html-form-merge": "^0.0.1",
     "html-form-scroll": "^0.0.2",
-    "html-template-tag-stream": "^4.0.0",
+    "html-template-tag-stream": "^4.0.1",
     "html-traits": "^0.0.2",
     "html-traits-on": "^0.0.0",
     "idb-keyval": "^6.2.2",
