@@ -34,7 +34,12 @@ function render({ team, positions, grid }: PositionView) {
     return html`
 <h2>${team.name} — Formation</h2>
 
-<p><a href="?handler=showTemplates&teamId=${team.id}">Use a template.</a></p>
+<p>
+    <button
+        form="get"
+        formaction="?handler=showTemplates&teamId=${team.id}"
+        target="main">Use a template.</button>
+</p>
 
 <h3>Grid</h3>
 <form
@@ -319,12 +324,7 @@ const getHandlers: RouteGetHandler = {
 
     async showTemplates({ query }) {
         let { teamId } = await validateObject(query, queryTeamIdValidator)
-        const result = await start(query)
-        return layout({
-            main: await getPositionTemplates(teamId),
-            nav: teamNav(result.team.id),
-            title: `Formation Picker - ${result.team.name} (${result.team.year})`,
-        }) 
+        return getPositionTemplates(teamId)
     },
 
     async getTemplates({ query }) {
