@@ -23,8 +23,7 @@ async function render(o: StatsView) {
         return html`
         <form
             onchange="this.requestSubmit()"
-            class=form
-            method=post
+            hf method=post
             action="?teamId=${teamId}&handler=updateStat">
             <input type=hidden name=id value="${x.id}">
             <input type=text maxlength=25 name=name value="${x.name}">
