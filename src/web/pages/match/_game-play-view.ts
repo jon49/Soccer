@@ -31,6 +31,7 @@ export default async function render(query: any) {
     form=post
     formaction="?${queryTeamGame}&handler=deleteGame"
     hf-confirm="Are you sure you would like to delete this game?"
+    hf-submit
     >Delete</button>
 
 <br>

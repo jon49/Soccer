@@ -14,7 +14,22 @@ import "@jon49/sw/new-app-notifier.js"
 document.addEventListener("hf:completed", e => {
     // @ts-ignore
     let { form, response } = e.detail
-    if (response.headers.has("hf-reset")) {
+    if (response?.headers.has("hf-reset")) {
         form.reset()
+    }
+})
+
+document.addEventListener("hf:before", e => {
+    // @ts-ignore
+    let { submitter, form } = e.detail
+    // @ts-ignore
+    let { hasAttr } = window.htmf
+    let result = [submitter, form].map(x => hasAttr("hf-submit")(x)).find(x => x)
+    if (result) {
+        e.preventDefault()
+        form.setAttribute("hf-ignore", "");
+        setTimeout(() => {
+            form.requestSubmit(submitter)
+        })
     }
 })
