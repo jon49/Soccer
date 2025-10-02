@@ -440,6 +440,30 @@ const postHandlers : RoutePostHandler = {
                 Location: returnUrl
             }
         }
+    },
+
+    async deleteGame({ query }) {
+        let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
+        let state = new PlayerStateView(teamId, gameId)
+        let team = await state.team()
+        let game = await state.game()
+        let players = await state.gamePlayers()
+        let gameIndex = team.games.findIndex(x => x === game)
+        team.games.splice(gameIndex, 1)
+        for (let player of players) {
+            player.gameTime.length = 0
+            player.stats.length = 0
+            player.status = void 0
+            await playerGameSave(teamId, player)
+        }
+        await teamSave(team)
+
+        return {
+            status: 302,
+            headers: {
+                Location: `/web/games?teamId=${teamId}`
+            }
+        }
     }
 
 }
