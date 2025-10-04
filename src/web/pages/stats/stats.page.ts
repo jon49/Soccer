@@ -3,6 +3,7 @@ import { StatsView } from "./shared.js"
 import { timePlayedView } from "./_positions-played-view.js"
 import { gamesPlayedView } from "./_number-of-games-played-view.js"
 import { playerStatsView } from "./_activities-view.js"
+import { percentagePlayed } from "./_percentage-played.js"
 
 const {
     html,
@@ -38,6 +39,7 @@ async function render(query: any) {
             >
             ${[
                 ["timePlayed", "Time Played"],
+                ["percentagePlayed", "Percentage of Games Played"],
                 ["gamesPlayed", "Games Played"],
                 ["activitiesPerformed", "Player Stats"],
             ].map(([handler, label]) =>
@@ -62,7 +64,12 @@ const getHandler: RouteGetHandler = {
         let playersView = await StatsView.create(query)
         return timePlayedView(playersView)
     },
-    
+
+    async percentagePlayed({ query }) {
+        let playersView = await StatsView.create(query)
+        return percentagePlayed(playersView)
+    },
+
     async gamesPlayed({ query }) {
         let playersView = await StatsView.create(query)
         return gamesPlayedView(playersView)
