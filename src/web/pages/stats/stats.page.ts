@@ -54,6 +54,21 @@ async function render(query: any) {
 const getHandler: RouteGetHandler = {
     async get({ query }) {
         return layout({
+            head: `<style>
+            table.sticky {
+                th {
+                    position: sticky;
+                    top: 0;
+                    z-index: 2;
+                }
+
+                td:first-child, th:first-child {
+                    position: sticky;
+                    left: 0;
+                    z-index: 1;
+                }
+            }
+            </style>`,
             main: await render(query),
             nav: teamNav(+query.teamId),
             title: "Player Stats"

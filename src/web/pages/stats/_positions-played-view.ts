@@ -21,7 +21,7 @@ export async function timePlayedView(o: StatsView) {
 
     return html`
     <h3>Positions Played (Hours:Minutes:Seconds)</h3>
-    <table>
+    <table class="sticky">
     <thead>
         <tr>
             <th>Player</th>
