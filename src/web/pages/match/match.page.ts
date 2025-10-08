@@ -369,10 +369,12 @@ const postHandlers : RoutePostHandler = {
         let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
         let team = await teamGet(teamId)
 
+        let now = Date.now()
+
         let game = await required(team.games.find(x => x.id === gameId), `Could not find game! ${gameId}`)
         game.status = "ended"
         let calc = new GameTimeCalculator(game)
-        calc.end()
+        calc.end(now)
         await teamSave(team)
 
         let players = await playerGameAllGet(teamId, gameId, team.players.map(x => x.id))
@@ -381,7 +383,7 @@ const postHandlers : RoutePostHandler = {
             .filter(isInPlayPlayer)
             .map(player => {
                 let playerCalc = new PlayerGameTimeCalculator(player, calc)
-                playerCalc.end()
+                playerCalc.end(now)
                 // @ts-ignore
                 player.status = { _: "out"}
                 return playerCalc.save(teamId)

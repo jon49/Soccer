@@ -84,12 +84,12 @@ export class PlayerGameTimeCalculator {
         time.start = +new Date()
     }
 
-    end() {
+    end(now?: number) {
         let time = tail(this.times)
         if (!time?.start || time?.end) {
             return
         }
-        time.end = +new Date()
+        time.end = now || Date.now()
     }
 
     position(position: string) {
@@ -179,13 +179,13 @@ export class GameTimeCalculator {
         })
     }
 
-    end() {
+    end(now?: number) {
         let time = tail(this.times)
         if (!time || !time.start) {
             throw new Error("Cannot end time without starting!")
         }
         if (!time.end) {
-            time.end = Date.now()
+            time.end = now || Date.now()
         }
     }
 
