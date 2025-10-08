@@ -175,7 +175,7 @@ export class GameTimeCalculator {
             return
         }
         this.times.push({
-            start: +new Date(),
+            start: Date.now(),
         })
     }
 
@@ -184,7 +184,9 @@ export class GameTimeCalculator {
         if (!time || !time.start) {
             throw new Error("Cannot end time without starting!")
         }
-        time.end = +new Date()
+        if (!time.end) {
+            time.end = Date.now()
+        }
     }
 
     isGameOn() {
