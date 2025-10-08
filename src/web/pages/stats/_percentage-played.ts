@@ -33,8 +33,9 @@ export async function percentagePlayed(o: StatsView) {
     <thead>
         <tr>
             <th>Player</th>
-            <th>% Played</th>
             <th>Total Games</th>
+            <th>% Played</th>
+            ${team.games.map((_, index) => html`<th>${index + 1}</th>`)}
         </tr>
     </thead>
     <tbody>
@@ -52,17 +53,19 @@ export async function percentagePlayed(o: StatsView) {
                                 return acc + val
                             }, 0) ?? 0
                         let rate = totalTime / (gameTimes.get(val?.gameId ?? 0) || 1)
-                        acc.rate += rate
+                        acc.rate.push(rate)
                         acc.total++
                         return acc
                     } else {
+                        acc.rate.push(0)
                         return acc
                     }
-                }, { rate: 0, total: 0 })
-                let percentagePlayed = rate / (total || 1) * 100
+                }, { rate: [] as number[], total: 0 })
+                let percentagePlayed = rate.reduce((acc, val) => acc + val, 0) / (total || 1) * 100
 
-                yield html`<td>${percentagePlayed.toFixed(0)}%</td>`
                 yield html`<td>${total}</td>`
+                yield html`<td>${percentagePlayed === 0 ? "-" : `${percentagePlayed.toFixed(0)}%`}</td>`
+                yield rate.map(x => html`<td>${x === 0 ? "-" : `${(x * 100).toFixed(0)}%`}</td>`)
                 yield html`</tr>`
             }
         }}
