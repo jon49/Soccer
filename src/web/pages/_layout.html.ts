@@ -53,6 +53,7 @@ const render = async (
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <base target=htmz>
     <title>${title} - Soccer</title>
     <link rel="icon" type="image/x-icon" href="/web/images/soccer.ico">
     <style> @import url("/web/css/pico.blue.min.css") layer(base); </style>
@@ -80,7 +81,7 @@ const render = async (
                     ${syncCountView(updatedCount)}
 
                     ${isLoggedIn
-            ? html`<a id=auth-link href="/login?logout" role=button>Logout</a>`
+            ? html`<a id=auth-link href="/login?logout" role=button target="_self">Logout</a>`
             : loginView()}
                 </li>
             </ul>
@@ -88,10 +89,10 @@ const render = async (
 
         <nav role=navigation>
             <ul>
-                <li><a href="/web/teams">Teams</a></li>
+                <li><a href="/web/teams" target="_self">Teams</a></li>
                 ${!nav || nav.length === 0
             ? null
-            : nav.map(x => html`<li><a href="$${x.url}">${x.name}</a></li>`)}
+            : nav.map(x => html`<li><a href="$${x.url}" target="_self">${x.name}</a></li>`)}
             </ul>
         </nav>
     </header>
@@ -103,8 +104,8 @@ const render = async (
     <div id=toasts></div>
     <div id=temp></div>
 
-    <form id=post method=post target=htmz hidden></form>
-    <form id=get method=get target=htmz hidden></form>
+    <form id=post method=post hidden></form>
+    <form id=get method=get hidden></form>
     <script src="/web/js/app.bundle.js" type="module"></script>
     <div id=scripts>${(scripts ?? []).map(x => html`<script src="${x}" type="module"></script>`)}</div>
     </div>
@@ -113,7 +114,7 @@ const render = async (
 }
 
 export function loginView() {
-    return html`<a id=auth-link href="/login">Login</a>`
+    return html`<a id=auth-link href="/login" target="_self">Login</a>`
 }
 
 export default

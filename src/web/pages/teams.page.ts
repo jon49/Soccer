@@ -34,11 +34,11 @@ ${teams ? html`
             : html`<p>No teams found. Please add one!</p>`
         }
 
-${wasFiltered ? html`<p><a href="?all">Show all teams.</a></p>` : null}
+${wasFiltered ? html`<p><a href="?all" target="_self">Show all teams.</a></p>` : null}
 
 <h3>Add a team</h3>
 
-<form class=form action="/web/teams" method=post target=htmz data-action=reset>
+<form class=form action="/web/teams" method=post  data-action=reset>
     <div>
         <label for=name>Team Name</label>
         <input
@@ -60,8 +60,8 @@ function getTeamView(team: Team, includeSwap = false) {
     let teamId = team.id
     return html`
     <li $${when(includeSwap, `hz-target="#teams" hz-swap="append"`)}>
-        <a href="/web/players?teamId=${team.id}">${team.name} - ${team.year}</a>
-        <a href="/web/games?teamId=${team.id}">Games</a>
+        <a target="_self" href="/web/players?teamId=${team.id}">${team.name} - ${team.year}</a>
+        <a target="_self" href="/web/games?teamId=${team.id}">Games</a>
         ${when((() => {
                 let d = new Date()
                 let currentDate = `${d.getFullYear()}-${("" + (d.getMonth() + 1)).padStart(2, "0")}-${("" + d.getDate()).padStart(2, "0")}`
@@ -70,7 +70,7 @@ function getTeamView(team: Team, includeSwap = false) {
                     .find(x => x.date >= currentDate)
                     return result
             })(),
-        (x: Game) => html`<a href="/web/match?teamId=${teamId}&gameId=${x.id}">${x.date}</a>`
+        (x: Game) => html`<a href=htmz href="/web/match?teamId=${teamId}&gameId=${x.id}">${x.date}</a>`
     ) ?? html`<span>&nbsp;</span>`}
     </li>`
 }

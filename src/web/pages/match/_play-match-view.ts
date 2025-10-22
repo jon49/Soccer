@@ -40,7 +40,7 @@ export default async function playMatchView(state: PlayerStateView) {
 <main id=main>
 <header class=flex>
 <div>
-<a href="?${queryTeamGame}">Back</a>
+<a href="?${queryTeamGame}" target="_self">Back</a>
 ${when(countOnDeckPlayersWithPosition > 0, () => html`
 <button
     form=post
@@ -97,7 +97,7 @@ ${opponentPointsView(queryTeamGame, gameCalc)}
 
 <h3 id=onDeck class="inline mt-2">On Deck (${playersOnDeck.filter(x => x.status.targetPosition == null).length})</h3>
 ${when(playersOnDeck.length > 1, () => html`
-<a class="condense-padding" href="?${queryTeamGame}&handler=rapidFire" target=htmz role="button">Rapid Fire</a>
+<a class="condense-padding" href="?${queryTeamGame}&handler=rapidFire" role="button">Rapid Fire</a>
 `)}
 
 <ul id=onDeckList class=list>

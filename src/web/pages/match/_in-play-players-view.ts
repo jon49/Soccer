@@ -37,7 +37,6 @@ export function inPlayersView(state: PlayerStateView) {
         return html`
 <form
     method=post
-    target=htmz
     $${when(!sub, () => `id="${id}"`)}
     $${when(sub && !player, () => `id="${subPlayerId}"`)}
     class="list m-0
@@ -84,7 +83,6 @@ function playerView(
 <fieldset class="mb-0" role="group">
     <a class="in-play-button"
        href="?$${queryTeamGame}&playerId=${player?.playerId}&handler=playerSwap"
-       target=htmz
        role="button"
        >${player?.name}</a>
     <button

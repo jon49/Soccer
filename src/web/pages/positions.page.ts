@@ -35,7 +35,7 @@ function render({ team, positions, grid }: PositionView) {
 <h2>${team.name} — Formation</h2>
 
 <p>
-    <a href="?handler=showTemplates&teamId=${team.id}" target="htmz" role="button">Use a template.</a>
+    <a href="?handler=showTemplates&teamId=${team.id}" role="button">Use a template.</a>
 </p>
 
 <h3>Grid</h3>
@@ -54,7 +54,6 @@ function positionsNameView(positions: string[][], teamId: number) {
     class=form
     method=post
     action="?teamId=${teamId}&handler=editPositions"
-    target=htmz
     onchange="this.requestSubmit()">
     ${function* positionViews() {
             let count = 0
@@ -75,7 +74,7 @@ function addGridView(grid: number[], teamId: number) {
     style="--card-width:3.5em;"
     method=post
     action="?handler=addGrid&teamId=${teamId}" onchange="this.requestSubmit()"
-    target="htmz" >
+     >
     ${grid.map((x, i) => html`<input id="grid${i}" class=inline type=number name="grid[]" value="${x}">`)}
     <input id="grid-1" type=number name="grid[]" ${when(!grid.length, () => "autofocus")}>
 </form>`
@@ -153,7 +152,7 @@ function getTemplates(teamId: number, numberOfPlayers: number) {
     return html`
 <div id=templates class=grid style="--grid-item-width: 250px;">
         ${grid.map((x, i) => html`
-    <form method=post action="?handler=createFormation&teamId=${teamId}" target="htmz" class=inline>
+    <form method=post action="?handler=createFormation&teamId=${teamId}"  class=inline>
     <button class=bg>${getTemplate(x)}</button>
     <input type=hidden name=index value="${i}">
     <input type=hidden name=numberOfPlayers value="${numberOfPlayers}">
@@ -167,10 +166,10 @@ async function getPositionTemplates(teamId: number) {
 
     return html`
     <main id=main>
-        <a href="/web/positions?teamId=${teamId}&hz" target=htmz>Cancel</a>
+        <a href="/web/positions?teamId=${teamId}&hz" >Cancel</a>
         <h2>Formation Templates</h2>
 
-        <form target="htmz" onchange="this.requestSubmit()">
+        <form  onchange="this.requestSubmit()">
             <fieldset class=fieldset-outline>
                 <legend>Number of players</legend>
                 <label class="inline p-1">
@@ -347,4 +346,3 @@ const route: RoutePage = {
 }
 
 export default route
-

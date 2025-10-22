@@ -40,7 +40,7 @@ export async function activityPlayerSelectorView(query: any) {
     return html`
 <main id=main>
 <header>
-    <a href="$${returnUrl ? returnUrl : `?${queryTeamGame}&handler=play`}">Cancel</a>&nbsp;
+    <a href="$${returnUrl ? returnUrl : `?${queryTeamGame}&handler=play`}" target="_self">Cancel</a>&nbsp;
     <h2 class="inline">Player Goal</h2>
 </header>
     ${positionPlayersView(
@@ -53,7 +53,7 @@ export async function activityPlayerSelectorView(query: any) {
             <form
                 method=post
                 action="$${action}"
-                target=htmz>
+                >
                 <input type=hidden name=activityId value="${activityId}">
                 <input type=hidden name=playerId value="${player.playerId}">
                 <input type=hidden name=operation value="${operation}">
@@ -68,7 +68,7 @@ export async function activityPlayerSelectorView(query: any) {
         .map(x => html`<form
             method=post
             action="$${action}"
-            target=htmz>
+            >
             <input type=hidden name=activityId value="${activityId}">
             <input type=hidden name=playerId value="${x.playerId}">
             <input type=hidden name=operation value="${operation}">

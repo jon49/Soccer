@@ -33,8 +33,8 @@ function render(o: PlayersEditView) {
 
 <nav>
     <ul>
-        <li><a href="#team">Team</a></li>
-        <li><a href="#players">Players</a></li>
+        <li><a href="#team" target="_self">Team</a></li>
+        <li><a href="#players" target="_self">Players</a></li>
     </ul>
 </nav>
 
@@ -44,7 +44,7 @@ function render(o: PlayersEditView) {
     class=form
     method=post
     action="?handler=editTeam&teamId=${team.id}"
-    target=htmz>
+    >
     <div class=inline>
         <label for=team-input>Team Name:</label><input id=team-input name=name type=text value="${team.name}">
     </div>
@@ -71,7 +71,7 @@ ${when(!team.players.length, () => html`<p>No players have been added.</p>`)}
     class=form
     method=post
     action="?handler=addPlayer&teamId=${team.id}"
-    target=htmz>
+    >
     <div>
         <label for=newPlayer>Add Player Name</label>
         <input
@@ -97,7 +97,7 @@ function playerView(player: TeamPlayer, teamId: number) {
         class=form
         method=post
         action="?handler=editPlayer&$${teamPlayerQuery}"
-        target=htmz>
+        >
         <fieldset role=group>
             <input class="basis-175" name=name type=text value="${player.name}" placeholder="Player name">
             <input name=number type=number value="${player.number}" placeholder="#">

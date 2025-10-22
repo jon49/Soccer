@@ -33,7 +33,7 @@ function render({ team }: GameView) {
     ${team.games.map(x => getGameView(team.id, x))}
 </ul>
 
-<form class="form" method=post action="?teamId=${team.id}" target=htmz data-action="clearAutoFocus reset">
+<form class="form" method=post action="?teamId=${team.id}"  data-action="clearAutoFocus reset">
     <div class=grid>
         <div>
             <label for=gameDate>Name</label>
@@ -91,7 +91,7 @@ function getGamePartialView(teamId: number, game: Game) {
         value="$${datetime}"
         >
     <label for="game-date-${game.id}">
-        <a href="/web/match?$${teamQuery}&gameId=${game.id}">${game.date} (${formatTime(d)})</a>
+        <a href="/web/match?$${teamQuery}&gameId=${game.id}" target="_self">${game.date} (${formatTime(d)})</a>
         <span class=editable-pencil>&#9998;</span>
     </label>
 </div>
@@ -104,7 +104,7 @@ function getGamePartialView(teamId: number, game: Game) {
         name=opponent
         value="${game.opponent}">
     <label for="game-opponent-${game.id}">
-        <a href="/web/match?$${teamQuery}&gameId=${game.id}">${game.opponent}</a>
+        <a href="/web/match?$${teamQuery}&gameId=${game.id}" target="_self">${game.opponent}</a>
         <span class=editable-pencil>&#9998;</span>
     </label>
 </div>
@@ -118,7 +118,6 @@ function getGamePartialView(teamId: number, game: Game) {
     hidden
     method=post
     action="?${teamQuery}&handler=edit"
-    target=htmz
     onchange="this.requestSubmit()"></form>
 `
 }

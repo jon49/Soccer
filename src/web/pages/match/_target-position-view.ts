@@ -27,7 +27,7 @@ export default async function render(query: any) {
     return html`
 <main id=main>
 <header>
-    <a href="?${queryTeamGame}&handler=play">Cancel</a>&nbsp;
+    <a href="?${queryTeamGame}&handler=play" target="_self">Cancel</a>&nbsp;
     <h2 class="inline">Swap for ${player.name}</h2>
 </header>
 
@@ -39,7 +39,6 @@ export default async function render(query: any) {
             <form
                 method=post
                 action="?position=${positionIndex}&teamId=${teamId}&gameId=${gameId}&playerId=${playerId}&handler=updateUserPosition&playerSwap"
-                target=htmz
                 >${
             async () => {
                 if (player) {

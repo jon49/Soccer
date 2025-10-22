@@ -40,7 +40,7 @@ export default async function render(query: any) {
 <ul class=list>
     <li>
         <span>Points</span>
-        <form method="post" target=htmz>
+        <form method="post">
             <button class=condense-padding formaction="$${pointAction}&action=dec">-</button>
             <span id=points>${getPointsView(game.points)}</span>
             <button class=condense-padding formaction="$${pointAction}&action=inc">+</button>
@@ -49,7 +49,7 @@ export default async function render(query: any) {
 
     <li>
         <span>Opponent</span>
-        <form method="post" target=htmz>
+        <form method="post">
             <button class=condense-padding formaction="${opponentPointAction}Dec">-</button>
             <span id=o-points>${getPointsView(game.opponentPoints)}</span>
             <button class=condense-padding formaction="${opponentPointAction}Inc">+</button>
@@ -58,7 +58,7 @@ export default async function render(query: any) {
 </ul>
 
 <div>
-    <a href="?${queryTeamGame}&handler=play">Show Game Play View</a>
+    <a href="?${queryTeamGame}&handler=play" target="_self">Show Game Play View</a>
 </div>
 
 <h3>Notes</h3>
@@ -67,7 +67,7 @@ export default async function render(query: any) {
     method=post
     action="?${queryTeamGame}&handler=updateNote"
     onchange="this.requestSubmit()"
-    target=htmz
+    
     >
     <textarea name=notes>${notes}</textarea>
 </form>

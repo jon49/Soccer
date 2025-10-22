@@ -15,15 +15,13 @@ export async function onDeckView(state: PlayerStateView) {
         return html`
 <li id="${id}">
     <div>
-        <a href="?${queryTeamGame}&playerId=${x.playerId}&handler=playerSwap" target=htmz role=button>(${x.name}${when(x.number, x => ` ${x}`)})</a>
+        <a href="?${queryTeamGame}&playerId=${x.playerId}&handler=playerSwap"  role=button>(${x.name}${when(x.number, x => ` ${x}`)})</a>
     </div>
     <form
         method=post
         action="?${queryTeamGame}&playerId=${x.playerId}&handler=cancelOnDeck"
-        target=htmz
         data-action=anchor
-        data-anchor="#onDeck"
-        >
+        data-anchor="#onDeck">
         <button>X</button>
     </form>
 </li>`

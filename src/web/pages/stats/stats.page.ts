@@ -21,7 +21,8 @@ async function render(query: any) {
         `href="?teamId=${teamId}&handler=${handler}"`
 
     return html`
-    <h2 class=inline>${team.name} — Stats</h2> <a href="/web/stats/edit?teamId=${teamId}">Edit</a>
+    <h2 class=inline>${team.name} — Stats</h2>
+    <a href="/web/stats/edit?teamId=${teamId}" target="_self">Edit</a>
 
     <div style="margin-bottom: 1em;">
         <div
@@ -34,7 +35,7 @@ async function render(query: any) {
                 ["gamesPlayed", "Games Played"],
                 ["activitiesPerformed", "Player Stats"],
             ].map(([handler, label]) =>
-             html`<a id="${handler}" $${href(handler)} role="button" target=htmz>$${label}</a>`)
+             html`<a id="${handler}" $${href(handler)} role="button">$${label}</a>`)
             }
         </div>
     </div>

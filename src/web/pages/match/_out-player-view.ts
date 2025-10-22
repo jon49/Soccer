@@ -16,12 +16,10 @@ export async function outPlayersView(o: PlayerStateView) {
     return html`
 <li id="${outPlayerId}">
     <div>
-        <a
-            href="?${queryTeamGame}&playerId=${x.playerId}&handler=playerSwap"
-            target=htmz
-            aria-label="Immediately Swap Player"
-            title="Immediately Swap Player"
-            role="button">&#10166;</a>
+        <a href="?${queryTeamGame}&playerId=${x.playerId}&handler=playerSwap"
+           aria-label="Immediately Swap Player"
+           title="Immediately Swap Player"
+           role="button">&#10166;</a>
     </div>
     <div>
         <button
