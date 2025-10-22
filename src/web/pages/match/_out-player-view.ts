@@ -2,29 +2,33 @@ import type { PlayerStateView } from "./shared.js"
 
 let {
     html,
-} = self.app
+} = self.sw
 
 export async function outPlayersView(o: PlayerStateView) {
     let outPlayers = await o.outPlayers()
     let queryTeamGame = o.queryTeamGame
 
     return html`
-<form id="out-players-form" method=post hf-swap="merge" hf-target="#app"></form>
-
     ${outPlayers.map(x => {
 
-    let outPlayerId = `out-player-${x.playerId}`
+    let outPlayerId = `outPlayer${x.playerId}`
 
     return html`
 <li id="${outPlayerId}">
-    <form action="?${queryTeamGame}&playerId=${x.playerId}&handler=playerSwap" hf-target="#app">
-        <button aria-label="Immediately Swap Player" title="Immediately Swap Player">&#10166;</button>
-    </form>
+    <div>
+        <a
+            href="?${queryTeamGame}&playerId=${x.playerId}&handler=playerSwap"
+            target=htmz
+            aria-label="Immediately Swap Player"
+            title="Immediately Swap Player"
+            role="button">&#10166;</a>
+    </div>
     <div>
         <button
-            form="out-players-form"
+            form=post
             formaction="?$${queryTeamGame}&playerId=${x.playerId}&handler=playerOnDeck"
-            hf-scroll-target="#out-players-form"
+            data-action="anchor"
+            data-anchor="#outPlayers"
         >${x.name} ${x.number}</button>
     </div>
     <div>
@@ -32,7 +36,7 @@ export async function outPlayersView(o: PlayerStateView) {
     </div>
     <div>
         <button
-            form="out-players-form"
+            form=post
             formaction="?$${queryTeamGame}&playerId=$${x.playerId}&handler=notPlaying"
         >X</button>
     </div>

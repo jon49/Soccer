@@ -10,7 +10,7 @@ let {
         validateObject,
         queryTeamIdGameIdValidator
     },
-} = self.app
+} = self.sw
 
 const queryActivityValidator = {
     ...queryTeamIdGameIdValidator,
@@ -38,6 +38,7 @@ export async function activityPlayerSelectorView(query: any) {
     let queryTeamGame = state.queryTeamGame
 
     return html`
+<main id=main>
 <header>
     <a href="$${returnUrl ? returnUrl : `?${queryTeamGame}&handler=play`}">Cancel</a>&nbsp;
     <h2 class="inline">Player Goal</h2>
@@ -52,7 +53,7 @@ export async function activityPlayerSelectorView(query: any) {
             <form
                 method=post
                 action="$${action}"
-                hf-target="#app">
+                target=htmz>
                 <input type=hidden name=activityId value="${activityId}">
                 <input type=hidden name=playerId value="${player.playerId}">
                 <input type=hidden name=operation value="${operation}">
@@ -67,7 +68,7 @@ export async function activityPlayerSelectorView(query: any) {
         .map(x => html`<form
             method=post
             action="$${action}"
-            hf-target="#app">
+            target=htmz>
             <input type=hidden name=activityId value="${activityId}">
             <input type=hidden name=playerId value="${x.playerId}">
             <input type=hidden name=operation value="${operation}">
@@ -75,6 +76,7 @@ export async function activityPlayerSelectorView(query: any) {
             <button>${x.name}</button>
         </form>`)
     }
-</div>`
+</div>
+</main>`
 
 }

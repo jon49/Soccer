@@ -6,7 +6,7 @@ import { swapAll } from "./player-swap.js"
 import targetPositionView from "./_target-position-view.js"
 import targetPosition from "./player-target-position.js"
 import { activityPlayerSelectorView } from "./_activity-position-view.js"
-import playMatchView from "./_play-match-view.js"
+import playMatchView, { opponentPointsView } from "./_play-match-view.js"
 import { play } from "./_play.js"
 
 const {
@@ -33,14 +33,14 @@ const {
         maybe,
         required,
         },
-} = self.app
+} = self.sw
 
 const queryTeamGamePlayerValidator = {
     ...queryTeamIdGameIdValidator,
     playerId: createIdNumber("Query Player Id")
 }
 
-function setPoints(f: (game: Game) => number) {
+function setPoints(target: string, f: (game: Game) => number) {
     return async ({ query } : { query: any }) => {
         let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
         let team = await teamGet(teamId)
@@ -51,7 +51,7 @@ function setPoints(f: (game: Game) => number) {
         } else {
             return reject("Points cannot be negative!")
         }
-        return getPointsView(points)
+        return html`<span id="${target}">${getPointsView(points)}</span>`
     }
 }
 
@@ -106,8 +106,8 @@ async function handlePlayerStatUpdated(data: PlayerStatUpdatedArgs) {
     if (data.activityId === 1) {
         let action : (query: any) => Promise<any> =
             data.action === "inc"
-                ? setPoints(game => ++game.points)
-            : setPoints(game => --game.points)
+                ? setPoints("points", game => ++game.points)
+            : setPoints("points", game => --game.points)
         await action({ query: data })
     }
 }
@@ -137,18 +137,7 @@ const getHandlers : RouteGetHandler = {
     },
 
     async activityPlayerSelector(o) {
-        let { req, query } = o
-        let url = new URL(req.referrer)
-        if (url.searchParams.get("handler") === "play") {
-            return {
-                body: await activityPlayerSelectorView(query),
-                headers: {
-                    "hf-target": "#app",
-                },
-            }
-        } else if (req.headers.has("hf-request")) {
-            return { status: 204 }
-        }
+        let { query } = o
         return play({ ...o, app: activityPlayerSelectorView(query) })
     },
 
@@ -181,7 +170,7 @@ const getHandlers : RouteGetHandler = {
 }
 
 function getApp(state: PlayerStateView) {
-    return html`<div id=app>${playMatchView(state)}</div>`
+    return playMatchView(state)
 }
 
 const queryActionValidatory = {
@@ -190,10 +179,17 @@ const queryActionValidatory = {
 }
 
 const postHandlers : RoutePostHandler = {
-    oPointsDec: setPoints(game => --game.opponentPoints),
-    oPointsInc: setPoints(game => ++game.opponentPoints),
-    pointsDec: setPoints(game => --game.points),
-    pointsInc: setPoints(game => ++game.points),
+    oPointsDec: setPoints("o-points", game => --game.opponentPoints),
+    oPointsInc: setPoints("o-points", game => ++game.opponentPoints),
+    pointsDec: setPoints("points", game => --game.points),
+    pointsInc: setPoints("points", game => ++game.points),
+
+    async oPointsIncPlay(o) {
+        let { teamId, gameId } = await validateObject(o.query, queryTeamIdGameIdValidator)
+        await setPoints("o-points", game => ++game.opponentPoints)(o)
+        let state = new PlayerStateView(teamId, gameId)
+        return html`${opponentPointsView(state.queryTeamGame, await state.gameCalc())}`
+    },
 
     async points(o) {
         let { query, req } = o
@@ -202,17 +198,12 @@ const postHandlers : RoutePostHandler = {
         let { stats } = await state.stats()
 
         if (stats.find(x => x.id === statIds.Goal)?.active) {
-            return {
-                status: 302,
-                headers: {
-                    Location: `?${state.queryTeamGame}&activityId=1&action=${action}&handler=activityPlayerSelector&returnUrl=${encodeURIComponent(req.referrer)}`
-                }
-            }
+            return html`<x-redirect id=temp data-url="/web/match?teamId=${teamId}&action=${action}&activityId=1&gameId=${gameId}&handler=activityPlayerSelector&returnUrl=${encodeURIComponent(req.referrer)}"></x-redirect>`
         }
 
         if (action === "inc") {
             return postHandlers.pointsInc(o)
-        } else if (action === "dec") {
+        } else {
             return postHandlers.pointsDec(o)
         }
     },
@@ -432,16 +423,7 @@ const postHandlers : RoutePostHandler = {
             gameId
         })
 
-        if (returnUrl?.includes("handler=play")) {
-            return playMatchView(new PlayerStateView(teamId, gameId))
-        }
-
-        return {
-            status: 302,
-            headers: {
-                Location: returnUrl
-            }
-        }
+        return html`<x-redirect id=temp data-url="$${returnUrl}"></x-redirect>`
     },
 
     async deleteGame({ query }) {
@@ -460,12 +442,7 @@ const postHandlers : RoutePostHandler = {
         }
         await teamSave(team)
 
-        return {
-            status: 302,
-            headers: {
-                Location: `/web/games?teamId=${teamId}`
-            }
-        }
+        return html`<x-redirect id=temp data-url="/web/games?teamId=${teamId}"></x-redirect>`
     }
 
 }

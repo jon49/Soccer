@@ -1,4 +1,4 @@
-import { PlayerStateView } from "./shared.js"
+import { GameTimeCalculator, PlayerStateView } from "./shared.js"
 import { onDeckView } from "./_on-deck-view.js"
 import { outPlayersView } from "./_out-player-view.js"
 import { inPlayersView } from "./_in-play-players-view.js"
@@ -7,7 +7,7 @@ import { notPlayingPlayersView } from "./_not-playing-players-view.js"
 let {
     html,
     utils: {when}
-} = self.app
+} = self.sw
 
 export default async function playMatchView(state: PlayerStateView) {
     let [
@@ -37,6 +37,7 @@ export default async function playMatchView(state: PlayerStateView) {
     let playersExist = !noPlayersExist
 
     return html`
+<main id=main>
 <header class=flex>
 <div>
 <a href="?${queryTeamGame}">Back</a>
@@ -44,32 +45,28 @@ ${when(countOnDeckPlayersWithPosition > 0, () => html`
 <button
     form=post
     formaction="?$${queryTeamGame}&handler=swapAll"
-    hf-target="#app"
-    hf-swap="merge"
     >Swap All</button>
 `)}
 ${when(playersExist, () => html`
 <button
     form=post
     formaction="?$${queryTeamGame}&handler=allOut"
-    hf-confirm="Are you sure you want to take all players out?"
-    hf-swap="merge"
-    hf-target="#app">All Out</button>
+    data-action="confirm"
+    data-confirm="Are you sure you want to take all players out?"
+    >All Out</button>
 `)}
 </div>
 
 <div class=flex>
     ${when(!isGameEnded, () => html`
     <button
-        id=game-status
+        id=gameStatus
         form=post
-        formaction="?$${queryTeamGame}&handler=${isGameInPlay ? "pauseGame" : "startGame"}"
-        hf-swap="merge"
-        hf-target="#app" >
+        formaction="?$${queryTeamGame}&handler=${isGameInPlay ? "pauseGame" : "startGame"}" >
         ${isGameInPlay ? "Pause" : "Start"}
     </button>`)}
 
-    <span traits="game-timer"
+    <span id=gameTimer traits="game-timer"
         $${when(isGamePaused, () => `data-flash data-start="${gameCalc.getLastEndTime()}"`)}
         $${when(isGameInPlay, `data-start="${gameCalc.getLastStartTime()}" data-total="${gameCalc.total()}"`)}
         $${when(isGameEnded, `data-static data-total="${gameCalc.total()}"`)}>
@@ -79,10 +76,8 @@ ${when(playersExist, () => html`
     <button
         form=post
         formaction="?$${queryTeamGame}&handler=${isGameEnded ? "restartGame" : "endGame"}"
-        hf-target="#app"
-        hf-swap="merge"
-        hf-confirm="Are you sure you would like to ${isGameEnded ? 'restart' : 'end'} the game?"
-        >
+        data-action="confirm"
+        data-confirm="Are you sure you would like to ${isGameEnded ? 'restart' : 'end'} the game?" >
         ${isGameEnded ? "Restart" : "End"}
     </button>
 </div>
@@ -94,37 +89,39 @@ ${when(playersExist, () => html`
     aria-label="Game points ${gameCalc.game.points}"
     >${gameCalc.game.points}</button>
     VS
-<button
-    form=post
-    formaction="?$${queryTeamGame}&handler=oPointsInc"
-    aria-label="Opponent points ${gameCalc.game.opponentPoints}"
-    >${gameCalc.game.opponentPoints}</button>
+${opponentPointsView(queryTeamGame, gameCalc)}
 </div>
 </header>
 <br>
 <div>${inPlayersView(state)}</div>
 
-<h3 class="inline mt-2">On Deck (${playersOnDeck.filter(x => x.status.targetPosition == null).length})</h3>
+<h3 id=onDeck class="inline mt-2">On Deck (${playersOnDeck.filter(x => x.status.targetPosition == null).length})</h3>
 ${when(playersOnDeck.length > 1, () => html`
-<button
-    class="condense-padding"
-    form="get"
-    formaction="?${queryTeamGame}&handler=rapidFire"
-    hf-target="#app">Rapid Fire</button>
+<a class="condense-padding" href="?${queryTeamGame}&handler=rapidFire" target=htmz role="button">Rapid Fire</a>
 `)}
 
 <ul id=onDeckList class=list>
     ${onDeckView(state)}
 </ul>
 
-<h3 class="mt-2">Out Players (${outPlayers.length})</h3>
+<h3 id=outPlayers class="mt-2">Out Players (${outPlayers.length})</h3>
 <ul id=outPlayersList class=list>
 ${outPlayersView(state)}
 </ul>
 
-<h3 class="mt-2">Not Playing (${notPlayingPlayers.length})</h3>
-<ul id="notPlayingList" class=list>
+<h3 id=notPlaying class="mt-2">Not Playing (${notPlayingPlayers.length})</h3>
+<ul id=notPlayingList class=list>
 ${notPlayingPlayersView(state)}
-</ul>`
+</ul>
+</main>`
 
+}
+
+export function opponentPointsView(queryTeamGame: string, gameCalc: GameTimeCalculator) {
+    return html`<button
+id=opponentPoints
+form=post
+formaction="?$${queryTeamGame}&handler=oPointsIncPlay"
+aria-label="Opponent points ${gameCalc.game.opponentPoints}"
+>${gameCalc.game.opponentPoints}</button>`
 }

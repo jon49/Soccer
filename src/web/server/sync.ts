@@ -3,7 +3,7 @@
 const {
     db: { getMany, setMany, set, update },
     globalDb,
-} = self.app
+} = self.sw
 
 export default async function sync() {
     let isLoggedIn = await globalDb.isLoggedIn()

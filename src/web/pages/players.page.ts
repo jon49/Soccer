@@ -11,7 +11,7 @@ const {
         createString25, dataPlayerNameActiveValidator, dataTeamNameYearActiveValidator, queryTeamIdPlayerIdValidator, queryTeamIdValidator 
     },
     views: { teamNav },
-} = self.app
+} = self.sw
 
 interface PlayersEditView {
     team: Team
@@ -44,7 +44,7 @@ function render(o: PlayersEditView) {
     class=form
     method=post
     action="?handler=editTeam&teamId=${team.id}"
-    hf-target=main>
+    target=htmz>
     <div class=inline>
         <label for=team-input>Team Name:</label><input id=team-input name=name type=text value="${team.name}">
     </div>
@@ -63,7 +63,7 @@ function render(o: PlayersEditView) {
 <h3 id=players>Players Settings</h3>
 ${when(!team.players.length, () => html`<p>No players have been added.</p>`)}
 
-<div id=player-cards  class=grid style="--grid-item-width: 200px;">
+<div id=playerCards  class=grid style="--grid-item-width: 200px;">
     ${team.players.map(x => playerView(x, team.id))}
 </div>
 
@@ -71,16 +71,16 @@ ${when(!team.players.length, () => html`<p>No players have been added.</p>`)}
     class=form
     method=post
     action="?handler=addPlayer&teamId=${team.id}"
-    hf-target="#player-cards"
-    hf-swap=beforeend
-
-    traits="on"
-    data-events="submit"
-    data-action="newPlayer.removeAttribute('autofocus'); this.removeAttribute('traits');"
-    >
+    target=htmz>
     <div>
         <label for=newPlayer>Add Player Name</label>
-        <input id=newPlayer name=newPlayerName type=text required ${when(!team.players.length, "autofocus")}>
+        <input
+            id=newPlayer
+            name=newPlayerName
+            type=text
+            required
+            ${when(!team.players.length, "autofocus")}
+            data-action="clearAutoFocus reset">
     </div>
 </form>
 `
@@ -91,13 +91,13 @@ function playerView(player: TeamPlayer, teamId: number) {
     let playerId_: string = `edit-player${player.id}`
 
     return html`
-<article id="active-${playerId_}" class="player-card">
+<article id="active-${playerId_}" class="player-card" hz-target="#playerCards" hz-swap="append">
     <form
         onchange="this.requestSubmit()"
         class=form
         method=post
         action="?handler=editPlayer&$${teamPlayerQuery}"
-        hf>
+        target=htmz>
         <fieldset role=group>
             <input class="basis-175" name=name type=text value="${player.name}" placeholder="Player name">
             <input name=number type=number value="${player.number}" placeholder="#">
@@ -140,7 +140,7 @@ const postHandlers: RoutePostHandler = {
         // Player name will also need to be updated for the individual player when implemented!
         await teamSave(team)
 
-        return { status: 204 }
+        return { status: 200 }
     },
 
     async addPlayer({ data, query }) {
@@ -159,9 +159,6 @@ const postHandlers: RoutePostHandler = {
         return {
             status: 200,
             body: playerView(player, teamId),
-            headers: {
-                "hf-reset": ""
-            }
         }
     },
 
@@ -176,7 +173,7 @@ const postHandlers: RoutePostHandler = {
         team.year = year
         team.name = newTeamName
         await teamSave(team)
-        return { status: 204 }
+        return { status: 200 }
     }
 }
 

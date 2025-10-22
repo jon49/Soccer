@@ -23,7 +23,7 @@ let {
         queryTeamIdGameIdValidator,
         validateObject
     }
-} = self.app
+} = self.sw
 
 
 export interface GamePlayerStatusView<T extends PlayerStatus> extends PlayerGameStatus<T>, TeamPlayer {

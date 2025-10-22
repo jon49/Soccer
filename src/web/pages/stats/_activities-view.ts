@@ -3,7 +3,7 @@ import type { StatsView } from "./shared.js"
 const {
     html,
     repo: { statsGetAll },
-} = self.app
+} = self.sw
 
 export async function playerStatsView(o: StatsView) {
     let [playerIdList,

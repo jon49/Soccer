@@ -91,7 +91,7 @@ export function teamNew(o: TeamSingle): Team {
     }
 }
 
-export async function teamsCreate(o: TeamNew) : Promise<number> {
+export async function teamsCreate(o: TeamNew) : Promise<Team> {
     let teamsAggregate = await teamGetAll(true)
     if (teamsAggregate?.find(x => equals(x.name, o.name) && equals(x.year, o.year))) {
         return reject(`The team "${o.name} - ${o.year}" already exists.`)
@@ -126,7 +126,7 @@ export async function teamsCreate(o: TeamNew) : Promise<number> {
         }),
         set(getTeamDbId(team.id), team)
     ])
-    return id
+    return team
 }
 
 export async function playerCreate(teamId: number, name: string) : Promise<TeamPlayer> {

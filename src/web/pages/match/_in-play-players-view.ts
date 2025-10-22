@@ -4,7 +4,7 @@ import type { InPlayPlayer, OnDeckPlayer } from "../../server/db.js";
 let {
     html,
     utils: { when }
-} = self.app
+} = self.sw
 
 export function inPlayersView(state: PlayerStateView) {
     return positionPlayersView(state, async ({
@@ -36,6 +36,8 @@ export function inPlayersView(state: PlayerStateView) {
         let style2 = `${shadeBackground2}; ${shadeColor2};`
         return html`
 <form
+    method=post
+    target=htmz
     $${when(!sub, () => `id="${id}"`)}
     $${when(sub && !player, () => `id="${subPlayerId}"`)}
     class="list m-0
@@ -80,17 +82,14 @@ function playerView(
 
     return html`
 <fieldset class="mb-0" role="group">
+    <a class="in-play-button"
+       href="?$${queryTeamGame}&playerId=${player?.playerId}&handler=playerSwap"
+       target=htmz
+       role="button"
+       >${player?.name}</a>
     <button
         class="in-play-button"
-        formmethod="get"
-        formaction="?$${queryTeamGame}&playerId=${player?.playerId}&handler=playerSwap"
-        hf-target="#app">${player?.name}</button>
-    <button
-        class="in-play-button"
-        formmethod=post
         formaction="?${queryTeamGame}&playerId=${player.playerId}&handler=playerNowOut"
-        hf-swap="merge"
-        hf-target="#app"
         >X</button>
 </fieldset>
 <div
@@ -113,17 +112,12 @@ function subPlayerView(
     <button
         class="in-play-button"
         style="border-top-left-radius: unset;"
-        formmethod=post
         formaction="?$${queryTeamGame}&playerId=${sub.playerId}&handler=swap"
-        hf-swap="merge"
-        hf-target="#app">(${sub.name})</button>
+        >(${sub.name})</button>
     <button
         class="in-play-button"
         style="border-top-right-radius: unset;"
-        formmethod=post
         formaction="?$${queryTeamGame}&playerId=${sub.playerId}&handler=cancelOnDeck"
-        hf-swap="merge"
-        hf-target="#app"
         >X</button>
 </fieldset>
 <div

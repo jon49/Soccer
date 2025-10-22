@@ -2,7 +2,7 @@ import { PlayerStateView } from "./shared.js"
 
 let {
     html,
-} = self.app
+} = self.sw
 
 export function getPointsView(points: number) {
     return html`${points || "0"}`
@@ -30,8 +30,8 @@ export default async function render(query: any) {
     class=condense-padding
     form=post
     formaction="?${queryTeamGame}&handler=deleteGame"
-    hf-confirm="Are you sure you would like to delete this game?"
-    hf-submit
+    data-confirm="Are you sure you would like to delete this game?"
+    data-action="confirm"
     >Delete</button>
 
 <br>
@@ -40,7 +40,7 @@ export default async function render(query: any) {
 <ul class=list>
     <li>
         <span>Points</span>
-        <form method="post" hf-target="#points">
+        <form method="post" target=htmz>
             <button class=condense-padding formaction="$${pointAction}&action=dec">-</button>
             <span id=points>${getPointsView(game.points)}</span>
             <button class=condense-padding formaction="$${pointAction}&action=inc">+</button>
@@ -49,7 +49,7 @@ export default async function render(query: any) {
 
     <li>
         <span>Opponent</span>
-        <form method="post" hf-target="#o-points">
+        <form method="post" target=htmz>
             <button class=condense-padding formaction="${opponentPointAction}Dec">-</button>
             <span id=o-points>${getPointsView(game.opponentPoints)}</span>
             <button class=condense-padding formaction="${opponentPointAction}Inc">+</button>

@@ -66,14 +66,13 @@ class GameTimer {
      * @param {HTMLElement} el 
      */
     constructor(el) {
-        if (!(el instanceof HTMLElement)) console.error('Invalid element type', el)
         this.el = el
 
         this.interval = +(el.dataset.interval ?? 0) || 1e3
 
         this.update(+new Date())
         // @ts-ignore
-        document.addEventListener("hf:completed", this)
+        document.addEventListener("hz:completed", this)
     }
 
     handleEvent() {
@@ -88,22 +87,24 @@ class GameTimer {
      * @param {number} currentTime
      */
     update(currentTime) {
-        let el = this.el
+        setTimeout(() => {
+            let el = this.el
 
-        let { start, total, static: static_ } = el.dataset
-        let start_ = +(start ?? 0) || +new Date()
-        let total_ = +(total ?? 0)
-        if (el.hasAttribute("data-flash")) {
-            el.classList.add("flash")
-        } else {
-            el.classList.remove("flash")
-        }
-        if (static_ !== "") {
-            timer.add(this)
-        } else {
-            timer.remove(this)
-        }
-        this.el.textContent = formatTime(currentTime, start_, total_)
+            let { start, total, static: static_ } = el.dataset
+            let start_ = +(start ?? 0) || +new Date()
+            let total_ = +(total ?? 0)
+            if (el.hasAttribute("data-flash")) {
+                el.classList.add("flash")
+            } else {
+                el.classList.remove("flash")
+            }
+            if (static_ !== "") {
+                timer.add(this)
+            } else {
+                timer.remove(this)
+            }
+            this.el.textContent = formatTime(currentTime, start_, total_)
+        })
     }
 }
 

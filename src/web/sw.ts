@@ -1,14 +1,34 @@
 import { ValidationResult } from "promise-validation"
 import { useRoutes, options } from "@jon49/sw/routes.middleware.js"
-import { useHtmf } from "@jon49/sw/htmf.middleware.js"
 import { useResponse } from "@jon49/sw/response.middleware.js"
 import { swFramework } from "@jon49/sw/web-framework.js"
+import { loginView, syncCountView } from "./pages/_layout.html.js"
+import { updated as dbUpdated } from "./server/global-model.js"
+import html from "html-template-tag-stream"
 
 // @ts-ignore
-let version: string = self.app?.version ?? "unknown"
+let version: string = self.sw?.version ?? "unknown"
 
 swFramework.use(useRoutes)
-swFramework.use(useHtmf)
+swFramework.use(
+async function useHtmz(req, res, ctx): Promise<void> {
+    if (req.method !== "POST") return
+
+    let updated = await dbUpdated()
+
+    let messages = (ctx.messages || []) as string[]
+
+    if (res.error) {
+        messages.push(res.error)
+    }
+
+    res.body = html`${res.body}
+<div id=toasts>
+    ${messages.map(x => html`<dialog class=toast traits=x-toaster open><p class=message>${x}</p></dialog>`)}
+</div>
+${res.status === 401 ? html`${loginView()}` : null}
+${syncCountView(updated.length)}
+`})
 swFramework.use(useResponse)
 
 self.addEventListener('message', async function (event) {
@@ -25,7 +45,7 @@ self.addEventListener("install", (e: Event) => {
     e.waitUntil(caches.open(version).then(async cache => {
         console.log("Caching files.")
         // @ts-ignore
-        return cache.addAll(self.app.links.map(x => x.file))
+        return cache.addAll(self.sw.links.map(x => x.file))
     }))
 
 })

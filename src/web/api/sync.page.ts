@@ -1,10 +1,9 @@
 import type { RoutePostHandler, RoutePage } from "@jon49/sw/routes.middleware.js"
 import sync from "../server/sync.js"
 
-const {
-    globalDb: db,
-    views: { syncCountView },
-} = self.app
+const { html } = self.sw
+
+let refresh = html`<x-refresh hz-target="#temp" hz-swap="append"></x-refresh>`
 
 const postHandlers : RoutePostHandler = {
     async post() {
@@ -12,7 +11,8 @@ const postHandlers : RoutePostHandler = {
         switch (result.status) {
             case 200:
                 return {
-                    status: 302
+                    status: 200,
+                    body: refresh
                 }
             default:
                 return { status: 204, message: "" }
@@ -23,12 +23,15 @@ const postHandlers : RoutePostHandler = {
         switch (result.status) {
             case 200:
                 return {
-                    status: 302
+                    message: "Synced!",
+                    status: 200,
+                    body: refresh
                 }
             case 204:
                 return {
                     message: "Synced!",
-                    response: null
+                    response: null,
+                    body: refresh
                 }
             case 401:
             case 403:
@@ -50,10 +53,6 @@ const postHandlers : RoutePostHandler = {
 }
 
 const router: RoutePage = {
-    get: async () => {
-        let x = await db.updated()
-        return syncCountView(x.length)
-    },
     post: postHandlers
 }
 

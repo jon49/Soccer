@@ -7,7 +7,7 @@ let {
     html,
     utils: { when },
     validation: { queryTeamIdGameIdValidator, validateObject }
-} = self.app
+} = self.sw
 
 export async function play({ app, query }: RouteGetArgs & { app?: Promise<AsyncGenerator<any, void, unknown>> }) {
     let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
@@ -65,14 +65,15 @@ export async function play({ app, query }: RouteGetArgs & { app?: Promise<AsyncG
 
     <script src="/web/js/app.bundle.js" type="module"></script>
     <script src="/web/js/game-timer.js" type="module"></script>
-    <script src="/web/js/morphdom.bundle.js" type="module"></script>
 </head>
 <body hf-swap="innerHTML">
 
-<div id=app>${app ? app :  playMatchView(state)}</div>
+${app ? app :  playMatchView(state)}
 
-<form id=post method=post hidden hf></form>
-<form id=get hidden hf></form>
+<div id=temp></div>
+
+<form id=post method=post hidden target=htmz></form>
+<form id=get hidden target=htmz></form>
 
 </body>
 </html>

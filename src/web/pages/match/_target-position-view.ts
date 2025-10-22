@@ -4,7 +4,7 @@ let {
     html,
     utils: { when },
     validation: { queryTeamIdGameIdValidator, createIdNumber, validateObject }
-} = self.app
+} = self.sw
 
 const querySwapValidator = {
     ...queryTeamIdGameIdValidator,
@@ -25,6 +25,7 @@ export default async function render(query: any) {
     let queryTeamGame = state.queryTeamGame
 
     return html`
+<main id=main>
 <header>
     <a href="?${queryTeamGame}&handler=play">Cancel</a>&nbsp;
     <h2 class="inline">Swap for ${player.name}</h2>
@@ -38,7 +39,7 @@ export default async function render(query: any) {
             <form
                 method=post
                 action="?position=${positionIndex}&teamId=${teamId}&gameId=${gameId}&playerId=${playerId}&handler=updateUserPosition&playerSwap"
-                hf-target="#app"
+                target=htmz
                 >${
             async () => {
                 if (player) {
@@ -78,5 +79,6 @@ export default async function render(query: any) {
             `
         },
         {gridItemWidth: "50px"}
-    )}`
+    )}
+</main>`
 }

@@ -1,6 +1,5 @@
 import html from "../server/html.js"
 import * as db from "../server/global-model.js"
-import { syncCountView } from "../api/_shared-views.js"
 import { when } from "@jon49/sw/utils.js"
 import { Theme } from "../server/db.js"
 
@@ -13,12 +12,23 @@ const defaultTheme = "⛅",
     lightTheme = "&#127774;",
     darkTheme = "&#127762;"
 
-export function themeImage(theme: Theme | undefined) {
-    return html`$${theme === "light"
+export function themeView(theme: Theme | undefined) {
+    return html`<button id=themeView form=post formaction="/web/api/settings?handler=theme">$${
+    theme === "light"
         ? lightTheme
         : theme === "dark"
             ? darkTheme
-            : defaultTheme}`
+            : defaultTheme
+    }</button>`
+}
+
+export function syncCountView(count: number) {
+    return html`
+    <button
+        id=syncCount
+        form=post
+        formaction="/web/api/sync?handler=force"
+        >&#128259; ${when(count, count => html`(${count})`)}</button>`
 }
 
 const render = async (
@@ -49,7 +59,7 @@ const render = async (
     <link href="/web/css/app.css" rel=stylesheet>
     <link rel="manifest" href="/web/manifest.json">
 </head>
-<body hf-swap="innerHTML" $${bodyAttr}>
+<body $${bodyAttr}>
 <div id=head>$${head}</div>
     <div class=container>
     <div id=sw-message></div>
@@ -65,35 +75,9 @@ const render = async (
             <form id=theme method=post hidden><input name="defaultTheme"></form>
             <ul>
                 <li>
-                    <button
-                        traits=on
-                        data-action="this.form.defaultTheme.value = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';"
-                        data-events="click"
-                        form=theme
-                        formaction="/web/api/settings?handler=theme"
-                        hf
-                        >$${themeImage(theme)}</button>
+                    ${themeView(theme)}
 
-                    <button
-                        form=post
-                        formaction="/web/api/sync?handler=count"
-                        formmethod=get
-                        hidden
-
-                        traits=on
-                        data-events="hf:completed"
-                        data-match="detail: {method:'post'}"
-
-                        hf-scroll-ignore
-                        hf-target="#sync-count">
-                    </button>
-
-                    <button
-                        id=sync-count
-                        form=post
-                        formaction="/web/api/sync?handler=force"
-                        hf-target
-                        >${syncCountView(updatedCount)}</button>
+                    ${syncCountView(updatedCount)}
 
                     ${isLoggedIn
             ? html`<a id=auth-link href="/login?logout" role=button>Logout</a>`
@@ -112,15 +96,15 @@ const render = async (
         </nav>
     </header>
 
-    <main>
+    <main id=main>
         ${main}
     </main>
 
-    <template id=toast-template><dialog class="toast" traits=x-toaster open><p class=message></p></dialog></template>
     <div id=toasts></div>
+    <div id=temp></div>
 
-    <form id=post method=post hf hidden></form>
-    <form id=get method=get hf hidden></form>
+    <form id=post method=post target=htmz hidden></form>
+    <form id=get method=get target=htmz hidden></form>
     <script src="/web/js/app.bundle.js" type="module"></script>
     <div id=scripts>${(scripts ?? []).map(x => html`<script src="${x}" type="module"></script>`)}</div>
     </div>

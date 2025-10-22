@@ -2,7 +2,7 @@ import type { StatsView } from "./shared.js"
 
 const {
     html,
-} = self.app
+} = self.sw
 
 export async function gamesPlayedView(o: StatsView) {
 

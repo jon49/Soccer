@@ -12,7 +12,7 @@ const {
         validate, validateObject,
     },
     views: { teamNav },
-} = self.app
+} = self.sw
 
 interface GameView {
     team: Team
@@ -33,15 +33,15 @@ function render({ team }: GameView) {
     ${team.games.map(x => getGameView(team.id, x))}
 </ul>
 
-<form class="form" method=post action="?teamId=${team.id}" hf-target=main>
+<form class="form" method=post action="?teamId=${team.id}" target=htmz data-action="clearAutoFocus reset">
     <div class=grid>
         <div>
-            <label for=game-date>Name</label>
-            <input id=game-date type=datetime-local name=date required ${when(team.games.length === 0, "autofocus")}>
+            <label for=gameDate>Name</label>
+            <input id=gameDate type=datetime-local name=date required ${when(team.games.length === 0, "autofocus")}>
         </div>
         <div>
-            <label for=game-opponent>Opponent</label>
-            <input id=game-opponent type=text name=opponent required>
+            <label for=gameOpponent>Opponent</label>
+            <input id=gameOpponent type=text name=opponent required>
         </div>
     </div>
 
@@ -62,8 +62,8 @@ async function renderMain(query: any) {
     return render(await start(query))
 }
 
-function getGameView(teamId: number, game: Game) {
-    return html`<li onchange="event.target.form.requestSubmit()" id=game-${game.id}>
+function getGameView(teamId: number, game: Game, hz: string = "") {
+    return html`<li id=game-${game.id} onchange="event.target.form.requestSubmit()" $${hz}>
         ${getGamePartialView(teamId, game)}
     </li>`
 }
@@ -79,7 +79,7 @@ function getGamePartialView(teamId: number, game: Game) {
     let datetime = game.date && game.time ? `${game.date}T${game.time}` : ""
     let d = new Date(datetime)
     return html`
-<input form=${formId} type=hidden name=gameId value="${game.id}" hf-target=main>
+<input form=${formId} type=hidden name=gameId value="${game.id}">
 <div>
     <input
         id="game-date-${game.id}"
@@ -118,8 +118,8 @@ function getGamePartialView(teamId: number, game: Game) {
     hidden
     method=post
     action="?${teamQuery}&handler=edit"
-    onchange="this.requestSubmit()"
-    hf-target=main></form>
+    target=htmz
+    onchange="this.requestSubmit()"></form>
 `
 }
 
@@ -167,7 +167,7 @@ const postHandlers: RoutePostHandler = {
 
         await teamSave(team)
 
-        return renderMain(query)
+        return getGameView(teamId, team.games.find(x => x.id === gameId)!, `hz-target="#games" hz-swap="prepend"`)
     },
 
     async edit({ data, query }) {
@@ -192,7 +192,7 @@ const postHandlers: RoutePostHandler = {
 
         await teamSave(team)
 
-        return renderMain(query)
+        return getGameView(teamId, game)
     },
 }
 

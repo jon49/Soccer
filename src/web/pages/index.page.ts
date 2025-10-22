@@ -3,7 +3,7 @@ import type { RoutePage } from "@jon49/sw/routes.middleware.js"
 const {
     html,
     layout,
-} = self.app
+} = self.sw
 
 let index : RoutePage = {
     get: async () => {

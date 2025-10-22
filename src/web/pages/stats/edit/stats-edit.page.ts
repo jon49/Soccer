@@ -8,7 +8,7 @@ const {
     utils: { when, DbCache },
     validation: { validateObject, createCheckbox, createIdNumber, createString25, required, queryTeamIdValidator },
     views: { teamNav },
-} = self.app
+} = self.sw
 
 async function render(o: StatsView) {
     let [{ stats }, team] = await Promise.all([o.stats(), o.team()])
@@ -23,7 +23,8 @@ async function render(o: StatsView) {
         return html`
         <form
             onchange="this.requestSubmit()"
-            hf method=post
+            method=post
+            target="htmz"
             action="?teamId=${teamId}&handler=updateStat">
             <input type=hidden name=id value="${x.id}">
             <input type=text maxlength=25 name=name value="${x.name}">
@@ -68,7 +69,7 @@ const postHandlers : RoutePostHandler = {
 
         await statSave(teamId, o)
 
-        return { status: 204 }
+        return { status: 200 }
     }
 }
 

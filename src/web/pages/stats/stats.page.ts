@@ -11,44 +11,35 @@ const {
     repo: { teamGet },
     validation: { validateObject, queryTeamIdValidator },
     views: { teamNav },
-} = self.app
+} = self.sw
 
 async function render(query: any) {
     let { teamId } = await validateObject(query, queryTeamIdValidator)
     let team = await teamGet(teamId)
 
-    let formAction = (handler: string) =>
-        `formaction="?teamId=${teamId}&handler=${handler}"`
+    let href = (handler: string) =>
+        `href="?teamId=${teamId}&handler=${handler}"`
 
     return html`
     <h2 class=inline>${team.name} — Stats</h2> <a href="/web/stats/edit?teamId=${teamId}">Edit</a>
 
     <div style="margin-bottom: 1em;">
-        <form
-            id=stat-buttons
+        <div
+            id=statButtons
             class=grid
-            style="--grid-item-width: 150px;"
-
-            traits=on
-            data-events="hf:completed"
-            data-match="detail: {form:{id:'stat-buttons'}}"
-            data-action="event.target.remove()"
-
-            hf-target="#stat-tables"
-            hf-swap="afterbegin"
-            >
+            style="--grid-item-width: 150px;">
             ${[
                 ["timePlayed", "Time Played"],
                 ["percentagePlayed", "Percentage of Games Played"],
                 ["gamesPlayed", "Games Played"],
                 ["activitiesPerformed", "Player Stats"],
             ].map(([handler, label]) =>
-             html`<button $${formAction(handler)}>$${label}</button>`)
+             html`<a id="${handler}" $${href(handler)} role="button" target=htmz>$${label}</a>`)
             }
-        </form>
+        </div>
     </div>
 
-    <div id=stat-tables></div>`
+    <div id=statTables></div>`
 }
 
 const getHandler: RouteGetHandler = {
@@ -77,22 +68,30 @@ const getHandler: RouteGetHandler = {
 
     async timePlayed({ query }) {
         let playersView = await StatsView.create(query)
-        return timePlayedView(playersView)
+        return html`
+        <template hz-target="#statTables" hz-swap="prepend">${timePlayedView(playersView)}</template>
+        <template id=timePlayed></template>`
     },
 
     async percentagePlayed({ query }) {
         let playersView = await StatsView.create(query)
-        return percentagePlayed(playersView)
+        return html`
+        <template hz-target="#statTables" hz-swap="prepend">${percentagePlayed(playersView)}</template>
+        <template id=percentagePlayed></template>`
     },
 
     async gamesPlayed({ query }) {
         let playersView = await StatsView.create(query)
-        return gamesPlayedView(playersView)
+        return html`
+        <template hz-target="#statTables" hz-swap="prepend">${gamesPlayedView(playersView)}</template>
+        <template id=gamesPlayed></template>`
     },
 
     async activitiesPerformed({ query }) {
         let playersView = await StatsView.create(query)
-        return playerStatsView(playersView)
+        return html`
+        <template hz-target="#statTables" hz-swap="prepend">${playerStatsView(playersView)}</template>
+        <template id=activitiesPerformed></template>`
     }
 }
 

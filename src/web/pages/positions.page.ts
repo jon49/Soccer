@@ -16,7 +16,7 @@ const {
     },
     views: { teamNav },
     utils: { when },
-} = self.app
+} = self.sw
 
 interface PositionView {
     positions: string[][]
@@ -35,31 +35,26 @@ function render({ team, positions, grid }: PositionView) {
 <h2>${team.name} — Formation</h2>
 
 <p>
-    <button
-        form="get"
-        formaction="?handler=showTemplates&teamId=${team.id}"
-        target="main">Use a template.</button>
+    <a href="?handler=showTemplates&teamId=${team.id}" target="htmz" role="button">Use a template.</a>
 </p>
 
 <h3>Grid</h3>
-<form
-    id=add-grid
-    class=row
-    style="--card-width:3.5em;"
-    method=post
-    action="?handler=addGrid&teamId=${team.id}" onchange="this.requestSubmit()"
-    hf-target="main" >
-    ${grid.map((x, i) => html`<input id="grid${i}" class=inline type=number name="grid[]" value="${x}">`)}
-    <input id="grid-1" type=number name="grid[]" ${when(!grid.length, () => "autofocus")}>
-</form>
+${addGridView(grid, team.id)}
 
 ${when(grid.length, () => html`
 <h3>Position Names</h3>
-<form
-    id=positions-form
+
+${positionsNameView(positions, team.id)}
+`)}`
+}
+
+function positionsNameView(positions: string[][], teamId: number) {
+    return html`<form
+    id=positionsForm
     class=form
     method=post
-    action="?teamId=${team.id}&handler=editPositions"
+    action="?teamId=${teamId}&handler=editPositions"
+    target=htmz
     onchange="this.requestSubmit()">
     ${function* positionViews() {
             let count = 0
@@ -70,8 +65,20 @@ ${when(grid.length, () => html`
                 yield html`</div>`
             }
         }}
-</form>
-`)}`
+</form>`
+}
+
+function addGridView(grid: number[], teamId: number) {
+    return html`<form
+    id=addGrid
+    class=row
+    style="--card-width:3.5em;"
+    method=post
+    action="?handler=addGrid&teamId=${teamId}" onchange="this.requestSubmit()"
+    target="htmz" >
+    ${grid.map((x, i) => html`<input id="grid${i}" class=inline type=number name="grid[]" value="${x}">`)}
+    <input id="grid-1" type=number name="grid[]" ${when(!grid.length, () => "autofocus")}>
+</form>`
 }
 
 const templates = {
@@ -143,33 +150,27 @@ function getTemplate(positions: number[]) {
 function getTemplates(teamId: number, numberOfPlayers: number) {
     let playerCount = getNumberOfPlayers(numberOfPlayers)
     let grid = templates[playerCount]
-    return grid.map((x, i) => html`
-<form
-    method=post
-    class=inline
-    action="?teamId=${teamId}&handler=createFormation"
-    hf-target="main"
-    >
-<button class=bg>${getTemplate(x)}</button>
-<input type=hidden name=index value="${i}">
-<input type=hidden name=numberOfPlayers value="${numberOfPlayers}">
-</form>`
-    )
+    return html`
+<div id=templates class=grid style="--grid-item-width: 250px;">
+        ${grid.map((x, i) => html`
+    <form method=post action="?handler=createFormation&teamId=${teamId}" target="htmz" class=inline>
+    <button class=bg>${getTemplate(x)}</button>
+    <input type=hidden name=index value="${i}">
+    <input type=hidden name=numberOfPlayers value="${numberOfPlayers}">
+    </form>`)}
+</div>`
 }
 
 async function getPositionTemplates(teamId: number) {
     let { grid } = await positionGetAll(teamId)
-    let positionCount = grid.reduce((a, b) => a + b, 0)
+    let positionCount = grid.reduce((a, b) => a + b, 0) || 4
 
     return html`
+    <main id=main>
         <a href="/web/positions?teamId=${teamId}">Cancel</a>
-        <h2>Formation Templates</h2> 
+        <h2>Formation Templates</h2>
 
-        <form
-            action="?handler=getTemplates&teamId=${teamId}"
-            hf-target="#templates"
-            onchange="this.requestSubmit()"
-            >
+        <form target="htmz" onchange="this.requestSubmit()">
             <fieldset class=fieldset-outline>
                 <legend>Number of players</legend>
                 <label class="inline p-1">
@@ -189,14 +190,13 @@ async function getPositionTemplates(teamId: number) {
                     &nbsp;11
                 </label>
             </fieldset>
+            <input type=hidden name=teamId value="${teamId}">
+            <input type=hidden name=handler value="getTemplates">
         </form>
 
-        <div
-            id=templates
-            class=grid
-            style="--grid-item-width: 250px;">
-            ${getTemplates(teamId, positionCount)}
-        </div>`
+        ${getTemplates(teamId, positionCount)}
+
+    </main>`
 }
 
 const positionNames = [
@@ -274,7 +274,8 @@ const postHandlers: RoutePostHandler = {
             grid,
             positions,
         })
-        return render(await start(query))
+
+        return html`${addGridView(grid, teamId)}${positionsNameView(positions, teamId)}`
     },
 
     async editPositions({ query, data }) {
@@ -287,7 +288,7 @@ const postHandlers: RoutePostHandler = {
         }
         o.positions = positions
         await positionsSave(teamId, o)
-        return { body: null, status: 204 }
+        return { status: 200 }
     },
 
     async createFormation({ query, data }) {
@@ -308,7 +309,7 @@ const postHandlers: RoutePostHandler = {
             positions,
         })
 
-        return render(await start(query))
+        return html`<main id=main>${render(await start(query))}</main>`
     },
 }
 

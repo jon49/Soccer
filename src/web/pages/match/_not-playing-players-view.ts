@@ -2,7 +2,7 @@ import type { PlayerStateView } from "./shared.js";
 
 let {
     html,
-} = self.app
+} = self.sw
 
 export async function notPlayingPlayersView(state: PlayerStateView) {
     let [
@@ -18,11 +18,10 @@ export async function notPlayingPlayersView(state: PlayerStateView) {
     <form
         method=post
         action="?${state.queryTeamGame}&playerId=${x.playerId}&handler=backIn"
-        hf-target="#app"
-        hf-swap="merge"
+        target=htmz
         aria-label="Place ${x.name} back into the game."
         >
-        <button>${x.name} ${x.number}</button>
+        <button data-action=anchor data-anchor="#notPlaying">${x.name} ${x.number}</button>
     </form>
 </li>`})
 

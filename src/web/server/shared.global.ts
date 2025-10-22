@@ -1,4 +1,4 @@
-import layout /*, { themeView, syncCountView } */ from "../pages/_layout.html.js"
+import layout, { syncCountView, themeView } from "../pages/_layout.html.js"
 import * as globalDb from "./global-model.js"
 import * as utils from "@jon49/sw/utils.js"
 import html from "html-template-tag-stream"
@@ -10,9 +10,8 @@ import * as repo from "./repo-team.js"
 import * as repoPlayerGame from "./repo-player-game.js"
 import * as sharedViews from "../pages/_shared-views.js"
 import * as serverUtils from "./utils.js"
-import * as apiSharedViews from "../api/_shared-views.js"
 
-self.app = self.app || {}
+self.sw = self.sw || {}
 
 let app = {
     db,
@@ -22,11 +21,11 @@ let app = {
     repo: { ...repo, ...repoPlayerGame },
     utils: { ...utils, ...serverUtils },
     validation: { ...validation, ...validators, ...v },
-    views: { ...sharedViews, ...apiSharedViews },
+    views: { ...sharedViews, themeView, syncCountView },
 }
 
 export type SharedApp = typeof app
 
-Object.assign(self.app, app)
+Object.assign(self.sw, app)
 
 
