@@ -213,7 +213,7 @@ const postHandlers : RoutePostHandler = {
         let { notes } = await validateObject(data, dataNotesValidator)
         await saveGameNotes(teamId, gameId, notes)
 
-        return { body: null, status: 204 }
+        return { status: 200 }
     },
 
     async swap({ query }) {
