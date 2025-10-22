@@ -167,7 +167,7 @@ async function getPositionTemplates(teamId: number) {
 
     return html`
     <main id=main>
-        <a href="/web/positions?teamId=${teamId}">Cancel</a>
+        <a href="/web/positions?teamId=${teamId}&hz" target=htmz>Cancel</a>
         <h2>Formation Templates</h2>
 
         <form target="htmz" onchange="this.requestSubmit()">
@@ -316,6 +316,9 @@ const postHandlers: RoutePostHandler = {
 const getHandlers: RouteGetHandler = {
     async get({ query }) {
         const result = await start(query)
+        if (query.hz === "") {
+            return html`<main id=main>${render(result)}</main>`
+        }
         return layout({
             main: render(result),
             nav: teamNav(result.team.id),
