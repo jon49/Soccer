@@ -121,5 +121,14 @@ w.app = {
     let el = document.querySelector(anchorTargetId)
     if (!(el instanceof HTMLElement)) return
     setAnchor(el)
+  },
+  defaultTheme: (_, target) => {
+    if (!(target instanceof HTMLAnchorElement)) return
+    // Get system theme
+    let isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+    let theme = isDark ? "dark" : "light"
+    let url = new URL(target.href)
+    url.searchParams.set("theme", theme)
+    target.href = url.toString()
   }
 }

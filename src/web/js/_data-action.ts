@@ -1,7 +1,8 @@
+let allowedElements = ["A", "BUTTON"]
 document.addEventListener("click", e => {
   let target = e.target as HTMLElement
   let action: string | undefined
-  if (!(target.tagName === "BUTTON" && (action = target.dataset.action))) return
+  if (!allowedElements.includes(target.tagName) || !(action = target.dataset.action)) return
 
   if (handleCall(e, target, action)) {
     e.preventDefault()

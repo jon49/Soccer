@@ -1,5 +1,5 @@
 import type { RoutePostHandler, RoutePage, RouteGetHandler } from "@jon49/sw/routes.middleware.js"
-import type { Game } from "../../server/db.js"
+import type { Game, Theme } from "../../server/db.js"
 import { GameTimeCalculator, PlayerGameTimeCalculator, PlayerStateView, isInPlayPlayer } from "./shared.js"
 import render, { getPointsView } from "./_game-play-view.js"
 import { swapAll } from "./player-swap.js"
@@ -11,6 +11,7 @@ import { play } from "./_play.js"
 
 const {
     db,
+    globalDb,
     html,
     layout,
     repo: {
@@ -153,7 +154,13 @@ const getHandlers : RouteGetHandler = {
         return getPointsView(game.points)
     },
 
-    play: play,
+    async play(o) {
+        let { query } = o
+        let settings = await globalDb.settings()
+        settings.defaultTheme = query.theme as Theme
+        await globalDb.setSettings(settings)
+        return play(o)
+    },
 
     async get({ query }) {
         let team = await teamGet(+query.teamId)

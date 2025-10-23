@@ -26,7 +26,7 @@ const postHandlers: RoutePostHandler = {
             body: html`${themeView(theme)}
             <x-theme hz-target="#temp" hz-swap="append" data-theme="${theme}"></x-theme>`,
         }
-    }
+    },
 }
 
 const route: RoutePage = {
