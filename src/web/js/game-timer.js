@@ -70,13 +70,13 @@ class GameTimer {
 
         this.interval = +(el.dataset.interval ?? 0) || 1e3
 
-        this.update(+new Date())
+        this.update(Date.now())
         // @ts-ignore
         document.addEventListener("hz:completed", this)
     }
 
     handleEvent() {
-        this.update(+new Date())
+        this.update(Date.now())
     }
 
     disconnectedCallback() {
@@ -91,8 +91,8 @@ class GameTimer {
             let el = this.el
 
             let { start, total, static: static_ } = el.dataset
-            let start_ = +(start ?? 0) || +new Date()
-            let total_ = +(total ?? 0)
+            let start_ = +(start || 0) || currentTime
+            let total_ = +(total || 0)
             if (el.hasAttribute("data-flash")) {
                 el.classList.add("flash")
             } else {
@@ -103,7 +103,7 @@ class GameTimer {
             } else {
                 timer.remove(this)
             }
-            this.el.textContent = formatTime(currentTime, start_, total_)
+            el.textContent = formatTime(currentTime, start_, total_)
         })
     }
 }
@@ -116,8 +116,8 @@ class GameTimer {
 function formatTime(currentTime, start, total) {
     let grandTotal = total + (currentTime - start)
     let time = new Date(grandTotal)
-    let seconds = (""+time.getSeconds()).padStart(2, "0")
-    let minutes = (""+time.getMinutes()).padStart(2, "0")
+    let seconds = `${time.getSeconds()}`.padStart(2, "0")
+    let minutes = `${time.getMinutes()}`.padStart(2, "0")
     let hours = grandTotal/1e3/60/60|0
     return `${ hours ? `${hours}:` : "" }${minutes}:${seconds}`
 }
