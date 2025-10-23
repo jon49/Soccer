@@ -74,7 +74,9 @@ async function inPlayerOut(state: PlayerStateView, playerId: number) {
 async function onDeckPlayerOut(state: PlayerStateView, playerId: number) {
     let player = await state.playerGame(playerId)
     player.status = { _: "out" }
-    player.gameTime.pop()
+    if (player.gameTime.slice(-1)[0]?.end == null) {
+        player.gameTime.pop()
+    }
     await playerGameSave(state.teamId, player)
 }
 
