@@ -56,17 +56,7 @@ function handleCall(
 
   let preventDefault = 0
   for (let action of actions) {
-    let fn: Function | undefined // = target.app?.[action]
-    // if (fn) {
-    //   preventDefault = fn.call(target.app, e, target, form) ?? 0
-    // }
-
-    // let root = target.closest("[data-root]")
-
-    // fn = root?.app?.[action]
-    // if (fn && root?.app) {
-    //   preventDefault = fn.call(root.app, e, target, form) ?? 0
-    // }
+    let fn: Function | undefined
 
     fn = window.app?.[action]
     if (fn) {
