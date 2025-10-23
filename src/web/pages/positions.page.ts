@@ -153,7 +153,7 @@ function getTemplates(teamId: number, numberOfPlayers: number) {
 <div id=templates class=grid style="--grid-item-width: 250px;">
         ${grid.map((x, i) => html`
     <form method=post action="?handler=createFormation&teamId=${teamId}"  class=inline>
-    <button class=bg>${getTemplate(x)}</button>
+    <button class="outline secondary">${getTemplate(x)}</button>
     <input type=hidden name=index value="${i}">
     <input type=hidden name=numberOfPlayers value="${numberOfPlayers}">
     </form>`)}

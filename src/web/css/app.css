@@ -182,11 +182,6 @@ input:indeterminate ~ .none {
     background-color: slategray;
 }
 
-.bg {
-    background-color: var(--pico-card-sectioning-background-color);
-    border-color: gray;
-}
-
 .fieldset-outline {
     border: 2px solid gray;
     border-radius: 0.5em;
