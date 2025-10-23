@@ -36,6 +36,8 @@ export default async function playMatchView(state: PlayerStateView) {
     let noPlayersExist = !inPlayPlayers.length && !countOnDeckPlayersWithPosition
     let playersExist = !noPlayersExist
 
+    let countOnDeckWithNoPosition = playersOnDeck.filter(x => x.status.targetPosition == null).length
+
     return html`
 <main id=main>
 <header class=flex>
@@ -95,8 +97,8 @@ ${opponentPointsView(queryTeamGame, gameCalc)}
 <br>
 <div>${inPlayersView(state)}</div>
 
-<h3 id=onDeck class="inline mt-2">On Deck (${playersOnDeck.filter(x => x.status.targetPosition == null).length})</h3>
-${when(playersOnDeck.length > 1, () => html`
+<h3 id=onDeck class="inline mt-2">On Deck (${countOnDeckWithNoPosition})</h3>
+${when(countOnDeckWithNoPosition > 1, () => html`
 <a class="condense-padding" href="?${queryTeamGame}&handler=rapidFire" role="button">Rapid Fire</a>
 `)}
 

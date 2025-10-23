@@ -66,9 +66,7 @@ export default async function render(query: any) {
 <form
     method=post
     action="?${queryTeamGame}&handler=updateNote"
-    onchange="this.requestSubmit()"
-    
-    >
+    onchange="this.requestSubmit()">
     <textarea name=notes>${notes}</textarea>
 </form>
 `
