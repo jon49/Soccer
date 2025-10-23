@@ -136,12 +136,13 @@ input:indeterminate ~ .none {
 
 /** Editable text area that looks normal **/
 
-.editable:not(:focus) {
+.editable:not(:focus):not(:focus-within) {
     position: absolute;
     right: 100%;
 }
 
-.editable:focus + label {
+.editable:focus + label,
+.editable:focus-within + label {
     position: absolute;
     right: 100%;
 }
