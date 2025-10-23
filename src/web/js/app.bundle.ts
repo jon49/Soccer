@@ -48,16 +48,13 @@ w.htmz = function htmz(frame: HTMLIFrameElement) {
 
 document.body.insertAdjacentHTML("beforeend", `<iframe hidden name=htmz onload="window.htmz(this)"></iframe>`)
 
-customElements.define("x-theme", class extends HTMLElement {
-  constructor() {
-    super()
+w.defineTrait("theme", function(el) {
     setTimeout(() => {
-      let theme = this.dataset.theme;
+      let theme = el.dataset.theme;
       let docElement = document.documentElement
       theme === "" ? docElement.removeAttribute("data-theme") : docElement.setAttribute("data-theme", theme || "")
-      this.remove()
+      el.remove()
     })
-  }
 })
 
 w.defineTrait("refresh", function() {setTimeout(() => { document.location.reload() }, 250)})
