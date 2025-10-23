@@ -207,7 +207,7 @@ const postHandlers : RoutePostHandler = {
         let { stats } = await state.stats()
 
         if (stats.find(x => x.id === statIds.Goal)?.active) {
-            return html`<x-redirect id=temp data-url="/web/match?teamId=${teamId}&action=${action}&activityId=1&gameId=${gameId}&handler=activityPlayerSelector&returnUrl=${encodeURIComponent(req.referrer)}"></x-redirect>`
+            return html`<i traits=redirect id=temp data-url="/web/match?teamId=${teamId}&action=${action}&activityId=1&gameId=${gameId}&handler=activityPlayerSelector&returnUrl=${encodeURIComponent(req.referrer)}"></i>`
         }
 
         if (action === "inc") {
@@ -432,7 +432,7 @@ const postHandlers : RoutePostHandler = {
             gameId
         })
 
-        return html`<x-redirect id=temp data-url="$${returnUrl}"></x-redirect>`
+        return html`<i traits=redirect id=temp data-url="$${returnUrl}"></i>`
     },
 
     async deleteGame({ query }) {
@@ -451,7 +451,7 @@ const postHandlers : RoutePostHandler = {
         }
         await teamSave(team)
 
-        return html`<x-redirect id=temp data-url="/web/games?teamId=${teamId}"></x-redirect>`
+        return html`<i traits=redirect id=temp data-url="/web/games?teamId=${teamId}"></i>`
     }
 
 }

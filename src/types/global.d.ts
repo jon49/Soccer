@@ -7,6 +7,7 @@ declare global {
     dataAction: (event: Event) => void
     sw: App  // Add the sw property with proper typing
     app?: Record<string, (e: Event, el: HTMLElement, form?: HTMLFormElement) => 1 | void>
+    defineTrait: (name: string, trait: (el: HTMLElement) => void) => void
   }
 
   interface Element {

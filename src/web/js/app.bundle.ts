@@ -60,22 +60,10 @@ customElements.define("x-theme", class extends HTMLElement {
   }
 })
 
-customElements.define("x-refresh", class extends HTMLElement {
-constructor() {
-  super()
-  setTimeout(() => {
-    document.location.reload()
-  }, 250)
-}
-})
+w.defineTrait("refresh", function() {setTimeout(() => { document.location.reload() }, 250)})
 
-customElements.define("x-redirect", class extends HTMLElement {
-  constructor() {
-    super()
-    setTimeout(() => {
-      document.location.href = this.dataset.url || "/"
-    })
-  }
+w.defineTrait("redirect", function(el) {
+  setTimeout(() => { document.location.href = el.dataset.url || "/" })
 })
 
 let anchor: { id?: string, offset?: number, target?: HTMLElement } = {}

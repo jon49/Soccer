@@ -3,7 +3,7 @@ import sync from "../server/sync.js"
 
 const { html } = self.sw
 
-let refresh = html`<x-refresh hz-target="#temp" hz-swap="append"></x-refresh>`
+let refresh = html`<i traits=refresh id=temp></i>`
 
 const postHandlers : RoutePostHandler = {
     async post() {
