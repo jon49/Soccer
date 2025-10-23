@@ -27,8 +27,7 @@ function getPlayerPosition(player : PlayerGame) {
 }
 
 export async function swapAll(query: any) {
-    let { gameId, playerId, teamId } =
-        await validateObject(query, queryTeamGamePlayerValidator)
+    let { gameId, playerId, teamId } = await validateObject(query, queryTeamGamePlayerValidator)
 
     let team = await teamGet(teamId)
     let players = await playerGameAllGet(teamId, gameId, team.players.map(x => x.id))
@@ -37,6 +36,7 @@ export async function swapAll(query: any) {
         players
         .filter(isOnDeckPlayer)
         .filter(x => playerId ? x.playerId === playerId : true)
+        .filter(x => x.status.targetPosition != null)
     let game = await required(team.games.find(x => x.id === gameId), "Could not find game ID!")
     let gameCalc = new GameTimeCalculator(game)
 
