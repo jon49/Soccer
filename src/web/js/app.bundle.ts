@@ -102,8 +102,7 @@ document.addEventListener("hz:completed", _ => {
 
 w.app = {
   reset: (e, _, form) => {
-    // @ts-ignore
-    if (e.type !== "submit" && !(e.target.tagName !== "FORM" && e.type === "change")) return
+    if (e.type !== "submit") return
     setTimeout(() => form?.reset())
   },
   clearAutoFocus: (e, target) => {
@@ -130,5 +129,10 @@ w.app = {
     let url = new URL(target.href)
     url.searchParams.set("theme", theme)
     target.href = url.toString()
+  },
+  submit: (e, target) => {
+    if (e.type !== "change") return
+    // @ts-ignore
+    target.requestSubmit?.() || target.form?.requestSubmit?.()
   }
 }

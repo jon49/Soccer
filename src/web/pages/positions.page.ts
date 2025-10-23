@@ -54,7 +54,7 @@ function positionsNameView(positions: string[][], teamId: number) {
     class=form
     method=post
     action="?teamId=${teamId}&handler=editPositions"
-    onchange="this.requestSubmit()">
+    data-action=submit>
     ${function* positionViews() {
             let count = 0
             for (let xs of positions) {
@@ -73,8 +73,8 @@ function addGridView(grid: number[], teamId: number) {
     class=row
     style="--card-width:3.5em;"
     method=post
-    action="?handler=addGrid&teamId=${teamId}" onchange="this.requestSubmit()"
-     >
+    action="?handler=addGrid&teamId=${teamId}" data-action=submit
+    >
     ${grid.map((x, i) => html`<input id="grid${i}" class=inline type=number name="grid[]" value="${x}">`)}
     <input id="grid-1" type=number name="grid[]" ${when(!grid.length, () => "autofocus")}>
 </form>`
@@ -169,7 +169,7 @@ async function getPositionTemplates(teamId: number) {
         <a href="/web/positions?teamId=${teamId}&hz" >Cancel</a>
         <h2>Formation Templates</h2>
 
-        <form  onchange="this.requestSubmit()">
+        <form data-action=submit>
             <fieldset class=fieldset-outline>
                 <legend>Number of players</legend>
                 <label class="inline p-1">

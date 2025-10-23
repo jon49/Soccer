@@ -22,7 +22,7 @@ async function render(o: StatsView) {
         let description = getStatDescription(x.id)
         return html`
         <form
-            onchange="this.requestSubmit()"
+            data-action=submit
             method=post
             action="?teamId=${teamId}&handler=updateStat">
             <input type=hidden name=id value="${x.id}">

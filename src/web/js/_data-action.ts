@@ -13,7 +13,8 @@ let inputs = ["INPUT", "TEXTAREA", "SELECT", "FORM"]
 document.addEventListener("change", e => {
   let target = e.target as HTMLElement
   let action: string | undefined
-  if (!((inputs.includes(target.tagName) && (action = target.dataset.action)))) return
+  // @ts-ignore
+  if (!((inputs.includes(target.tagName) && (action = target.dataset.action || target.form?.dataset.action)))) return
 
   if (handleCall(e, target, action)) {
     e.preventDefault()

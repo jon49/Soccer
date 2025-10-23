@@ -63,7 +63,7 @@ async function renderMain(query: any) {
 }
 
 function getGameView(teamId: number, game: Game, hz: string = "") {
-    return html`<li id=game-${game.id} onchange="event.target.form.requestSubmit()" $${hz}>
+    return html`<li id=game-${game.id} $${hz}>
         ${getGamePartialView(teamId, game)}
     </li>`
 }
@@ -118,7 +118,7 @@ function getGamePartialView(teamId: number, game: Game) {
     hidden
     method=post
     action="?${teamQuery}&handler=edit"
-    onchange="this.requestSubmit()"></form>
+    data-action=submit></form>
 `
 }
 
