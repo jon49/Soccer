@@ -61,6 +61,7 @@ const render = async (
     <link rel="manifest" href="/web/manifest.json">
 </head>
 <body $${bodyAttr}>
+<script>window.app = {}</script>
 <div id=head>$${head}</div>
     <div class=container>
     <div id=sw-message></div>

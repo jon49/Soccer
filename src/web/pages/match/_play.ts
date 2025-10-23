@@ -68,6 +68,7 @@ export async function play({ app, query }: RouteGetArgs & { app?: Promise<AsyncG
     <script src="/web/js/game-timer.js" type="module"></script>
 </head>
 <body>
+<script>window.app = {}</script>
 
 ${app ? app :  playMatchView(state)}
 
