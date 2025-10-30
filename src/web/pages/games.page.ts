@@ -166,7 +166,7 @@ const postHandlers: RoutePostHandler = {
 
         await teamSave(team)
 
-        return getGameView(teamId, team.games.find(x => x.id === gameId)!, `hz-target="#games" hz-swap="prepend"`)
+        return getGameView(teamId, team.games.find(x => x.id === gameId)!, `id="games" hz-swap="prepend"`)
     },
 
     async edit({ data, query }) {

@@ -24,7 +24,7 @@ const postHandlers: RoutePostHandler = {
         return {
             status: 200,
             body: html`${themeView(theme)}
-            <i traits=theme hz-target="#temp" hz-swap="append" data-theme="${theme}"></i>`,
+            <i traits=theme id="temp" hz-swap="append" data-theme="${theme}"></i>`,
         }
     },
 }

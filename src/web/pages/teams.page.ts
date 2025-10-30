@@ -49,7 +49,7 @@ ${wasFiltered ? html`<p><a id=allTeams href="?handler=all">Show all teams.</a></
 function getTeamView(team: Team, includeSwap = false) {
     let teamId = team.id
     return html`
-    <li $${when(includeSwap, `hz-target="#teams" hz-swap="append"`)}>
+    <li $${when(includeSwap, `id="teams" hz-swap="append"`)}>
         <a target="_self" href="/web/players?teamId=${team.id}">${team.name} - ${team.year}</a>
         <a target="_self" href="/web/games?teamId=${team.id}">Games</a>
         ${when((() => {

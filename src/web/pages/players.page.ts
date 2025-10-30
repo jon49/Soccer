@@ -92,7 +92,7 @@ function playerView(player: TeamPlayer, teamId: number) {
     let playerId_: string = `edit-player${player.id}`
 
     return html`
-<article id="active-${playerId_}" class="player-card" hz-target="#playerCards" hz-swap="append">
+<article id="active-${playerId_}" class="player-card" id="playerCards" hz-swap="append">
     <form
         data-action=submit
         class=form
