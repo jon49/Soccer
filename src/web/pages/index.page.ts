@@ -8,7 +8,7 @@ const {
 let index : RoutePage = {
     get: async () => {
         return layout({
-            main: html`<p>Welcome to soccer tracking!</p>`,
+            main: html`<p>Welcome to soccer tracking!</p><i traits=redirect data-url="/web/teams"></i>`,
             title: "Home" })
     }
 }
