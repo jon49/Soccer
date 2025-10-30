@@ -70,28 +70,28 @@ const getHandler: RouteGetHandler = {
     async timePlayed({ query }) {
         let playersView = await StatsView.create(query)
         return html`
-        <template id="statTables" hz-swap="prepend">${timePlayedView(playersView)}</template>
+        <template hz-target="#statTables" hz-swap="prepend">${timePlayedView(playersView)}</template>
         <template id=timePlayed></template>`
     },
 
     async percentagePlayed({ query }) {
         let playersView = await StatsView.create(query)
         return html`
-        <template id="statTables" hz-swap="prepend">${percentagePlayed(playersView)}</template>
+        <template hz-target="#statTables" hz-swap="prepend">${percentagePlayed(playersView)}</template>
         <template id=percentagePlayed></template>`
     },
 
     async gamesPlayed({ query }) {
         let playersView = await StatsView.create(query)
         return html`
-        <template id="statTables" hz-swap="prepend">${gamesPlayedView(playersView)}</template>
+        <template hz-target="#statTables" hz-swap="prepend">${gamesPlayedView(playersView)}</template>
         <template id=gamesPlayed></template>`
     },
 
     async activitiesPerformed({ query }) {
         let playersView = await StatsView.create(query)
         return html`
-        <template id="statTables" hz-swap="prepend">${playerStatsView(playersView)}</template>
+        <template hz-target="#statTables" hz-swap="prepend">${playerStatsView(playersView)}</template>
         <template id=activitiesPerformed></template>`
     }
 }
