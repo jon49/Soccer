@@ -1,6 +1,5 @@
 import type { Game, Team } from "../server/db.js"
 import type { RoutePage, RoutePostHandler } from "@jon49/sw/routes.middleware.js"
-import type { WasFiltered } from "../server/repo-team.js"
 
 const {
     html,
@@ -10,21 +9,11 @@ const {
     validation: { dataTeamNameYearValidator, validateObject },
 } = self.sw
 
-interface TeamsView {
-    teams: Team[] | undefined
-    wasFiltered: boolean
-}
+const render = async () => {
+    let {teams, total} = await teamGetAll("active")
+    let wasFiltered = total > teams.length
 
-async function start(query: any): Promise<TeamsView> {
-    const showAll = query.all != null
-
-    let wasFiltered: WasFiltered = {}
-    let teams = await teamGetAll(showAll, wasFiltered)
-    return { teams, wasFiltered: !!wasFiltered.filtered }
-}
-
-const render = ({ teams, wasFiltered }: TeamsView) =>
-    html`
+    return html`
 <h2>Teams</h2>
 
 ${teams ? html`
@@ -34,7 +23,7 @@ ${teams ? html`
             : html`<p>No teams found. Please add one!</p>`
         }
 
-${wasFiltered ? html`<p><a href="?all" target="_self">Show all teams.</a></p>` : null}
+${wasFiltered ? html`<p><a id=allTeams href="?handler=all">Show all teams.</a></p>` : null}
 
 <h3>Add a team</h3>
 
@@ -55,6 +44,7 @@ ${wasFiltered ? html`<p><a href="?all" target="_self">Show all teams.</a></p>` :
     </div>
     <button>Save</button>
 </form>`
+}
 
 function getTeamView(team: Team, includeSwap = false) {
     let teamId = team.id
@@ -84,13 +74,23 @@ const postHandlers: RoutePostHandler = {
 }
 
 const route: RoutePage = {
-    async get({ query }) {
-        const result = await start(query)
-        return layout({
-            main: render(result),
-            title: "Teams",
-        })
+    get: {
+        async get() {
+            return layout({
+                main: await render(),
+                title: "Teams",
+            })
+        },
+        async all() {
+            let { teams } = await teamGetAll("inactive")
+            return html`
+<template id="teams" hz-swap="append">
+    ${teams.map(x => getTeamView(x))}
+</template>
+<template id="allTeams"></template>`
+        }
     },
+
     post: postHandlers,
 }
 

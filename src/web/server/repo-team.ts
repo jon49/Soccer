@@ -6,18 +6,10 @@ export async function teamGet(teamId: number) : Promise<Team> {
     return required(await get<Team>(getTeamDbId(teamId)), `Could not find team with id: "${teamId}".`)
 }
 
-export interface WasFiltered {
-    filtered?: boolean
-}
-
-export async function teamGetAll(all: boolean, wasFiltered?: WasFiltered) : Promise<Team[]> {
+export async function teamGetAll(active: "all" | "active" | "inactive") : Promise<{teams: Team[], total: number}> {
     let data = await get("teams")
-    if (!data) return []
-    let teams_ = data.teams.filter(x => all || x.active)
-
-    if (wasFiltered) {
-        wasFiltered.filtered = data.teams.length !== teams_.length
-    }
+    if (!data) return { teams: [], total: 0 }
+    let teams_ = data.teams.filter(x => active === "all" || x.active === (active === "active"))
 
     let teams = await getMany<Team>(teams_.map(x => getTeamDbId(x.id)))
 
@@ -25,7 +17,7 @@ export async function teamGetAll(all: boolean, wasFiltered?: WasFiltered) : Prom
         a.year !== b.year
             ? b.year.localeCompare(a.year)
         : a.name.localeCompare(b.name))
-    return teams
+    return { teams, total: data.teams.length }
 }
 
 interface GameNotes extends Revision {
@@ -48,8 +40,8 @@ function getGameNotesId(teamId: number, gameId: number) {
 }
 
 export async function teamSave(o: Team) {
-    let teamsAggregate = await teamGetAll(true)
-    if (teamsAggregate?.find(x => x.id !== o.id && equals(x.name, o.name) && equals(x.year, o.year))) {
+    let teamsAggregate = await teamGetAll("all")
+    if (teamsAggregate.teams.find(x => x.id !== o.id && equals(x.name, o.name) && equals(x.year, o.year))) {
         return reject(`The team "${o.name} - ${o.year}" already exists.`)
     }
 
@@ -92,8 +84,8 @@ export function teamNew(o: TeamSingle): Team {
 }
 
 export async function teamsCreate(o: TeamNew) : Promise<Team> {
-    let teamsAggregate = await teamGetAll(true)
-    if (teamsAggregate?.find(x => equals(x.name, o.name) && equals(x.year, o.year))) {
+    let teamsAggregate = (await teamGetAll("all")).teams
+    if (teamsAggregate.find(x => equals(x.name, o.name) && equals(x.year, o.year))) {
         return reject(`The team "${o.name} - ${o.year}" already exists.`)
     }
 
