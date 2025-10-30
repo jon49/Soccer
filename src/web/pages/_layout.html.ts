@@ -69,7 +69,7 @@ const render = async (
         <nav role=navigation>
             <ul>
                 <li>
-                    <a href="/web/">
+                    <a href="/web/teams" target="_self">
                         <img style="height:2.5em;" src="/web/images/soccer.svg"></img>
                     </a>
                 </li>
