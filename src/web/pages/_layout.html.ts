@@ -106,7 +106,6 @@ const render = async (
     <div id=temp></div>
 
     <form id=post method=post hidden></form>
-    <form id=get method=get hidden></form>
     <script src="/web/js/app.bundle.js" type="module"></script>
     <div id=scripts>${(scripts ?? []).map(x => html`<script src="${x}" type="module"></script>`)}</div>
     </div>

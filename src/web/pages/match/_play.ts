@@ -75,7 +75,6 @@ ${app ? app :  playMatchView(state)}
 <div id=temp></div>
 
 <form id=post method=post hidden></form>
-<form id=get hidden></form>
 
 </body>
 </html>
