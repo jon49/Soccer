@@ -116,7 +116,7 @@ export async function statsGetAll(teamId: number) : Promise<Stats> {
                 .map((x, i) => ({
                     id: i + 1,
                     name: x,
-                    active: false,
+                    active: true,
                 })),
             _rev: 0 }
 }
