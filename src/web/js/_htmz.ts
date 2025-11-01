@@ -15,7 +15,7 @@ window.htmz = function htmz(frame: HTMLIFrameElement) {
     let target = document.querySelector(targetQuery)
     if (!target) continue
     // @ts-ignore
-    if (el.tagName === "TEMPLATE") el = el.content.cloneNode(true)
+    if (el.tagName === "TEMPLATE") el = el.content.cloneNode(true) as DocumentFragment
     if (!swap) {
       if (el.nodeType === Node.DOCUMENT_FRAGMENT_NODE) {
         target.replaceWith(el)

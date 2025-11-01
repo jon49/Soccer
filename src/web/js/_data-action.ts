@@ -22,7 +22,8 @@ document.addEventListener("change", e => {
 })
 
 function isForm(target: unknown): target is HTMLFormElement {
-  return target instanceof HTMLFormElement
+  // @ts-ignore
+  return (target as HTMLElement).tagName === "FORM"
 }
 
 document.addEventListener("submit", e => {
@@ -50,7 +51,7 @@ function handleCall(
   target: HTMLElement,
   action: string): number {
   // @ts-ignore
-  let form = target instanceof HTMLFormElement ? target : target.form
+  let form = isForm(target) ? target : target.form
 
   let actions = action.split(" ")
 
@@ -60,11 +61,11 @@ function handleCall(
 
     fn = window.app?.[action]
     if (fn) {
-      preventDefault = fn.call(window.app, e, target, form) ?? 0
+      fn.call(window.app, e, target, form) ?? 0
+    } else {
+      console.warn(`DATA-ACTION: Could not find function ${action}. Target element`, target)
     }
 
-    if (preventDefault) return preventDefault
-    if (preventDefault == null) console.warn(`DATA-ACTION: Could not find function ${action}. Target element`, target)
   }
 
   return preventDefault

@@ -1,7 +1,9 @@
 let w = window
 
+let tick = setTimeout
+
 w.defineTrait("theme", function(el) {
-    setTimeout(() => {
+    tick(() => {
       let theme = el.dataset.theme;
       let docElement = document.documentElement
       theme === "" ? docElement.removeAttribute("data-theme") : docElement.setAttribute("data-theme", theme || "")
@@ -9,34 +11,34 @@ w.defineTrait("theme", function(el) {
     })
 })
 
-w.defineTrait("refresh", function() {setTimeout(() => { document.location.reload() }, 250)})
+w.defineTrait("refresh", function() {tick(() => { document.location.reload() }, 500)})
 
 w.defineTrait("redirect", function(el) {
-  setTimeout(() => { document.location.href = el.dataset.url || "/" })
+  tick(() => { document.location.href = el.dataset.url || "/" })
 })
 
 Object.assign(w.app, {
   reset: (e, _, form) => {
     if (e.type !== "submit") return
-    setTimeout(() => form?.reset())
+    tick(() => form?.reset())
   },
   clearAutoFocus: (e, target) => {
     if (e.type !== "submit") return
     target.removeAttribute("autofocus")
   },
-  confirm: (_, target): 1 | void => {
-    if (!confirm(target.dataset.confirm || "Are you sure?")) {
-      return 1
+  confirm: (e, target): 1 | void => {
+    if (!confirm(target.dataset.confirm)) {
+      e.preventDefault()
     }
   },
   defaultTheme: (_, target) => {
-    if (!(target instanceof HTMLAnchorElement)) return
+    if (target.tagName !== "A") return
     // Get system theme
-    let isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+    let isDark = window.matchMedia?.('(prefers-color-scheme: dark)').matches
     let theme = isDark ? "dark" : "light"
-    let url = new URL(target.href)
+    let url = new URL((target as HTMLAnchorElement).href)
     url.searchParams.set("theme", theme)
-    target.href = url.toString()
+    ;(target as HTMLAnchorElement).href = url.toString()
   },
   submit: (e, target) => {
     if (e.type !== "change") return
