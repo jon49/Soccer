@@ -75,7 +75,6 @@ export interface Positions extends Revision {
 
 export interface PositionsV0 extends Revision, Version {
     positions: string[][]
-    grid: number[]
 }
 
 export interface Stat {

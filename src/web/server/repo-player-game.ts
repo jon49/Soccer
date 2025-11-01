@@ -65,7 +65,6 @@ function positionsToV0(positionsOld: Positions | PositionsV0) : PositionsV0 {
         _rev: positionsOld._rev,
         _v: 0,
         positions,
-        grid: positionsOld.grid,
     }
 }
 

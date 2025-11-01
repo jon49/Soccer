@@ -78,7 +78,6 @@ export function teamNew(o: TeamSingle): Team {
         games: [],
         positions: [],
         _rev: 0,
-        grid: [],
         _v: 0,
     }
 }

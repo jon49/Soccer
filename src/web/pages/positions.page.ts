@@ -21,17 +21,16 @@ const {
 
 interface PositionView {
   positions: string[][]
-  grid: number[]
   team: Team
 }
 
 async function start(query: any): Promise<PositionView> {
   let { teamId } = await validateObject(query, queryTeamIdValidator)
   let [positions, team] = await Promise.all([positionGetAll(teamId), teamGet(teamId)])
-  return { positions: positions.positions, team, grid: positions.grid }
+  return { positions: positions.positions, team }
 }
 
-function render({ team, positions, grid }: PositionView) {
+function render({ team, positions }: PositionView) {
   return html`
 <h2>${team.name} — Formation</h2>
 
@@ -41,7 +40,7 @@ function render({ team, positions, grid }: PositionView) {
 
 <h3>Grid</h3>
 
-${when(grid.length, () => html`
+${when(positions.length, () => html`
 
 ${positionsNameView(positions, team.id)}
 `)}`
@@ -154,7 +153,7 @@ function getTemplates(teamId: number, numberOfPlayers: number) {
   return html`
 <div id=templates class=grid style="--grid-item-width: 250px;">
     ${grid.map((x, i) => html`
-  <form method=post action="?handler=createFormation&teamId=${teamId}"  class=inline>
+  <form method=post action="?handler=createFormation&teamId=${teamId}" class=inline>
   <button class="outline secondary">${getTemplate(x)}</button>
   <input type=hidden name=index value="${i}">
   <input type=hidden name=numberOfPlayers value="${numberOfPlayers}">
@@ -163,8 +162,8 @@ function getTemplates(teamId: number, numberOfPlayers: number) {
 }
 
 async function getPositionTemplates(teamId: number) {
-  let { grid } = await positionGetAll(teamId)
-  let positionCount = grid.reduce((a, b) => a + b, 0) || 4
+  let { positions } = await positionGetAll(teamId)
+  let positionCount = positions.reduce((acc, xs) => acc + xs.length, 0) || 4
 
   return html`
   <main id=main>
@@ -280,7 +279,6 @@ const postHandlers: RoutePostHandler = {
     positions = positions.filter(xs => xs.length)
     await positionsSave(teamId, {
       ...o,
-      grid: positions.map(xs => xs.length),
       positions,
     })
 
@@ -292,8 +290,8 @@ const postHandlers: RoutePostHandler = {
     let { names } = await validateObject(data, positionValidator)
     let o = await positionGetAll(teamId)
     let positions: string[][] = []
-    for (let grid of o.grid) {
-      positions.push(names.splice(0, grid).map(x => x || ""))
+    for (let grid of o.positions) {
+      positions.push(names.splice(0, grid.length).map(x => x || ""))
     }
     o.positions = positions
     await positionsSave(teamId, o)
@@ -314,7 +312,6 @@ const postHandlers: RoutePostHandler = {
 
     await positionsSave(teamId, {
       ...o,
-      grid,
       positions,
     })
 
