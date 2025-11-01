@@ -36,16 +36,6 @@ document.addEventListener("submit", e => {
   }
 })
 
-window.dataAction = function dataAction(e: Event) {
-  const target = e.target as HTMLElement | null
-  let action: string | undefined
-  if (!(target instanceof HTMLElement && (action = target.dataset.action))) return
-
-  if (handleCall(e, target, action)) {
-    e.preventDefault()
-  }
-}
-
 function handleCall(
   e: Event,
   target: HTMLElement,
@@ -65,7 +55,6 @@ function handleCall(
     } else {
       console.warn(`DATA-ACTION: Could not find function ${action}. Target element`, target)
     }
-
   }
 
   return preventDefault
