@@ -15,8 +15,8 @@ export function inPlayersView(state: PlayerStateView) {
         let isGameInPlay = await state.isGameInPlay()
         let sub = playerOnDeck
         let queryTeamGame = state.queryTeamGame
-        let id = `in-player-${player?.playerId ?? positionIndex}`
-        let subPlayerId = `sub-player-${sub?.playerId ?? positionIndex}`
+        let id = `in-player-${positionIndex}`
+        let subPlayerId = `sub-player-${positionIndex}`
 
         let shadeBackground = ""
         let shadeColor = ""
