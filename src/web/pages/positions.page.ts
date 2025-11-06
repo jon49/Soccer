@@ -40,10 +40,7 @@ function render({ team, positions }: PositionView) {
 
 <h3>Grid</h3>
 
-${when(positions.length, () => html`
-
-${positionsNameView(positions, team.id)}
-`)}`
+${positionsNameView(positions, team.id)}`
 }
 
 function positionsNameView(positions: string[][], teamId: number) {
