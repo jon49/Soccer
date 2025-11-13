@@ -5,9 +5,7 @@ for (let event of ["click", "change", "submit"]) {
     if (!action) return
 
     // @ts-ignore
-    if (handleCall(e, target, action)) {
-      e.preventDefault()
-    }
+    handleCall(e, target, action)
   })
 }
 
@@ -29,13 +27,12 @@ function isForm(element: HTMLElement): element is HTMLFormElement {
 function handleCall(
   e: Event,
   target: HTMLElement,
-  action: string): number {
+  action: string): void {
   // @ts-ignore
   let form = isForm(target) ? target : target.form
 
   let actions = action.split(" ")
 
-  let preventDefault = 0
   for (let action of actions) {
     let fn: Function | undefined
 
@@ -46,6 +43,4 @@ function handleCall(
       console.warn(`ACTION: Could not find function ${action}. Target element`, target)
     }
   }
-
-  return preventDefault
 }
