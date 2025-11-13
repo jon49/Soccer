@@ -40,7 +40,7 @@ function render(o: PlayersEditView) {
 
 <h3 id=team>Team Settings</h3>
 <form
-    data-action=submit
+    _change=submit
     class=form
     method=post
     action="?handler=editTeam&teamId=${team.id}"
@@ -71,7 +71,7 @@ ${when(!team.players.length, () => html`<p>No players have been added.</p>`)}
     class=form
     method=post
     action="?handler=addPlayer&teamId=${team.id}"
-    data-action=reset
+    _submit=reset
     >
     <div>
         <label for=newPlayer>Add Player Name</label>
@@ -81,7 +81,7 @@ ${when(!team.players.length, () => html`<p>No players have been added.</p>`)}
             type=text
             required
             ${when(!team.players.length, "autofocus")}
-            data-action=clearAutoFocus>
+            _submit=clearAutoFocus>
     </div>
 </form>
 `
@@ -94,7 +94,7 @@ function playerView(player: TeamPlayer, teamId: number) {
     return html`
 <article id="active-${playerId_}" class="player-card" hz-target="#playerCards" hz-swap="append">
     <form
-        data-action=submit
+        _change=submit
         class=form
         method=post
         action="?handler=editPlayer&$${teamPlayerQuery}"

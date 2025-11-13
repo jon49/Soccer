@@ -53,7 +53,7 @@ ${when(playersExist, () => html`
 <button
     form=post
     formaction="?$${queryTeamGame}&handler=allOut"
-    data-action="confirm"
+    _click="confirm"
     data-confirm="Are you sure you want to take all players out?"
     >All Out</button>
 `)}
@@ -78,7 +78,7 @@ ${when(playersExist, () => html`
     <button
         form=post
         formaction="?$${queryTeamGame}&handler=${isGameEnded ? "restartGame" : "endGame"}"
-        data-action="confirm"
+        _click="confirm"
         data-confirm="Are you sure you would like to ${isGameEnded ? 'restart' : 'end'} the game?" >
         ${isGameEnded ? "Restart" : "End"}
     </button>

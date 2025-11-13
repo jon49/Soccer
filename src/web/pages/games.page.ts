@@ -33,7 +33,7 @@ function render({ team }: GameView) {
     ${team.games.map(x => getGameView(team.id, x))}
 </ul>
 
-<form class="form" method=post action="?teamId=${team.id}"  data-action="clearAutoFocus reset">
+<form class="form" method=post action="?teamId=${team.id}"  _submit="clearAutoFocus reset">
     <div class=grid>
         <div>
             <label for=gameDate>Name</label>
@@ -118,7 +118,8 @@ function getGamePartialView(teamId: number, game: Game) {
     hidden
     method=post
     action="?${teamQuery}&handler=edit"
-    data-action=submit></form>
+    _change=submit
+    ></form>
 `
 }
 

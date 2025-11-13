@@ -20,7 +20,7 @@ export async function notPlayingPlayersView(state: PlayerStateView) {
         action="?${state.queryTeamGame}&playerId=${x.playerId}&handler=backIn"
         aria-label="Place ${x.name} back into the game."
         >
-        <button data-action=anchor data-anchor="#notPlaying">${x.name} ${x.number}</button>
+        <button _click=anchor data-anchor="#notPlaying">${x.name} ${x.number}</button>
     </form>
 </li>`})
 

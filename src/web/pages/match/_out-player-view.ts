@@ -25,7 +25,7 @@ export async function outPlayersView(o: PlayerStateView) {
         <button
             form=post
             formaction="?$${queryTeamGame}&playerId=${x.playerId}&handler=playerOnDeck"
-            data-action="anchor"
+            _click="anchor"
             data-anchor="#outPlayers"
         >${x.name} ${x.number}</button>
     </div>

@@ -49,7 +49,7 @@ function positionsNameView(positions: string[][], teamId: number) {
   class=form
   method=post
   action="?teamId=${teamId}&handler=editPositions"
-  data-action=submit>
+  _change=submit>
   ${function* positionViews() {
       let count = 0
       let row = 0
@@ -167,7 +167,7 @@ async function getPositionTemplates(teamId: number) {
     <a href="/web/positions?teamId=${teamId}&hz" >Cancel</a>
     <h2>Formation Templates</h2>
 
-    <form data-action=submit>
+    <form _change=submit>
       <fieldset class=fieldset-outline>
         <legend>Number of players</legend>
         <label class="inline p-1">

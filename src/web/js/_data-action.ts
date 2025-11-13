@@ -1,40 +1,30 @@
-let allowedElements = ["A", "BUTTON"]
-document.addEventListener("click", e => {
-  let target = e.target as HTMLElement
-  let action: string | undefined
-  if (!allowedElements.includes(target.tagName) || !(action = target.dataset.action)) return
+for (let event of ["click", "change", "submit"]) {
+  document.addEventListener(event, e => {
+    let target = e.target
+    let action = findAttr(target, event)
+    if (!action) return
 
-  if (handleCall(e, target, action)) {
-    e.preventDefault()
-  }
-})
-
-let inputs = ["INPUT", "TEXTAREA", "SELECT", "FORM"]
-document.addEventListener("change", e => {
-  let target = e.target as HTMLElement
-  let action: string | undefined
-  // @ts-ignore
-  if (!((inputs.includes(target.tagName) && (action = target.dataset.action || target.form?.dataset.action)))) return
-
-  if (handleCall(e, target, action)) {
-    e.preventDefault()
-  }
-})
-
-function isForm(target: unknown): target is HTMLFormElement {
-  // @ts-ignore
-  return (target as HTMLElement).tagName === "FORM"
+    // @ts-ignore
+    if (handleCall(e, target, action)) {
+      e.preventDefault()
+    }
+  })
 }
 
-document.addEventListener("submit", e => {
-  let target = e.target
-  let action: string | undefined
-  if (!((isForm(target) || isForm((target as any)?.form)) && (action = (target as any).dataset.action))) return
-
-  if (handleCall(e, target as HTMLElement, action)) {
-    e.preventDefault()
+function findAttr(target: EventTarget | null, attr: string): string | null | undefined {
+  if (!target) return
+  // @ts-ignore
+  let result = target?.closest?.(`[_${attr}]`)?.getAttribute(`_${attr}`)
+  if (!result) {
+    // @ts-ignore
+    return findAttr(target?.form, attr)
   }
-})
+  return result
+}
+
+function isForm(element: HTMLElement): element is HTMLFormElement {
+  return element.tagName === "FORM"
+}
 
 function handleCall(
   e: Event,
@@ -53,7 +43,7 @@ function handleCall(
     if (fn) {
       fn.call(window.app, e, target, form) ?? 0
     } else {
-      console.warn(`DATA-ACTION: Could not find function ${action}. Target element`, target)
+      console.warn(`ACTION: Could not find function ${action}. Target element`, target)
     }
   }
 

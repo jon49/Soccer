@@ -20,7 +20,7 @@ export async function onDeckView(state: PlayerStateView) {
     <form
         method=post
         action="?${queryTeamGame}&playerId=${x.playerId}&handler=cancelOnDeck"
-        data-action=anchor
+        _click=anchor
         data-anchor="#onDeck">
         <button>X</button>
     </form>

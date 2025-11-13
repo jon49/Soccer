@@ -31,7 +31,7 @@ export default async function render(query: any) {
     form=post
     formaction="?${queryTeamGame}&handler=deleteGame"
     data-confirm="Are you sure you would like to delete this game?"
-    data-action="confirm"
+    _click="confirm"
     >Delete</button>
 
 <br>
@@ -58,7 +58,7 @@ export default async function render(query: any) {
 </ul>
 
 <div>
-    <a href="?${queryTeamGame}&handler=play" target="_self" data-action="defaultTheme">Show Game Play View</a>
+    <a href="?${queryTeamGame}&handler=play" target="_self" _click="defaultTheme">Show Game Play View</a>
 </div>
 
 <h3>Notes</h3>
@@ -66,7 +66,7 @@ export default async function render(query: any) {
 <form
     method=post
     action="?${queryTeamGame}&handler=updateNote"
-    data-action=submit>
+    _change=submit>
     <textarea name=notes>${notes}</textarea>
 </form>
 `

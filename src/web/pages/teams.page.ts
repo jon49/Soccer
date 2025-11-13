@@ -27,7 +27,7 @@ ${wasFiltered ? html`<p><a id=allTeams href="?handler=all">Show all teams.</a></
 
 <h3>Add a team</h3>
 
-<form class=form action="/web/teams" method=post  data-action=reset>
+<form class=form action="/web/teams" method=post  _submit=reset>
     <div>
         <label for=name>Team Name</label>
         <input
@@ -35,7 +35,7 @@ ${wasFiltered ? html`<p><a id=allTeams href="?handler=all">Show all teams.</a></
             name=name
             type=text
             $${when(!teams?.length, "autofocus")}
-            data-action=clearAutoFocus
+            _change=clearAutoFocus
             required>
     </div>
     <div>

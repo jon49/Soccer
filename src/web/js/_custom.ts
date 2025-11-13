@@ -18,12 +18,10 @@ w.defineTrait("redirect", function(el) {
 })
 
 Object.assign(w.app, {
-  reset: (e, _, form) => {
-    if (e.type !== "submit") return
+  reset: (_, __, form) => {
     tick(() => form?.reset())
   },
-  clearAutoFocus: (e, target) => {
-    if (e.type !== "submit") return
+  clearAutoFocus: (_, target) => {
     target.removeAttribute("autofocus")
   },
   confirm: (e, target): 1 | void => {
@@ -32,7 +30,6 @@ Object.assign(w.app, {
     }
   },
   defaultTheme: (_, target) => {
-    if (target.tagName !== "A") return
     // Get system theme
     let isDark = window.matchMedia?.('(prefers-color-scheme: dark)').matches
     let theme = isDark ? "dark" : "light"
@@ -40,9 +37,7 @@ Object.assign(w.app, {
     url.searchParams.set("theme", theme)
     ;(target as HTMLAnchorElement).href = url.toString()
   },
-  submit: (e, target) => {
-    if (e.type !== "change") return
-    // @ts-ignore
-    target.requestSubmit?.() || target.form?.requestSubmit?.()
+  submit: (_, __, form) => {
+    form?.requestSubmit()
   }
 } as Record<string, (e: Event, el: HTMLElement, form?: HTMLFormElement) => 1 | void>)
