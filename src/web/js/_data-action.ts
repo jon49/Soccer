@@ -20,16 +20,12 @@ function findAttr(target: EventTarget | null, attr: string): string | null | und
   return result
 }
 
-function isForm(element: HTMLElement): element is HTMLFormElement {
-  return element.tagName === "FORM"
-}
-
 function handleCall(
   e: Event,
   target: HTMLElement,
   action: string): void {
   // @ts-ignore
-  let form = isForm(target) ? target : target.form
+  let form = target.tagName === "FORM" ? target : target.form
 
   let actions = action.split(" ")
 
