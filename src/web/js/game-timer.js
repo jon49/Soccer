@@ -70,12 +70,12 @@ class GameTimer {
 
         this.interval = +(el.dataset.interval ?? 0) || 1e3
 
+        document.addEventListener("hz:completed", this)
+
         this.update(Date.now())
     }
 
-    static observedAttributes = ["data-start", "data-total", "data-static", "data-flash"];
-
-    attributeChangedCallback() {
+    handleEvent() {
         this.update(Date.now())
     }
 
