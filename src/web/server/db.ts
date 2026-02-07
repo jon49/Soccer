@@ -160,6 +160,7 @@ export interface Team extends Revision, PositionsV0 {
     year: string
     players: TeamPlayer[]
     games: Game[]
+    basketballMode?: boolean
 }
 
 export interface TeamSingle {

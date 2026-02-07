@@ -4,7 +4,7 @@ import type { DbCache as DbCacheType } from "@jon49/sw/utils.js"
 const {
     html,
     layout,
-    repo: { teamGet, statSave, getStatDescription, statsGetAll },
+    repo: { teamGet, teamSave, statSave, getStatDescription, statsGetAll },
     utils: { when, DbCache },
     validation: { validateObject, createCheckbox, createIdNumber, createString25, required, queryTeamIdValidator },
     views: { teamNav },
@@ -43,6 +43,18 @@ async function render(o: StatsView) {
             )}
         </form>`
     })}
+
+<form
+    _change=submit
+    method=post
+    action="?teamId=${teamId}&handler=basketballMode">
+    <input type=hidden name=value value="${team.basketballMode ? 1 : 0}">
+    <label class=toggle>
+        <input type=checkbox name=basketballMode $${when(team.basketballMode, "checked")}>
+        <span class="off" role="button">Soccer Mode</span>
+        <span class="on" role="button">Basketball Mode</span>
+    </label>
+</form>
 </div>`
 }
 
@@ -69,7 +81,16 @@ const postHandlers : RoutePostHandler = {
         await statSave(teamId, o)
 
         return { status: 200 }
-    }
+    },
+
+    async basketballMode({ query, data }) {
+        let { teamId } = await validateObject(query, queryTeamIdValidator)
+        let { basketballMode } = await validateObject(data, { basketballMode: createCheckbox })
+        let team = await teamGet(teamId)
+        team.basketballMode = basketballMode
+        await teamSave(team)
+        return { status: 200 }
+    },
 }
 
 class StatsView {
