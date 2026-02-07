@@ -9,7 +9,7 @@ let {
     validation: { queryTeamIdGameIdValidator, validateObject }
 } = self.sw
 
-export async function play({ app, query }: RouteGetArgs & { app?: Promise<AsyncGenerator<any, void, unknown>> }) {
+export async function play({ app, query, head }: RouteGetArgs & { head?: string, app?: Promise<AsyncGenerator<any, void, unknown>> }) {
     let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
     let state = new PlayerStateView(teamId, gameId)
     let { theme } = await db.settings()
@@ -25,6 +25,7 @@ export async function play({ app, query }: RouteGetArgs & { app?: Promise<AsyncG
     <link rel="icon" type="image/x-icon" href="/web/images/soccer.ico">
     <style>@import url("/web/css/pico.blue.min.css") layer(base);</style>
     <link href="/web/css/app.css" rel=stylesheet>
+    $${head}
     <style>
         .empty {
             margin: 1rem;

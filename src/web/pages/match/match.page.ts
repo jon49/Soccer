@@ -94,7 +94,8 @@ const dataSetPlayerActivity = {
     activityId: createIdNumber("Activity ID"),
     playerId: createIdNumber("Player ID"),
     operation: createString25("Action"),
-    returnUrl: maybe(createStringInfinity("Return URL"))
+    returnUrl: maybe(createStringInfinity("Return URL")),
+    points: maybe(createPositiveWholeNumber("Points"))
 }
 
 interface PlayerStatUpdatedArgs {
@@ -141,7 +142,17 @@ const getHandlers : RouteGetHandler = {
 
     async activityPlayerSelector(o) {
         let { query } = o
-        return play({ ...o, app: activityPlayerSelectorView(query) })
+        return play({
+            ...o,
+            app: activityPlayerSelectorView(query),
+            head: `
+<style>
+.points {
+  margin-top: 1em;
+  margin-bottom: 1em;
+}
+</style>`
+         })
     },
 
     async showInPlay({ query }) {
@@ -404,8 +415,9 @@ const postHandlers : RoutePostHandler = {
 
     async setPlayerStat({ query, data }) {
         let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
-        let { activityId, playerId, operation, returnUrl } = await validateObject(data, dataSetPlayerActivity)
-        let [player] = await playerGameAllGet(teamId, gameId, [playerId])
+        let { activityId, playerId, operation, returnUrl, points } = await validateObject(data, dataSetPlayerActivity)
+        let state = new PlayerStateView(teamId, gameId)
+        let player = await state.playerGame(playerId)
 
         let activity = player.stats.find(x => x.statId === activityId)
         if (!activity) {
@@ -416,10 +428,21 @@ const postHandlers : RoutePostHandler = {
             player.stats.push(activity)
         }
 
+        points = points ?? 1
         if (operation === "inc") {
-            activity.count++
+            activity.count += points
+            if (points > 1) {
+                let [team, game] = await Promise.all([state.team(), state.game()])
+                game.points += points - 1
+                await teamSave(team)
+            }
         } else {
-            activity.count--
+            activity.count -= points
+            if (points > 1) {
+                let [team, game] = await Promise.all([state.team(), state.game()])
+                game.points -= points - 1
+                await teamSave(team)
+            }
         }
 
         await playerGameSave(teamId, player)

@@ -2,6 +2,7 @@ import { PlayerStateView, positionPlayersView } from "./shared.js"
 
 let {
     html,
+    utils: { when },
     validation: {
         createIdNumber,
         createString25,
@@ -36,6 +37,7 @@ export async function activityPlayerSelectorView(query: any) {
 
     let action = `?teamId=${teamId}&gameId=${gameId}&handler=setPlayerStat`
     let queryTeamGame = state.queryTeamGame
+    let isBasketballMode = (await state.team()).basketballMode
 
     return html`
 <main id=main>
@@ -43,6 +45,26 @@ export async function activityPlayerSelectorView(query: any) {
     <a href="$${returnUrl ? returnUrl : `?${queryTeamGame}&handler=play`}" target="_self">Cancel</a>&nbsp;
     <h2 class="inline">Player Goal</h2>
 </header>
+    ${when(isBasketballMode, () => html`
+<fieldset>
+    <legend>Points</legend>
+    <div class="flex points" id=points>
+        <label><input type="radio" name="points" value="1">1 Point</label>
+        <label><input type="radio" name="points" value="2" checked>2 Points</label>
+        <label><input type="radio" name="points" value="3">3 Points</label>
+    </div>
+    <script>
+document.addEventListener("submit", e => {
+    let form = e.target.form ?? e.target
+    if (form.id.startsWith("player-")) {
+        for (let input of points.querySelectorAll("input[name='points']")) {
+            input.setAttribute("form", form.id)
+        }
+    }
+})
+    </script>
+</fieldset>`)}
+
     ${positionPlayersView(
         state,
         ({ player }) => {
@@ -51,6 +73,7 @@ export async function activityPlayerSelectorView(query: any) {
             }
             return html`
             <form
+                id="player-${player.playerId}"
                 method=post
                 action="$${action}"
                 >
@@ -66,6 +89,7 @@ export async function activityPlayerSelectorView(query: any) {
 <div class=grid style="--grid-item-width: 75px;">
     ${[...onDeckPlayers, ...outPlayers]
         .map(x => html`<form
+            id="player-${x.playerId}"
             method=post
             action="$${action}"
             >
