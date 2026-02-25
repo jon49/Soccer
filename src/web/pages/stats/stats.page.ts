@@ -33,7 +33,7 @@ async function render(query: any) {
                 ["timePlayed", "Time Played"],
                 ["percentagePlayed", "Percentage of Games Played"],
                 ["gamesPlayed", "Games Played"],
-                ["activitiesPerformed", "Player Stats"],
+                ["activitiesPerformed", "Player Points"],
             ].map(([handler, label]) =>
              html`<a id="${handler}" $${href(handler)} role="button">$${label}</a>`)
             }
@@ -63,7 +63,7 @@ const getHandler: RouteGetHandler = {
             </style>`,
             main: await render(query),
             nav: teamNav(+query.teamId),
-            title: "Player Stats"
+            title: "Player Points"
         })
     },
 
