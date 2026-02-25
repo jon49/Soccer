@@ -2,7 +2,7 @@ import type { RoutePage, RouteGetHandler } from "@jon49/sw/routes.middleware.js"
 import { StatsView } from "./shared.js"
 import { timePlayedView } from "./_positions-played-view.js"
 import { gamesPlayedView } from "./_number-of-games-played-view.js"
-import { playerStatsView } from "./_activities-view.js"
+import { playerPointsView } from "./_player-points-view.js"
 import { percentagePlayed } from "./_percentage-played.js"
 
 const {
@@ -91,7 +91,7 @@ const getHandler: RouteGetHandler = {
     async activitiesPerformed({ query }) {
         let playersView = await StatsView.create(query)
         return html`
-        <template id="statTables" hz-swap="prepend">${playerStatsView(playersView)}</template>
+        <template id="statTables" hz-swap="prepend">${playerPointsView(playersView)}</template>
         <template id=activitiesPerformed></template>`
     }
 }
