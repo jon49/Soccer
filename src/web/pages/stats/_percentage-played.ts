@@ -39,7 +39,7 @@ export async function percentagePlayed(o: StatsView) {
         </tr>
     </thead>
     <tbody>
-        ${async function* (){
+        ${function* (){
             for (let playerId of playerIdList) {
                 yield html`<tr><th>${playerMap.get(playerId)}</th>`
 

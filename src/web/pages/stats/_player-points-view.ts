@@ -23,7 +23,7 @@ export async function playerPointsView(o: StatsView) {
             </tr>
         </thead>
         <tbody>
-        ${async function*() {
+        ${function*() {
             for (let playerId of playerIdList) {
                 let perGame = playersGames.map(xs => {
                     let pg = xs.find(x => x.playerId === playerId)
