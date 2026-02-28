@@ -4,7 +4,7 @@ const {
     globalDb: db,
     html,
     views: { themeView },
-} = self.sw
+} = self.app
 
 const themes = ["dark", "light", null] as const
 export type Theme = typeof themes[number]
@@ -24,7 +24,7 @@ const postHandlers: RoutePostHandler = {
         return {
             status: 200,
             body: html`${themeView(theme)}
-            <i traits=theme hz-target="#temp" hz-swap="append" data-theme="${theme}"></i>`,
+            <i _load=theme hz-target="#temp" hz-swap="append" data-theme="${theme}"></i>`,
         }
     },
 }

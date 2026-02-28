@@ -10,7 +10,7 @@ const {
     repo: { teamGet },
     validation: { validateObject, queryTeamIdValidator },
     views: { teamNav },
-} = self.sw
+} = self.app
 
 async function render(query: any) {
     let { teamId } = await validateObject(query, queryTeamIdValidator)

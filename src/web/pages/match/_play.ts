@@ -7,7 +7,7 @@ let {
     html,
     utils: { when },
     validation: { queryTeamIdGameIdValidator, validateObject }
-} = self.sw
+} = self.app
 
 export async function play({ app, query, head }: RouteGetArgs & { head?: string, app?: Promise<AsyncGenerator<any, void, unknown>> }) {
     let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
@@ -33,7 +33,7 @@ export async function play({ app, query, head }: RouteGetArgs & { head?: string,
             padding: 0.5em;
             border-radius: 1em;
         }
-        [traits="game-timer"] {
+        .game-timer {
             width: 5em;
             text-align: center;
         }
@@ -50,7 +50,7 @@ export async function play({ app, query, head }: RouteGetArgs & { head?: string,
             text-align: center;
             border-radius: 0 0 5px 5px;
         }
-        
+
         /* Game Shader CSS */
         :root {
             --game-shader-background: #000;

@@ -2,7 +2,7 @@ import { PlayerStateView } from "./shared.js"
 
 let {
     html,
-} = self.sw
+} = self.app
 
 export function getPointsView(points: number) {
     return html`${points || "0"}`

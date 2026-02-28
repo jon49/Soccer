@@ -4,7 +4,7 @@ let {
     html,
     utils: { when },
     validation: { queryTeamIdGameIdValidator, createIdNumber, validateObject }
-} = self.sw
+} = self.app
 
 const querySwapValidator = {
     ...queryTeamIdGameIdValidator,
@@ -53,7 +53,9 @@ export default async function render(query: any) {
                         ${when(isCurrentPlayer, "You cannot swap the same player!")}">
                         ${player.name}
                         ${when(playerOnDeck, p => html` (${p.name})`)}
-                        <span traits="game-timer"
+                        <span
+                            class="game-timer"
+                            _load="gameTimer"
                             data-start="${player.calc.getLastStartTime()}"
                             data-total="${player.calc.total()}"
                             $${when(isPaused, `data-static`)}>
@@ -65,7 +67,9 @@ export default async function render(query: any) {
                     return html`
                     <button>
                         (${playerOnDeck.name})
-                        <span traits=game-timer
+                        <span
+                            class="game-timer"
+                            _load="gameTimer"
                             data-start=${playerOnDeckGameCalc.start()}
                             data-total="${playerOnDeckGameCalc.total()}"
                             $${when(isPaused, `data-static`)}>

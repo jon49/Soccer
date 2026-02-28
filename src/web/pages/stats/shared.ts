@@ -4,7 +4,7 @@ const {
     repo: { teamGet, playerGameAllGet },
     utils: { DbCache },
     validation: { validateObject, queryTeamIdValidator }
-} = self.sw
+} = self.app
 
 export class StatsView {
     #cache: DbCacheType

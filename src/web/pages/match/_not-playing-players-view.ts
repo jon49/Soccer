@@ -2,7 +2,7 @@ import type { PlayerStateView } from "./shared.js";
 
 let {
     html,
-} = self.sw
+} = self.app
 
 export async function notPlayingPlayersView(state: PlayerStateView) {
     let [

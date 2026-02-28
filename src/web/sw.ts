@@ -7,7 +7,7 @@ import { updated as dbUpdated } from "./server/global-model.js"
 import html from "html-template-tag-stream"
 
 // @ts-ignore
-let version: string = self.sw?.version ?? "unknown"
+let version: string = self.app?.version ?? "unknown"
 
 swFramework.use(useRoutes)
 swFramework.use(
@@ -24,7 +24,7 @@ async function useHtmz(req, res, ctx): Promise<void> {
 
     res.body = html`${res.body}
 <div id=toasts>
-    ${messages.map(x => html`<dialog class=toast traits=x-toaster open><p class=message>${x}</p></dialog>`)}
+    ${messages.map(x => html`<dialog class=toast _load=toast open><p class=message>${x}</p></dialog>`)}
 </div>
 ${res.status === 401 ? html`${loginView()}` : null}
 ${syncCountView(updated.length)}
@@ -45,7 +45,7 @@ self.addEventListener("install", (e: Event) => {
     e.waitUntil(caches.open(version).then(async cache => {
         console.log("Caching files.")
         // @ts-ignore
-        return cache.addAll(self.sw.links.map(x => x.file))
+        return cache.addAll(self.app.links.map(x => x.file))
     }))
 
 })

@@ -7,7 +7,7 @@ import { notPlayingPlayersView } from "./_not-playing-players-view.js"
 let {
     html,
     utils: {when}
-} = self.sw
+} = self.app
 
 export default async function playMatchView(state: PlayerStateView) {
     let [
@@ -68,7 +68,7 @@ ${when(playersExist, () => html`
         ${isGameInPlay ? "Pause" : "Start"}
     </button>`)}
 
-    <span id=gameTimer traits="game-timer"
+    <span id=gameTimer _load="gameTimer"
         $${when(isGamePaused, () => `data-flash data-start="${gameCalc.getLastEndTime()}"`)}
         $${when(isGameInPlay, `data-start="${gameCalc.getLastStartTime()}" data-total="${gameCalc.total()}"`)}
         $${when(isGameEnded, `data-static data-total="${gameCalc.total()}"`)}>

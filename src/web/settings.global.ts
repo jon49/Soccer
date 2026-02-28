@@ -1,6 +1,6 @@
 import { Route } from "@jon49/sw/routes.middleware.js"
 
-self.sw = self.sw || {}
+self.app = self.app || {}
 
 const routes : Route[] = [
     { route: /\/match\/$/,
@@ -31,5 +31,5 @@ let app = {
 
 export type SettingsApp = typeof app
 
-Object.assign(self.sw, app)
+Object.assign(self.app, app)
 

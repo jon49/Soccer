@@ -11,7 +11,7 @@ const {
         createString25, dataPlayerNameActiveValidator, dataTeamNameYearActiveValidator, queryTeamIdPlayerIdValidator, queryTeamIdValidator 
     },
     views: { teamNav },
-} = self.sw
+} = self.app
 
 interface PlayersEditView {
     team: Team

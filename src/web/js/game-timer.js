@@ -24,7 +24,18 @@ class Timer {
             requestAnimationFrame(() => {
                 let currentTime = +new Date()
                 for (let instance of m) {
+                    // When WeakMap allows iterating, this can be changed to a
+                    // WeakMap and the instance can be removed when it is
+                    // garbage collected
+                    if (!instance.el.isConnected) {
+                        m.delete(instance)
+                        continue
+                    }
                     instance.update(currentTime)
+                }
+                if (m.size === 0) {
+                    this.times.delete(time)
+                    clearInterval(interval)
                 }
             })
         }, time)
@@ -79,17 +90,16 @@ class GameTimer {
         this.update(Date.now())
     }
 
-    disconnectedCallback() {
-        timer.remove(this)
-    }
+    // Use a disconnected callback here instead. Will need to manually register
+    // the callback on the element and remove it when the element is removed
+    // from the DOM
 
     /**
      * @param {number} currentTime
      */
     update(currentTime) {
-        setTimeout(() => {
+        requestAnimationFrame(() => {
             let el = this.el
-
             let { start, total, static: static_ } = el.dataset
             let start_ = +(start || 0) || currentTime
             let total_ = +(total || 0)
@@ -123,4 +133,8 @@ function formatTime(currentTime, start, total) {
 }
 
 // @ts-ignore
-window.defineTrait("game-timer", GameTimer)
+window.app.gameTimer = (_, el) => {
+  if (el._) return
+  el._ = true
+  new GameTimer(el)
+}

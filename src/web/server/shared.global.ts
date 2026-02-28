@@ -11,7 +11,7 @@ import * as repoPlayerGame from "./repo-player-game.js"
 import * as sharedViews from "../pages/_shared-views.js"
 import * as serverUtils from "./utils.js"
 
-self.sw = self.sw || {}
+self.app = self.app || {}
 
 let app = {
     db,
@@ -26,6 +26,6 @@ let app = {
 
 export type SharedApp = typeof app
 
-Object.assign(self.sw, app)
+Object.assign(self.app, app)
 
 

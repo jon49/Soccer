@@ -4,7 +4,7 @@ import type { InPlayPlayer, OnDeckPlayer } from "../../server/db.js";
 let {
     html,
     utils: { when }
-} = self.sw
+} = self.app
 
 export function inPlayersView(state: PlayerStateView) {
     return positionPlayersView(state, async ({
@@ -92,9 +92,9 @@ function playerView(
         >X</button>
 </fieldset>
 <div
-    class="in-play-timer game-shader"
+    class="in-play-timer game-shader game-timer"
     style="$${style} $${when(numberOfPlayers > 1, 'border-bottom-right-radius: unset; border-bottom-left-radius: unset;')}"
-    traits="game-timer"
+    _load="gameTimer"
     data-start="${player.calc.getLastStartTime()}"
     data-total="${player.calc.total()}"
     ${when(!isGameInPlay, "data-static")}>00:00</div>
@@ -120,9 +120,9 @@ function subPlayerView(
         >X</button>
 </fieldset>
 <div
-    class="in-play-timer game-shader"
+    class="in-play-timer game-shader game-timer"
     style="$${style} border-radius: 0 0 5px 5px;"
-    traits="game-timer"
+    _load="gameTimer"
     data-start="${sub.calc.getLastStartTime()}"
     data-total="${sub.calc.total()}"
     data-static

@@ -3,7 +3,7 @@ import type { PlayerStateView } from "./shared.js"
 let {
     html,
     utils: { when }
-} = self.sw
+} = self.app
 
 export async function onDeckView(state: PlayerStateView) {
     let playersOnDeck = await state.onDeckPlayers()

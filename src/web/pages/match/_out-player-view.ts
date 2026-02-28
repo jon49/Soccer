@@ -2,7 +2,7 @@ import type { PlayerStateView } from "./shared.js"
 
 let {
     html,
-} = self.sw
+} = self.app
 
 export async function outPlayersView(o: PlayerStateView) {
     let outPlayers = await o.outPlayers()
@@ -30,7 +30,7 @@ export async function outPlayersView(o: PlayerStateView) {
         >${x.name} ${x.number}</button>
     </div>
     <div>
-        <span traits="game-timer" data-total="${x.calc.total()}" data-static>00:00</span>
+        <span _load="gameTimer" data-total="${x.calc.total()}" data-static>00:00</span>
     </div>
     <div>
         <button

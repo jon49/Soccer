@@ -17,7 +17,7 @@ const {
   },
   views: { teamNav },
   utils: { when },
-} = self.sw
+} = self.app
 
 interface PositionView {
   positions: string[][]

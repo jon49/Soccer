@@ -1,9 +1,9 @@
 import type { RoutePostHandler, RoutePage } from "@jon49/sw/routes.middleware.js"
 import sync from "../server/sync.js"
 
-const { html } = self.sw
+const { html } = self.app
 
-let refresh = html`<i traits=refresh id=temp></i>`
+let refresh = html`<i _load=refresh id=temp></i>`
 
 const postHandlers : RoutePostHandler = {
     async post() {
