@@ -1,6 +1,6 @@
 import "@jon49/web/login.js"
 import "@jon49/sw/new-app-notifier.js"
-import "./_data-action.js"
+import "./_action.js"
 import "@jon49/web/toast.js"
 import "./_anchor.js"
 import "./_htmz.js"
