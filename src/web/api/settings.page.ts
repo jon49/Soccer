@@ -4,7 +4,7 @@ const {
     globalDb: db,
     html,
     views: { themeView },
-} = self.app
+} = self.sw
 
 const themes = ["dark", "light", null] as const
 export type Theme = typeof themes[number]

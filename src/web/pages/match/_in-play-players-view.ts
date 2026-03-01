@@ -4,7 +4,7 @@ import type { InPlayPlayer, OnDeckPlayer } from "../../server/db.js";
 let {
     html,
     utils: { when }
-} = self.app
+} = self.sw
 
 export function inPlayersView(state: PlayerStateView) {
     return positionPlayersView(state, async ({

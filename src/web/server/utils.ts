@@ -35,3 +35,12 @@ export function getNewId(ids: number[]) {
 export function tail<T>(xs: T[]) : T {
     return xs.slice(-1)[0]
 }
+
+export function cssRes(css: string) {
+  return {
+    body: css,
+    headers: {
+      "Content-Type": "text/css"
+    }
+  }
+}

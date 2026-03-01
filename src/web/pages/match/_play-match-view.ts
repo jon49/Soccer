@@ -7,7 +7,7 @@ import { notPlayingPlayersView } from "./_not-playing-players-view.js"
 let {
     html,
     utils: {when}
-} = self.app
+} = self.sw
 
 export default async function playMatchView(state: PlayerStateView) {
     let [

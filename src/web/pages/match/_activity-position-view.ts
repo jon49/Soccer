@@ -11,7 +11,7 @@ let {
         validateObject,
         queryTeamIdGameIdValidator
     },
-} = self.app
+} = self.sw
 
 const queryActivityValidator = {
     ...queryTeamIdGameIdValidator,

@@ -8,7 +8,7 @@ const {
     utils: { when, DbCache },
     validation: { validateObject, createCheckbox, createIdNumber, createString25, required, queryTeamIdValidator },
     views: { teamNav },
-} = self.app
+} = self.sw
 
 async function render(o: StatsView) {
     let [{ stats }, team] = await Promise.all([o.stats(), o.team()])

@@ -7,7 +7,7 @@ let {
     html,
     utils: { when },
     validation: { queryTeamIdGameIdValidator, validateObject }
-} = self.app
+} = self.sw
 
 export async function play({ app, query, head }: RouteGetArgs & { head?: string, app?: Promise<AsyncGenerator<any, void, unknown>> }) {
     let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)

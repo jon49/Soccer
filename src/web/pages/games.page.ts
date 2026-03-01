@@ -12,7 +12,7 @@ const {
         validate, validateObject,
     },
     views: { teamNav },
-} = self.app
+} = self.sw
 
 interface GameView {
     team: Team

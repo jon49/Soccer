@@ -1,7 +1,7 @@
 import type { RoutePostHandler, RoutePage } from "@jon49/sw/routes.middleware.js"
 import sync from "../server/sync.js"
 
-const { html } = self.app
+const { html } = self.sw
 
 let refresh = html`<i _load=refresh id=temp></i>`
 

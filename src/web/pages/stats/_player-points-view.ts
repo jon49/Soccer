@@ -2,7 +2,7 @@ import type { StatsView } from "./shared.js"
 
 const {
     html,
-} = self.app
+} = self.sw
 
 export async function playerPointsView(o: StatsView) {
     let [playerIdList, playerMap, playersGames, team] = await Promise.all([

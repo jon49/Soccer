@@ -34,7 +34,7 @@ const {
         maybe,
         required,
         },
-} = self.app
+} = self.sw
 
 const queryTeamGamePlayerValidator = {
     ...queryTeamIdGameIdValidator,

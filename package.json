@@ -12,7 +12,7 @@
   "author": "Jon Nyman",
   "license": "ISC",
   "dependencies": {
-    "@jon49/sw": "^0.14.8",
+    "@jon49/sw": "^0.15.1",
     "@jon49/web": "^0.10.0",
     "html-template-tag-stream": "^4.0.1",
     "idb-keyval": "^6.2.2",

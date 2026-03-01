@@ -34,6 +34,7 @@ export function syncCountView(count: number) {
 const render = async (
     { main,
         head,
+        cssLinks,
         scripts,
         nav,
         title,
@@ -58,6 +59,7 @@ const render = async (
     <link rel="icon" type="image/x-icon" href="/web/images/soccer.ico">
     <style> @import url("/web/css/pico.blue.min.css") layer(base); </style>
     <link href="/web/css/app.css" rel=stylesheet>
+    ${cssLinks?.map(x => html`<link href="${x}" rel=stylesheet>`)}
     <link rel="manifest" href="/web/manifest.json">
 </head>
 <body $${bodyAttr}>
@@ -130,5 +132,6 @@ export interface LayoutTemplateArguments {
     bodyAttr?: string
     main?: AsyncGenerator<any, void, unknown>
     scripts?: string[]
+    cssLinks?: string[]
     nav?: Nav[]
 }

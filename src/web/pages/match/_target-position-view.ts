@@ -4,7 +4,7 @@ let {
     html,
     utils: { when },
     validation: { queryTeamIdGameIdValidator, createIdNumber, validateObject }
-} = self.app
+} = self.sw
 
 const querySwapValidator = {
     ...queryTeamIdGameIdValidator,

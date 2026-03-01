@@ -7,7 +7,7 @@ const {
     repo: { teamGetAll, teamsCreate },
     utils: { when },
     validation: { dataTeamNameYearValidator, validateObject },
-} = self.app
+} = self.sw
 
 const render = async () => {
     let {teams, total} = await teamGetAll("active")

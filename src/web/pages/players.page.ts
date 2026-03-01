@@ -1,17 +1,17 @@
 import type { Team, TeamPlayer } from "../server/db.js"
-import type { RoutePostHandler, RoutePage } from "@jon49/sw/routes.middleware.js"
+import type { RoutePostHandler, RoutePage, RouteGetHandler } from "@jon49/sw/routes.middleware.js"
 
 const {
     html,
     layout,
     repo: { teamGet, playerCreate, teamSave },
-    utils: { equals, when },
+    utils: { equals, when, cssRes },
     validation: {
         assert, validate, validateObject,
         createString25, dataPlayerNameActiveValidator, dataTeamNameYearActiveValidator, queryTeamIdPlayerIdValidator, queryTeamIdValidator 
     },
     views: { teamNav },
-} = self.app
+} = self.sw
 
 interface PlayersEditView {
     team: Team
@@ -178,23 +178,30 @@ const postHandlers: RoutePostHandler = {
     }
 }
 
-const route: RoutePage = {
-    async get({ query }) {
-        let result = await start(query)
-        return layout({
-            head: `<style>
-.player-card {
+const getHandlers: RouteGetHandler = {
+    css() {
+        return cssRes(
+`.player-card {
     min-width: 200px;
 }
 .basis-175 {
     flex-basis: 175%;
-}
-</style>`,
+}`)
+    },
+
+    async get({ query }) {
+        let result = await start(query)
+        return layout({
+            cssLinks: ["?handler=css"],
             main: render(result),
             nav: teamNav(result.team.id),
             title: `Players - ${result.team.name} (${result.team.year})}`
         })
     },
+}
+
+const route: RoutePage = {
+    get: getHandlers,
     post: postHandlers
 }
 

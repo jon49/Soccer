@@ -7,7 +7,7 @@ import { updated as dbUpdated } from "./server/global-model.js"
 import html from "html-template-tag-stream"
 
 // @ts-ignore
-let version: string = self.app?.version ?? "unknown"
+let version: string = self.sw?.version ?? "unknown"
 
 swFramework.use(useRoutes)
 swFramework.use(
@@ -45,7 +45,7 @@ self.addEventListener("install", (e: Event) => {
     e.waitUntil(caches.open(version).then(async cache => {
         console.log("Caching files.")
         // @ts-ignore
-        return cache.addAll(self.app.links.map(x => x.file))
+        return cache.addAll(self.sw.links.map(x => x.file))
     }))
 
 })
