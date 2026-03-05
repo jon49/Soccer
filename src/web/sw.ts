@@ -1,4 +1,4 @@
-import { useRoutes, options } from "@jon49/sw/routes.middleware.js"
+import { useRoutes } from "@jon49/sw/routes.middleware.js"
 import { useResponse } from "@jon49/sw/response.middleware.js"
 import { swFramework } from "@jon49/sw/web-framework.js"
 import { loginView, syncCountView } from "./pages/_layout.html.js"
@@ -49,17 +49,8 @@ self.addEventListener("install", (e: Event) => {
 
 })
 
-function handleErrors(errors: any) {
-  if (Array.isArray(errors) && errors.length > 0) {
-    // @ts-ignore
-    return errors
-  }
-  return []
-}
-
 // @ts-ignore
 self.addEventListener("fetch", (e: FetchEvent) => {
-  options.handleErrors = handleErrors
   e.respondWith(swFramework.start(e))
 })
 
