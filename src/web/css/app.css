@@ -1,190 +1,193 @@
 body {
-    padding: 1em 0.5em 50vh 0.5em;
+  padding: 1em 0.5em 50vh 0.5em;
 }
 
 textarea {
-    field-sizing: content;
+  field-sizing: content;
 }
 
 .inline {
-    display: inline;
+  display: inline;
 }
 
 .rtl {
-    direction: rtl;
+  direction: rtl;
 }
 
 .grid-row-1 {
-    grid-row: 1;
+  grid-row: 1;
 }
 
 .m-0 {
-    margin: 0;
+  margin: 0;
 }
 
 .mb-0 {
-    margin-bottom: 0;
+  margin-bottom: 0;
 }
 
 .mt-2 {
-    margin-top: 2em;
+  margin-top: 2em;
 }
 
 .w-auto {
-    width: auto;
+  width: auto;
 }
 
 .h-fit-content {
-    height: fit-content;
+  height: fit-content;
 }
 
 .self-center {
-    align-self: center;
+  align-self: center;
 }
 
 .flex {
-    display: flex;
-    justify-items: start;
-    flex-wrap: wrap;
-    gap: 5px;
+  display: flex;
+  justify-items: start;
+  flex-wrap: wrap;
+  gap: 5px;
 }
 
 .gap-10 {
-    gap: 10px;
+  gap: 10px;
 }
 
 .char-10 {
-    display: inline-block;
-    min-width: 10ch;
+  display: inline-block;
+  min-width: 10ch;
 }
 
 .grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(var(--grid-item-width), 1fr));
-    grid-gap: 0.5em;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(var(--grid-item-width), 1fr));
+  grid-gap: 0.5em;
 }
 
 /** Toast notifications **/
 
 .toast {
-    max-width: 80vw;
-    height: fit-content;
-    min-height: auto;
-    top: auto;
-    bottom: 10px;
-    background-color: var(--pico-primary-background);
-    opacity: 0.95;
+  max-width: 80vw;
+  height: fit-content;
+  min-height: auto;
+  top: auto;
+  bottom: 10px;
+  background-color: var(--pico-primary-background);
+  opacity: 0.95;
 }
 
 .toast p {
-    margin-top: var(--pico-typography-spacing-vertical);
+  margin-top: var(--pico-typography-spacing-vertical);
+  color: var(--pico-primary-inverse);
 }
 
 /** Fancy Checkbox **/
 
-.toggle > [type="checkbox"],
+.toggle>[type="checkbox"],
 .on,
-input:checked ~ .off,
-input:indeterminate ~ .off,
+input:checked~.off,
+input:indeterminate~.off,
 .none {
   display: none;
-  border: none;;
+  border: none;
+  ;
 }
 
 .off {
   display: inline-block;
   background-color: firebrick;
-  border: none;;
+  border: none;
+  ;
 }
 
-input:checked ~ .on {
+input:checked~.on {
   display: inline-block;
   background-color: green;
 }
 
-input:indeterminate ~ .none {
+input:indeterminate~.none {
   display: inline-block;
 }
 
 /** Flex **/
 
 .flex {
-    display: flex;
-    gap: 1rem;
+  display: flex;
+  gap: 1rem;
 }
 
-.flex > * {
-    margin: auto;
+.flex>* {
+  margin: auto;
 }
 
 /** List of items **/
 
 .list {
-    list-style-type: none;
-    display: table;
-    padding: 0;
+  list-style-type: none;
+  display: table;
+  padding: 0;
 }
 
-.list > li {
-    display: table-row;
+.list>li {
+  display: table-row;
 }
 
-.list > li > * {
-    display: table-cell;
-    padding: 5px 10px;
+.list>li>* {
+  display: table-cell;
+  padding: 5px 10px;
 }
 
 /** Editable text area that looks normal **/
 
 .editable:not(:focus):not(:focus-within) {
-    position: absolute;
-    right: 100%;
+  position: absolute;
+  right: 100%;
 }
 
-.editable:focus + label,
-.editable:focus-within + label {
-    position: absolute;
-    right: 100%;
+.editable:focus+label,
+.editable:focus-within+label {
+  position: absolute;
+  right: 100%;
 }
 
-.editable + label {
-    cursor: pointer;
+.editable+label {
+  cursor: pointer;
 }
 
 .editable-pencil {
-    display: inline-block;
-    transform: rotate(90deg);
+  display: inline-block;
+  transform: rotate(90deg);
 }
 
 /* Utility Classes */
 
 .grid-center {
-    justify-items: center;
+  justify-items: center;
 }
 
 .condense-padding {
-    padding: 0.3em;
+  padding: 0.3em;
 }
 
 .p-1 {
-    padding: 1em;
+  padding: 1em;
 }
 
 .pb-1 {
-    padding-bottom: 1em;
+  padding-bottom: 1em;
 }
 
 .dialog-full-screen {
-    max-width: 100vw;
-    height: 100vh;
+  max-width: 100vw;
+  height: 100vh;
 }
 
 .danger {
-    background-color: slategray;
+  background-color: slategray;
 }
 
 .fieldset-outline {
-    border: 2px solid gray;
-    border-radius: 0.5em;
-    padding: 1em;
+  border: 2px solid gray;
+  border-radius: 0.5em;
+  padding: 1em;
 }
