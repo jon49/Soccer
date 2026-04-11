@@ -6,18 +6,21 @@ const {
     views: { themeView },
 } = self.sw
 
-const themes = ["dark", "light", null] as const
-export type Theme = typeof themes[number]
-
 const postHandlers: RoutePostHandler = {
     async theme() {
         let { theme } = await db.settings()
-        theme =
-            theme === "light"
-                ? "dark"
-                : theme === "dark"
-                    ? null
-                    : "light"
+        theme = theme === "dark" ? "light" : "dark"
+
+        await db.setTheme(theme, null)
+
+        return {
+            status: 200,
+            body: html`${themeView(theme)}
+            <i _load=theme hz-target="#temp" hz-swap="append" data-theme="${theme}"></i>`,
+        }
+    },
+    async initTheme({ query }) {
+        const theme = query.theme === "dark" ? "dark" : "light"
 
         await db.setTheme(theme, null)
 

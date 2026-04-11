@@ -8,17 +8,13 @@ interface Nav {
     url: string
 }
 
-const defaultTheme = "⛅",
-    lightTheme = "&#127774;",
-    darkTheme = "&#127762;"
+const sunIcon = "&#127774;",
+    moonIcon = "&#127762;"
 
 export function themeView(theme: Theme | undefined) {
-    return html`<button id=themeView form=post formaction="/web/api/settings?handler=theme">$${
-    theme === "light"
-        ? lightTheme
-        : theme === "dark"
-            ? darkTheme
-            : defaultTheme
+    const isUnset = theme == null
+    return html`<button id=themeView form=post formaction="/web/api/settings?handler=theme" $${isUnset ? '_load=initTheme' : ''}>$${
+    theme === "dark" ? sunIcon : moonIcon
     }</button>`
 }
 
@@ -109,6 +105,19 @@ const render = async (
 
     <form id=post method=post hidden></form>
     <script src="/web/js/app.bundle.js" type="module"></script>
+
+    $${theme == null ? `<script>
+window.app.initTheme = (_, el) => {
+    setTimeout(() => {
+        let button = el
+        if (!window.matchMedia?.('(prefers-color-scheme: dark)').matches) {
+            button.setAttribute('formaction', '/web/api/settings?handler=initTheme&theme=light')
+        }
+        button.click()
+    })
+}
+</script>` : ''}
+
     <div id=scripts>${(scripts ?? []).map(x => html`<script src="${x}" type="module"></script>`)}</div>
     </div>
 </body>
