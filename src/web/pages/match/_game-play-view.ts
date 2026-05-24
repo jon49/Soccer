@@ -1,30 +1,20 @@
-import { PlayerStateView } from "./shared.js"
+import { PlayerStateView } from "./shared.js";
 
-let {
-    html,
-} = self.sw
+let { html } = self.sw;
 
 export function getPointsView(points: number) {
-    return html`${points || "0"}`
+  return html`${points || "0"}`;
 }
 
 export default async function render(query: any) {
-    let state = await PlayerStateView.create(query),
-        [
-            notes,
-            game,
-            team,
-        ] = await Promise.all([
-            state.notes(),
-            state.game(),
-            state.team(),
-        ]),
-        queryTeamGame = state.queryTeamGame
+  let state = await PlayerStateView.create(query),
+    [notes, game, team] = await Promise.all([state.notes(), state.game(), state.team()]),
+    queryTeamGame = state.queryTeamGame;
 
-        let pointAction = `?${queryTeamGame}&activityId=1&handler=points`
-        let opponentPointAction = `?${queryTeamGame}&handler=oPoints`
+  let pointAction = `?${queryTeamGame}&activityId=1&handler=points`;
+  let opponentPointAction = `?${queryTeamGame}&handler=oPoints`;
 
-    return html`
+  return html`
 <h2 class=inline>${team.name} ($${game.home ? "Home" : "Away"}) vs ${game.opponent}</h2>
 <button
     class=condense-padding
@@ -69,5 +59,5 @@ export default async function render(query: any) {
     _change=submit>
     <textarea name=notes>${notes}</textarea>
 </form>
-`
+`;
 }

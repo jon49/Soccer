@@ -1,30 +1,35 @@
-import { GameTimeCalculator, PlayerGameTimeCalculator, PlayerStateView, positionPlayersView } from "./shared.js"
+import {
+  GameTimeCalculator,
+  PlayerGameTimeCalculator,
+  PlayerStateView,
+  positionPlayersView,
+} from "./shared.js";
 
 let {
-    html,
-    utils: { when },
-    validation: { queryTeamIdGameIdValidator, createIdNumber, validateObject }
-} = self.sw
+  html,
+  utils: { when },
+  validation: { queryTeamIdGameIdValidator, createIdNumber, validateObject },
+} = self.sw;
 
 const querySwapValidator = {
-    ...queryTeamIdGameIdValidator,
-    playerId: createIdNumber("Player ID"),
-}
+  ...queryTeamIdGameIdValidator,
+  playerId: createIdNumber("Player ID"),
+};
 
 export default async function render(query: any) {
-    let { teamId, gameId, playerId } = await validateObject(query, querySwapValidator)
+  let { teamId, gameId, playerId } = await validateObject(query, querySwapValidator);
 
-    let state = new PlayerStateView(teamId, gameId)
-    let [ isPaused, player, game ] = await Promise.all([
-        state.isGamePaused(),
-        state.player(playerId),
-        state.game(),
-    ])
+  let state = new PlayerStateView(teamId, gameId);
+  let [isPaused, player, game] = await Promise.all([
+    state.isGamePaused(),
+    state.player(playerId),
+    state.game(),
+  ]);
 
-    let gameTimeCalculator = new GameTimeCalculator(game)
-    let queryTeamGame = state.queryTeamGame
+  let gameTimeCalculator = new GameTimeCalculator(game);
+  let queryTeamGame = state.queryTeamGame;
 
-    return html`
+  return html`
 <main id=main>
 <header>
     <a href="?${queryTeamGame}&handler=play" target="_self">Cancel</a>&nbsp;
@@ -32,18 +37,17 @@ export default async function render(query: any) {
 </header>
 
     ${positionPlayersView(
-        state,
-        ({ player, playerOnDeck, positionName, positionIndex }) => {
-            let isCurrentPlayer = player?.playerId === playerId
-            return html`
+      state,
+      ({ player, playerOnDeck, positionName, positionIndex }) => {
+        let isCurrentPlayer = player?.playerId === playerId;
+        return html`
             <form
                 method=post
                 action="?position=${positionIndex}&teamId=${teamId}&gameId=${gameId}&playerId=${playerId}&handler=updateUserPosition&playerSwap"
-                >${
-            async () => {
-                if (player) {
-                    let shadeBackground = await state.shadeBackgroundStyle(player.playerId)
-                    let shadeColor = await state.shadeColorStyle(player.playerId)
+                >${async () => {
+                  if (player) {
+                    let shadeBackground = await state.shadeBackgroundStyle(player.playerId);
+                    let shadeColor = await state.shadeColorStyle(player.playerId);
                     return html`
                     <button
                         class="game-shader"
@@ -52,7 +56,7 @@ export default async function render(query: any) {
                         title="${when(playerOnDeck, "Player is on deck already.")}
                         ${when(isCurrentPlayer, "You cannot swap the same player!")}">
                         ${player.name}
-                        ${when(playerOnDeck, p => html` (${p.name})`)}
+                        ${when(playerOnDeck, (p) => html` (${p.name})`)}
                         <span
                             class="game-timer"
                             _load="gameTimer"
@@ -60,10 +64,13 @@ export default async function render(query: any) {
                             data-total="${player.calc.total()}"
                             $${when(isPaused, `data-static`)}>
                         </span>
-                    </button>`
-                }
-                if (playerOnDeck) {
-                    let playerOnDeckGameCalc = new PlayerGameTimeCalculator(playerOnDeck, gameTimeCalculator)
+                    </button>`;
+                  }
+                  if (playerOnDeck) {
+                    let playerOnDeckGameCalc = new PlayerGameTimeCalculator(
+                      playerOnDeck,
+                      gameTimeCalculator,
+                    );
                     return html`
                     <button>
                         (${playerOnDeck.name})
@@ -74,14 +81,13 @@ export default async function render(query: any) {
                             data-total="${playerOnDeckGameCalc.total()}"
                             $${when(isPaused, `data-static`)}>
                         </span>
-                    </button>`
-                }
-                return html`<button>${positionName}</button>`
-            }
-                }</form>
-            `
-        },
-        {gridItemWidth: "50px"}
+                    </button>`;
+                  }
+                  return html`<button>${positionName}</button>`;
+                }}</form>
+            `;
+      },
+      { gridItemWidth: "50px" },
     )}
-</main>`
+</main>`;
 }

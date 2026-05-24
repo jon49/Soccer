@@ -1,3 +1,23 @@
+/* The unhashed base.css path here requires server-side resolution to the
+ * built hashed file (e.g. /web/css/base.4e713321.css):
+ *   - dev: handled by @jon49/sw's dev proxy via the file-map.
+ *   - prod: NGINX must serve a hashed equivalent for /web/css/base.css
+ *     (e.g. `try_files $uri $uri.* =404;` or an explicit alias).
+ *   - service worker: also rewrites unhashed → hashed once active.
+ */
+@import url("/web/css/base.css");
+
+/* Theme color — muted slate-blue. Set via the pico accent vars so
+   hover/focus/border/inverse all derive consistently from one source
+   (see :root block in base.css). The SVG and inline diagram fills use
+   the sRGB equivalent (#506f8d) so they read as the same color as the
+   button background. */
+:root {
+  --accent-h: 248;
+  --accent-c: 0.06;
+  --accent-l: 0.53;
+}
+
 body {
   padding: 1em 0.5em 50vh 0.5em;
 }
@@ -42,13 +62,6 @@ textarea {
   align-self: center;
 }
 
-.flex {
-  display: flex;
-  justify-items: start;
-  flex-wrap: wrap;
-  gap: 5px;
-}
-
 .gap-10 {
   gap: 10px;
 }
@@ -67,45 +80,55 @@ textarea {
 /** Toast notifications **/
 
 .toast {
-  max-width: 80vw;
+  position: fixed;
+  width: 100%;
   height: fit-content;
   min-height: auto;
   top: auto;
   bottom: 10px;
-  background-color: var(--pico-primary-background);
-  opacity: 0.95;
+  left: 0;
+  right: 0;
+  padding: 1em;
+  color: var(--pico-primary-inverse);
+  background-color: color-mix(in srgb, var(--pico-primary-background) 80%, transparent);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
 }
 
 .toast p {
-  margin-top: var(--pico-typography-spacing-vertical);
+  margin: 0;
+  width: 100%;
+  text-align: center;
   color: var(--pico-primary-inverse);
+  font-weight: 600;
 }
 
 /** Fancy Checkbox **/
 
-.toggle>[type="checkbox"],
+.toggle > [type="checkbox"],
 .on,
-input:checked~.off,
-input:indeterminate~.off,
+input:checked ~ .off,
+input:indeterminate ~ .off,
 .none {
   display: none;
   border: none;
-  ;
 }
 
 .off {
   display: inline-block;
   background-color: firebrick;
   border: none;
-  ;
 }
 
-input:checked~.on {
+input:checked ~ .on {
   display: inline-block;
   background-color: green;
 }
 
-input:indeterminate~.none {
+input:indeterminate ~ .none {
   display: inline-block;
 }
 
@@ -114,9 +137,11 @@ input:indeterminate~.none {
 .flex {
   display: flex;
   gap: 1rem;
+  justify-items: start;
+  flex-wrap: wrap;
 }
 
-.flex>* {
+.flex > * {
   margin: auto;
 }
 
@@ -128,11 +153,11 @@ input:indeterminate~.none {
   padding: 0;
 }
 
-.list>li {
+.list > li {
   display: table-row;
 }
 
-.list>li>* {
+.list > li > * {
   display: table-cell;
   padding: 5px 10px;
 }
@@ -144,13 +169,13 @@ input:indeterminate~.none {
   right: 100%;
 }
 
-.editable:focus+label,
-.editable:focus-within+label {
+.editable:focus + label,
+.editable:focus-within + label {
   position: absolute;
   right: 100%;
 }
 
-.editable+label {
+.editable + label {
   cursor: pointer;
 }
 

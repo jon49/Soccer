@@ -1,36 +1,42 @@
-import type { Game, Team } from "../server/db.js"
-import type { RoutePostHandler, RoutePage } from "@jon49/sw/routes.middleware.js"
+import type { Game, Team } from "../server/db.js";
+import type { RoutePostHandler, RoutePage } from "@jon49/sw/routes.middleware.js";
 
 const {
-    html,
-    layout,
-    repo: { teamGet, teamSave },
-    utils: { when, equals, getNewId },
-    validation: {
-        assert, createCheckbox, createDateTimeString, createIdNumber, createString50, required,
-        queryTeamIdValidator,
-        validate, validateObject,
-    },
-    views: { teamNav },
-} = self.sw
+  html,
+  layout,
+  repo: { teamGet, teamSave },
+  utils: { when, equals, getNewId },
+  validation: {
+    assert,
+    createCheckbox,
+    createDateTimeString,
+    createIdNumber,
+    createString50,
+    required,
+    queryTeamIdValidator,
+    validate,
+    validateObject,
+  },
+  views: { teamNav },
+} = self.sw;
 
 interface GameView {
-    team: Team
+  team: Team;
 }
 
 async function start(query: any): Promise<GameView> {
-    let { teamId } = await validateObject(query, queryTeamIdValidator)
-    let team = await teamGet(teamId)
-    return { team }
+  let { teamId } = await validateObject(query, queryTeamIdValidator);
+  let team = await teamGet(teamId);
+  return { team };
 }
 
 function render({ team }: GameView) {
-    team.games.sort((a, b) => b.date.localeCompare(a.date))
-    return html`
+  team.games.sort((a, b) => b.date.localeCompare(a.date));
+  return html`
 <h2>${team.name} — Games</h2>
 
 <ul id=games class=list>
-    ${team.games.map(x => getGameView(team.id, x))}
+    ${team.games.map((x) => getGameView(team.id, x))}
 </ul>
 
 <form class="form" method=post action="?teamId=${team.id}"  _submit="clearAutoFocus reset">
@@ -55,30 +61,30 @@ function render({ team }: GameView) {
         </div>
     </div>
 </form>
-`
+`;
 }
 
 async function renderMain(query: any) {
-    return render(await start(query))
+  return render(await start(query));
 }
 
 function getGameView(teamId: number, game: Game, hz: string = "") {
-    return html`<li id=game-${game.id} $${hz}>
+  return html`<li id=game-${game.id} $${hz}>
         ${getGamePartialView(teamId, game)}
-    </li>`
+    </li>`;
 }
 
 function formatTime(date: Date | undefined) {
-    if (!date) return ""
-    return date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
+  if (!date) return "";
+  return date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 }
 
 function getGamePartialView(teamId: number, game: Game) {
-    let teamQuery = `teamId=${teamId}`
-    let formId = `game-form-${game.id}`
-    let datetime = game.date && game.time ? `${game.date}T${game.time}` : ""
-    let d = new Date(datetime)
-    return html`
+  let teamQuery = `teamId=${teamId}`;
+  let formId = `game-form-${game.id}`;
+  let datetime = game.date && game.time ? `${game.date}T${game.time}` : "";
+  let d = new Date(datetime);
+  return html`
 <input form=${formId} type=hidden name=gameId value="${game.id}">
 <div>
     <input
@@ -120,91 +126,102 @@ function getGamePartialView(teamId: number, game: Game) {
     action="?${teamQuery}&handler=edit"
     _change=submit
     ></form>
-`
+`;
 }
 
 let addGameValidator = {
-    date: createDateTimeString("Game Date"),
-    opponent: createString50("Game Opponent"),
-    home: createCheckbox,
-}
+  date: createDateTimeString("Game Date"),
+  opponent: createString50("Game Opponent"),
+  home: createCheckbox,
+};
 
 let editGameValidator = {
-    ...addGameValidator,
-    gameId: createIdNumber("Game ID")
-}
+  ...addGameValidator,
+  gameId: createIdNumber("Game ID"),
+};
 
 const postHandlers: RoutePostHandler = {
-    async post({ data, query }) {
-        let [{ date: datetime, opponent, home }, { teamId }] = await validate([
-            validateObject(data, addGameValidator),
-            validateObject(query, queryTeamIdValidator)])
+  async post({ data, query }) {
+    let [{ date: datetime, opponent, home }, { teamId }] = await validate([
+      validateObject(data, addGameValidator),
+      validateObject(query, queryTeamIdValidator),
+    ]);
 
-        opponent = opponent || "Unknown"
+    opponent = opponent || "Unknown";
 
-        let [date, time] = datetime.split("T")
+    let [date, time] = datetime.split("T");
 
-        let team = await teamGet(teamId)
-        let existingTeam =
-            team.games
-            .find(x => equals(x.date, date) && equals(x.opponent || "", opponent || ""))
-        await assert.isFalse(
-            !!team.games.find(x => equals(x.date, date) && equals(x.opponent || "", opponent || "")),
-            `The game "${date}${when(existingTeam?.opponent, " - " + existingTeam?.opponent)}" already exists!`)
+    let team = await teamGet(teamId);
+    let existingTeam = team.games.find(
+      (x) => equals(x.date, date) && equals(x.opponent || "", opponent || ""),
+    );
+    await assert.isFalse(
+      !!team.games.find((x) => equals(x.date, date) && equals(x.opponent || "", opponent || "")),
+      `The game "${date}${when(existingTeam?.opponent, " - " + existingTeam?.opponent)}" already exists!`,
+    );
 
-        let gameId = getNewId(team.games.map(x => x.id))
+    let gameId = getNewId(team.games.map((x) => x.id));
 
-        team.games.push({
-            id: gameId,
-            date,
-            time,
-            home,
-            opponent,
-            points: 0,
-            opponentPoints: 0,
-            gameTime: []
-        })
+    team.games.push({
+      id: gameId,
+      date,
+      time,
+      home,
+      opponent,
+      points: 0,
+      opponentPoints: 0,
+      gameTime: [],
+    });
 
-        await teamSave(team)
+    await teamSave(team);
 
-        return getGameView(teamId, team.games.find(x => x.id === gameId)!, `hz-target="#games" hz-swap="prepend"`)
-    },
+    return getGameView(
+      teamId,
+      team.games.find((x) => x.id === gameId)!,
+      `hz-target="#games" hz-swap="prepend"`,
+    );
+  },
 
-    async edit({ data, query }) {
-        let [{ date: datetime, opponent, gameId, home }, { teamId }] = await validate([
-            validateObject(data, editGameValidator),
-            validateObject(query, queryTeamIdValidator)])
+  async edit({ data, query }) {
+    let [{ date: datetime, opponent, gameId, home }, { teamId }] = await validate([
+      validateObject(data, editGameValidator),
+      validateObject(query, queryTeamIdValidator),
+    ]);
 
-        opponent = opponent || "Unknown"
+    opponent = opponent || "Unknown";
 
-        let [date, time] = datetime.split("T")
+    let [date, time] = datetime.split("T");
 
-        let team = await teamGet(teamId)
-        await assert.isFalse(
-            !!team.games.find(x => gameId !== x.id && x.date === date && x.opponent === opponent),
-            `The game "${date}${when(opponent, " - " + opponent)}" already exists!`)
+    let team = await teamGet(teamId);
+    await assert.isFalse(
+      !!team.games.find((x) => gameId !== x.id && x.date === date && x.opponent === opponent),
+      `The game "${date}${when(opponent, " - " + opponent)}" already exists!`,
+    );
 
-        let game = await required(team.games.find(x => gameId === x.id), "Could not find game!")
-        game.opponent = opponent
-        game.date = date
-        game.time = time
-        game.home = home
+    let game = await required(
+      team.games.find((x) => gameId === x.id),
+      "Could not find game!",
+    );
+    game.opponent = opponent;
+    game.date = date;
+    game.time = time;
+    game.home = home;
 
-        await teamSave(team)
+    await teamSave(team);
 
-        return getGameView(teamId, game)
-    },
-}
+    return getGameView(teamId, game);
+  },
+};
 
 const router: RoutePage = {
-    async get({ query }) {
-        return layout({
-            main: await renderMain(query),
-            nav: teamNav(+query.teamId),
-            title: "Games"
-        })
-    },
-    post: postHandlers,
-}
+  async get({ query }) {
+    return layout({
+      main: await renderMain(query),
+      nav: teamNav(+query.teamId),
+      title: "Games",
+    });
+  },
+  post: postHandlers,
+};
 
-export default router
+export default router;

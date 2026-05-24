@@ -1,17 +1,19 @@
 {
-    "name": "Soccer Tracker",
-    "icons": [
-        {
-            "src": "/web/images/soccer.ico",
-            "sizes": "16x16",
-            "type": "image/ico"
-        },
-        {
-            "src": "/web/images/soccer.png",
-            "sizes": "any",
-            "type": "image/png"
-        }
-    ],
-    "start_url": "/web/#/web/teams/",
-    "display": "standalone"
+  "name": "Soccer Tracker",
+  "icons": [
+    {
+      "src": "/web/images/soccer.ico",
+      "sizes": "16x16",
+      "type": "image/ico"
+    },
+    {
+      "src": "/web/images/soccer.png",
+      "sizes": "any",
+      "type": "image/png"
+    }
+  ],
+  "start_url": "/web/#/web/teams/",
+  "display": "standalone",
+  "theme_color": "#506f8d",
+  "background_color": "#506f8d"
 }

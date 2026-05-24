@@ -1,8 +1,8 @@
-import type { RoutePage, RouteGetHandler } from "@jon49/sw/routes.middleware.js"
-import { StatsView } from "./shared.js"
-import { timePlayedView } from "./_positions-played-view.js"
-import { playerPointsView } from "./_player-points-view.js"
-import { percentagePlayed } from "./_percentage-played.js"
+import type { RoutePage, RouteGetHandler } from "@jon49/sw/routes.middleware.js";
+import { StatsView } from "./shared.js";
+import { timePlayedView } from "./_positions-played-view.js";
+import { playerPointsView } from "./_player-points-view.js";
+import { percentagePlayed } from "./_percentage-played.js";
 
 const {
   html,
@@ -10,14 +10,13 @@ const {
   repo: { teamGet },
   validation: { validateObject, queryTeamIdValidator },
   views: { teamNav },
-} = self.sw
+} = self.sw;
 
 async function render(query: any) {
-  let { teamId } = await validateObject(query, queryTeamIdValidator)
-  let team = await teamGet(teamId)
+  let { teamId } = await validateObject(query, queryTeamIdValidator);
+  let team = await teamGet(teamId);
 
-  let href = (handler: string) =>
-    `href="?teamId=${teamId}&handler=${handler}"`
+  let href = (handler: string) => `href="?teamId=${teamId}&handler=${handler}"`;
 
   return html`
   <h2 class=inline>${team.name} — Stats</h2>
@@ -32,13 +31,13 @@ async function render(query: any) {
       ["timePlayed", "Time Played"],
       ["percentagePlayed", "Percentage of Games Played"],
       ["activitiesPerformed", "Player Points"],
-    ].map(([handler, label]) =>
-      html`<a id="${handler}" $${href(handler)} role="button">$${label}</a>`)
-    }
+    ].map(
+      ([handler, label]) => html`<a id="${handler}" $${href(handler)} role="button">$${label}</a>`,
+    )}
   </div>
   </div>
 
-  <div id=statTables></div>`
+  <div id=statTables></div>`;
 }
 
 const getHandler: RouteGetHandler = {
@@ -61,36 +60,34 @@ table.sticky {
     </style>`,
       main: await render(query),
       nav: teamNav(+query.teamId),
-      title: "Player Points"
-    })
+      title: "Player Points",
+    });
   },
 
   async timePlayed({ query }) {
-    let playersView = await StatsView.create(query)
+    let playersView = await StatsView.create(query);
     return html`
   <template id="statTables" hz-swap="prepend">${timePlayedView(playersView)}</template>
-  <template id=timePlayed></template>`
+  <template id=timePlayed></template>`;
   },
 
   async percentagePlayed({ query }) {
-    let playersView = await StatsView.create(query)
+    let playersView = await StatsView.create(query);
     return html`
   <template id="statTables" hz-swap="prepend">${percentagePlayed(playersView)}</template>
-  <template id=percentagePlayed></template>`
+  <template id=percentagePlayed></template>`;
   },
 
-
   async activitiesPerformed({ query }) {
-    let playersView = await StatsView.create(query)
+    let playersView = await StatsView.create(query);
     return html`
   <template id="statTables" hz-swap="prepend">${playerPointsView(playersView)}</template>
-  <template id=activitiesPerformed></template>`
-  }
-}
+  <template id=activitiesPerformed></template>`;
+  },
+};
 
 const router: RoutePage = {
-  get: getHandler
-}
+  get: getHandler,
+};
 
-export default router
-
+export default router;

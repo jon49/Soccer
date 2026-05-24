@@ -10,4 +10,3 @@ offline-first web application which auto syncs with the back end (if signed in).
 It uses the library [HTMZ](https://github.com/Kalabasa/htmz) which
 makes development straight forward and fast but makes the application feel like
 an SPA.
-

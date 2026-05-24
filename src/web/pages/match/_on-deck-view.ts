@@ -1,21 +1,21 @@
-import type { PlayerStateView } from "./shared.js"
+import type { PlayerStateView } from "./shared.js";
 
 let {
-    html,
-    utils: { when }
-} = self.sw
+  html,
+  utils: { when },
+} = self.sw;
 
 export async function onDeckView(state: PlayerStateView) {
-    let playersOnDeck = await state.onDeckPlayers()
-    let onDeckWithoutPosition = playersOnDeck.filter(x => x.status.targetPosition == null)
-    let queryTeamGame = state.queryTeamGame
+  let playersOnDeck = await state.onDeckPlayers();
+  let onDeckWithoutPosition = playersOnDeck.filter((x) => x.status.targetPosition == null);
+  let queryTeamGame = state.queryTeamGame;
 
-    return onDeckWithoutPosition.map(x => {
-        let id = `on-deck-${x.playerId}`
-        return html`
+  return onDeckWithoutPosition.map((x) => {
+    let id = `on-deck-${x.playerId}`;
+    return html`
 <li id="${id}">
     <div>
-        <a href="?${queryTeamGame}&playerId=${x.playerId}&handler=playerSwap"  role=button>(${x.name}${when(x.number, x => ` ${x}`)})</a>
+        <a href="?${queryTeamGame}&playerId=${x.playerId}&handler=playerSwap"  role=button>(${x.name}${when(x.number, (x) => ` ${x}`)})</a>
     </div>
     <form
         method=post
@@ -24,6 +24,6 @@ export async function onDeckView(state: PlayerStateView) {
         data-anchor="#onDeck">
         <button>X</button>
     </form>
-</li>`
-    })
+</li>`;
+  });
 }

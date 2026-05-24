@@ -1,19 +1,16 @@
-import type { PlayerStateView } from "./shared.js"
+import type { PlayerStateView } from "./shared.js";
 
-let {
-    html,
-} = self.sw
+let { html } = self.sw;
 
 export async function outPlayersView(o: PlayerStateView) {
-    let outPlayers = await o.outPlayers()
-    let queryTeamGame = o.queryTeamGame
+  let outPlayers = await o.outPlayers();
+  let queryTeamGame = o.queryTeamGame;
 
-    return html`
-    ${outPlayers.map(x => {
+  return html`
+    ${outPlayers.map((x) => {
+      let outPlayerId = `outPlayer${x.playerId}`;
 
-    let outPlayerId = `outPlayer${x.playerId}`
-
-    return html`
+      return html`
 <li id="${outPlayerId}">
     <div>
         <a href="?${queryTeamGame}&playerId=${x.playerId}&handler=playerSwap"
@@ -38,6 +35,6 @@ export async function outPlayersView(o: PlayerStateView) {
             formaction="?$${queryTeamGame}&playerId=$${x.playerId}&handler=notPlaying"
         >X</button>
     </div>
-</li>`
-})}`
+</li>`;
+    })}`;
 }

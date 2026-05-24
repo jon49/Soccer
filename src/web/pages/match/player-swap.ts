@@ -1,68 +1,79 @@
 import type { PlayerGame } from "../../server/db.js";
-import { GameTimeCalculator, PlayerGameTimeCalculator, isInPlayPlayer, isOnDeckPlayer } from "./shared.js";
+import {
+  GameTimeCalculator,
+  PlayerGameTimeCalculator,
+  isInPlayPlayer,
+  isOnDeckPlayer,
+} from "./shared.js";
 
 let {
-    repo: { playerGameAllGet, teamGet },
-    validation: {
-        createPositiveWholeNumber,
-        maybe,
-        required,
-        queryTeamIdGameIdValidator,
-        createIdNumber,
-        validateObject
-    }
-} = self.sw
+  repo: { playerGameAllGet, teamGet },
+  validation: {
+    createPositiveWholeNumber,
+    maybe,
+    required,
+    queryTeamIdGameIdValidator,
+    createIdNumber,
+    validateObject,
+  },
+} = self.sw;
 
 const queryTeamGamePlayerValidator = {
-    ...queryTeamIdGameIdValidator,
-    playerId: maybe(createIdNumber("Query Player Id"))
-}
+  ...queryTeamIdGameIdValidator,
+  playerId: maybe(createIdNumber("Query Player Id")),
+};
 
-function getPlayerPosition(player : PlayerGame) {
-    return isOnDeckPlayer(player)
-        ? player.status.targetPosition
+function getPlayerPosition(player: PlayerGame) {
+  return isOnDeckPlayer(player)
+    ? player.status.targetPosition
     : isInPlayPlayer(player)
-        ? player.status.position
-    : null
+      ? player.status.position
+      : null;
 }
 
 export async function swapAll(query: any) {
-    let { gameId, playerId, teamId } = await validateObject(query, queryTeamGamePlayerValidator)
+  let { gameId, playerId, teamId } = await validateObject(query, queryTeamGamePlayerValidator);
 
-    let team = await teamGet(teamId)
-    let players = await playerGameAllGet(teamId, gameId, team.players.map(x => x.id))
-    let inPlayers = players.filter(isInPlayPlayer)
-    let onDeckPlayers =
-        players
-        .filter(isOnDeckPlayer)
-        .filter(x => playerId ? x.playerId === playerId : true)
-        .filter(x => x.status.targetPosition != null)
-    let game = await required(team.games.find(x => x.id === gameId), "Could not find game ID!")
-    let gameCalc = new GameTimeCalculator(game)
+  let team = await teamGet(teamId);
+  let players = await playerGameAllGet(
+    teamId,
+    gameId,
+    team.players.map((x) => x.id),
+  );
+  let inPlayers = players.filter(isInPlayPlayer);
+  let onDeckPlayers = players
+    .filter(isOnDeckPlayer)
+    .filter((x) => (playerId ? x.playerId === playerId : true))
+    .filter((x) => x.status.targetPosition != null);
+  let game = await required(
+    team.games.find((x) => x.id === gameId),
+    "Could not find game ID!",
+  );
+  let gameCalc = new GameTimeCalculator(game);
 
-    for (let player of onDeckPlayers) {
-        let calc = new PlayerGameTimeCalculator(player, gameCalc)
+  for (let player of onDeckPlayers) {
+    let calc = new PlayerGameTimeCalculator(player, gameCalc);
 
-        let currentPlayer =
-            inPlayers.find(x => x.status.position === player.status.targetPosition)
-        if (currentPlayer) {
-            let inPlayerCalc = new PlayerGameTimeCalculator(<PlayerGame>currentPlayer, gameCalc)
-            if (inPlayerCalc.hasStarted()) {
-                inPlayerCalc.end()
-            }
-            (<PlayerGame>currentPlayer).status = { _: "out" }
-            await inPlayerCalc.save(teamId)
-        }
-
-        calc.start()
-
-        let position = await createPositiveWholeNumber("Player position number")(getPlayerPosition(player))
-
-        ;(<PlayerGame>player).status = {
-            _: "inPlay",
-            position,
-        }
-        await calc.save(teamId)
+    let currentPlayer = inPlayers.find((x) => x.status.position === player.status.targetPosition);
+    if (currentPlayer) {
+      let inPlayerCalc = new PlayerGameTimeCalculator(<PlayerGame>currentPlayer, gameCalc);
+      if (inPlayerCalc.hasStarted()) {
+        inPlayerCalc.end();
+      }
+      (<PlayerGame>currentPlayer).status = { _: "out" };
+      await inPlayerCalc.save(teamId);
     }
-}
 
+    calc.start();
+
+    let position = await createPositiveWholeNumber("Player position number")(
+      getPlayerPosition(player),
+    );
+
+    (<PlayerGame>player).status = {
+      _: "inPlay",
+      position,
+    };
+    await calc.save(teamId);
+  }
+}

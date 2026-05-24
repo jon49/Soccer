@@ -1,141 +1,149 @@
-import { get, set, update, getMany, Team, Teams, TeamSingle, Revision, TeamPlayer } from "./db.js"
-import { equals, getNewId } from "./utils.js"
-import { required, reject } from "@jon49/sw/validation.js"
+import { get, set, update, getMany, Team, Teams, TeamSingle, Revision, TeamPlayer } from "./db.js";
+import { equals, getNewId } from "./utils.js";
+import { required, reject } from "@jon49/sw/validation.js";
 
-export async function teamGet(teamId: number) : Promise<Team> {
-    return required(await get<Team>(getTeamDbId(teamId)), `Could not find team with id: "${teamId}".`)
+export async function teamGet(teamId: number): Promise<Team> {
+  return required(
+    await get<Team>(getTeamDbId(teamId)),
+    `Could not find team with id: "${teamId}".`,
+  );
 }
 
-export async function teamGetAll(active: "all" | "active" | "inactive") : Promise<{teams: Team[], total: number}> {
-    let data = await get("teams")
-    if (!data) return { teams: [], total: 0 }
-    let teams_ = data.teams.filter(x => active === "all" || x.active === (active === "active"))
+export async function teamGetAll(
+  active: "all" | "active" | "inactive",
+): Promise<{ teams: Team[]; total: number }> {
+  let data = await get("teams");
+  if (!data) return { teams: [], total: 0 };
+  let teams_ = data.teams.filter((x) => active === "all" || x.active === (active === "active"));
 
-    let teams = await getMany<Team>(teams_.map(x => getTeamDbId(x.id)))
+  let teams = await getMany<Team>(teams_.map((x) => getTeamDbId(x.id)));
 
-    teams.sort((a, b) =>
-        a.year !== b.year
-            ? b.year.localeCompare(a.year)
-        : a.name.localeCompare(b.name))
-    return { teams, total: data.teams.length }
+  teams.sort((a, b) =>
+    a.year !== b.year ? b.year.localeCompare(a.year) : a.name.localeCompare(b.name),
+  );
+  return { teams, total: data.teams.length };
 }
 
 interface GameNotes extends Revision {
-    notes: string
+  notes: string;
 }
 
 export async function saveGameNotes(teamId: number, gameId: number, notes: string) {
-    let gameNotes = await getGameNotes(teamId, gameId)
-    gameNotes.notes = notes
-    await set(getGameNotesId(teamId, gameId), gameNotes)
+  let gameNotes = await getGameNotes(teamId, gameId);
+  gameNotes.notes = notes;
+  await set(getGameNotesId(teamId, gameId), gameNotes);
 }
 
-export async function getGameNotes(teamId: number, gameId: number) : Promise<GameNotes> {
-    let notes = await get<GameNotes>(getGameNotesId(teamId, gameId))
-    return notes ?? { notes: "", _rev: 0 }
+export async function getGameNotes(teamId: number, gameId: number): Promise<GameNotes> {
+  let notes = await get<GameNotes>(getGameNotesId(teamId, gameId));
+  return notes ?? { notes: "", _rev: 0 };
 }
 
 function getGameNotesId(teamId: number, gameId: number) {
-    return ["game-notes", teamId, gameId]
+  return ["game-notes", teamId, gameId];
 }
 
 export async function teamSave(o: Team) {
-    let teamsAggregate = await teamGetAll("all")
-    if (teamsAggregate.teams.find(x => x.id !== o.id && equals(x.name, o.name) && equals(x.year, o.year))) {
-        return reject(`The team "${o.name} - ${o.year}" already exists.`)
+  let teamsAggregate = await teamGetAll("all");
+  if (
+    teamsAggregate.teams.find(
+      (x) => x.id !== o.id && equals(x.name, o.name) && equals(x.year, o.year),
+    )
+  ) {
+    return reject(`The team "${o.name} - ${o.year}" already exists.`);
+  }
+
+  await set<Team>(getTeamDbId(o.id), o);
+
+  await update<Teams>("teams", (teams) => {
+    if (!teams) {
+      throw new Error(`Teams doesn't exist. This should never happen!`);
     }
-
-    await set<Team>(getTeamDbId(o.id), o)
-
-    await update<Teams>("teams", teams => {
-            if (!teams) {
-                throw new Error(`Teams doesn't exist. This should never happen!`)
-            }
-            let teamId =  teams?.teams.findIndex(x => x.id === o.id)
-            if (teamId === undefined || teamId === -1) {
-                throw new Error(`Could not find team with id: ${o.id}. This should have never happened!`)
-            }
-            teams.teams[teamId] = {
-                id: o.id,
-                name: o.name,
-                year: o.year,
-                active: o.active,
-            }
-            return teams
-        })
-    return
+    let teamId = teams?.teams.findIndex((x) => x.id === o.id);
+    if (teamId === undefined || teamId === -1) {
+      throw new Error(`Could not find team with id: ${o.id}. This should have never happened!`);
+    }
+    teams.teams[teamId] = {
+      id: o.id,
+      name: o.name,
+      year: o.year,
+      active: o.active,
+    };
+    return teams;
+  });
+  return;
 }
 
 interface TeamNew {
-    name: string
-    year: string
+  name: string;
+  year: string;
 }
 
 export function teamNew(o: TeamSingle): Team {
-    return {
-        ...o,
-        players: [],
-        games: [],
-        positions: [],
-        _rev: 0,
-        _v: 0,
-    }
+  return {
+    ...o,
+    players: [],
+    games: [],
+    positions: [],
+    _rev: 0,
+    _v: 0,
+  };
 }
 
-export async function teamsCreate(o: TeamNew) : Promise<Team> {
-    let teamsAggregate = (await teamGetAll("all")).teams
-    if (teamsAggregate.find(x => equals(x.name, o.name) && equals(x.year, o.year))) {
-        return reject(`The team "${o.name} - ${o.year}" already exists.`)
-    }
+export async function teamsCreate(o: TeamNew): Promise<Team> {
+  let teamsAggregate = (await teamGetAll("all")).teams;
+  if (teamsAggregate.find((x) => equals(x.name, o.name) && equals(x.year, o.year))) {
+    return reject(`The team "${o.name} - ${o.year}" already exists.`);
+  }
 
-    let id = getNewId(teamsAggregate.map(x => x.id))
+  let id = getNewId(teamsAggregate.map((x) => x.id));
 
-    let teamSingle : TeamSingle = {
-        ...o,
+  let teamSingle: TeamSingle = {
+    ...o,
+    id,
+    active: true,
+  };
+  let team = teamNew(teamSingle);
+
+  await Promise.all([
+    update<Teams>("teams", (o) => {
+      const teamsSingle = {
         id,
-        active: true,
-    }
-    let team = teamNew(teamSingle)
-
-    await Promise.all([
-        update<Teams>("teams", o => {
-            const teamsSingle = {
-                    id,
-                    name: team.name,
-                    year: team.year,
-                    active: team.active,
-            }
-            if (o) {
-                o.teams.push(teamsSingle)
-            } else {
-                return {
-                    _rev: 0,
-                    teams: [teamsSingle]
-                }
-            }
-            return o
-        }),
-        set(getTeamDbId(team.id), team)
-    ])
-    return team
+        name: team.name,
+        year: team.year,
+        active: team.active,
+      };
+      if (o) {
+        o.teams.push(teamsSingle);
+      } else {
+        return {
+          _rev: 0,
+          teams: [teamsSingle],
+        };
+      }
+      return o;
+    }),
+    set(getTeamDbId(team.id), team),
+  ]);
+  return team;
 }
 
-export async function playerCreate(teamId: number, name: string) : Promise<TeamPlayer> {
-    let team = await teamGet(teamId)
-    let id = getNewId(team.players.map(x => x.id))
+export async function playerCreate(teamId: number, name: string): Promise<TeamPlayer> {
+  let team = await teamGet(teamId);
+  let id = getNewId(team.players.map((x) => x.id));
 
-    let player = {
-        active: true,
-        name,
-        id,
-    }
-    team.players.push(player)
+  let player = {
+    active: true,
+    name,
+    id,
+  };
+  team.players.push(player);
 
-    await teamSave(team)
+  await teamSave(team);
 
-    return player
+  return player;
 }
 
 function getTeamDbId(teamId: number) {
-    return ["team", teamId]
+  return ["team", teamId];
 }

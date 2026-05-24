@@ -1,19 +1,13 @@
 import type { PlayerStateView } from "./shared.js";
 
-let {
-    html,
-} = self.sw
+let { html } = self.sw;
 
 export async function notPlayingPlayersView(state: PlayerStateView) {
-    let [
-        notPlayingPlayers,
-    ] = await Promise.all([
-        state.notPlayingPlayers(),
-    ])
+  let [notPlayingPlayers] = await Promise.all([state.notPlayingPlayers()]);
 
-    return notPlayingPlayers.map(x => {
-        let id = `not-playing-${x.playerId}`
-        return html`
+  return notPlayingPlayers.map((x) => {
+    let id = `not-playing-${x.playerId}`;
+    return html`
 <li id="${id}">
     <form
         method=post
@@ -22,6 +16,6 @@ export async function notPlayingPlayersView(state: PlayerStateView) {
         >
         <button _click=anchor data-anchor="#notPlaying">${x.name} ${x.number}</button>
     </form>
-</li>`})
-
+</li>`;
+  });
 }

@@ -1,34 +1,40 @@
-import type { Team, TeamPlayer } from "../server/db.js"
-import type { RoutePostHandler, RoutePage, RouteGetHandler } from "@jon49/sw/routes.middleware.js"
+import type { Team, TeamPlayer } from "../server/db.js";
+import type { RoutePostHandler, RoutePage, RouteGetHandler } from "@jon49/sw/routes.middleware.js";
 
 const {
-    html,
-    layout,
-    repo: { teamGet, playerCreate, teamSave },
-    utils: { equals, when, cssRes },
-    validation: {
-        assert, validate, validateObject,
-        createString25, dataPlayerNameActiveValidator, dataTeamNameYearActiveValidator, queryTeamIdPlayerIdValidator, queryTeamIdValidator 
-    },
-    views: { teamNav },
-} = self.sw
+  html,
+  layout,
+  repo: { teamGet, playerCreate, teamSave },
+  utils: { equals, when, cssRes },
+  validation: {
+    assert,
+    validate,
+    validateObject,
+    createString25,
+    dataPlayerNameActiveValidator,
+    dataTeamNameYearActiveValidator,
+    queryTeamIdPlayerIdValidator,
+    queryTeamIdValidator,
+  },
+  views: { teamNav },
+} = self.sw;
 
 interface PlayersEditView {
-    team: Team
+  team: Team;
 }
 
 async function start(query: any): Promise<PlayersEditView> {
-    let { teamId } = await validateObject(query, queryTeamIdValidator)
+  let { teamId } = await validateObject(query, queryTeamIdValidator);
 
-    let team = await teamGet(teamId)
+  let team = await teamGet(teamId);
 
-    return { team }
+  return { team };
 }
 
 function render(o: PlayersEditView) {
-    let { team } = o
+  let { team } = o;
 
-    return html`
+  return html`
 <h2 id=subheading>${o?.team.name ?? "Unknown"} (${o?.team.year})</h2>
 
 <nav>
@@ -61,10 +67,16 @@ function render(o: PlayersEditView) {
 </form>
 
 <h3 id=players>Players Settings</h3>
-${when(!team.players.length, () => html`<p>No players have been added.</p>`)}
+${when(
+  !team.players.length,
+  () =>
+    html`
+      <p>No players have been added.</p>
+    `,
+)}
 
 <div id=playerCards  class=grid style="--grid-item-width: 200px;">
-    ${team.players.map(x => playerView(x, team.id))}
+    ${team.players.map((x) => playerView(x, team.id))}
 </div>
 
 <form
@@ -84,14 +96,14 @@ ${when(!team.players.length, () => html`<p>No players have been added.</p>`)}
             _submit=clearAutoFocus>
     </div>
 </form>
-`
+`;
 }
 
 function playerView(player: TeamPlayer, teamId: number) {
-    let teamPlayerQuery = `teamId=${teamId}&playerId=${player.id}`
-    let playerId_: string = `edit-player${player.id}`
+  let teamPlayerQuery = `teamId=${teamId}&playerId=${player.id}`;
+  let playerId_: string = `edit-player${player.id}`;
 
-    return html`
+  return html`
 <article id="active-${playerId_}" class="player-card" hz-target="#playerCards" hz-swap="append">
     <form
         _change=submit
@@ -114,96 +126,100 @@ function playerView(player: TeamPlayer, teamId: number) {
             </label>
         </div>
     </form>
-</article>`
+</article>`;
 }
 
 const postHandlers: RoutePostHandler = {
-    async editPlayer({ data: d, query: q }) {
-        let [{ teamId, playerId }, { name: playerName, active, number }] = await validate([
-            validateObject(q, queryTeamIdPlayerIdValidator),
-            validateObject(d, dataPlayerNameActiveValidator)
-        ])
-        let team = await teamGet(teamId)
+  async editPlayer({ data: d, query: q }) {
+    let [{ teamId, playerId }, { name: playerName, active, number }] = await validate([
+      validateObject(q, queryTeamIdPlayerIdValidator),
+      validateObject(d, dataPlayerNameActiveValidator),
+    ]);
+    let team = await teamGet(teamId);
 
-        let playerIndex = team.players.findIndex(x => x.id === playerId)
-        await assert.isFalse(playerIndex === -1, `Unknown player "${playerId}"`)
-        let player = team.players[playerIndex]
+    let playerIndex = team.players.findIndex((x) => x.id === playerId);
+    await assert.isFalse(playerIndex === -1, `Unknown player "${playerId}"`);
+    let player = team.players[playerIndex];
 
-        // Check for duplicates
-        let existingPlayer = team.players.find(x => equals(x.name, playerName))
-        await assert.isFalse(
-            !equals(player.name, playerName) && !!existingPlayer,
-            `The player name "${existingPlayer?.name}" has already been chosen.`)
+    // Check for duplicates
+    let existingPlayer = team.players.find((x) => equals(x.name, playerName));
+    await assert.isFalse(
+      !equals(player.name, playerName) && !!existingPlayer,
+      `The player name "${existingPlayer?.name}" has already been chosen.`,
+    );
 
-        player.name = playerName
-        player.active = active
-        player.number = number
-        // Player name will also need to be updated for the individual player when implemented!
-        await teamSave(team)
+    player.name = playerName;
+    player.active = active;
+    player.number = number;
+    // Player name will also need to be updated for the individual player when implemented!
+    await teamSave(team);
 
-        return { status: 200 }
-    },
+    return { status: 200 };
+  },
 
-    async addPlayer({ data, query }) {
-        let [{ teamId }, { newPlayerName }] = await validate([
-            validateObject(query, queryTeamIdValidator),
-            validateObject(data, {  newPlayerName: createString25("Player Name") })
-        ])
+  async addPlayer({ data, query }) {
+    let [{ teamId }, { newPlayerName }] = await validate([
+      validateObject(query, queryTeamIdValidator),
+      validateObject(data, { newPlayerName: createString25("Player Name") }),
+    ]);
 
-        let team = await teamGet(teamId)
+    let team = await teamGet(teamId);
 
-        let existingPlayer = team.players.find(x => equals(x.name, newPlayerName))
-        await assert.isFalse(!!existingPlayer, `The player name "${existingPlayer?.name}" has already been chosen.`)
+    let existingPlayer = team.players.find((x) => equals(x.name, newPlayerName));
+    await assert.isFalse(
+      !!existingPlayer,
+      `The player name "${existingPlayer?.name}" has already been chosen.`,
+    );
 
-        let player = await playerCreate(teamId, newPlayerName)
+    let player = await playerCreate(teamId, newPlayerName);
 
-        return {
-            status: 200,
-            body: playerView(player, teamId),
-        }
-    },
+    return {
+      status: 200,
+      body: playerView(player, teamId),
+    };
+  },
 
-    async editTeam({ data, query }) {
-        let [{ name: newTeamName, year, active }, { teamId }] = await validate([
-            validateObject(data, dataTeamNameYearActiveValidator),
-            validateObject(query, queryTeamIdValidator),
-        ])
+  async editTeam({ data, query }) {
+    let [{ name: newTeamName, year, active }, { teamId }] = await validate([
+      validateObject(data, dataTeamNameYearActiveValidator),
+      validateObject(query, queryTeamIdValidator),
+    ]);
 
-        let team = await teamGet(teamId)
-        team.active = active
-        team.year = year
-        team.name = newTeamName
-        await teamSave(team)
-        return { status: 200 }
-    }
-}
+    let team = await teamGet(teamId);
+    team.active = active;
+    team.year = year;
+    team.name = newTeamName;
+    await teamSave(team);
+    return { status: 200 };
+  },
+};
 
 const getHandlers: RouteGetHandler = {
-    css() {
-        return cssRes(
-`.player-card {
+  css() {
+    return cssRes(
+      `.player-card {
     min-width: 200px;
 }
 .basis-175 {
     flex-basis: 175%;
-}`)
-    },
+}`,
+    );
+  },
 
-    async get({ query }) {
-        let result = await start(query)
-        return layout({
-            cssLinks: ["?handler=css"],
-            main: render(result),
-            nav: teamNav(result.team.id),
-            title: `Players - ${result.team.name} (${result.team.year})}`
-        })
-    },
-}
+  async get({ query }) {
+    let result = await start(query);
+    return layout({
+      cssLinks: ["?handler=css"],
+      main: render(result),
+      nav: teamNav(result.team.id),
+      title: `Players - ${result.team.name} (${result.team.year})}`,
+    });
+  },
+};
 
 const route: RoutePage = {
-    get: getHandlers,
-    post: postHandlers
-}
+  get: getHandlers,
+  post: postHandlers,
+};
 
-export default route
-
+export default route;

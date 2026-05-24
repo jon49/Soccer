@@ -1,77 +1,128 @@
-import { useRoutes } from "@jon49/sw/routes.middleware.js"
-import { useResponse } from "@jon49/sw/response.middleware.js"
-import { swFramework } from "@jon49/sw/web-framework.js"
-import { loginView, syncCountView } from "./pages/_layout.html.js"
-import { updated as dbUpdated } from "./server/global-model.js"
-import html from "html-template-tag-stream"
+import { useRoutes } from "@jon49/sw/routes.middleware.js";
+import { useResponse } from "@jon49/sw/response.middleware.js";
+import { swFramework } from "@jon49/sw/web-framework.js";
+import { loginView, syncCountView } from "./pages/_layout.html.js";
+import { updated as dbUpdated } from "./server/global-model.js";
+import html from "html-template-tag-stream";
 
 // @ts-ignore
-let version: string = self.sw?.version ?? "unknown"
+let version: string = self.sw?.version ?? "unknown";
+const isDev = self.location.hostname === "localhost";
 
-swFramework.use(useRoutes)
-swFramework.use(
-  async function useHtmz(req, res, ctx): Promise<void> {
-    if (req.method !== "POST") return
+if (isDev) {
+  let lastSwContent = "";
+  swFramework.use(async function devMode(req, res): Promise<void | false> {
+    // Refresh file-map links from network
+    try {
+      let swRes = await fetch("/web/sw.js");
+      let swContent = await swRes.text();
+      if (swContent !== lastSwContent) {
+        lastSwContent = swContent;
+        let match = swContent.match(/importScripts\("([^"]+)"/);
+        if (match) {
+          let mapRes = await fetch(match[1]);
+          let mapContent = await mapRes.text();
+          let linksMatch = mapContent.match(/links: (\[.*\])/);
+          if (linksMatch) {
+            let newLinks = JSON.parse(linksMatch[1]);
+            // Mutate in-place so the reference in routes.middleware stays current
+            let links = (self.sw as any).links;
+            links.length = 0;
+            links.push(...newLinks);
+          }
+        }
+      }
+    } catch {}
 
-    let updated = await dbUpdated()
-
-    let messages = (ctx.messages || []) as string[]
-
-    if (res.error) {
-      messages.push(res.error)
+    // Serve static files directly from network using resolved hashed URL
+    // (bypasses cacheResponse which incorrectly fetches the unhashed URL)
+    let url = new URL(req.url);
+    let p = url.pathname;
+    if (p.startsWith("/web/") && p.lastIndexOf("/") < p.lastIndexOf(".")) {
+      let links = (self.sw as any).links;
+      let hashed = links?.find((x: any) => x.url === p)?.file || p;
+      res.response = await fetch(hashed);
+      return false;
     }
+  });
+}
 
-    res.body = html`${res.body}
+swFramework.use(useRoutes);
+swFramework.use(async function useHtmz(req, res, ctx): Promise<void> {
+  if (req.method !== "POST") return;
+
+  let updated = await dbUpdated();
+
+  let messages = (ctx.messages || []) as string[];
+
+  if (res.error) {
+    messages.push(res.error);
+  }
+
+  res.body = html`${res.body}
 <div id=toasts>
-    ${messages.map(x => html`<dialog class=toast _load=toast open><p class=message>${x}</p></dialog>`)}
+    ${messages.map((x) => html`<dialog class=toast _load=toast open><p class=message>${x}</p></dialog>`)}
 </div>
 ${res.status === 401 ? html`${loginView()}` : null}
 ${syncCountView(updated.length)}
-`})
-swFramework.use(useResponse)
+`;
+});
+swFramework.use(useResponse);
 
-self.addEventListener('message', async function (event) {
+self.addEventListener("message", async function (event) {
   if (event.data === "skipWaiting") {
     // @ts-ignore
-    self.skipWaiting()
-  }
-})
-
-self.addEventListener("install", (e: Event) => {
-  console.log("Service worker installed.")
-
-  // @ts-ignore
-  e.waitUntil(caches.open(version).then(async cache => {
-    console.log("Caching files.")
-    // @ts-ignore
-    return cache.addAll(self.sw.links.map(x => x.file))
-  }))
-
-})
-
-// @ts-ignore
-self.addEventListener("fetch", (e: FetchEvent) => {
-  e.respondWith(swFramework.start(e))
-})
-
-// @ts-ignore
-self.addEventListener("activate", async (e: ExtendableEvent) => {
-  console.log("Service worker activated.")
-
-  let keys = await caches.keys(),
-    deleteMe =
-      keys
-        .map((x: string) => ((version !== x) && caches.delete(x)))
-        .filter(x => x)
-  if (deleteMe.length === 0) return
-  e.waitUntil(Promise.all(deleteMe))
-})
-
-self.addEventListener('message', event => {
-  if (event.data.action === 'skipWaiting') {
-    console.log("Skip waiting!")
-    // @ts-ignore
-    return self.skipWaiting()
+    self.skipWaiting();
   }
 });
 
+self.addEventListener("install", (e: Event) => {
+  console.log("Service worker installed.");
+
+  // @ts-ignore
+  e.waitUntil(
+    isDev
+      ? // @ts-ignore
+        self.skipWaiting()
+      : caches.open(version).then(async (cache) => {
+          console.log("Caching files.");
+          // @ts-ignore
+          return cache.addAll(self.sw.links.map((x) => x.file));
+        }),
+  );
+});
+
+// @ts-ignore
+self.addEventListener("fetch", (e: FetchEvent) => {
+  e.respondWith(swFramework.start(e));
+});
+
+// @ts-ignore
+self.addEventListener("activate", async (e: ExtendableEvent) => {
+  console.log("Service worker activated.");
+
+  if (isDev) {
+    let keys = await caches.keys();
+    e.waitUntil(
+      Promise.all([
+        ...keys.map((key) => caches.delete(key)),
+        // @ts-ignore
+        self.clients.claim(),
+      ]),
+    );
+    return;
+  }
+
+  let keys = await caches.keys(),
+    deleteMe = keys.map((x: string) => version !== x && caches.delete(x)).filter((x) => x);
+  if (deleteMe.length === 0) return;
+  e.waitUntil(Promise.all(deleteMe));
+});
+
+self.addEventListener("message", (event) => {
+  if (event.data.action === "skipWaiting") {
+    console.log("Skip waiting!");
+    // @ts-ignore
+    return self.skipWaiting();
+  }
+});

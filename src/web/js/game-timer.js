@@ -1,62 +1,62 @@
 // @ts-check
 
 class Timer {
+  times = new Map();
 
-    times = new Map()
+  constructor() {}
 
-    constructor() { }
+  /**
+   * @param {GameTimer} instance
+   * */
+  add(instance) {
+    let time = instance.interval;
+    if (this.times.get(time)?.add(instance)) return;
 
-    /**
-    * @param {GameTimer} instance
-    * */
-    add(instance) {
-        let time = instance.interval
-        if (this.times.get(time)?.add(instance)) return
+    let m = new Set([instance]);
+    this.times.set(time, m);
+    let interval = setInterval(() => {
+      if (m.size === 0) {
+        this.times.delete(time);
+        clearInterval(interval);
+        return;
+      }
+      requestAnimationFrame(() => {
+        let currentTime = +new Date();
+        for (let instance of m) {
+          // When WeakMap allows iterating, this can be changed to a
+          // WeakMap and the instance can be removed when it is
+          // garbage collected
+          if (!instance.el.isConnected) {
+            m.delete(instance);
+            continue;
+          }
+          instance.update(currentTime);
+        }
+        if (m.size === 0) {
+          this.times.delete(time);
+          clearInterval(interval);
+        }
+      });
+    }, time);
+  }
 
-        let m = new Set([instance])
-        this.times.set(time, m)
-        let interval = setInterval(() => {
-            if (m.size === 0) {
-                this.times.delete(time)
-                clearInterval(interval)
-                return
-            }
-            requestAnimationFrame(() => {
-                let currentTime = +new Date()
-                for (let instance of m) {
-                    // When WeakMap allows iterating, this can be changed to a
-                    // WeakMap and the instance can be removed when it is
-                    // garbage collected
-                    if (!instance.el.isConnected) {
-                        m.delete(instance)
-                        continue
-                    }
-                    instance.update(currentTime)
-                }
-                if (m.size === 0) {
-                    this.times.delete(time)
-                    clearInterval(interval)
-                }
-            })
-        }, time)
-    }
-
-    /**
-    * @param {GameTimer} instance
-    * */
-    remove(instance) {
-        let time = instance.interval
-        let m = this.times.get(time)
-        if (!m) return
-        m.delete(instance)
-        if (m.size === 0) this.times.delete(time)
-    }
+  /**
+   * @param {GameTimer} instance
+   * */
+  remove(instance) {
+    let time = instance.interval;
+    let m = this.times.get(time);
+    if (!m) return;
+    m.delete(instance);
+    if (m.size === 0) this.times.delete(time);
+  }
 }
 
-let timer = new Timer()
+let timer = new Timer();
 
-document.head.insertAdjacentHTML("beforeend",
-`<style>
+document.head.insertAdjacentHTML(
+  "beforeend",
+  `<style>
 .flash {
     background-color: yellow;
     animation: 2s flash infinite;
@@ -70,52 +70,53 @@ span {
         background-color: transparent;
     }
 }
-</style>`)
+</style>`,
+);
 
 class GameTimer {
-    /**
-     * @param {HTMLElement} el 
-     */
-    constructor(el) {
-        this.el = el
+  /**
+   * @param {HTMLElement} el
+   */
+  constructor(el) {
+    this.el = el;
 
-        this.interval = +(el.dataset.interval ?? 0) || 1e3
+    this.interval = +(el.dataset.interval ?? 0) || 1e3;
 
-        document.addEventListener("hz:completed", this)
+    document.addEventListener("hz:completed", this);
 
-        this.update(Date.now())
-    }
+    this.update(Date.now());
+  }
 
-    handleEvent() {
-        this.update(Date.now())
-    }
+  handleEvent() {
+    this.update(Date.now());
+  }
 
-    // Use a disconnected callback here instead. Will need to manually register
-    // the callback on the element and remove it when the element is removed
-    // from the DOM
+  // Use a disconnected callback here instead. Will need to manually register
+  // the callback on the element and remove it when the element is removed
+  // from the DOM
 
-    /**
-     * @param {number} currentTime
-     */
-    update(currentTime) {
-        requestAnimationFrame(() => {
-            let el = this.el
-            let { start, total, static: static_ } = el.dataset
-            let start_ = +(start || 0) || currentTime
-            let total_ = +(total || 0)
-            if (el.hasAttribute("data-flash")) {
-                el.classList.add("flash")
-            } else {
-                el.classList.remove("flash")
-            }
-            if (static_ !== "") {
-                timer.add(this)
-            } else {
-                timer.remove(this)
-            }
-            el.textContent = formatTime(currentTime, start_, total_)
-        })
-    }
+  /**
+   * @param {number} currentTime
+   */
+  update(currentTime) {
+    requestAnimationFrame(() => {
+      let el = this.el;
+      let { start, total, static: static_ } = el.dataset;
+      let start_ = +(start || 0) || currentTime;
+      let total_ = +(total || 0);
+      if (el.hasAttribute("data-flash")) {
+        el.classList.add("flash");
+      } else {
+        el.classList.remove("flash");
+      }
+      if (static_ !== "") {
+        timer.add(this);
+      } else {
+        timer.remove(this);
+      }
+      el.textContent = formatTime(currentTime, start_, total_);
+    });
+  }
 }
 
 /**
@@ -124,17 +125,17 @@ class GameTimer {
  * @param {number} total
  */
 function formatTime(currentTime, start, total) {
-    let grandTotal = total + (currentTime - start)
-    let time = new Date(grandTotal)
-    let seconds = `${time.getSeconds()}`.padStart(2, "0")
-    let minutes = `${time.getMinutes()}`.padStart(2, "0")
-    let hours = grandTotal/1e3/60/60|0
-    return `${ hours ? `${hours}:` : "" }${minutes}:${seconds}`
+  let grandTotal = total + (currentTime - start);
+  let time = new Date(grandTotal);
+  let seconds = `${time.getSeconds()}`.padStart(2, "0");
+  let minutes = `${time.getMinutes()}`.padStart(2, "0");
+  let hours = (grandTotal / 1e3 / 60 / 60) | 0;
+  return `${hours ? `${hours}:` : ""}${minutes}:${seconds}`;
 }
 
 // @ts-ignore
 window.app.gameTimer = (_, el) => {
-  if (el._) return
-  el._ = true
-  new GameTimer(el)
-}
+  if (el._) return;
+  el._ = true;
+  new GameTimer(el);
+};

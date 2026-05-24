@@ -1,21 +1,22 @@
-import type { RouteGetArgs } from "@jon49/sw/routes.middleware.js"
-import playMatchView from "./_play-match-view.js"
-import { PlayerStateView } from "./shared.js"
+import type { RouteGetArgs } from "@jon49/sw/routes.middleware.js";
+import playMatchView from "./_play-match-view.js";
+import { PlayerStateView } from "./shared.js";
 
 let {
-    globalDb: db,
-    html,
-    utils: { when },
-    validation: { queryTeamIdGameIdValidator, validateObject }
-} = self.sw
+  html,
+  validation: { queryTeamIdGameIdValidator, validateObject },
+} = self.sw;
 
-export async function play({ app, query, head }: RouteGetArgs & { head?: string, app?: Promise<AsyncGenerator<any, void, unknown>> }) {
-    let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator)
-    let state = new PlayerStateView(teamId, gameId)
-    let { theme } = await db.settings()
-    return html`
+export async function play({
+  app,
+  query,
+  head,
+}: RouteGetArgs & { head?: string; app?: Promise<AsyncGenerator<any, void, unknown>> }) {
+  let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator);
+  let state = new PlayerStateView(teamId, gameId);
+  return html`
 <!DOCTYPE html>
-<html $${when(theme, x => x == null ? null : `data-theme=${x}`)}>
+<html>
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -23,7 +24,6 @@ export async function play({ app, query, head }: RouteGetArgs & { head?: string,
     <base target=htmz>
     <title>Match - Soccer</title>
     <link rel="icon" type="image/x-icon" href="/web/images/soccer.ico">
-    <style>@import url("/web/css/pico.blue.min.css") layer(base);</style>
     <link href="/web/css/app.css" rel=stylesheet>
     $${head}
     <style>
@@ -71,7 +71,7 @@ export async function play({ app, query, head }: RouteGetArgs & { head?: string,
 <body>
 <script>window.app = {}</script>
 
-${app ? app :  playMatchView(state)}
+${app ? app : playMatchView(state)}
 
 <div id=temp></div>
 
@@ -79,5 +79,5 @@ ${app ? app :  playMatchView(state)}
 
 </body>
 </html>
-`
+`;
 }

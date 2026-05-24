@@ -1,20 +1,18 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-    <head>
-        <title>Forgot Password</title>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <link href="/web/css/index.css" rel="stylesheet">
-        <link href="/web/css/app.css" rel="stylesheet">
-    </head>
-    <body>
+  <head>
+    <title>Forgot Password</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link href="/web/css/app.css" rel="stylesheet" />
+  </head>
+  <body>
+    <h1>Request Password Reset</h1>
+    <main></main>
 
-        <h1>Request Password Reset</h1>
-        <main></main>
-
-<script>
-    document.querySelector('main').innerHTML = `
-<form method="post" action="/api/authentication/forgot-password">
+    <script>
+      document.querySelector("main").innerHTML = `
+<form method="post" action="/api/auth/v1/reset_password/request">
     <div>
         <label for="email">Email</label>
         <input type="email" name="email" id="email" required>
@@ -26,11 +24,9 @@
     gmail after submitting this form.</p>
 
 <p>Already have an account? <a href="/login">Login here.</a></p>
-<p>First time user? <a href="/register">Register here.</a></p>`
-</script>
+<p>First time user? <a href="/register">Register here.</a></p>`;
+    </script>
 
     <script src="/js/app.js"></script>
-    
-    </body>
+  </body>
 </html>
-

@@ -1,129 +1,126 @@
 import type { Game, PlayerGame, Team } from "../../server/db.js";
-import { GameTimeCalculator, PlayerGameTimeCalculator, isInPlayPlayer, isOnDeckPlayer } from "./shared.js";
+import {
+  GameTimeCalculator,
+  PlayerGameTimeCalculator,
+  isInPlayPlayer,
+  isOnDeckPlayer,
+} from "./shared.js";
 
 let {
-    repo: { playerGameAllGet, teamGet, playerGameSave, positionGetAll },
-    validation: {
-        required,
-        queryTeamIdGameIdValidator,
-        createIdNumber,
-        validateObject
-    }
-} = self.sw
+  repo: { playerGameAllGet, teamGet, playerGameSave, positionGetAll },
+  validation: { required, queryTeamIdGameIdValidator, createIdNumber, validateObject },
+} = self.sw;
 
 const queryTeamGamePlayerValidator = {
-    ...queryTeamIdGameIdValidator,
-    playerId: createIdNumber("Query Player Id")
-}
+  ...queryTeamIdGameIdValidator,
+  playerId: createIdNumber("Query Player Id"),
+};
 
 export default async function targetPosition(query: any, targetPosition: number) {
-        let { gameId, playerId, teamId } =
-            await validateObject(query, queryTeamGamePlayerValidator)
+  let { gameId, playerId, teamId } = await validateObject(query, queryTeamGamePlayerValidator);
 
-        let [team, players] =
-            await Promise.all([
-                teamGet(teamId),
-                playerGameAllGet(teamId, gameId, [playerId])])
-        let game = await required(team.games.find(x => x.id === gameId), "Could not find game ID!")
-        let player = await required(players.find(x => x.playerId === playerId), "Could not find player ID!")
+  let [team, players] = await Promise.all([
+    teamGet(teamId),
+    playerGameAllGet(teamId, gameId, [playerId]),
+  ]);
+  let game = await required(
+    team.games.find((x) => x.id === gameId),
+    "Could not find game ID!",
+  );
+  let player = await required(
+    players.find((x) => x.playerId === playerId),
+    "Could not find player ID!",
+  );
 
-        await _targetPosition(player, team, game, targetPosition)
+  await _targetPosition(player, team, game, targetPosition);
 }
 
-async function _targetPosition(
-    player: PlayerGame,
-    team: Team,
-    game: Game,
-    targetPosition: number) {
+async function _targetPosition(player: PlayerGame, team: Team, game: Game, targetPosition: number) {
+  let [players, { positions }] = await Promise.all([
+    playerGameAllGet(team.id, game.id, []),
+    positionGetAll(team.id),
+  ]);
 
-    let [ players, { positions } ] = await Promise.all([
-        playerGameAllGet(team.id, game.id, []),
-        positionGetAll(team.id)
-    ])
-
-    await swapWhenInGame(player, players, positions.flat(), team, targetPosition, game)
-    await swapToOnDeck(player, players, positions.flat(), team, targetPosition, game)
+  await swapWhenInGame(player, players, positions.flat(), team, targetPosition, game);
+  await swapToOnDeck(player, players, positions.flat(), team, targetPosition, game);
 }
 
 async function swapToOnDeck(
-    player: PlayerGame,
-    players: PlayerGame[],
-    positions: string[],
-    team: Team,
-    targetPosition: number,
-    game: Game) {
+  player: PlayerGame,
+  players: PlayerGame[],
+  positions: string[],
+  team: Team,
+  targetPosition: number,
+  game: Game,
+) {
+  if (!(player.status?._ === "onDeck" || player.status?._ === "out" || !player.status?._)) return;
 
-    if (!(player.status?._ === "onDeck" || player.status?._ === "out" || !player.status?._)) return
+  let onDeckPlayer = players
+    .filter(isOnDeckPlayer)
+    .find((x) => x.status.targetPosition === targetPosition);
 
-    let onDeckPlayer =
-        players
-        .filter(isOnDeckPlayer)
-        .find(x => x.status.targetPosition === targetPosition)
+  if (onDeckPlayer) {
+    (<PlayerGame>onDeckPlayer).status = { _: "out" };
+    await playerGameSave(team.id, onDeckPlayer);
+  }
 
-    if (onDeckPlayer) {
-        (<PlayerGame>onDeckPlayer).status = { _: "out" }
-        await playerGameSave(team.id, onDeckPlayer)
-    }
+  player.status = {
+    _: "onDeck",
+    targetPosition,
+  };
 
-    player.status = {
-        _: "onDeck",
-        targetPosition,
-    }
+  let playerCalc = new PlayerGameTimeCalculator(player, new GameTimeCalculator(game));
+  if (isOnDeckPlayer(player)) {
+    playerCalc.position(positions[targetPosition]);
+  }
 
-    let playerCalc = new PlayerGameTimeCalculator(player, new GameTimeCalculator(game))
-    if (isOnDeckPlayer(player)) {
-        playerCalc.position(positions[targetPosition])
-    }
-
-    await playerGameSave(team.id, player)
+  await playerGameSave(team.id, player);
 }
 
 async function swapWhenInGame(
-    player: PlayerGame,
-    players: PlayerGame[],
-    positions: string[],
-    team: Team,
-    targetPosition: number,
-    game: Game) {
+  player: PlayerGame,
+  players: PlayerGame[],
+  positions: string[],
+  team: Team,
+  targetPosition: number,
+  game: Game,
+) {
+  if (player.status?._ !== "inPlay") return;
 
-    if (player.status?._ !== "inPlay") return
+  let inGamePlayer = players
+    .filter(isInPlayPlayer)
+    .find((x) => x.status.position === targetPosition);
 
-    let inGamePlayer =
-        players
-        .filter(isInPlayPlayer)
-        .find(x => x.status.position === targetPosition)
+  if (inGamePlayer) {
+    inGamePlayer.status.position = player.status.position;
+  }
+  player.status.position = targetPosition;
 
-    if (inGamePlayer) {
-        inGamePlayer.status.position = player.status.position
-    }
-    player.status.position = targetPosition
+  let gameCalc = new GameTimeCalculator(game);
+  let playerCalc = new PlayerGameTimeCalculator(player, gameCalc);
+  let gameOn = playerCalc.isGameOn();
 
-    let gameCalc = new GameTimeCalculator(game)
-    let playerCalc = new PlayerGameTimeCalculator(player, gameCalc)
-    let gameOn = playerCalc.isGameOn()
+  let positionName = positions[targetPosition];
+  if (gameOn) {
+    playerCalc.end();
+    playerCalc.position(positionName);
+    playerCalc.start();
+  } else {
+    playerCalc.position(positionName);
+  }
 
-    let positionName = positions[targetPosition]
+  if (inGamePlayer) {
+    let inGamePlayerCalc = new PlayerGameTimeCalculator(inGamePlayer, gameCalc);
+    let positionName = positions[player.status.position];
     if (gameOn) {
-        playerCalc.end()
-        playerCalc.position(positionName)
-        playerCalc.start()
+      inGamePlayerCalc.end();
+      inGamePlayerCalc.position(positionName);
+      inGamePlayerCalc.start();
     } else {
-        playerCalc.position(positionName)
+      inGamePlayerCalc.position(positionName);
     }
+    await inGamePlayerCalc.save(team.id);
+  }
 
-    if (inGamePlayer) {
-        let inGamePlayerCalc = new PlayerGameTimeCalculator(inGamePlayer, gameCalc)
-        let positionName = positions[player.status.position]
-        if (gameOn) {
-            inGamePlayerCalc.end()
-            inGamePlayerCalc.position(positionName)
-            inGamePlayerCalc.start()
-        } else {
-            inGamePlayerCalc.position(positionName)
-        }
-        await inGamePlayerCalc.save(team.id)
-    }
-
-    await playerCalc.save(team.id)
+  await playerCalc.save(team.id);
 }
-

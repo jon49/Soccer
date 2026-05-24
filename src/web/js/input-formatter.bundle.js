@@ -1,2 +1,1 @@
-import "simple-input-formatter"
-
+import "simple-input-formatter";

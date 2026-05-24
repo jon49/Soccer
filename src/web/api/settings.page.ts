@@ -1,39 +1,27 @@
-import type { RoutePage, RoutePostHandler } from "@jon49/sw/routes.middleware.js"
+import type { RoutePage, RoutePostHandler } from "@jon49/sw/routes.middleware.js";
 
 const {
-    globalDb: db,
-    html,
-    views: { themeView },
-} = self.sw
+  globalDb: db,
+  html,
+  views: { themeView },
+} = self.sw;
 
 const postHandlers: RoutePostHandler = {
-    async theme() {
-        let { theme } = await db.settings()
-        theme = theme === "dark" ? "light" : "dark"
+  async theme({ data }) {
+    const submitted = (data as { theme?: string } | undefined)?.theme;
+    const theme = submitted === "dark" ? "dark" : "light";
 
-        await db.setTheme(theme, null)
+    await db.setTheme(theme, null);
 
-        return {
-            status: 200,
-            body: html`${themeView(theme)}
-            <i _load=theme hz-target="#temp" hz-swap="append" data-theme="${theme}"></i>`,
-        }
-    },
-    async initTheme({ query }) {
-        const theme = query.theme === "dark" ? "dark" : "light"
-
-        await db.setTheme(theme, null)
-
-        return {
-            status: 200,
-            body: html`${themeView(theme)}
-            <i _load=theme hz-target="#temp" hz-swap="append" data-theme="${theme}"></i>`,
-        }
-    },
-}
+    return {
+      status: 200,
+      body: html`${themeView(theme)}`,
+    };
+  },
+};
 
 const route: RoutePage = {
-    post: postHandlers
-}
+  post: postHandlers,
+};
 
-export default route
+export default route;
