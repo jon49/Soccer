@@ -27,6 +27,13 @@ const render = async () => {
     </p>
   </div>
   <button>Save</button>
+</form>
+
+<h3>Data</h3>
+<form method=get action="/web/api/settings" target=_self>
+  <input type=hidden name=handler value=export>
+  <p><button>Download data as JSON</button></p>
+  <p>Saves all local app data to a JSON file on your device.</p>
 </form>`;
 };
 

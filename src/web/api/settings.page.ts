@@ -1,4 +1,5 @@
 import type { RoutePage, RoutePostHandler } from "@jon49/sw/routes.middleware.js";
+import { entries } from "idb-keyval";
 
 const {
   globalDb: db,
@@ -31,7 +32,26 @@ const postHandlers: RoutePostHandler = {
   },
 };
 
+async function exportData() {
+  let all = await entries();
+  let data: Record<string, unknown> = {};
+  for (let [k, v] of all) {
+    let key = Array.isArray(k) ? JSON.stringify(k) : String(k);
+    data[key] = v;
+  }
+  let json = JSON.stringify(data, (_, v) => (v instanceof Set ? Array.from(v) : v), 2);
+  let filename = `soccer-data-${new Date().toISOString().slice(0, 10)}.json`;
+  return {
+    body: json,
+    headers: {
+      "Content-Type": "application/json",
+      "Content-Disposition": `attachment; filename="${filename}"`,
+    },
+  };
+}
+
 const route: RoutePage = {
+  get: { export: exportData },
   post: postHandlers,
 };
 
