@@ -21,7 +21,7 @@ export function themeView(theme: Theme | undefined) {
   // below must live inside an element with that id for the swap to
   // actually flip the theme.
   return html`<span id=theme>
-<button form=post formaction="/web/api/settings?handler=theme" name=theme value="${next}">$${icon}</button>
+<button form=post formaction="/web/settings?handler=theme" name=theme value="${next}">$${icon}</button>
 ${when(isSet, () => html`<input type=radio name=theme value="${current}" checked hidden>`)}
 ${when(
   !isSet,
