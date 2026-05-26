@@ -3,7 +3,7 @@
 class Timer {
   times = new Map();
 
-  constructor() {}
+  constructor() { }
 
   /**
    * @param {GameTimer} instance
@@ -23,18 +23,7 @@ class Timer {
       requestAnimationFrame(() => {
         let currentTime = +new Date();
         for (let instance of m) {
-          // When WeakMap allows iterating, this can be changed to a
-          // WeakMap and the instance can be removed when it is
-          // garbage collected
-          if (!instance.el.isConnected) {
-            m.delete(instance);
-            continue;
-          }
           instance.update(currentTime);
-        }
-        if (m.size === 0) {
-          this.times.delete(time);
-          clearInterval(interval);
         }
       });
     }, time);
@@ -53,6 +42,38 @@ class Timer {
 }
 
 let timer = new Timer();
+
+class DisconnectWatcher {
+  /** @type {Map<HTMLElement, { disconnectedCallback: () => void }>} */
+  registry = new Map();
+
+  constructor() {
+    let observer = new MutationObserver((mutations) => {
+      if (this.registry.size === 0) return;
+      for (let mutation of mutations) {
+        for (let node of mutation.removedNodes) {
+          for (let [el, instance] of this.registry) {
+            if (node.contains(el)) {
+              this.registry.delete(el);
+              instance.disconnectedCallback();
+            }
+          }
+        }
+      }
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+  }
+
+  /**
+   * @param {HTMLElement} el
+   * @param {{ disconnectedCallback: () => void }} instance
+   */
+  register(el, instance) {
+    this.registry.set(el, instance);
+  }
+}
+
+let watcher = new DisconnectWatcher();
 
 document.head.insertAdjacentHTML(
   "beforeend",
@@ -83,6 +104,7 @@ class GameTimer {
     this.interval = +(el.dataset.interval ?? 0) || 1e3;
 
     document.addEventListener("hz:completed", this);
+    watcher.register(el, this);
 
     this.update(Date.now());
   }
@@ -91,31 +113,30 @@ class GameTimer {
     this.update(Date.now());
   }
 
-  // Use a disconnected callback here instead. Will need to manually register
-  // the callback on the element and remove it when the element is removed
-  // from the DOM
+  disconnectedCallback() {
+    timer.remove(this);
+    document.removeEventListener("hz:completed", this);
+  }
 
   /**
    * @param {number} currentTime
    */
   update(currentTime) {
-    requestAnimationFrame(() => {
-      let el = this.el;
-      let { start, total, static: static_ } = el.dataset;
-      let start_ = +(start || 0) || currentTime;
-      let total_ = +(total || 0);
-      if (el.hasAttribute("data-flash")) {
-        el.classList.add("flash");
-      } else {
-        el.classList.remove("flash");
-      }
-      if (static_ !== "") {
-        timer.add(this);
-      } else {
-        timer.remove(this);
-      }
-      el.textContent = formatTime(currentTime, start_, total_);
-    });
+    let el = this.el;
+    let { start, total, static: static_ } = el.dataset;
+    let start_ = +(start || 0) || currentTime;
+    let total_ = +(total || 0);
+    if (el.hasAttribute("data-flash")) {
+      el.classList.add("flash");
+    } else {
+      el.classList.remove("flash");
+    }
+    if (static_ !== "") {
+      timer.add(this);
+    } else {
+      timer.remove(this);
+    }
+    el.textContent = formatTime(currentTime, start_, total_);
   }
 }
 
