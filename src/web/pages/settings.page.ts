@@ -14,7 +14,7 @@ const render = async () => {
   return html`
 <h2>Settings</h2>
 
-<form class=form method=post action="/web/settings?handler=autoSync">
+<form class=form method=post action="/web/settings?handler=autoSync" onchange="this.submit()">
   <div>
     <label>
       <input
@@ -28,7 +28,6 @@ const render = async () => {
       can still tap the sync button to sync manually.
     </p>
   </div>
-  <button>Save</button>
 </form>
 
 <h3>Data</h3>
