@@ -3,6 +3,7 @@ import playMatchView from "./_play-match-view.js";
 import { PlayerStateView } from "./shared.js";
 
 let {
+  globalDb,
   html,
   validation: { queryTeamIdGameIdValidator, validateObject },
 } = self.sw;
@@ -14,6 +15,7 @@ export async function play({
 }: RouteGetArgs & { head?: string; app?: Promise<AsyncGenerator<any, void, unknown>> }) {
   let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator);
   let state = new PlayerStateView(teamId, gameId);
+  let { disableAutoSyncDuringGame } = await globalDb.settings();
   return html`
 <!DOCTYPE html>
 <html>
@@ -21,6 +23,7 @@ export async function play({
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="auto-sync-disable-during-game" content="${disableAutoSyncDuringGame ? "1" : "0"}">
     <base target=htmz>
     <title>Match - Soccer</title>
     <link rel="icon" type="image/x-icon" href="/web/images/soccer.ico">

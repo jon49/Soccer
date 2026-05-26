@@ -13,6 +13,7 @@ const routes: Route[] = [
   { route: /\/positions\/$/, file: "/web/pages/positions.page.js" },
   { route: /\/players\/$/, file: "/web/pages/players.page.js" },
   { route: /\/web\/$/, file: "/web/pages/index.page.js" },
+  { route: /\/settings\/$/, file: "/web/pages/settings.page.js" },
 ];
 
 let app = {

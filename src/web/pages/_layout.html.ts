@@ -59,11 +59,12 @@ const render = async ({
   title,
   bodyAttr,
 }: LayoutTemplateArguments) => {
-  const [isLoggedIn, updated, { theme }] = await Promise.all([
+  const [isLoggedIn, updated, settings] = await Promise.all([
     db.isLoggedIn(),
     db.updated(),
     db.settings(),
   ]);
+  const { theme, disableAutoSyncDuringGame } = settings;
   const updatedCount = updated.length;
 
   return html`
@@ -73,6 +74,7 @@ const render = async ({
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="auto-sync-disable-during-game" content="${disableAutoSyncDuringGame ? "1" : "0"}">
     <base target=htmz>
     <title>${title} - Soccer</title>
     <link rel="icon" type="image/x-icon" href="/web/images/soccer.ico">
@@ -99,6 +101,8 @@ const render = async ({
                     ${themeView(theme)}
 
                     ${syncCountView(updatedCount)}
+
+                    <a href="/web/settings" role="button" target="_self" aria-label="Settings">&#9881;</a>
 
                     ${
                       isLoggedIn

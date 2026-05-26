@@ -65,6 +65,7 @@ export interface Settings {
   lastSynced?: number;
   theme: Theme;
   defaultTheme: Theme;
+  disableAutoSyncDuringGame?: boolean;
 }
 
 export interface Revision {

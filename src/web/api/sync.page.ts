@@ -20,6 +20,22 @@ const postHandlers: RoutePostHandler = {
         return { status: 204, message: "" };
     }
   },
+  async auto() {
+    // Silent variant of `post`: no toaster, no error banner, no login redirect.
+    // The sw.ts middleware appends syncCountView so the badge still updates.
+    // The client checks the response body for the refresh marker to decide
+    // whether to reload (only when the server delivered new data).
+    let result;
+    try {
+      result = await sync();
+    } catch {
+      return { status: 204, message: "" };
+    }
+    if (result.status === 200) {
+      return { status: 200, body: refresh, message: "" };
+    }
+    return { status: 204, message: "" };
+  },
   async force() {
     let result = await sync();
     switch (result.status) {
