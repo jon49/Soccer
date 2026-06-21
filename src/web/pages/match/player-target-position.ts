@@ -1,4 +1,4 @@
-import type { Game, PlayerGame, Team } from "../../server/db.js";
+import type { GameState, PlayerGame, Team } from "../../server/db.js";
 import {
   GameTimeCalculator,
   PlayerGameTimeCalculator,
@@ -7,7 +7,7 @@ import {
 } from "./shared.js";
 
 let {
-  repo: { playerGameAllGet, teamGet, playerGameSave, positionGetAll },
+  repo: { playerGameAllGet, teamGet, playerGameSave, positionGetAll, gameStateGet },
   validation: { required, queryTeamIdGameIdValidator, createIdNumber, validateObject },
 } = self.sw;
 
@@ -27,22 +27,28 @@ export default async function targetPosition(query: any, targetPosition: number)
     team.games.find((x) => x.id === gameId),
     "Could not find game ID!",
   );
+  let gameState = await gameStateGet(teamId, gameId, game);
   let player = await required(
     players.find((x) => x.playerId === playerId),
     "Could not find player ID!",
   );
 
-  await _targetPosition(player, team, game, targetPosition);
+  await _targetPosition(player, team, gameState, targetPosition);
 }
 
-async function _targetPosition(player: PlayerGame, team: Team, game: Game, targetPosition: number) {
+async function _targetPosition(
+  player: PlayerGame,
+  team: Team,
+  gameState: GameState,
+  targetPosition: number,
+) {
   let [players, { positions }] = await Promise.all([
-    playerGameAllGet(team.id, game.id, []),
+    playerGameAllGet(team.id, gameState.gameId, []),
     positionGetAll(team.id),
   ]);
 
-  await swapWhenInGame(player, players, positions.flat(), team, targetPosition, game);
-  await swapToOnDeck(player, players, positions.flat(), team, targetPosition, game);
+  await swapWhenInGame(player, players, positions.flat(), team, targetPosition, gameState);
+  await swapToOnDeck(player, players, positions.flat(), team, targetPosition, gameState);
 }
 
 async function swapToOnDeck(
@@ -51,7 +57,7 @@ async function swapToOnDeck(
   positions: string[],
   team: Team,
   targetPosition: number,
-  game: Game,
+  gameState: GameState,
 ) {
   if (!(player.status?._ === "onDeck" || player.status?._ === "out" || !player.status?._)) return;
 
@@ -69,7 +75,7 @@ async function swapToOnDeck(
     targetPosition,
   };
 
-  let playerCalc = new PlayerGameTimeCalculator(player, new GameTimeCalculator(game));
+  let playerCalc = new PlayerGameTimeCalculator(player, new GameTimeCalculator(gameState));
   if (isOnDeckPlayer(player)) {
     playerCalc.position(positions[targetPosition]);
   }
@@ -83,7 +89,7 @@ async function swapWhenInGame(
   positions: string[],
   team: Team,
   targetPosition: number,
-  game: Game,
+  gameState: GameState,
 ) {
   if (player.status?._ !== "inPlay") return;
 
@@ -96,7 +102,7 @@ async function swapWhenInGame(
   }
   player.status.position = targetPosition;
 
-  let gameCalc = new GameTimeCalculator(game);
+  let gameCalc = new GameTimeCalculator(gameState);
   let playerCalc = new PlayerGameTimeCalculator(player, gameCalc);
   let gameOn = playerCalc.isGameOn();
 

@@ -20,13 +20,13 @@ export default async function render(query: any) {
   let { teamId, gameId, playerId } = await validateObject(query, querySwapValidator);
 
   let state = new PlayerStateView(teamId, gameId);
-  let [isPaused, player, game] = await Promise.all([
+  let [isPaused, player, gameState] = await Promise.all([
     state.isGamePaused(),
     state.player(playerId),
-    state.game(),
+    state.gameState(),
   ]);
 
-  let gameTimeCalculator = new GameTimeCalculator(game);
+  let gameTimeCalculator = new GameTimeCalculator(gameState);
   let queryTeamGame = state.queryTeamGame;
 
   return html`

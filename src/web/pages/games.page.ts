@@ -168,9 +168,6 @@ const postHandlers: RoutePostHandler = {
       time,
       home,
       opponent,
-      points: 0,
-      opponentPoints: 0,
-      gameTime: [],
     });
 
     await teamSave(team);

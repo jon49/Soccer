@@ -6,7 +6,7 @@ import type {
   PlayerGameStatus,
   PlayerStatus,
   TeamPlayer,
-  Game,
+  GameState,
 } from "../../server/db.js";
 import {
   PlayerGameTimeCalculatorBase,
@@ -24,7 +24,15 @@ export { GameTimeCalculator, isInPlayPlayer, isOnDeckPlayer, isOutPlayer };
 let {
   globalDb: db,
   html,
-  repo: { playerGameAllGet, teamGet, playerGameSave, positionGetAll, statsGetAll, getGameNotes },
+  repo: {
+    playerGameAllGet,
+    teamGet,
+    playerGameSave,
+    positionGetAll,
+    statsGetAll,
+    getGameNotes,
+    gameStateGet,
+  },
   utils: { DbCache, when },
   validation: { required, queryTeamIdGameIdValidator, validateObject },
 } = self.sw;
@@ -51,12 +59,12 @@ export async function createPlayersView<T extends PlayerStatus>(
   filter: (playerGame: PlayerGame) => playerGame is PlayerGameStatus<T>,
   teamPlayers: TeamPlayer[],
   players: PlayerGame[],
-  game: Game,
+  gameState: GameState,
 ): Promise<GamePlayerStatusView<T>[]> {
   let typedPlayers_ = players.filter(filter);
   let typedPlayers = await Promise.all(
     typedPlayers_.map(async (x) => {
-      let calc = new PlayerGameTimeCalculator(x, new GameTimeCalculator(game));
+      let calc = new PlayerGameTimeCalculator(x, new GameTimeCalculator(gameState));
       let player = await required(
         teamPlayers.find((y) => y.id === x.playerId),
         "Could not find player ID!",
@@ -166,26 +174,32 @@ export class PlayerStateView {
     );
   }
 
+  async gameState() {
+    return this.#cache.get("gameState", async () =>
+      gameStateGet(this.teamId, this.gameId, await this.game()),
+    );
+  }
+
   get queryTeamGame() {
     return `teamId=${this.teamId}&gameId=${this.gameId}`;
   }
 
   async gameCalc() {
-    return this.#cache.get("gameCalc", async () => new GameTimeCalculator(await this.game()));
+    return this.#cache.get("gameCalc", async () => new GameTimeCalculator(await this.gameState()));
   }
 
   async isGameInPlay() {
-    return this.#cache.get("isGameInPlay", async () => (await this.game()).status === "play");
+    return this.#cache.get("isGameInPlay", async () => (await this.gameState()).status === "play");
   }
 
   async isGameEnded() {
-    return this.#cache.get("isGameEnded", async () => (await this.game()).status === "ended");
+    return this.#cache.get("isGameEnded", async () => (await this.gameState()).status === "ended");
   }
 
   async isGamePaused() {
     return this.#cache.get("isGamePaused", async () => {
       return (
-        (await this.game()).status === "paused" ||
+        (await this.gameState()).status === "paused" ||
         (!(await this.isGameInPlay()) && !(await this.isGameEnded()))
       );
     });
@@ -216,7 +230,7 @@ export class PlayerStateView {
         isInPlayPlayer,
         await this.players(),
         await this.gamePlayers(),
-        await this.game(),
+        await this.gameState(),
       ),
     );
   }
@@ -231,7 +245,7 @@ export class PlayerStateView {
         isOnDeckPlayer,
         await this.players(),
         await this.gamePlayers(),
-        await this.game(),
+        await this.gameState(),
       ),
     );
   }
@@ -246,7 +260,7 @@ export class PlayerStateView {
         filterOutPlayers,
         (await this.team()).players,
         await this.gamePlayers(),
-        await this.game(),
+        await this.gameState(),
       );
       return players.sort((a, b) => a.calc.total() - b.calc.total());
     });
@@ -262,7 +276,7 @@ export class PlayerStateView {
         filterNotPlayingPlayers,
         (await this.team()).players,
         await this.gamePlayers(),
-        await this.game(),
+        await this.gameState(),
       ),
     );
   }

@@ -3,19 +3,20 @@ import type { StatsView } from "./shared.js";
 const { html } = self.sw;
 
 export async function percentagePlayed(o: StatsView) {
-  let [playerIdList, playerMap, playersGames, team] = await Promise.all([
+  let [playerIdList, playerMap, playersGames, gameStates, team] = await Promise.all([
     o.playerIdList(),
     o.playerMap(),
     o.playerGames(),
+    o.gameStates(),
     o.team(),
   ]);
 
   let gameTimes = new Map<number, number>();
-  for (let game of team.games) {
-    let totalGameTime = game.gameTime
+  for (let gameState of gameStates) {
+    let totalGameTime = gameState.gameTime
       .map((x) => (x.end ? x.end - x.start : 0))
       .reduce((acc, val) => acc + val, 0);
-    gameTimes.set(game.id, totalGameTime);
+    gameTimes.set(gameState.gameId, totalGameTime);
   }
 
   return html`

@@ -101,8 +101,8 @@ ${when(
 <button
     form="post"
     formaction="?${queryTeamGame}&activityId=1&handler=points&action=inc"
-    aria-label="Game points ${gameCalc.game.points}"
-    >${gameCalc.game.points}</button>
+    aria-label="Game points ${gameCalc.gameState.points}"
+    >${gameCalc.gameState.points}</button>
     VS
 ${opponentPointsView(queryTeamGame, gameCalc)}
 </div>
@@ -139,6 +139,6 @@ export function opponentPointsView(queryTeamGame: string, gameCalc: GameTimeCalc
 id=opponentPoints
 form=post
 formaction="?$${queryTeamGame}&handler=oPointsIncPlay"
-aria-label="Opponent points ${gameCalc.game.opponentPoints}"
->${gameCalc.game.opponentPoints}</button>`;
+aria-label="Opponent points ${gameCalc.gameState.opponentPoints}"
+>${gameCalc.gameState.opponentPoints}</button>`;
 }

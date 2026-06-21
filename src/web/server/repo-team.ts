@@ -1,4 +1,16 @@
-import { get, set, update, getMany, Team, Teams, TeamSingle, Revision, TeamPlayer } from "./db.js";
+import {
+  get,
+  set,
+  update,
+  getMany,
+  Game,
+  GameState,
+  Team,
+  Teams,
+  TeamSingle,
+  Revision,
+  TeamPlayer,
+} from "./db.js";
 import { equals, getNewId } from "./utils.js";
 import { required, reject } from "@jon49/sw/validation.js";
 
@@ -41,6 +53,50 @@ export async function getGameNotes(teamId: number, gameId: number): Promise<Game
 
 function getGameNotesId(teamId: number, gameId: number) {
   return ["game-notes", teamId, gameId];
+}
+
+/*** Game state (live, frequently-changing slice of a game) ***/
+
+function getGameStateId(teamId: number, gameId: number) {
+  return ["game-state", teamId, gameId];
+}
+
+function gameStateFromLegacy(gameId: number, game?: Game): GameState {
+  return {
+    gameId,
+    status: game?.status,
+    points: game?.points ?? 0,
+    opponentPoints: game?.opponentPoints ?? 0,
+    gameTime: game?.gameTime ?? [],
+    _rev: 0,
+  };
+}
+
+// Returns the separate game-state record if it exists, otherwise falls back to
+// the legacy fields still embedded in the team's game (non-destructive
+// migration). Pass `game` to avoid an extra team read when it's already loaded.
+export async function gameStateGet(
+  teamId: number,
+  gameId: number,
+  game?: Game,
+): Promise<GameState> {
+  let existing = await get<GameState>(getGameStateId(teamId, gameId));
+  if (existing) return existing;
+  if (!game) {
+    game = (await teamGet(teamId)).games.find((x) => x.id === gameId);
+  }
+  return gameStateFromLegacy(gameId, game);
+}
+
+export async function gameStateSave(teamId: number, gameState: GameState) {
+  await set(getGameStateId(teamId, gameState.gameId), gameState);
+}
+
+// Batch loader for list views (e.g. stats). Falls back to legacy game fields
+// for any game without its own record yet.
+export async function gameStatesGet(teamId: number, games: Game[]): Promise<GameState[]> {
+  let records = await getMany<GameState>(games.map((x) => getGameStateId(teamId, x.id)));
+  return records.map((record, i) => record ?? gameStateFromLegacy(games[i].id, games[i]));
 }
 
 export async function teamSave(o: Team) {

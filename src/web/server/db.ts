@@ -100,13 +100,28 @@ export interface GameTime {
   end?: number;
 }
 
+export type GameStatus = "play" | "paused" | "ended";
+
 export interface Game {
   id: number;
   date: string;
   time?: string;
   home: boolean;
   opponent?: string;
-  status?: "play" | "paused" | "ended";
+  // Legacy fields — the live values now live in a separate `GameState` record
+  // (see `gameStateGet`). These remain only so games created before the split
+  // can be migrated/read; new writes never touch them.
+  status?: GameStatus;
+  points?: number;
+  opponentPoints?: number;
+  gameTime?: GameTime[];
+}
+
+// The frequently-changing slice of a game, synced independently from the team
+// record so in-game point/clock updates don't re-sync the whole team.
+export interface GameState extends Revision {
+  gameId: number;
+  status?: GameStatus;
   points: number;
   opponentPoints: number;
   gameTime: GameTime[];

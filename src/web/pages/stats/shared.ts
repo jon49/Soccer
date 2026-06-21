@@ -1,7 +1,7 @@
 import type { DbCache as DbCacheType } from "@jon49/sw/utils.js";
 
 const {
-  repo: { teamGet, playerGameAllGet },
+  repo: { teamGet, playerGameAllGet, gameStatesGet },
   utils: { DbCache },
   validation: { validateObject, queryTeamIdValidator },
 } = self.sw;
@@ -33,6 +33,12 @@ export class StatsView {
   async playerGames() {
     return this.#cache.get("playerGames", async () =>
       Promise.all((await this.team()).games.map((x) => playerGameAllGet(this.teamId, x.id, []))),
+    );
+  }
+
+  async gameStates() {
+    return this.#cache.get("gameStates", async () =>
+      gameStatesGet(this.teamId, (await this.team()).games),
     );
   }
 

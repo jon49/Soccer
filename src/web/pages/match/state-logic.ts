@@ -7,7 +7,7 @@ import type {
   OutPlayer,
   NotPlayingPlayer,
   GameTime,
-  Game,
+  GameState,
 } from "../../server/db.js";
 
 export function tail<T>(xs: T[]): T {
@@ -134,16 +134,16 @@ export class PlayerGameTimeCalculatorBase {
 
 export class GameTimeCalculator {
   times: GameTime[];
-  game: Game;
-  constructor(game: Game) {
-    if (!game) {
-      throw new Error("Game cannot be null!");
+  gameState: GameState;
+  constructor(gameState: GameState) {
+    if (!gameState) {
+      throw new Error("Game state cannot be null!");
     }
-    this.game = game;
-    if (!game.gameTime) {
-      game.gameTime = [];
+    this.gameState = gameState;
+    if (!gameState.gameTime) {
+      gameState.gameTime = [];
     }
-    this.times = game.gameTime;
+    this.times = gameState.gameTime;
   }
 
   start() {

@@ -1,5 +1,5 @@
 import type { RoutePostHandler, RoutePage, RouteGetHandler } from "@jon49/sw/routes.middleware.js";
-import type { Game, Theme } from "../../server/db.js";
+import type { GameState, Theme } from "../../server/db.js";
 import {
   GameTimeCalculator,
   PlayerGameTimeCalculator,
@@ -19,7 +19,16 @@ const {
   globalDb,
   html,
   layout,
-  repo: { playerGameAllGet, playerGameSave, saveGameNotes, statIds, teamGet, teamSave },
+  repo: {
+    gameStateGet,
+    gameStateSave,
+    playerGameAllGet,
+    playerGameSave,
+    saveGameNotes,
+    statIds,
+    teamGet,
+    teamSave,
+  },
   views: { teamNav },
   validation: {
     queryTeamIdGameIdValidator,
@@ -39,17 +48,13 @@ const queryTeamGamePlayerValidator = {
   playerId: createIdNumber("Query Player Id"),
 };
 
-function setPoints(target: string, f: (game: Game) => number) {
+function setPoints(target: string, f: (gameState: GameState) => number) {
   return async ({ query }: { query: any }) => {
     let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator);
-    let team = await teamGet(teamId);
-    let game = await required(
-      team.games.find((x) => x.id === gameId),
-      "Could not find game!",
-    );
-    let points = f(game);
+    let gameState = await gameStateGet(teamId, gameId);
+    let points = f(gameState);
     if (points >= 0) {
-      await teamSave(team);
+      await gameStateSave(teamId, gameState);
     } else {
       return reject("Points cannot be negative!");
     }
@@ -58,8 +63,8 @@ function setPoints(target: string, f: (game: Game) => number) {
 }
 
 async function inPlayerOut(state: PlayerStateView, playerId: number) {
-  let [player, game] = await Promise.all([state.playerGame(playerId), state.game()]);
-  let gameCalc = new GameTimeCalculator(game);
+  let [player, gameState] = await Promise.all([state.playerGame(playerId), state.gameState()]);
+  let gameCalc = new GameTimeCalculator(gameState);
   player.status = { _: "out" };
   let calc = new PlayerGameTimeCalculator(player, gameCalc);
   calc.playerOut();
@@ -105,8 +110,8 @@ async function handlePlayerStatUpdated(data: PlayerStatUpdatedArgs) {
   if (data.activityId === 1) {
     let action: (query: any) => Promise<any> =
       data.action === "inc"
-        ? setPoints("points", (game) => ++game.points)
-        : setPoints("points", (game) => --game.points);
+        ? setPoints("points", (gameState) => ++gameState.points)
+        : setPoints("points", (gameState) => --gameState.points);
     await action({ query: data });
   }
 }
@@ -156,13 +161,9 @@ const getHandlers: RouteGetHandler = {
 
   async points({ query }) {
     let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator);
-    let team = await teamGet(teamId);
-    let game = await required(
-      team.games.find((x) => x.id === gameId),
-      "Could not find game!",
-    );
+    let gameState = await gameStateGet(teamId, gameId);
 
-    return getPointsView(game.points);
+    return getPointsView(gameState.points);
   },
 
   async play(o) {
@@ -198,14 +199,14 @@ const queryActionValidatory = {
 };
 
 const postHandlers: RoutePostHandler = {
-  oPointsDec: setPoints("o-points", (game) => --game.opponentPoints),
-  oPointsInc: setPoints("o-points", (game) => ++game.opponentPoints),
-  pointsDec: setPoints("points", (game) => --game.points),
-  pointsInc: setPoints("points", (game) => ++game.points),
+  oPointsDec: setPoints("o-points", (gameState) => --gameState.opponentPoints),
+  oPointsInc: setPoints("o-points", (gameState) => ++gameState.opponentPoints),
+  pointsDec: setPoints("points", (gameState) => --gameState.points),
+  pointsInc: setPoints("points", (gameState) => ++gameState.points),
 
   async oPointsIncPlay(o) {
     let { teamId, gameId } = await validateObject(o.query, queryTeamIdGameIdValidator);
-    await setPoints("o-points", (game) => ++game.opponentPoints)(o);
+    await setPoints("o-points", (gameState) => ++gameState.opponentPoints)(o);
     let state = new PlayerStateView(teamId, gameId);
     return html`${opponentPointsView(state.queryTeamGame, await state.gameCalc())}`;
   },
@@ -335,11 +336,12 @@ const postHandlers: RoutePostHandler = {
       team.games.find((x) => x.id === gameId),
       `Could not find game! ${gameId}`,
     );
-    game.status = "play";
-    game.gameTime.push({
+    let gameState = await gameStateGet(teamId, gameId, game);
+    gameState.status = "play";
+    gameState.gameTime.push({
       start: timestamp,
     });
-    await teamSave(team);
+    await gameStateSave(teamId, gameState);
 
     let players = await playerGameAllGet(
       teamId,
@@ -349,7 +351,7 @@ const postHandlers: RoutePostHandler = {
     let inPlayPlayers = players.filter(isInPlayPlayer);
     await Promise.all(
       inPlayPlayers.map((player) => {
-        let calc = new PlayerGameTimeCalculator(player, new GameTimeCalculator(game));
+        let calc = new PlayerGameTimeCalculator(player, new GameTimeCalculator(gameState));
         calc.start();
         return calc.save(teamId);
       }),
@@ -366,10 +368,11 @@ const postHandlers: RoutePostHandler = {
       team.games.find((x) => x.id === gameId),
       `Could not find game! ${gameId}`,
     );
-    game.status = "paused";
-    let gameCalc = new GameTimeCalculator(game);
+    let gameState = await gameStateGet(teamId, gameId, game);
+    gameState.status = "paused";
+    let gameCalc = new GameTimeCalculator(gameState);
     gameCalc.end();
-    await teamSave(team);
+    await gameStateSave(teamId, gameState);
 
     let players = await playerGameAllGet(
       teamId,
@@ -402,10 +405,11 @@ const postHandlers: RoutePostHandler = {
       team.games.find((x) => x.id === gameId),
       `Could not find game! ${gameId}`,
     );
-    game.status = "ended";
-    let calc = new GameTimeCalculator(game);
+    let gameState = await gameStateGet(teamId, gameId, game);
+    gameState.status = "ended";
+    let calc = new GameTimeCalculator(gameState);
     calc.end(now);
-    await teamSave(team);
+    await gameStateSave(teamId, gameState);
 
     let players = await playerGameAllGet(
       teamId,
@@ -427,13 +431,9 @@ const postHandlers: RoutePostHandler = {
 
   async restartGame({ query }) {
     let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator);
-    let team = await teamGet(teamId);
-    let game = await required(
-      team.games.find((x) => x.id === gameId),
-      `Could not find game! ${gameId}`,
-    );
-    game.status = "paused";
-    await teamSave(team);
+    let gameState = await gameStateGet(teamId, gameId);
+    gameState.status = "paused";
+    await gameStateSave(teamId, gameState);
 
     return getApp(new PlayerStateView(teamId, gameId));
   },
@@ -460,16 +460,16 @@ const postHandlers: RoutePostHandler = {
     if (operation === "inc") {
       activity.count += points;
       if (points > 1) {
-        let [team, game] = await Promise.all([state.team(), state.game()]);
-        game.points += points - 1;
-        await teamSave(team);
+        let gameState = await state.gameState();
+        gameState.points += points - 1;
+        await gameStateSave(teamId, gameState);
       }
     } else {
       activity.count -= points;
       if (points > 1) {
-        let [team, game] = await Promise.all([state.team(), state.game()]);
-        game.points -= points - 1;
-        await teamSave(team);
+        let gameState = await state.gameState();
+        gameState.points -= points - 1;
+        await gameStateSave(teamId, gameState);
       }
     }
 
@@ -491,7 +491,7 @@ const postHandlers: RoutePostHandler = {
     let state = new PlayerStateView(teamId, gameId);
     let team = await state.team();
     let game = await state.game();
-    let players = await state.gamePlayers();
+    let [players, gameState] = await Promise.all([state.gamePlayers(), state.gameState()]);
     let gameIndex = team.games.findIndex((x) => x === game);
     team.games.splice(gameIndex, 1);
     for (let player of players) {
@@ -500,6 +500,13 @@ const postHandlers: RoutePostHandler = {
       player.status = void 0;
       await playerGameSave(teamId, player);
     }
+    // Clear and persist the live game-state so the deletion propagates via sync
+    // (mirrors how player records are zeroed rather than removed).
+    gameState.status = void 0;
+    gameState.points = 0;
+    gameState.opponentPoints = 0;
+    gameState.gameTime = [];
+    await gameStateSave(teamId, gameState);
     await teamSave(team);
 
     return html`<i _load=redirect id=temp data-url="/web/games?teamId=${teamId}"></i>`;

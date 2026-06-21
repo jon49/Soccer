@@ -1,6 +1,6 @@
 import { describe, it, beforeEach } from "node:test";
 import assert from "node:assert/strict";
-import type { Game, PlayerGame } from "../../server/db.js";
+import type { GameState, PlayerGame } from "../../server/db.js";
 import {
   tail,
   getTotal,
@@ -16,14 +16,13 @@ import {
   PlayerGameTimeCalculatorBase,
 } from "./state-logic.js";
 
-function makeGame(overrides: Partial<Game> = {}): Game {
+function makeGame(overrides: Partial<GameState> = {}): GameState {
   return {
-    id: 1,
-    date: "2026-01-01",
-    home: true,
+    gameId: 1,
     points: 0,
     opponentPoints: 0,
     gameTime: [],
+    _rev: 0,
     ...overrides,
   };
 }
@@ -144,11 +143,11 @@ describe("calcInversion / invertRGBA", () => {
 
 describe("GameTimeCalculator", () => {
   it("throws when constructed with null game", () => {
-    assert.throws(() => new GameTimeCalculator(null as any), /Game cannot be null/);
+    assert.throws(() => new GameTimeCalculator(null as any), /Game state cannot be null/);
   });
 
   it("initializes gameTime when missing", () => {
-    let game = { ...makeGame(), gameTime: undefined as any } as Game;
+    let game = { ...makeGame(), gameTime: undefined as any } as GameState;
     let calc = new GameTimeCalculator(game);
     assert.deepEqual(calc.times, []);
     assert.equal(game.gameTime, calc.times);
@@ -222,7 +221,7 @@ describe("GameTimeCalculator", () => {
 });
 
 describe("PlayerGameTimeCalculatorBase", () => {
-  let game: Game;
+  let game: GameState;
   let gameCalc: GameTimeCalculator;
   let player: PlayerGame;
   let calc: PlayerGameTimeCalculatorBase;

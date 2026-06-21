@@ -7,7 +7,7 @@ import {
 } from "./shared.js";
 
 let {
-  repo: { playerGameAllGet, teamGet },
+  repo: { playerGameAllGet, teamGet, gameStateGet },
   validation: {
     createPositiveWholeNumber,
     maybe,
@@ -49,7 +49,8 @@ export async function swapAll(query: any) {
     team.games.find((x) => x.id === gameId),
     "Could not find game ID!",
   );
-  let gameCalc = new GameTimeCalculator(game);
+  let gameState = await gameStateGet(teamId, gameId, game);
+  let gameCalc = new GameTimeCalculator(gameState);
 
   for (let player of onDeckPlayers) {
     let calc = new PlayerGameTimeCalculator(player, gameCalc);
