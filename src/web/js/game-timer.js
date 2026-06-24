@@ -43,38 +43,6 @@ class Timer {
 
 let timer = new Timer();
 
-class DisconnectWatcher {
-  /** @type {Map<HTMLElement, { disconnectedCallback: () => void }>} */
-  registry = new Map();
-
-  constructor() {
-    let observer = new MutationObserver((mutations) => {
-      if (this.registry.size === 0) return;
-      for (let mutation of mutations) {
-        for (let node of mutation.removedNodes) {
-          for (let [el, instance] of this.registry) {
-            if (node.contains(el)) {
-              this.registry.delete(el);
-              instance.disconnectedCallback();
-            }
-          }
-        }
-      }
-    });
-    observer.observe(document.body, { childList: true, subtree: true });
-  }
-
-  /**
-   * @param {HTMLElement} el
-   * @param {{ disconnectedCallback: () => void }} instance
-   */
-  register(el, instance) {
-    this.registry.set(el, instance);
-  }
-}
-
-let watcher = new DisconnectWatcher();
-
 document.head.insertAdjacentHTML(
   "beforeend",
   `<style>
@@ -104,7 +72,8 @@ class GameTimer {
     this.interval = +(el.dataset.interval ?? 0) || 1e3;
 
     document.addEventListener("hz:completed", this);
-    watcher.register(el, this);
+    // @ts-ignore - registered by @jon49/web/disconnect-watcher.js
+    window.app.disconnectWatcher(el, this);
 
     this.update(Date.now());
   }
@@ -155,7 +124,7 @@ function formatTime(currentTime, start, total) {
 }
 
 // @ts-ignore
-window.app.gameTimer = (_, el) => {
+window.app.gameTimer = ({ el }) => {
   if (el._) return;
   el._ = true;
   new GameTimer(el);

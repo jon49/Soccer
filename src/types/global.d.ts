@@ -6,7 +6,7 @@ declare global {
     htmz: (frame: HTMLIFrameElement) => void;
     dataAction: (event: Event) => void;
     sw: App; // Add the sw property with proper typing
-    app: Record<string, (e: Event, el: HTMLElement, form?: HTMLFormElement) => 1 | void>;
+    // `app` is declared by @jon49/web/app-actions.js (Record<string, AppAction>).
     defineTrait: (name: string, trait: (el: HTMLElement) => void) => void;
   }
 
