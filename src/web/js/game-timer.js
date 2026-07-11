@@ -1,51 +1,51 @@
 // @ts-check
 
 class Timer {
-  times = new Map();
+    times = new Map();
 
-  constructor() { }
+    constructor() { }
 
-  /**
-   * @param {GameTimer} instance
-   * */
-  add(instance) {
-    let time = instance.interval;
-    if (this.times.get(time)?.add(instance)) return;
+    /**
+     * @param {GameTimer} instance
+     * */
+    add(instance) {
+        let time = instance.interval;
+        if (this.times.get(time)?.add(instance)) return;
 
-    let m = new Set([instance]);
-    this.times.set(time, m);
-    let interval = setInterval(() => {
-      if (m.size === 0) {
-        this.times.delete(time);
-        clearInterval(interval);
-        return;
-      }
-      requestAnimationFrame(() => {
-        let currentTime = +new Date();
-        for (let instance of m) {
-          instance.update(currentTime);
-        }
-      });
-    }, time);
-  }
+        let m = new Set([instance]);
+        this.times.set(time, m);
+        let interval = setInterval(() => {
+            if (m.size === 0) {
+                this.times.delete(time);
+                clearInterval(interval);
+                return;
+            }
+            requestAnimationFrame(() => {
+                let currentTime = +new Date();
+                for (let instance of m) {
+                    instance.update(currentTime);
+                }
+            });
+        }, time);
+    }
 
-  /**
-   * @param {GameTimer} instance
-   * */
-  remove(instance) {
-    let time = instance.interval;
-    let m = this.times.get(time);
-    if (!m) return;
-    m.delete(instance);
-    if (m.size === 0) this.times.delete(time);
-  }
+    /**
+     * @param {GameTimer} instance
+     * */
+    remove(instance) {
+        let time = instance.interval;
+        let m = this.times.get(time);
+        if (!m) return;
+        m.delete(instance);
+        if (m.size === 0) this.times.delete(time);
+    }
 }
 
 let timer = new Timer();
 
 document.head.insertAdjacentHTML(
-  "beforeend",
-  `<style>
+    "beforeend",
+    `<style>
 .flash {
     background-color: yellow;
     animation: 2s flash infinite;
@@ -63,50 +63,48 @@ span {
 );
 
 class GameTimer {
-  /**
-   * @param {HTMLElement} el
-   */
-  constructor(el) {
-    this.el = el;
+    /**
+     * @param {HTMLElement} el
+     */
+    constructor(el) {
+        this.el = el;
 
-    this.interval = +(el.dataset.interval ?? 0) || 1e3;
+        this.interval = +(el.dataset.interval ?? 0) || 1e3;
 
-    document.addEventListener("hz:completed", this);
-    // @ts-ignore - registered by @jon49/web/disconnect-watcher.js
-    window.app.disconnectWatcher(el, this);
+        document.addEventListener("hz:completed", this);
 
-    this.update(Date.now());
-  }
-
-  handleEvent() {
-    this.update(Date.now());
-  }
-
-  disconnectedCallback() {
-    timer.remove(this);
-    document.removeEventListener("hz:completed", this);
-  }
-
-  /**
-   * @param {number} currentTime
-   */
-  update(currentTime) {
-    let el = this.el;
-    let { start, total, static: static_ } = el.dataset;
-    let start_ = +(start || 0) || currentTime;
-    let total_ = +(total || 0);
-    if (el.hasAttribute("data-flash")) {
-      el.classList.add("flash");
-    } else {
-      el.classList.remove("flash");
+        this.update(Date.now());
     }
-    if (static_ !== "") {
-      timer.add(this);
-    } else {
-      timer.remove(this);
+
+    handleEvent() {
+        this.update(Date.now());
     }
-    el.textContent = formatTime(currentTime, start_, total_);
-  }
+
+    disconnectedCallback() {
+        timer.remove(this);
+        document.removeEventListener("hz:completed", this);
+    }
+
+    /**
+     * @param {number} currentTime
+     */
+    update(currentTime) {
+        let el = this.el;
+        let { start, total, static: static_ } = el.dataset;
+        let start_ = +(start || 0) || currentTime;
+        let total_ = +(total || 0);
+        if (el.hasAttribute("data-flash")) {
+            el.classList.add("flash");
+        } else {
+            el.classList.remove("flash");
+        }
+        if (static_ !== "") {
+            timer.add(this);
+        } else {
+            timer.remove(this);
+        }
+        el.textContent = formatTime(currentTime, start_, total_);
+    }
 }
 
 /**
@@ -115,17 +113,17 @@ class GameTimer {
  * @param {number} total
  */
 function formatTime(currentTime, start, total) {
-  let grandTotal = total + (currentTime - start);
-  let time = new Date(grandTotal);
-  let seconds = `${time.getSeconds()}`.padStart(2, "0");
-  let minutes = `${time.getMinutes()}`.padStart(2, "0");
-  let hours = (grandTotal / 1e3 / 60 / 60) | 0;
-  return `${hours ? `${hours}:` : ""}${minutes}:${seconds}`;
+    let grandTotal = total + (currentTime - start);
+    let time = new Date(grandTotal);
+    let seconds = `${time.getSeconds()}`.padStart(2, "0");
+    let minutes = `${time.getMinutes()}`.padStart(2, "0");
+    let hours = (grandTotal / 1e3 / 60 / 60) | 0;
+    return `${hours ? `${hours}:` : ""}${minutes}:${seconds}`;
 }
 
 // @ts-ignore
 window.app.gameTimer = ({ el }) => {
-  if (el._) return;
-  el._ = true;
-  new GameTimer(el);
+    if (el._) return;
+    el._ = true;
+    return new GameTimer(el);
 };
