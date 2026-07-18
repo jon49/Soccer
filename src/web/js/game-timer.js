@@ -122,8 +122,4 @@ function formatTime(currentTime, start, total) {
 }
 
 // @ts-ignore
-window.app.gameTimer = ({ el }) => {
-    if (el._) return;
-    el._ = true;
-    return new GameTimer(el);
-};
+window.app.gameTimer = ({ el }) => new GameTimer(el);
