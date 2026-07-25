@@ -53,7 +53,7 @@ export default async function render(query: any) {
 </ul>
 
 <div>
-    <a href="?${queryTeamGame}&handler=play" target="_self" _click="defaultTheme">Show Game Play View</a>
+    <a href="?${queryTeamGame}&handler=play" target="_self">Show Game Play View</a>
 </div>
 
 <h3>Notes</h3>

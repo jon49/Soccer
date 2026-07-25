@@ -64,7 +64,6 @@ export interface Settings {
   lastSyncedId: number;
   lastSynced?: number;
   theme: Theme;
-  defaultTheme: Theme;
   disableAutoSyncDuringGame?: boolean;
 }
 

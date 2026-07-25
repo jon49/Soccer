@@ -1,5 +1,5 @@
 import type { RoutePostHandler, RoutePage, RouteGetHandler } from "@jon49/sw/routes.middleware.js";
-import type { GameState, Theme } from "../../server/db.js";
+import type { GameState } from "../../server/db.js";
 import {
   GameTimeCalculator,
   PlayerGameTimeCalculator,
@@ -16,7 +16,6 @@ import { play } from "./_play.js";
 
 const {
   db,
-  globalDb,
   html,
   layout,
   repo: {
@@ -167,10 +166,6 @@ const getHandlers: RouteGetHandler = {
   },
 
   async play(o) {
-    let { query } = o;
-    let settings = await globalDb.settings();
-    settings.defaultTheme = query.theme as Theme;
-    await globalDb.setSettings(settings);
     return play(o);
   },
 

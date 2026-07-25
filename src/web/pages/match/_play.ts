@@ -15,10 +15,15 @@ export async function play({
 }: RouteGetArgs & { head?: string; app?: Promise<AsyncGenerator<any, void, unknown>> }) {
   let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator);
   let state = new PlayerStateView(teamId, gameId);
-  let { disableAutoSyncDuringGame } = await globalDb.settings();
+  let { disableAutoSyncDuringGame, theme } = await globalDb.settings();
+  // This page is rendered outside of the layout, so there is no #theme radio
+  // for base.css to key off of. Emit data-theme when the setting is set;
+  // when it isn't, leave the attribute off so base.css can fall through to
+  // the prefers-color-scheme media query.
+  let themeAttr = theme ? ` data-theme="${theme}"` : "";
   return html`
 <!DOCTYPE html>
-<html>
+<html$${themeAttr}>
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">

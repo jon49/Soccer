@@ -10,7 +10,6 @@ const settingDefaults: Settings = {
   lastSyncedId: 0,
   lastSynced: 0,
   theme: null,
-  defaultTheme: null,
 };
 
 export interface AuthTokens {
@@ -64,8 +63,8 @@ export async function settings(): Promise<Settings> {
   return { ...settingDefaults, ...((await get("settings")) ?? {}) };
 }
 
-export async function setTheme(theme: Theme, defaultTheme: Theme): Promise<void> {
-  await update("settings", (v) => ({ ...(v ?? settingDefaults), theme, defaultTheme }), {
+export async function setTheme(theme: Theme): Promise<void> {
+  await update("settings", (v) => ({ ...(v ?? settingDefaults), theme }), {
     sync: false,
   });
 }

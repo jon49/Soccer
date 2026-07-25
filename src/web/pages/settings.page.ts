@@ -60,7 +60,7 @@ const postHandlers: RoutePostHandler = {
     const submitted = (data as { theme?: string } | undefined)?.theme;
     const theme = submitted === "dark" ? "dark" : "light";
 
-    await globalDb.setTheme(theme, null);
+    await globalDb.setTheme(theme);
 
     return {
       status: 200,

@@ -88,7 +88,7 @@ export class PlayerStateView {
   async theme() {
     return this.#cache.get("theme", async () => {
       let settings = await db.settings();
-      return settings.theme ?? settings.defaultTheme ?? "light";
+      return settings.theme ?? "light";
     });
   }
 
