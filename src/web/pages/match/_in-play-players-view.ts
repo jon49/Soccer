@@ -43,9 +43,9 @@ ${() =>
   player && sub
     ? html`">${twoPlayerView(player, sub, isGameInPlay, queryTeamGame, id, subPlayerId, [style, style2])}`
     : player
-      ? html`">${playerView(player, isGameInPlay, queryTeamGame, style, 1)}`
+      ? html`">${playerView(player, isGameInPlay, queryTeamGame, style, 1, id)}`
       : sub
-        ? html`">${subPlayerView(sub, queryTeamGame, style)}`
+        ? html`">${subPlayerView(sub, queryTeamGame, style, subPlayerId)}`
         : html`
             empty">
           `}</form>`;
@@ -65,10 +65,10 @@ function twoPlayerView(
 ) {
   return html`
 <div id="${inPlayerId}">
-${playerView(player, isGameInPlay, queryTeamGame, style[0], 2)}
+${playerView(player, isGameInPlay, queryTeamGame, style[0], 2, inPlayerId)}
 </div>
 <div id="${subPlayerId}">
-${subPlayerView(sub, queryTeamGame, style[1])}
+${subPlayerView(sub, queryTeamGame, style[1], subPlayerId)}
 </div>`;
 }
 
@@ -78,6 +78,7 @@ function playerView(
   queryTeamGame: string,
   style: string,
   numberOfPlayers: number,
+  containerId: string,
 ) {
   return html`
 <fieldset class="mb-0" role="group">
@@ -91,6 +92,7 @@ function playerView(
         >X</button>
 </fieldset>
 <div
+    id="${containerId}-timer"
     class="in-play-timer game-shader game-timer"
     style="$${style} $${when(numberOfPlayers > 1, "border-bottom-right-radius: unset; border-bottom-left-radius: unset;")}"
     _load="gameTimer"
@@ -104,6 +106,7 @@ function subPlayerView(
   sub: GamePlayerStatusView<OnDeckPlayer>,
   queryTeamGame: string,
   style: string,
+  containerId: string,
 ) {
   return html`
 <fieldset class="mb-0" role="group">
@@ -119,6 +122,7 @@ function subPlayerView(
         >X</button>
 </fieldset>
 <div
+    id="${containerId}-timer"
     class="in-play-timer game-shader game-timer"
     style="$${style} border-radius: 0 0 5px 5px;"
     _load="gameTimer"

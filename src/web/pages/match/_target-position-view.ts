@@ -58,6 +58,7 @@ export default async function render(query: any) {
                         ${player.name}
                         ${when(playerOnDeck, (p) => html` (${p.name})`)}
                         <span
+                            id="target-position-${positionIndex}-timer"
                             class="game-timer"
                             _load="gameTimer"
                             data-start="${player.calc.getLastStartTime()}"
@@ -75,6 +76,7 @@ export default async function render(query: any) {
                     <button>
                         (${playerOnDeck.name})
                         <span
+                            id="target-position-${positionIndex}-timer"
                             class="game-timer"
                             _load="gameTimer"
                             data-start=${playerOnDeckGameCalc.start()}

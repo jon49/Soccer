@@ -27,7 +27,7 @@ export async function outPlayersView(o: PlayerStateView) {
         >${x.name} ${x.number}</button>
     </div>
     <div>
-        <span _load="gameTimer" data-total="${x.calc.total()}" data-static>00:00</span>
+        <span id="${outPlayerId}-timer" _load="gameTimer" data-total="${x.calc.total()}" data-static>00:00</span>
     </div>
     <div>
         <button
