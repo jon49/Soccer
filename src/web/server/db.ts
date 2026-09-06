@@ -107,6 +107,7 @@ export interface Game {
   time?: string;
   home: boolean;
   opponent?: string;
+  location?: string;
   // Legacy fields — the live values now live in a separate `GameState` record
   // (see `gameStateGet`). These remain only so games created before the split
   // can be migrated/read; new writes never touch them.
@@ -183,6 +184,7 @@ export interface Team extends Revision, PositionsV0 {
   players: TeamPlayer[];
   games: Game[];
   basketballMode?: boolean;
+  scheduleFileId?: string;
 }
 
 export interface TeamSingle {

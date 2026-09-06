@@ -4,7 +4,7 @@ import type { RoutePostHandler, RoutePage } from "@jon49/sw/routes.middleware.js
 const {
   html,
   layout,
-  repo: { teamGet, teamSave },
+  repo: { teamGet, teamSave, publishTeamSchedule, getScheduleUrl },
   utils: { when, equals, getNewId },
   validation: {
     assert,
@@ -12,6 +12,7 @@ const {
     createDateTimeString,
     createIdNumber,
     createString50,
+    maybe,
     required,
     queryTeamIdValidator,
     validate,
@@ -22,22 +23,52 @@ const {
 
 interface GameView {
   team: Team;
+  showPast: boolean;
 }
 
 async function start(query: any): Promise<GameView> {
   let { teamId } = await validateObject(query, queryTeamIdValidator);
   let team = await teamGet(teamId);
-  return { team };
+  let showPast = query.showPast === "1";
+  return { team, showPast };
 }
 
-function render({ team }: GameView) {
+// A game disappears from the default list the day after it's played — games
+// on today's date or in the future stay visible.
+function isUpcoming(game: Game): boolean {
+  return todayDateString() <= game.date;
+}
+
+function todayDateString(): string {
+  let d = new Date();
+  let month = String(d.getMonth() + 1).padStart(2, "0");
+  let day = String(d.getDate()).padStart(2, "0");
+  return `${d.getFullYear()}-${month}-${day}`;
+}
+
+function render({ team, showPast }: GameView) {
   team.games.sort((a, b) => b.date.localeCompare(a.date));
+  let visibleGames = showPast ? team.games : team.games.filter(isUpcoming);
+  let hiddenCount = team.games.length - visibleGames.length;
+  let teamQuery = `teamId=${team.id}`;
+
   return html`
 <h2>${team.name} — Games</h2>
 
+<div id=schedule-share>
+    ${getScheduleShareView(team)}
+</div>
+
 <ul id=games class=list>
-    ${team.games.map((x) => getGameView(team.id, x))}
+    ${visibleGames.map((x) => getGameView(team.id, x))}
 </ul>
+
+$${when(
+    hiddenCount > 0 || showPast,
+    `<p><a href="/web/games?${teamQuery}${showPast ? "" : "&showPast=1"}" target=_self>${
+      showPast ? "Hide past games" : `Show past games (${hiddenCount})`
+    }</a></p>`,
+  )}
 
 <form class="form" method=post action="?teamId=${team.id}"  _submit="clearAutoFocus reset">
     <div class=grid>
@@ -53,13 +84,35 @@ function render({ team }: GameView) {
 
     <div class=grid>
         <div>
+            <label for=gameLocation>Location</label>
+            <input id=gameLocation type=text name=location>
+        </div>
+        <div>
             <input class=inline id=home type=checkbox name=home>
             <label for=home>Home</label>
         </div>
-        <div>
-            <button>Save</button>
-        </div>
     </div>
+
+    <button>Save</button>
+</form>
+`;
+}
+
+function getScheduleShareView(team: Team) {
+  let teamQuery = `teamId=${team.id}`;
+  if (!team.scheduleFileId) {
+    return html`
+<form method=post action="?${teamQuery}&handler=publishSchedule">
+    <button>Publish Schedule</button>
+</form>
+`;
+  }
+
+  let url = getScheduleUrl(team.scheduleFileId);
+  return html`
+<p>Shared schedule: <a href="${url}" target=_blank>${url}</a></p>
+<form method=post action="?${teamQuery}&handler=publishSchedule">
+    <button>Republish Schedule</button>
 </form>
 `;
 }
@@ -114,6 +167,19 @@ function getGamePartialView(teamId: number, game: Game) {
         <span class=editable-pencil>&#9998;</span>
     </label>
 </div>
+<div>
+    <input
+        id="game-location-${game.id}"
+        form=${formId}
+        class=editable
+        type=text
+        name=location
+        value="${game.location}">
+    <label for="game-location-${game.id}">
+        ${game.location || "No location set"}
+        <span class=editable-pencil>&#9998;</span>
+    </label>
+</div>
 <label class=toggle>
     <input form=${formId} id="home-${game.id}" type=checkbox name=home $${when(game.home, "checked")}>
     <span class="off full-width condense-padding" role="button">Visiting</span>
@@ -132,6 +198,7 @@ function getGamePartialView(teamId: number, game: Game) {
 let addGameValidator = {
   date: createDateTimeString("Game Date"),
   opponent: createString50("Game Opponent"),
+  location: maybe(createString50("Game Location")),
   home: createCheckbox,
 };
 
@@ -142,7 +209,7 @@ let editGameValidator = {
 
 const postHandlers: RoutePostHandler = {
   async post({ data, query }) {
-    let [{ date: datetime, opponent, home }, { teamId }] = await validate([
+    let [{ date: datetime, opponent, location, home }, { teamId }] = await validate([
       validateObject(data, addGameValidator),
       validateObject(query, queryTeamIdValidator),
     ]);
@@ -168,6 +235,7 @@ const postHandlers: RoutePostHandler = {
       time,
       home,
       opponent,
+      location,
     });
 
     await teamSave(team);
@@ -180,7 +248,7 @@ const postHandlers: RoutePostHandler = {
   },
 
   async edit({ data, query }) {
-    let [{ date: datetime, opponent, gameId, home }, { teamId }] = await validate([
+    let [{ date: datetime, opponent, location, gameId, home }, { teamId }] = await validate([
       validateObject(data, editGameValidator),
       validateObject(query, queryTeamIdValidator),
     ]);
@@ -203,10 +271,22 @@ const postHandlers: RoutePostHandler = {
     game.date = date;
     game.time = time;
     game.home = home;
+    game.location = location;
 
     await teamSave(team);
 
     return getGameView(teamId, game);
+  },
+
+  async publishSchedule({ query }) {
+    let { teamId } = await validateObject(query, queryTeamIdValidator);
+    let team = await teamGet(teamId);
+    await publishTeamSchedule(team);
+
+    return {
+      status: 200,
+      body: html`<div id=schedule-share>${getScheduleShareView(team)}</div>`,
+    };
   },
 };
 

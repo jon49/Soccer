@@ -8,6 +8,7 @@ import * as validators from "@jon49/sw/validation.js";
 import * as v from "./validators.js";
 import * as repo from "./repo-team.js";
 import * as repoPlayerGame from "./repo-player-game.js";
+import * as repoSchedule from "./repo-schedule.js";
 import * as sharedViews from "../pages/_shared-views.js";
 import * as serverUtils from "./utils.js";
 
@@ -18,7 +19,7 @@ let app = {
   globalDb,
   html,
   layout,
-  repo: { ...repo, ...repoPlayerGame },
+  repo: { ...repo, ...repoPlayerGame, ...repoSchedule },
   utils: { ...utils, ...serverUtils },
   validation: { ...validation, ...validators, ...v },
   views: { ...sharedViews, themeView, syncCountView },
