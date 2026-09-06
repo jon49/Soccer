@@ -23,18 +23,16 @@ const {
 
 interface GameView {
   team: Team;
-  showPast: boolean;
 }
 
 async function start(query: any): Promise<GameView> {
   let { teamId } = await validateObject(query, queryTeamIdValidator);
   let team = await teamGet(teamId);
-  let showPast = query.showPast === "1";
-  return { team, showPast };
+  return { team };
 }
 
-// A game disappears from the default list the day after it's played — games
-// on today's date or in the future stay visible.
+// A game sinks to the bottom of the list a day after it's played — games on
+// today's date or in the future stay up top.
 function isUpcoming(game: Game): boolean {
   return todayDateString() <= game.date;
 }
@@ -46,11 +44,15 @@ function todayDateString(): string {
   return `${d.getFullYear()}-${month}-${day}`;
 }
 
-function render({ team, showPast }: GameView) {
-  team.games.sort((a, b) => b.date.localeCompare(a.date));
-  let visibleGames = showPast ? team.games : team.games.filter(isUpcoming);
-  let hiddenCount = team.games.length - visibleGames.length;
-  let teamQuery = `teamId=${team.id}`;
+// Soonest game first; once a game is more than a day past, it moves to the
+// bottom (oldest-played last), without disturbing the upcoming order above it.
+function orderedGames(games: Game[]): Game[] {
+  let sorted = [...games].sort((a, b) => a.date.localeCompare(b.date));
+  return [...sorted.filter(isUpcoming), ...sorted.filter((x) => !isUpcoming(x))];
+}
+
+function render({ team }: GameView) {
+  let games = orderedGames(team.games);
 
   return html`
 <h2>${team.name} — Games</h2>
@@ -60,15 +62,8 @@ function render({ team, showPast }: GameView) {
 </div>
 
 <ul id=games class=list>
-    ${visibleGames.map((x) => getGameView(team.id, x))}
+    ${games.map((x) => getGameView(team.id, x))}
 </ul>
-
-$${when(
-    hiddenCount > 0 || showPast,
-    `<p><a href="/web/games?${teamQuery}${showPast ? "" : "&showPast=1"}" target=_self>${
-      showPast ? "Hide past games" : `Show past games (${hiddenCount})`
-    }</a></p>`,
-  )}
 
 <form class="form" method=post action="?teamId=${team.id}"  _submit="clearAutoFocus reset">
     <div class=grid>
