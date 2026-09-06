@@ -1,4 +1,9 @@
-const { globalDb } = self.sw;
+// This module is a transitive dependency of shared.global.ts (via
+// repo-schedule.ts), which gets eagerly `importScripts`'d at service-worker
+// startup — before `self.sw` is fully populated. Import directly from the
+// sibling module instead of destructuring off `self.sw` (the pattern
+// route/page modules use), which would capture `undefined` here.
+import * as globalDb from "./global-model.js";
 
 const REFRESH_URL = "/api/auth/v1/refresh";
 
