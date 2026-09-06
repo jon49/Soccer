@@ -93,4 +93,23 @@ describe("renderScheduleHtml", () => {
     assert.doesNotMatch(html, /<b>Eagles<\/b>/);
     assert.match(html, /&lt;script&gt;/);
   });
+
+  it("tags each row with its date for client-side highlighting", () => {
+    let html = renderScheduleHtml(makeTeam({ games: [makeGame({ id: 1, date: "2026-04-01" })] }));
+    assert.match(html, /<tr data-date="2026-04-01">/);
+  });
+
+  it("defines current-game and alternating-row highlight styles", () => {
+    let html = renderScheduleHtml(makeTeam());
+    assert.match(html, /tbody tr\.current-game/);
+    assert.match(html, /tbody tr\.row-alt/);
+  });
+
+  it("includes a script that picks the current game and stripes the rest client-side", () => {
+    let html = renderScheduleHtml(makeTeam());
+    assert.match(html, /<script>/);
+    assert.match(html, /querySelectorAll\("tbody tr\[data-date\]"\)/);
+    assert.match(html, /classList\.add\("current-game"\)/);
+    assert.match(html, /classList\.add\("row-alt"\)/);
+  });
 });

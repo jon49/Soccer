@@ -30,7 +30,7 @@ function gameRow(game: Game): string {
   let opponent = escapeHtml(game.opponent || "TBD");
   let location = escapeHtml(game.location || "TBD");
   let homeAway = game.home ? "Home" : "Away";
-  return `<tr>
+  return `<tr data-date="${escapeHtml(game.date)}">
   <td>${escapeHtml(formatDate(game.date))}</td>
   <td>${escapeHtml(formatTime(game.time))}</td>
   <td>${opponent}</td>
@@ -61,6 +61,8 @@ export function renderScheduleHtml(team: Team): string {
   table { border-collapse: collapse; width: 100%; }
   th, td { text-align: left; padding: 0.5rem 1rem; border-bottom: 1px solid #ddd; }
   th { border-bottom-width: 2px; }
+  tbody tr.row-alt { background: #f2f2f2; }
+  tbody tr.current-game { background: #fff3b0; font-weight: 600; }
 </style>
 </head>
 <body>
@@ -73,6 +75,32 @@ export function renderScheduleHtml(team: Team): string {
 ${rows}
 </tbody>
 </table>
+<script>
+(function () {
+  // Highlighting is computed here, client-side, using the viewer's own
+  // clock — not at publish time — since this file is a static snapshot
+  // that may be viewed long after it was generated.
+  var rows = Array.prototype.slice.call(document.querySelectorAll("tbody tr[data-date]"));
+  var now = new Date();
+  var todayStr = now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, "0") + "-" + String(now.getDate()).padStart(2, "0");
+
+  var current = null;
+  var others = [];
+  for (var i = 0; i < rows.length; i++) {
+    var row = rows[i];
+    if (!current && row.getAttribute("data-date") >= todayStr) {
+      current = row;
+    } else {
+      others.push(row);
+    }
+  }
+
+  if (current) current.classList.add("current-game");
+  others.forEach(function (row, i) {
+    if (i % 2 === 1) row.classList.add("row-alt");
+  });
+})();
+</script>
 </body>
 </html>
 `;
