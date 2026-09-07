@@ -56,7 +56,7 @@ describe("renderScheduleHtml", () => {
 
   it("shows Away for non-home games", () => {
     let html = renderScheduleHtml(makeTeam({ games: [makeGame({ home: false })] }));
-    assert.match(html, /<td>Away<\/td>/);
+    assert.match(html, /badge-away">Away<\/span>/);
   });
 
   it("falls back to TBD when time/opponent/location are missing", () => {
@@ -77,7 +77,7 @@ describe("renderScheduleHtml", () => {
     assert.ok(html.indexOf("Earlier") < html.indexOf("Later"));
   });
 
-  it("renders a placeholder row when there are no games", () => {
+  it("renders a placeholder item when there are no games", () => {
     let html = renderScheduleHtml(makeTeam({ games: [] }));
     assert.match(html, /No games scheduled yet\./);
   });
@@ -94,21 +94,21 @@ describe("renderScheduleHtml", () => {
     assert.match(html, /&lt;script&gt;/);
   });
 
-  it("tags each row with its date for client-side highlighting", () => {
+  it("tags each game card with its date for client-side highlighting", () => {
     let html = renderScheduleHtml(makeTeam({ games: [makeGame({ id: 1, date: "2026-04-01" })] }));
-    assert.match(html, /<tr data-date="2026-04-01">/);
+    assert.match(html, /<li class="game" data-date="2026-04-01">/);
   });
 
   it("defines current-game and alternating-row highlight styles", () => {
     let html = renderScheduleHtml(makeTeam());
-    assert.match(html, /tbody tr\.current-game/);
-    assert.match(html, /tbody tr\.row-alt/);
+    assert.match(html, /li\.game\.current-game/);
+    assert.match(html, /li\.game\.row-alt/);
   });
 
   it("includes a script that picks the current game and stripes the rest client-side", () => {
     let html = renderScheduleHtml(makeTeam());
     assert.match(html, /<script>/);
-    assert.match(html, /querySelectorAll\("tbody tr\[data-date\]"\)/);
+    assert.match(html, /querySelectorAll\("li\.game\[data-date\]"\)/);
     assert.match(html, /classList\.add\("current-game"\)/);
     assert.match(html, /classList\.add\("row-alt"\)/);
   });
