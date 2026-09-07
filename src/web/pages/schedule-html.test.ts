@@ -112,4 +112,18 @@ describe("renderScheduleHtml", () => {
     assert.match(html, /classList\.add\("current-game"\)/);
     assert.match(html, /classList\.add\("row-alt"\)/);
   });
+
+  it("defines a dark theme that follows the OS setting and an explicit override", () => {
+    let html = renderScheduleHtml(makeTeam());
+    assert.match(html, /@media \(prefers-color-scheme: dark\)/);
+    assert.match(html, /:root:not\(\[data-theme="light"\]\)/);
+    assert.match(html, /:root\[data-theme="dark"\]/);
+  });
+
+  it("includes a theme toggle button wired to persist the viewer's choice", () => {
+    let html = renderScheduleHtml(makeTeam());
+    assert.match(html, /<button id="theme-toggle"/);
+    assert.match(html, /localStorage\.setItem\("theme", next\)/);
+    assert.match(html, /localStorage\.getItem\("theme"\)/);
+  });
 });
