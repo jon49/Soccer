@@ -105,10 +105,10 @@ function getScheduleShareView(team: Team) {
 
   let url = getScheduleUrl(team.scheduleFileId);
   return html`
-<p>Shared schedule: <a href="${url}" target=_blank>${url}</a></p>
 <form method=post action="?${teamQuery}&handler=publishSchedule">
     <button>Republish Schedule</button>
 </form>
+<p>Shared schedule: <a href="${url}" target=_blank>${url}</a></p>
 `;
 }
 
