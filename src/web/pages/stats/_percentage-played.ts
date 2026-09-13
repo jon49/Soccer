@@ -1,3 +1,4 @@
+import { getCurrentTotal } from "../match/state-logic.js";
 import type { StatsView } from "./shared.js";
 
 const { html } = self.sw;
@@ -13,10 +14,7 @@ export async function percentagePlayed(o: StatsView) {
 
   let gameTimes = new Map<number, number>();
   for (let gameState of gameStates) {
-    let totalGameTime = gameState.gameTime
-      .map((x) => (x.end ? x.end - x.start : 0))
-      .reduce((acc, val) => acc + val, 0);
-    gameTimes.set(gameState.gameId, totalGameTime);
+    gameTimes.set(gameState.gameId, getCurrentTotal(gameState.gameTime));
   }
 
   return html`
@@ -39,12 +37,7 @@ export async function percentagePlayed(o: StatsView) {
             let { rate, total } = playerGames.reduce(
               (acc, val) => {
                 if ((val?.gameTime.length ?? 0) > 0) {
-                  let totalTime =
-                    val?.gameTime
-                      .map((x) => (x.end && x.start ? x.end - x.start : 0))
-                      .reduce((acc, val) => {
-                        return acc + val;
-                      }, 0) ?? 0;
+                  let totalTime = getCurrentTotal(val?.gameTime ?? []);
                   let rate = totalTime / (gameTimes.get(val?.gameId ?? 0) || 1);
                   acc.rate.push(rate);
                   acc.total++;

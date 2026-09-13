@@ -91,6 +91,28 @@ describe("getCurrentTotal", () => {
   it("ignores open tail that has no start", () => {
     assert.equal(getCurrentTotal([{ start: 100, end: 400 }, {}]), 300);
   });
+
+  it("keeps a player's time within a still-open half's elapsed time, even after several subs", () => {
+    // Regression for the stats page reporting >100% played: while a half is
+    // still in progress, a player's own gameTime closes on every position
+    // swap, but the game-level gameTime for that half stays open until the
+    // half itself ends. Both sides must use getCurrentTotal (elapsed-to-now)
+    // rather than a closed-intervals-only sum, or the player's total can
+    // exceed the game's total.
+    let halfStart = Date.now() - 20_000;
+    let gameTime = [{ start: halfStart }];
+
+    let playerTime = [
+      { position: "Fullback R", start: halfStart, end: halfStart + 5_000 },
+      { position: "Midfielder C", start: halfStart + 5_000, end: halfStart + 12_000 },
+      { position: "Forward R", start: halfStart + 12_000 },
+    ];
+
+    let gameTotal = getCurrentTotal(gameTime);
+    let playerTotal = getCurrentTotal(playerTime);
+
+    assert.ok(playerTotal <= gameTotal);
+  });
 });
 
 describe("player status predicates", () => {
