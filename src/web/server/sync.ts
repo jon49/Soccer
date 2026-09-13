@@ -1,6 +1,7 @@
 // import { getMany, setMany, set, update } from "./db.js"
 // import * as db from "./global-model.js"
 import { authFetch } from "./api-client.js";
+import { pendingAfterSync } from "./sync-logic.js";
 
 const {
   db: { getMany, setMany, set, update },
@@ -56,6 +57,13 @@ export default async function sync() {
     }
   }
 
+  if (newData.conflicted?.length) {
+    console.error(
+      "soccer sync: server rejected local change(s); keeping them queued for retry:",
+      newData.conflicted,
+    );
+  }
+
   await Promise.all([
     ...updatedRevisionsTask,
     update(
@@ -63,7 +71,7 @@ export default async function sync() {
       (val) => ({ ...val, lastSynced: +new Date(), lastSyncedId: newData.lastSyncedId }),
       { sync: false },
     ),
-    update("updated", (val) => (val?.clear(), val), { sync: false }),
+    update("updated", (val) => pendingAfterSync(val, newData.saved) ?? val, { sync: false }),
   ]);
 
   if (toSaveNewData.length > 0) {
