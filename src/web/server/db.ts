@@ -185,6 +185,7 @@ export interface Team extends Revision, PositionsV0 {
   games: Game[];
   basketballMode?: boolean;
   scheduleFileId?: string;
+  staleAfterMinutes?: number;
 }
 
 export interface TeamSingle {

@@ -58,6 +58,11 @@ export async function play({
             text-align: center;
             border-radius: 0 0 5px 5px;
         }
+        .in-play-stale {
+            outline: 3px solid #ff9800;
+            outline-offset: -1px;
+            border-radius: 6px;
+        }
 
         /* Game Shader CSS */
         :root {

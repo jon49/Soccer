@@ -43,6 +43,11 @@ class Timer {
 
 let timer = new Timer();
 
+// Fallback for how long a player can be in a position before being flagged
+// as not recently substituted in, when a per-element override isn't set via
+// data-stale-after (see team settings).
+const DEFAULT_STALE_AFTER_MS = 8 * 60 * 1e3;
+
 document.head.insertAdjacentHTML(
     "beforeend",
     `<style>
@@ -104,6 +109,11 @@ class GameTimer {
             timer.remove(this);
         }
         el.textContent = formatTime(currentTime, start_, total_);
+        if (el.hasAttribute("data-highlight-stale")) {
+            let staleAfter = +(el.dataset.staleAfter || 0) || DEFAULT_STALE_AFTER_MS;
+            let isStale = static_ !== "" && currentTime - start_ >= staleAfter;
+            el.parentElement?.classList.toggle("in-play-stale", isStale);
+        }
     }
 }
 

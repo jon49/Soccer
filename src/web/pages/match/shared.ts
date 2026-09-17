@@ -75,6 +75,8 @@ export async function createPlayersView<T extends PlayerStatus>(
   return typedPlayers;
 }
 
+export const DEFAULT_STALE_AFTER_MINUTES = 8;
+
 export class PlayerStateView {
   teamId: number;
   gameId: number;
@@ -286,6 +288,15 @@ export class PlayerStateView {
       "playersNotPlaying",
       async () => (await this.notPlayingPlayers()).length,
     );
+  }
+
+  /** Returns null when the highlight is disabled (team set it to 0 minutes). */
+  async staleAfterMs() {
+    return this.#cache.get("staleAfterMs", async () => {
+      let team = await this.team();
+      let minutes = team.staleAfterMinutes ?? DEFAULT_STALE_AFTER_MINUTES;
+      return minutes > 0 ? minutes * 60 * 1e3 : null;
+    });
   }
 
   isInPlayersFull() {

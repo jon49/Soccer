@@ -11,6 +11,7 @@ export function inPlayersView(state: PlayerStateView) {
     state,
     async ({ player, playerOnDeck, positionIndex }) => {
       let isGameInPlay = await state.isGameInPlay();
+      let staleAfterMs = await state.staleAfterMs();
       let sub = playerOnDeck;
       let queryTeamGame = state.queryTeamGame;
       let id = `in-player-${positionIndex}`;
@@ -41,9 +42,9 @@ export function inPlayersView(state: PlayerStateView) {
     class="list m-0
 ${() =>
   player && sub
-    ? html`">${twoPlayerView(player, sub, isGameInPlay, queryTeamGame, id, subPlayerId, [style, style2])}`
+    ? html`">${twoPlayerView(player, sub, isGameInPlay, queryTeamGame, id, subPlayerId, [style, style2], staleAfterMs)}`
     : player
-      ? html`">${playerView(player, isGameInPlay, queryTeamGame, style, 1, id)}`
+      ? html`">${playerView(player, isGameInPlay, queryTeamGame, style, 1, id, staleAfterMs)}`
       : sub
         ? html`">${subPlayerView(sub, queryTeamGame, style, subPlayerId)}`
         : html`
@@ -62,10 +63,11 @@ function twoPlayerView(
   inPlayerId: string,
   subPlayerId: string,
   style: string[],
+  staleAfterMs: number | null,
 ) {
   return html`
 <div id="${inPlayerId}">
-${playerView(player, isGameInPlay, queryTeamGame, style[0], 2, inPlayerId)}
+${playerView(player, isGameInPlay, queryTeamGame, style[0], 2, inPlayerId, staleAfterMs)}
 </div>
 <div id="${subPlayerId}">
 ${subPlayerView(sub, queryTeamGame, style[1], subPlayerId)}
@@ -79,6 +81,7 @@ function playerView(
   style: string,
   numberOfPlayers: number,
   containerId: string,
+  staleAfterMs: number | null,
 ) {
   return html`
 <fieldset class="mb-0" role="group">
@@ -98,6 +101,7 @@ function playerView(
     _load="gameTimer"
     data-start="${player.calc.getLastStartTime()}"
     data-total="${player.calc.total()}"
+    $${when(staleAfterMs != null, () => `data-highlight-stale data-stale-after="${staleAfterMs}"`)}
     ${when(!isGameInPlay, "data-static")}>00:00</div>
 `;
 }

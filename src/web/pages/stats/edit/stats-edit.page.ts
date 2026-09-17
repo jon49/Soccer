@@ -1,5 +1,6 @@
 import type { RoutePostHandler, RoutePage } from "@jon49/sw/routes.middleware.js";
 import type { DbCache as DbCacheType } from "@jon49/sw/utils.js";
+import { DEFAULT_STALE_AFTER_MINUTES } from "../../match/shared.js";
 
 const {
   html,
@@ -11,6 +12,7 @@ const {
     createCheckbox,
     createIdNumber,
     createString25,
+    createPositiveWholeNumber,
     required,
     queryTeamIdValidator,
   },
@@ -64,6 +66,23 @@ async function render(o: StatsView) {
         <span class="on" role="button">Basketball Mode</span>
     </label>
 </form>
+
+<form
+    _change=submit
+    method=post
+    action="?teamId=${teamId}&handler=staleAfterMinutes">
+    <label for=staleAfterMinutes>
+        Highlight players in a position for this many minutes without a
+        substitution
+    </label>
+    <input
+        id=staleAfterMinutes
+        type=number
+        min=0
+        name=staleAfterMinutes
+        value="${team.staleAfterMinutes ?? DEFAULT_STALE_AFTER_MINUTES}">
+    <small>Set to 0 to turn the highlight off.</small>
+</form>
 </div>`;
 }
 
@@ -100,6 +119,17 @@ const postHandlers: RoutePostHandler = {
     let { basketballMode } = await validateObject(data, { basketballMode: createCheckbox });
     let team = await teamGet(teamId);
     team.basketballMode = basketballMode;
+    await teamSave(team);
+    return { status: 200 };
+  },
+
+  async staleAfterMinutes({ query, data }) {
+    let { teamId } = await validateObject(query, queryTeamIdValidator);
+    let { staleAfterMinutes } = await validateObject(data, {
+      staleAfterMinutes: createPositiveWholeNumber("Highlight after minutes"),
+    });
+    let team = await teamGet(teamId);
+    team.staleAfterMinutes = staleAfterMinutes;
     await teamSave(team);
     return { status: 200 };
   },
