@@ -2,15 +2,17 @@
 // import * as db from "./global-model.js"
 import { authFetch } from "./api-client.js";
 import { pendingAfterSync } from "./sync-logic.js";
+import { errorToPlain, logSyncError, logSyncInfo } from "./sync-log.js";
 
 const {
-  db: { getMany, setMany, set, update },
+  db: { getMany, setMany, set, update, get },
   globalDb,
 } = self.sw;
 
 const SYNC_URL = "/api/data/soccer";
 
 export default async function sync() {
+  let rawUpdated = await get<Set<unknown>>("updated");
   let keys = await globalDb.updated();
   const items = await getMany(keys);
   const data: Data[] = new Array(keys.length);
@@ -21,8 +23,21 @@ export default async function sync() {
   }
   const lastSyncedId = (await globalDb.settings()).lastSyncedId ?? 0;
 
+  await logSyncInfo("sync start", {
+    lastSyncedId,
+    pendingRaw: Array.from(rawUpdated ?? []),
+    pendingParsed: keys,
+    outgoing: data.map((d) => ({ key: d.key, id: d.id })),
+  });
+
   let postData: PostData = { lastSyncedId, data };
-  let res = await postSync(postData);
+  let res;
+  try {
+    res = await postSync(postData);
+  } catch (err) {
+    await logSyncError("sync request failed", errorToPlain(err));
+    throw err;
+  }
 
   let newData: ResponseData;
   if (
@@ -32,6 +47,10 @@ export default async function sync() {
   ) {
     newData = await res.json();
   } else {
+    await logSyncError("sync response not ok", {
+      status: res.status,
+      contentType: res.headers.get("Content-Type"),
+    });
     return { status: res.status };
   }
 
@@ -54,6 +73,7 @@ export default async function sync() {
       updatedRevisionsTask.push(set(parse(key), updatedData[index], false));
     } else {
       console.error("Could not find the key to update the revision!", key, id);
+      await logSyncError("could not find key to update revision", { key, id });
     }
   }
 
@@ -62,6 +82,9 @@ export default async function sync() {
       "soccer sync: server rejected local change(s); keeping them queued for retry:",
       newData.conflicted,
     );
+    await logSyncError("server rejected local change(s); keeping them queued for retry", {
+      conflicted: newData.conflicted,
+    });
   }
 
   await Promise.all([
@@ -73,6 +96,13 @@ export default async function sync() {
     ),
     update("updated", (val) => pendingAfterSync(val, newData.saved) ?? val, { sync: false }),
   ]);
+
+  let rawUpdatedAfter = await get<Set<unknown>>("updated");
+  await logSyncInfo("sync complete", {
+    saved: newData.saved,
+    lastSyncedId: newData.lastSyncedId,
+    pendingRawAfter: Array.from(rawUpdatedAfter ?? []),
+  });
 
   if (toSaveNewData.length > 0) {
     return { status: 200 };

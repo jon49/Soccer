@@ -1,5 +1,6 @@
 import type { RoutePage, RoutePostHandler } from "@jon49/sw/routes.middleware.js";
 import { entries } from "idb-keyval";
+import { syncLogEntries } from "../server/sync-log.js";
 
 const {
   globalDb,
@@ -141,6 +142,14 @@ const render = async () => {
 <p><a href="/web/settings?handler=export" role="button" target="_self">Download data as JSON</a></p>
 <p>Saves all synced app data to a JSON file on your device.</p>
 
+<h3>Diagnostics</h3>
+<p><a href="/web/settings?handler=syncLog" role="button" target="_self">Download sync log</a></p>
+<p class=muted>
+  Records what happens on each sync (kept locally only, never sent to the
+  server, and cleared after a week). Useful for troubleshooting a sync count
+  badge that doesn't clear.
+</p>
+
 <h3>Force Resync a Game</h3>
 <p class=muted>
   If a game's data doesn't seem to have reached the server (e.g. it still
@@ -185,6 +194,23 @@ async function exportData() {
   }
   let json = JSON.stringify(data, (_, v) => (v instanceof Set ? Array.from(v) : v), 2);
   let filename = `soccer-data-${new Date().toISOString().slice(0, 10)}.json`;
+  return {
+    body: json,
+    headers: {
+      "Content-Type": "application/json",
+      "Content-Disposition": `attachment; filename="${filename}"`,
+    },
+  };
+}
+
+async function exportSyncLog() {
+  let entries = await syncLogEntries();
+  let json = JSON.stringify(
+    entries.map((e) => ({ ...e, time: new Date(e.ts).toISOString() })),
+    null,
+    2,
+  );
+  let filename = `soccer-sync-log-${new Date().toISOString().slice(0, 10)}.json`;
   return {
     body: json,
     headers: {
@@ -255,6 +281,7 @@ const route: RoutePage = {
       });
     },
     export: exportData,
+    syncLog: exportSyncLog,
   },
   post: postHandlers,
 };

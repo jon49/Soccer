@@ -1,5 +1,6 @@
 import type { RoutePostHandler, RoutePage } from "@jon49/sw/routes.middleware.js";
 import sync from "../server/sync.js";
+import { errorToPlain, logSyncError } from "../server/sync-log.js";
 
 const { html } = self.sw;
 
@@ -28,7 +29,8 @@ const postHandlers: RoutePostHandler = {
     let result;
     try {
       result = await sync();
-    } catch {
+    } catch (err) {
+      await logSyncError("auto sync threw", errorToPlain(err));
       return { status: 204, message: "" };
     }
     if (result.status === 200) {
