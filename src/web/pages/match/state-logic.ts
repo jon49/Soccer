@@ -187,13 +187,3 @@ export class GameTimeCalculator {
     return getCurrentTotal(this.times);
   }
 }
-
-export function calcInversion(color: number, alpha: number) {
-  if (alpha >= 0.4) return 255 - color;
-  return color;
-}
-
-export function invertRGBA(rgba: number[]) {
-  let [r, g, b, a] = rgba;
-  return [calcInversion(r, a), calcInversion(g, a), calcInversion(b, a)];
-}

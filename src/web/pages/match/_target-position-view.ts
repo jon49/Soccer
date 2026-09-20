@@ -20,8 +20,9 @@ export default async function render(query: any) {
   let { teamId, gameId, playerId } = await validateObject(query, querySwapValidator);
 
   let state = new PlayerStateView(teamId, gameId);
-  let [isPaused, player, gameState] = await Promise.all([
+  let [isPaused, isGameInPlay, player, gameState] = await Promise.all([
     state.isGamePaused(),
+    state.isGameInPlay(),
     state.player(playerId),
     state.gameState(),
   ]);
@@ -44,14 +45,11 @@ export default async function render(query: any) {
             <form
                 method=post
                 action="?position=${positionIndex}&teamId=${teamId}&gameId=${gameId}&playerId=${playerId}&handler=updateUserPosition&playerSwap"
-                >${async () => {
+                >${() => {
                   if (player) {
-                    let shadeBackground = await state.shadeBackgroundStyle(player.playerId);
-                    let shadeColor = await state.shadeColorStyle(player.playerId);
                     return html`
                     <button
                         class="game-shader"
-                        style="${shadeBackground}; ${shadeColor};"
                         ${when(isCurrentPlayer, "disabled")}
                         title="${when(playerOnDeck, "Player is on deck already.")}
                         ${when(isCurrentPlayer, "You cannot swap the same player!")}">
@@ -63,6 +61,8 @@ export default async function render(query: any) {
                             _load="gameTimer"
                             data-start="${player.calc.getLastStartTime()}"
                             data-total="${player.calc.total()}"
+                            data-game-total="${gameTimeCalculator.total()}"
+                            $${when(isGameInPlay, () => `data-game-start="${gameTimeCalculator.getLastStartTime()}"`)}
                             $${when(isPaused, `data-static`)}>
                         </span>
                     </button>`;

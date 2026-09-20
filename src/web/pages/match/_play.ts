@@ -64,10 +64,12 @@ export async function play({
             border-radius: 6px;
         }
 
-        /* Game Shader CSS */
+        /* Game Shader CSS — the actual color is computed client-side (see
+           game-timer.js) from the timer's data-* attributes; these are just
+           the pre-JS/no-JS fallback. */
         :root {
-            --game-shader-background: #000;
-            --game-shader-color: #fff;
+            --game-shader-background: transparent;
+            --game-shader-color: inherit;
         }
         .game-shader {
             background: var(--game-shader-background);

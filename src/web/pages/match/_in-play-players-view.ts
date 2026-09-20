@@ -17,23 +17,6 @@ export function inPlayersView(state: PlayerStateView) {
       let id = `in-player-${positionIndex}`;
       let subPlayerId = `sub-player-${positionIndex}`;
 
-      let shadeBackground = "";
-      let shadeColor = "";
-      let playerId = player?.playerId;
-      if (playerId) {
-        shadeBackground = await state.shadeBackgroundStyle(playerId);
-        shadeColor = await state.shadeColorStyle(playerId);
-      }
-      let style = `${shadeBackground}; ${shadeColor};`;
-
-      let shadeBackground2 = "";
-      let shadeColor2 = "";
-      let playerId2 = sub?.playerId;
-      if (playerId2) {
-        shadeBackground2 = await state.shadeBackgroundStyle(playerId2);
-        shadeColor2 = await state.shadeColorStyle(playerId2);
-      }
-      let style2 = `${shadeBackground2}; ${shadeColor2};`;
       return html`
 <form
     method=post
@@ -42,11 +25,11 @@ export function inPlayersView(state: PlayerStateView) {
     class="list m-0
 ${() =>
   player && sub
-    ? html`">${twoPlayerView(player, sub, isGameInPlay, queryTeamGame, id, subPlayerId, [style, style2], staleAfterMs)}`
+    ? html`">${twoPlayerView(player, sub, isGameInPlay, queryTeamGame, id, subPlayerId, staleAfterMs)}`
     : player
-      ? html`">${playerView(player, isGameInPlay, queryTeamGame, style, 1, id, staleAfterMs)}`
+      ? html`">${playerView(player, isGameInPlay, queryTeamGame, 1, id, staleAfterMs)}`
       : sub
-        ? html`">${subPlayerView(sub, queryTeamGame, style, subPlayerId)}`
+        ? html`">${subPlayerView(sub, isGameInPlay, queryTeamGame, subPlayerId)}`
         : html`
             empty">
           `}</form>`;
@@ -62,15 +45,14 @@ function twoPlayerView(
   queryTeamGame: string,
   inPlayerId: string,
   subPlayerId: string,
-  style: string[],
   staleAfterMs: number | null,
 ) {
   return html`
 <div id="${inPlayerId}">
-${playerView(player, isGameInPlay, queryTeamGame, style[0], 2, inPlayerId, staleAfterMs)}
+${playerView(player, isGameInPlay, queryTeamGame, 2, inPlayerId, staleAfterMs)}
 </div>
 <div id="${subPlayerId}">
-${subPlayerView(sub, queryTeamGame, style[1], subPlayerId)}
+${subPlayerView(sub, isGameInPlay, queryTeamGame, subPlayerId)}
 </div>`;
 }
 
@@ -78,7 +60,6 @@ function playerView(
   player: GamePlayerStatusView<InPlayPlayer>,
   isGameInPlay: boolean,
   queryTeamGame: string,
-  style: string,
   numberOfPlayers: number,
   containerId: string,
   staleAfterMs: number | null,
@@ -97,10 +78,12 @@ function playerView(
 <div
     id="${containerId}-timer"
     class="in-play-timer game-shader game-timer"
-    style="$${style} $${when(numberOfPlayers > 1, "border-bottom-right-radius: unset; border-bottom-left-radius: unset;")}"
+    $${when(numberOfPlayers > 1, () => `style="border-bottom-right-radius: unset; border-bottom-left-radius: unset;"`)}
     _load="gameTimer"
     data-start="${player.calc.getLastStartTime()}"
     data-total="${player.calc.total()}"
+    data-game-total="${player.calc.gameCalc.total()}"
+    $${when(isGameInPlay, () => `data-game-start="${player.calc.gameCalc.getLastStartTime()}"`)}
     $${when(staleAfterMs != null, () => `data-highlight-stale data-stale-after="${staleAfterMs}"`)}
     ${when(!isGameInPlay, "data-static")}>00:00</div>
 `;
@@ -108,8 +91,8 @@ function playerView(
 
 function subPlayerView(
   sub: GamePlayerStatusView<OnDeckPlayer>,
+  isGameInPlay: boolean,
   queryTeamGame: string,
-  style: string,
   containerId: string,
 ) {
   return html`
@@ -128,10 +111,12 @@ function subPlayerView(
 <div
     id="${containerId}-timer"
     class="in-play-timer game-shader game-timer"
-    style="$${style} border-radius: 0 0 5px 5px;"
+    style="border-radius: 0 0 5px 5px;"
     _load="gameTimer"
     data-start="${sub.calc.getLastStartTime()}"
     data-total="${sub.calc.total()}"
+    data-game-total="${sub.calc.gameCalc.total()}"
+    $${when(isGameInPlay, () => `data-game-start="${sub.calc.gameCalc.getLastStartTime()}"`)}
     data-static
     >00:00</div>
 `;

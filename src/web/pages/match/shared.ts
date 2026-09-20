@@ -16,13 +16,12 @@ import {
   isInPlayPlayer,
   isOnDeckPlayer,
   isOutPlayer,
-  invertRGBA,
 } from "./state-logic.js";
+import { isRosterFull, staleAfterMs } from "./player-state-logic.js";
 
 export { GameTimeCalculator, isInPlayPlayer, isOnDeckPlayer, isOutPlayer };
 
 let {
-  globalDb: db,
   html,
   repo: {
     playerGameAllGet,
@@ -85,47 +84,6 @@ export class PlayerStateView {
     this.teamId = teamId;
     this.gameId = gameId;
     this.#cache = new DbCache();
-  }
-
-  async theme() {
-    return this.#cache.get("theme", async () => {
-      let settings = await db.settings();
-      return settings.theme ?? "light";
-    });
-  }
-
-  async shadeBackgroundStyle(playerId: number) {
-    let background = await this.shadeBackground(playerId);
-    return `--game-shader-background: rgba(${background.join(",")})`;
-  }
-
-  async shadeBackground(playerId: number) {
-    let theme = await this.theme();
-    let rgb = theme === "dark" ? [255, 255, 255] : [19, 23, 31];
-    let playerCalc = await this.playerCalc(playerId);
-    rgb.push(+(playerCalc.currentTotal() / (playerCalc.gameCalc.currentTotal() || 1)).toFixed(3));
-
-    return rgb;
-  }
-
-  async shadeColor(playerId: number) {
-    let shadeBackground = await this.shadeBackground(playerId);
-    let color = invertRGBA(shadeBackground);
-    return color;
-  }
-
-  async shadeColorStyle(playerId: number) {
-    let color = await this.shadeColor(playerId);
-    return `--game-shader-color: rgb(${color.join(",")})`;
-  }
-
-  async playerCalc(playerId: number) {
-    return this.#cache.get(`playerCalc${playerId}`, async () => {
-      let gameCalc = await this.gameCalc();
-      let player = await this.playerGame(playerId);
-      let playerCalc = new PlayerGameTimeCalculator(player, gameCalc);
-      return playerCalc;
-    });
   }
 
   async stats() {
@@ -294,8 +252,7 @@ export class PlayerStateView {
   async staleAfterMs() {
     return this.#cache.get("staleAfterMs", async () => {
       let team = await this.team();
-      let minutes = team.staleAfterMinutes ?? DEFAULT_STALE_AFTER_MINUTES;
-      return minutes > 0 ? minutes * 60 * 1e3 : null;
+      return staleAfterMs(team.staleAfterMinutes, DEFAULT_STALE_AFTER_MINUTES);
     });
   }
 
@@ -304,7 +261,7 @@ export class PlayerStateView {
       let countPlayersOnDeck = await this.countPlayersOnDeck();
       let countInPlayPlayers = await this.countInPlayPlayers();
       let totalPositions = (await this.positions()).positions.flat().length;
-      return countInPlayPlayers + countPlayersOnDeck >= totalPositions;
+      return isRosterFull(countInPlayPlayers, countPlayersOnDeck, totalPositions);
     });
   }
 

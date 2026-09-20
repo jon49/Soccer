@@ -10,8 +10,6 @@ import {
   isOutPlayer,
   filterOutPlayers,
   filterNotPlayingPlayers,
-  calcInversion,
-  invertRGBA,
   GameTimeCalculator,
   PlayerGameTimeCalculatorBase,
 } from "./state-logic.js";
@@ -144,22 +142,6 @@ describe("player status predicates", () => {
   it("filterNotPlayingPlayers matches notPlaying only", () => {
     assert.equal(filterNotPlayingPlayers(makePlayerGame({ status: { _: "notPlaying" } })), true);
     assert.equal(filterNotPlayingPlayers(makePlayerGame()), false);
-  });
-});
-
-describe("calcInversion / invertRGBA", () => {
-  it("inverts channel when alpha >= 0.4", () => {
-    assert.equal(calcInversion(100, 0.4), 155);
-    assert.equal(calcInversion(0, 1), 255);
-  });
-
-  it("leaves channel alone when alpha < 0.4", () => {
-    assert.equal(calcInversion(100, 0.39), 100);
-  });
-
-  it("invertRGBA inverts r,g,b based on alpha and drops alpha", () => {
-    assert.deepEqual(invertRGBA([10, 20, 30, 0.5]), [245, 235, 225]);
-    assert.deepEqual(invertRGBA([10, 20, 30, 0.1]), [10, 20, 30]);
   });
 });
 
