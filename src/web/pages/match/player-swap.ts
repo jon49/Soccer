@@ -1,35 +1,15 @@
-import type { PlayerGame } from "../../server/db.js";
-import {
-  GameTimeCalculator,
-  PlayerGameTimeCalculator,
-  isInPlayPlayer,
-  isOnDeckPlayer,
-} from "./shared.js";
+import { isInPlayPlayer, isOnDeckPlayer } from "./shared.js";
+import { computeSwapAll } from "./player-swap-logic.js";
 
 let {
-  repo: { playerGameAllGet, teamGet, gameStateGet },
-  validation: {
-    createPositiveWholeNumber,
-    maybe,
-    required,
-    queryTeamIdGameIdValidator,
-    createIdNumber,
-    validateObject,
-  },
+  repo: { playerGameAllGet, teamGet, gameStateGet, playerGameSave },
+  validation: { maybe, required, queryTeamIdGameIdValidator, createIdNumber, validateObject },
 } = self.sw;
 
 const queryTeamGamePlayerValidator = {
   ...queryTeamIdGameIdValidator,
   playerId: maybe(createIdNumber("Query Player Id")),
 };
-
-function getPlayerPosition(player: PlayerGame) {
-  return isOnDeckPlayer(player)
-    ? player.status.targetPosition
-    : isInPlayPlayer(player)
-      ? player.status.position
-      : null;
-}
 
 export async function swapAll(query: any) {
   let { gameId, playerId, teamId } = await validateObject(query, queryTeamGamePlayerValidator);
@@ -50,31 +30,9 @@ export async function swapAll(query: any) {
     "Could not find game ID!",
   );
   let gameState = await gameStateGet(teamId, gameId, game);
-  let gameCalc = new GameTimeCalculator(gameState);
 
-  for (let player of onDeckPlayers) {
-    let calc = new PlayerGameTimeCalculator(player, gameCalc);
-
-    let currentPlayer = inPlayers.find((x) => x.status.position === player.status.targetPosition);
-    if (currentPlayer) {
-      let inPlayerCalc = new PlayerGameTimeCalculator(<PlayerGame>currentPlayer, gameCalc);
-      if (inPlayerCalc.hasStarted()) {
-        inPlayerCalc.end();
-      }
-      (<PlayerGame>currentPlayer).status = { _: "out" };
-      await inPlayerCalc.save(teamId);
-    }
-
-    calc.start();
-
-    let position = await createPositiveWholeNumber("Player position number")(
-      getPlayerPosition(player),
-    );
-
-    (<PlayerGame>player).status = {
-      _: "inPlay",
-      position,
-    };
-    await calc.save(teamId);
+  let { playersToSave } = computeSwapAll(onDeckPlayers, inPlayers, gameState);
+  for (let player of playersToSave) {
+    await playerGameSave(teamId, player);
   }
 }

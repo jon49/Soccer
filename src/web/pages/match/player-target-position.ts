@@ -1,10 +1,5 @@
 import type { GameState, PlayerGame, Team } from "../../server/db.js";
-import {
-  GameTimeCalculator,
-  PlayerGameTimeCalculator,
-  isInPlayPlayer,
-  isOnDeckPlayer,
-} from "./shared.js";
+import { applySwapToOnDeck, applySwapWhenInGame } from "./player-target-position-logic.js";
 
 let {
   repo: { playerGameAllGet, teamGet, playerGameSave, positionGetAll, gameStateGet },
@@ -46,87 +41,12 @@ async function _targetPosition(
     playerGameAllGet(team.id, gameState.gameId, []),
     positionGetAll(team.id),
   ]);
+  let positionNames = positions.flat();
 
-  await swapWhenInGame(player, players, positions.flat(), team, targetPosition, gameState);
-  await swapToOnDeck(player, players, positions.flat(), team, targetPosition, gameState);
-}
+  let inGame = applySwapWhenInGame(player, players, positionNames, targetPosition, gameState);
+  let onDeck = applySwapToOnDeck(player, players, positionNames, targetPosition, gameState);
 
-async function swapToOnDeck(
-  player: PlayerGame,
-  players: PlayerGame[],
-  positions: string[],
-  team: Team,
-  targetPosition: number,
-  gameState: GameState,
-) {
-  if (!(player.status?._ === "onDeck" || player.status?._ === "out" || !player.status?._)) return;
-
-  let onDeckPlayer = players
-    .filter(isOnDeckPlayer)
-    .find((x) => x.status.targetPosition === targetPosition);
-
-  if (onDeckPlayer) {
-    (<PlayerGame>onDeckPlayer).status = { _: "out" };
-    await playerGameSave(team.id, onDeckPlayer);
+  for (let toSave of [...inGame.playersToSave, ...onDeck.playersToSave]) {
+    await playerGameSave(team.id, toSave);
   }
-
-  player.status = {
-    _: "onDeck",
-    targetPosition,
-  };
-
-  let playerCalc = new PlayerGameTimeCalculator(player, new GameTimeCalculator(gameState));
-  if (isOnDeckPlayer(player)) {
-    playerCalc.position(positions[targetPosition]);
-  }
-
-  await playerGameSave(team.id, player);
-}
-
-async function swapWhenInGame(
-  player: PlayerGame,
-  players: PlayerGame[],
-  positions: string[],
-  team: Team,
-  targetPosition: number,
-  gameState: GameState,
-) {
-  if (player.status?._ !== "inPlay") return;
-
-  let inGamePlayer = players
-    .filter(isInPlayPlayer)
-    .find((x) => x.status.position === targetPosition);
-
-  if (inGamePlayer) {
-    inGamePlayer.status.position = player.status.position;
-  }
-  player.status.position = targetPosition;
-
-  let gameCalc = new GameTimeCalculator(gameState);
-  let playerCalc = new PlayerGameTimeCalculator(player, gameCalc);
-  let gameOn = playerCalc.isGameOn();
-
-  let positionName = positions[targetPosition];
-  if (gameOn) {
-    playerCalc.end();
-    playerCalc.position(positionName);
-    playerCalc.start();
-  } else {
-    playerCalc.position(positionName);
-  }
-
-  if (inGamePlayer) {
-    let inGamePlayerCalc = new PlayerGameTimeCalculator(inGamePlayer, gameCalc);
-    let positionName = positions[player.status.position];
-    if (gameOn) {
-      inGamePlayerCalc.end();
-      inGamePlayerCalc.position(positionName);
-      inGamePlayerCalc.start();
-    } else {
-      inGamePlayerCalc.position(positionName);
-    }
-    await inGamePlayerCalc.save(team.id);
-  }
-
-  await playerCalc.save(team.id);
 }
