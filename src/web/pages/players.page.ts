@@ -66,7 +66,7 @@ function render(o: PlayersEditView) {
     </div>
 </form>
 
-<h3 id=players>Players Settings</h3>
+<h3 id=players>Players Settings (${team.players.filter((x) => x.active).length})</h3>
 ${when(
   !team.players.length,
   () =>
