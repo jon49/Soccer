@@ -1,10 +1,10 @@
-import type { Game, Team } from "../server/db.js";
+import type { Game, GameState, Team } from "../server/db.js";
 import type { RoutePostHandler, RoutePage } from "@jon49/sw/routes.middleware.js";
 
 const {
   html,
   layout,
-  repo: { teamGet, teamSave, publishTeamSchedule, getScheduleUrl },
+  repo: { teamGet, teamSave, publishTeamSchedule, getScheduleUrl, gameStateGet, gameStatesGet },
   utils: { when, equals, getNewId },
   validation: {
     assert,
@@ -23,12 +23,15 @@ const {
 
 interface GameView {
   team: Team;
+  gameStates: Map<number, GameState>;
 }
 
 async function start(query: any): Promise<GameView> {
   let { teamId } = await validateObject(query, queryTeamIdValidator);
   let team = await teamGet(teamId);
-  return { team };
+  let states = await gameStatesGet(teamId, team.games);
+  let gameStates = new Map(states.map((x) => [x.gameId, x]));
+  return { team, gameStates };
 }
 
 // A game sinks to the bottom of the list a day after it's played — games on
@@ -51,7 +54,7 @@ function orderedGames(games: Game[]): Game[] {
   return [...sorted.filter(isUpcoming), ...sorted.filter((x) => !isUpcoming(x))];
 }
 
-function render({ team }: GameView) {
+function render({ team, gameStates }: GameView) {
   let games = orderedGames(team.games);
 
   return html`
@@ -62,31 +65,29 @@ function render({ team }: GameView) {
 </div>
 
 <ul id=games class=list>
-    ${games.map((x) => getGameView(team.id, x))}
+    ${games.map((x) => getGameView(team.id, x, gameStates.get(x.id)))}
 </ul>
 
 <form class="form" method=post action="?teamId=${team.id}"  _submit="clearAutoFocus reset">
-    <div class=grid>
-        <div>
-            <label for=gameDate>Name</label>
-            <input id=gameDate type=datetime-local name=date required ${when(team.games.length === 0, "autofocus")}>
-        </div>
+    <label for=gameDate>Date/Time</label>
+    <input id=gameDate type=datetime-local name=date required ${when(team.games.length === 0, "autofocus")}>
+
+    <div class=grid style="--grid-item-width: 300px;">
         <div>
             <label for=gameOpponent>Opponent</label>
             <input id=gameOpponent type=text name=opponent required>
         </div>
-    </div>
-
-    <div class=grid>
         <div>
             <label for=gameLocation>Location</label>
             <input id=gameLocation type=text name=location>
         </div>
-        <div>
-            <input class=inline id=home type=checkbox name=home>
-            <label for=home>Home</label>
-        </div>
     </div>
+
+    <label class=toggle>
+        <input id=home type=checkbox name=home>
+        <span class="off full-width condense-padding" role="button">Visiting</span>
+        <span class="on full-width condense-padding" role="button">Home</span>
+    </label>
 
     <button>Save</button>
 </form>
@@ -116,9 +117,9 @@ async function renderMain(query: any) {
   return render(await start(query));
 }
 
-function getGameView(teamId: number, game: Game, hz: string = "") {
+function getGameView(teamId: number, game: Game, gameState?: GameState, hz: string = "") {
   return html`<li id=game-${game.id} $${hz}>
-        ${getGamePartialView(teamId, game)}
+        ${getGamePartialView(teamId, game, gameState)}
     </li>`;
 }
 
@@ -127,7 +128,13 @@ function formatTime(date: Date | undefined) {
   return date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 }
 
-function getGamePartialView(teamId: number, game: Game) {
+// Only games that have been started have a meaningful score.
+function formatScore(gameState: GameState | undefined) {
+  if (!gameState?.status) return "";
+  return `${gameState.points} – ${gameState.opponentPoints}`;
+}
+
+function getGamePartialView(teamId: number, game: Game, gameState?: GameState) {
   let teamQuery = `teamId=${teamId}`;
   let formId = `game-form-${game.id}`;
   let datetime = game.date && game.time ? `${game.date}T${game.time}` : "";
@@ -162,6 +169,7 @@ function getGamePartialView(teamId: number, game: Game) {
         <span class=editable-pencil>&#9998;</span>
     </label>
 </div>
+<div>${formatScore(gameState)}</div>
 <div>
     <input
         id="game-location-${game.id}"
@@ -171,7 +179,7 @@ function getGamePartialView(teamId: number, game: Game) {
         name=location
         value="${game.location}">
     <label for="game-location-${game.id}">
-        ${game.location || "No location set"}
+        ${game.location || "?"}
         <span class=editable-pencil>&#9998;</span>
     </label>
 </div>
@@ -238,6 +246,7 @@ const postHandlers: RoutePostHandler = {
     return getGameView(
       teamId,
       team.games.find((x) => x.id === gameId)!,
+      undefined,
       `hz-target="#games" hz-swap="prepend"`,
     );
   },
@@ -270,7 +279,7 @@ const postHandlers: RoutePostHandler = {
 
     await teamSave(team);
 
-    return getGameView(teamId, game);
+    return getGameView(teamId, game, await gameStateGet(teamId, gameId, game));
   },
 
   async publishSchedule({ query }) {

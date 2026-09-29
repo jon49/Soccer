@@ -216,3 +216,9 @@ input:indeterminate ~ .none {
   border-radius: 0.5em;
   padding: 1em;
 }
+
+/* Keep visited links the same color as unvisited ones. Zero specificity so
+   links styled as buttons or nav items keep their own colors. */
+:where(a:visited) {
+  color: LinkText;
+}
