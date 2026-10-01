@@ -39,15 +39,13 @@ function gameCard(game: Game, gameState: GameState | undefined): string {
   let location = escapeHtml(game.location || "TBD");
   let homeAway = game.home ? "Home" : "Away";
   return `<li class="game" data-date="${escapeHtml(game.date)}">
-  <div class="game-when">
-    <span class="game-date">${escapeHtml(formatDate(game.date))}</span>
-    <span class="game-time">${escapeHtml(formatTime(game.time))}</span>
-  </div>
+  <span class="game-date">${escapeHtml(formatDate(game.date))}</span>
+  <span class="game-time">${escapeHtml(formatTime(game.time))}</span>
   <div class="game-opponent">
     vs ${opponent}
     <span class="badge ${game.home ? "badge-home" : "badge-away"}">${homeAway}</span>
-  </div>${scoreLine(gameState)}
-  <div class="game-location">${location}</div>
+  </div>
+  <span class="game-location">${location}</span>${scoreLine(gameState)}
 </li>`;
 }
 
@@ -158,18 +156,21 @@ export function renderScheduleHtml(team: Team, gameStates: GameState[] = []): st
   li.game.row-alt { background: var(--card-alt-bg); }
   li.game.current-game { background: var(--current-bg); border-color: var(--current-border); }
   li.game.empty { text-align: center; color: var(--muted-fg); }
-  .game-when {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    gap: 0.5rem 1rem;
-    font-size: 0.9rem;
-    color: var(--meta-fg);
+  /* Two columns — date/opponent/score on the left, time/location on the
+     right — so the location sits under the time without pushing the
+     opponent down. */
+  li.game:not(.empty) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) fit-content(45%);
+    column-gap: 1rem;
+    align-items: baseline;
   }
+  .game-date, .game-time { font-size: 0.9rem; color: var(--meta-fg); }
   .game-date { font-weight: 600; }
+  .game-time, .game-location { text-align: right; }
   .game-opponent { margin-top: 0.35rem; font-size: 1.1rem; }
-  .game-score { margin-top: 0.25rem; font-weight: 600; }
-  .game-location { margin-top: 0.25rem; color: var(--location-fg); }
+  .game-score { grid-column: 1; margin-top: 0.25rem; font-weight: 600; }
+  .game-location { color: var(--location-fg); }
   .badge {
     display: inline-block;
     margin-left: 0.5rem;
