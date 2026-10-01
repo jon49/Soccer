@@ -30,6 +30,7 @@ const {
     gameStateSave,
     playerGameAllGet,
     playerGameSave,
+    publishTeamSchedule,
     saveGameNotes,
     statIds,
     teamGet,
@@ -405,7 +406,18 @@ const postHandlers: RoutePostHandler = {
       inPlayPlayers.map((player) => new PlayerGameTimeCalculator(player, calc).save(teamId)),
     );
 
-    return getApp(new PlayerStateView(teamId, gameId));
+    // Keep an already-shared schedule current with the final score. Ending the
+    // game must still succeed if this fails (e.g. offline at the field).
+    let message: string | undefined;
+    if (team.scheduleFileId) {
+      try {
+        await publishTeamSchedule(team);
+      } catch (e: any) {
+        message = `Game ended, but the schedule was not republished: ${e?.message ?? e}`;
+      }
+    }
+
+    return { body: await getApp(new PlayerStateView(teamId, gameId)), message };
   },
 
   async restartGame({ query }) {

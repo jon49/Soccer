@@ -1,5 +1,5 @@
 import type { Team } from "./db.js";
-import { teamSave } from "./repo-team.js";
+import { gameStatesGet, teamSave } from "./repo-team.js";
 import { authFetch, OFFLINE_STATUS } from "./api-client.js";
 import { renderScheduleHtml } from "../pages/schedule-html.js";
 
@@ -24,7 +24,7 @@ export async function publishTeamSchedule(team: Team): Promise<{ url: string }> 
   // Reusing the guid makes this call an overwrite (same `id`) instead of a
   // new publish, so the shareable URL never changes across republishes.
   let guid = team.scheduleFileId ?? crypto.randomUUID();
-  let html = renderScheduleHtml(team);
+  let html = renderScheduleHtml(team, await gameStatesGet(team.id, team.games));
 
   let res = await authFetch(PUBLISH_URL, {
     method: "POST",

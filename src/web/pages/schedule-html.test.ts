@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import type { Game, Team } from "../server/db.js";
+import type { Game, GameState, Team } from "../server/db.js";
 import { renderScheduleHtml } from "./schedule-html.js";
 
 function makeGame(overrides: Partial<Game> = {}): Game {
@@ -23,6 +23,17 @@ function makeTeam(overrides: Partial<Team> = {}): Team {
     positions: [],
     _rev: 0,
     _v: 0,
+    ...overrides,
+  };
+}
+
+function makeGameState(overrides: Partial<GameState> = {}): GameState {
+  return {
+    gameId: 1,
+    points: 0,
+    opponentPoints: 0,
+    gameTime: [],
+    _rev: 0,
     ...overrides,
   };
 }
@@ -125,5 +136,24 @@ describe("renderScheduleHtml", () => {
     assert.match(html, /<button id="theme-toggle"/);
     assert.match(html, /localStorage\.setItem\("theme", next\)/);
     assert.match(html, /localStorage\.getItem\("theme"\)/);
+  });
+
+  it("shows the final score for ended games", () => {
+    let html = renderScheduleHtml(makeTeam({ games: [makeGame({ id: 1 })] }), [
+      makeGameState({ gameId: 1, status: "ended", points: 3, opponentPoints: 1 }),
+    ]);
+    assert.match(html, /<div class="game-score">Final: 3 – 1<\/div>/);
+  });
+
+  it("omits the score for games that haven't ended", () => {
+    let html = renderScheduleHtml(
+      makeTeam({ games: [makeGame({ id: 1 }), makeGame({ id: 2 }), makeGame({ id: 3 })] }),
+      [
+        makeGameState({ gameId: 1, status: "play", points: 2 }),
+        makeGameState({ gameId: 2, status: "paused", points: 2 }),
+        makeGameState({ gameId: 3 }),
+      ],
+    );
+    assert.doesNotMatch(html, /class="game-score"/);
   });
 });

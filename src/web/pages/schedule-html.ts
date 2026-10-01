@@ -1,4 +1,4 @@
-import type { Game, Team } from "../server/db.js";
+import type { Game, GameState, Team } from "../server/db.js";
 
 function escapeHtml(value: string): string {
   return value
@@ -26,7 +26,15 @@ function formatTime(time: string | undefined): string {
   return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 }
 
-function gameCard(game: Game): string {
+// Only ended games get a score — the published page is a static snapshot, so
+// an in-progress score would go stale.
+function scoreLine(gameState: GameState | undefined): string {
+  if (gameState?.status !== "ended") return "";
+  return `
+  <div class="game-score">Final: ${gameState.points} – ${gameState.opponentPoints}</div>`;
+}
+
+function gameCard(game: Game, gameState: GameState | undefined): string {
   let opponent = escapeHtml(game.opponent || "TBD");
   let location = escapeHtml(game.location || "TBD");
   let homeAway = game.home ? "Home" : "Away";
@@ -38,19 +46,20 @@ function gameCard(game: Game): string {
   <div class="game-opponent">
     vs ${opponent}
     <span class="badge ${game.home ? "badge-home" : "badge-away"}">${homeAway}</span>
-  </div>
+  </div>${scoreLine(gameState)}
   <div class="game-location">${location}</div>
 </li>`;
 }
 
-export function renderScheduleHtml(team: Team): string {
+export function renderScheduleHtml(team: Team, gameStates: GameState[] = []): string {
+  let stateById = new Map(gameStates.map((x) => [x.gameId, x]));
   let title = `${team.name} ${team.year}`;
   let games = [...team.games].sort((a, b) =>
     a.date === b.date ? (a.time ?? "").localeCompare(b.time ?? "") : a.date.localeCompare(b.date),
   );
 
   let items = games.length
-    ? games.map(gameCard).join("\n")
+    ? games.map((x) => gameCard(x, stateById.get(x.id))).join("\n")
     : `<li class="game empty">No games scheduled yet.</li>`;
 
   return `<!doctype html>
@@ -159,6 +168,7 @@ export function renderScheduleHtml(team: Team): string {
   }
   .game-date { font-weight: 600; }
   .game-opponent { margin-top: 0.35rem; font-size: 1.1rem; }
+  .game-score { margin-top: 0.25rem; font-weight: 600; }
   .game-location { margin-top: 0.25rem; color: var(--location-fg); }
   .badge {
     display: inline-block;
