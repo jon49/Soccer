@@ -1,7 +1,8 @@
-import type { Team } from "./db.js";
+import type { GameState, Team } from "./db.js";
 import { gameStatesGet, teamSave } from "./repo-team.js";
+import { playerGameAllGet, statIds } from "./repo-player-game.js";
 import { authFetch, OFFLINE_STATUS } from "./api-client.js";
-import { renderScheduleHtml } from "../pages/schedule-html.js";
+import { renderScheduleHtml, type GameGoals } from "../pages/schedule-html.js";
 
 // Per ../ImageBase/README.md "Publishing HTML pages": a stable per-frontend
 // app id, an owner-authenticated Record API write, and a public read route
@@ -20,11 +21,28 @@ function base64Encode(text: string): string {
   return btoa(binary);
 }
 
+// Only ended games with a score show who scored, matching what the published
+// page displays.
+async function goalsGet(team: Team, gameStates: GameState[]): Promise<GameGoals[]> {
+  let playerIds = team.players.map((x) => x.id);
+  if (!playerIds.length) return [];
+  let scoredGames = gameStates.filter((x) => x.status === "ended" && x.points > 0);
+  let playerGames = await Promise.all(
+    scoredGames.map((x) => playerGameAllGet(team.id, x.gameId, playerIds)),
+  );
+  return playerGames.flat().map((x) => ({
+    gameId: x.gameId,
+    playerId: x.playerId,
+    points: x.stats.find((s) => s.statId === statIds.Goal)?.count ?? 0,
+  }));
+}
+
 export async function publishTeamSchedule(team: Team): Promise<{ url: string }> {
   // Reusing the guid makes this call an overwrite (same `id`) instead of a
   // new publish, so the shareable URL never changes across republishes.
   let guid = team.scheduleFileId ?? crypto.randomUUID();
-  let html = renderScheduleHtml(team, await gameStatesGet(team.id, team.games));
+  let gameStates = await gameStatesGet(team.id, team.games);
+  let html = renderScheduleHtml(team, gameStates, await goalsGet(team, gameStates));
 
   let res = await authFetch(PUBLISH_URL, {
     method: "POST",

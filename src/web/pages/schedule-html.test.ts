@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import type { Game, GameState, Team } from "../server/db.js";
+import type { Game, GameState, Team, TeamPlayer } from "../server/db.js";
 import { renderScheduleHtml } from "./schedule-html.js";
 
 function makeGame(overrides: Partial<Game> = {}): Game {
@@ -25,6 +25,10 @@ function makeTeam(overrides: Partial<Team> = {}): Team {
     _v: 0,
     ...overrides,
   };
+}
+
+function makePlayer(id: number, name: string): TeamPlayer {
+  return { id, name, active: true };
 }
 
 function makeGameState(overrides: Partial<GameState> = {}): GameState {
@@ -155,5 +159,65 @@ describe("renderScheduleHtml", () => {
       ],
     );
     assert.doesNotMatch(html, /class="game-score"/);
+  });
+
+  it("makes the final score open a popover listing who scored", () => {
+    let html = renderScheduleHtml(
+      makeTeam({
+        name: "Sharks",
+        players: [makePlayer(1, "Ann"), makePlayer(2, "Bo"), makePlayer(3, "Cy")],
+        games: [makeGame({ id: 7 })],
+      }),
+      [makeGameState({ gameId: 7, status: "ended", points: 3, opponentPoints: 1 })],
+      [
+        { gameId: 7, playerId: 1, points: 1 },
+        { gameId: 7, playerId: 2, points: 2 },
+        { gameId: 7, playerId: 3, points: 0 },
+      ],
+    );
+    assert.match(
+      html,
+      /<button type="button" class="score-button" popovertarget="scorers-7">Final: 3 – 1<\/button>/,
+    );
+    assert.match(html, /<div class="scorers" id="scorers-7" popover>/);
+    assert.match(html, /Sharks scorers/);
+    assert.ok(html.indexOf("<span>Bo<") < html.indexOf("<span>Ann<"), "most points first");
+    assert.match(html, /<span>Bo<\/span><span>2 goals<\/span>/);
+    assert.match(html, /<span>Ann<\/span><span>1 goal<\/span>/);
+    assert.doesNotMatch(html, /Cy/);
+    assert.doesNotMatch(html, /class="scorer-other"/);
+  });
+
+  it("lists uncredited points as Other and uses points in basketball mode", () => {
+    let html = renderScheduleHtml(
+      makeTeam({
+        basketballMode: true,
+        players: [makePlayer(1, "Ann")],
+        games: [makeGame({ id: 1 })],
+      }),
+      [makeGameState({ gameId: 1, status: "ended", points: 5 })],
+      [{ gameId: 1, playerId: 1, points: 3 }],
+    );
+    assert.match(html, /<span>Ann<\/span><span>3 points<\/span>/);
+    assert.match(html, /class="scorer-other"><span>Other<\/span><span>2 points<\/span>/);
+  });
+
+  it("keeps the score plain when no player was credited", () => {
+    let html = renderScheduleHtml(
+      makeTeam({ players: [makePlayer(1, "Ann")], games: [makeGame({ id: 1 })] }),
+      [makeGameState({ gameId: 1, status: "ended", points: 2 })],
+    );
+    assert.match(html, /<div class="game-score">Final: 2 – 0<\/div>/);
+    assert.doesNotMatch(html, /popovertarget/);
+  });
+
+  it("escapes player names in the popover", () => {
+    let html = renderScheduleHtml(
+      makeTeam({ players: [makePlayer(1, "<i>Ann</i>")], games: [makeGame({ id: 1 })] }),
+      [makeGameState({ gameId: 1, status: "ended", points: 1 })],
+      [{ gameId: 1, playerId: 1, points: 1 }],
+    );
+    assert.doesNotMatch(html, /<i>Ann<\/i>/);
+    assert.match(html, /&lt;i&gt;Ann/);
   });
 });

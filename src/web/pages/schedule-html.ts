@@ -26,15 +26,68 @@ function formatTime(time: string | undefined): string {
   return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 }
 
-// Only ended games get a score — the published page is a static snapshot, so
-// an in-progress score would go stale.
-function scoreLine(gameState: GameState | undefined): string {
-  if (gameState?.status !== "ended") return "";
-  return `
-  <div class="game-score">Final: ${gameState.points} – ${gameState.opponentPoints}</div>`;
+// One player's points in one game, from their Goal stat.
+export interface GameGoals {
+  gameId: number;
+  playerId: number;
+  points: number;
 }
 
-function gameCard(game: Game, gameState: GameState | undefined): string {
+interface Scorer {
+  name: string;
+  points: number;
+}
+
+function pointsLabel(points: number, basketballMode: boolean | undefined): string {
+  let unit = basketballMode ? "point" : "goal";
+  return `${points} ${unit}${points === 1 ? "" : "s"}`;
+}
+
+// Points the team scored that weren't credited to a player (e.g. the Goal
+// stat was turned off) are listed as "Other" so the popover adds up to the
+// final score.
+function scorersPopover(
+  team: Team,
+  gameState: GameState,
+  scorers: Scorer[],
+): { button: string; popover: string } | undefined {
+  if (!scorers.length) return;
+  let id = `scorers-${gameState.gameId}`;
+  let credited = scorers.reduce((acc, x) => acc + x.points, 0);
+  let rows = scorers.map(
+    (x) => `
+      <li><span>${escapeHtml(x.name)}</span><span>${pointsLabel(x.points, team.basketballMode)}</span></li>`,
+  );
+  if (gameState.points > credited) {
+    rows.push(`
+      <li class="scorer-other"><span>Other</span><span>${pointsLabel(gameState.points - credited, team.basketballMode)}</span></li>`);
+  }
+  return {
+    button: `<button type="button" class="score-button" popovertarget="${id}">`,
+    popover: `
+  <div class="scorers" id="${id}" popover>
+    <h2>${escapeHtml(team.name)} scorers</h2>
+    <ul>${rows.join("")}
+    </ul>
+  </div>`,
+  };
+}
+
+// Only ended games get a score — the published page is a static snapshot, so
+// an in-progress score would go stale.
+function scoreLine(team: Team, gameState: GameState | undefined, scorers: Scorer[]): string {
+  if (gameState?.status !== "ended") return "";
+  let score = `Final: ${gameState.points} – ${gameState.opponentPoints}`;
+  let popover = scorersPopover(team, gameState, scorers);
+  if (!popover) {
+    return `
+  <div class="game-score">${score}</div>`;
+  }
+  return `
+  <div class="game-score">${popover.button}${score}</button></div>${popover.popover}`;
+}
+
+function gameCard(game: Game, score: string): string {
   let opponent = escapeHtml(game.opponent || "TBD");
   let location = escapeHtml(game.location || "TBD");
   let homeAway = game.home ? "Home" : "Away";
@@ -45,19 +98,42 @@ function gameCard(game: Game, gameState: GameState | undefined): string {
     vs ${opponent}
     <span class="badge ${game.home ? "badge-home" : "badge-away"}">${homeAway}</span>
   </div>
-  <span class="game-location">${location}</span>${scoreLine(gameState)}
+  <span class="game-location">${location}</span>${score}
 </li>`;
 }
 
-export function renderScheduleHtml(team: Team, gameStates: GameState[] = []): string {
+function scorersByGame(team: Team, goals: GameGoals[]): Map<number, Scorer[]> {
+  let names = new Map(team.players.map((x) => [x.id, x.name]));
+  let result = new Map<number, Scorer[]>();
+  for (let goal of goals) {
+    let name = names.get(goal.playerId);
+    if (name == null || goal.points <= 0) continue;
+    let scorers = result.get(goal.gameId) ?? [];
+    scorers.push({ name, points: goal.points });
+    result.set(goal.gameId, scorers);
+  }
+  for (let scorers of result.values()) {
+    scorers.sort((a, b) => b.points - a.points || a.name.localeCompare(b.name));
+  }
+  return result;
+}
+
+export function renderScheduleHtml(
+  team: Team,
+  gameStates: GameState[] = [],
+  goals: GameGoals[] = [],
+): string {
   let stateById = new Map(gameStates.map((x) => [x.gameId, x]));
+  let scorers = scorersByGame(team, goals);
   let title = `${team.name} ${team.year}`;
   let games = [...team.games].sort((a, b) =>
     a.date === b.date ? (a.time ?? "").localeCompare(b.time ?? "") : a.date.localeCompare(b.date),
   );
 
   let items = games.length
-    ? games.map((x) => gameCard(x, stateById.get(x.id))).join("\n")
+    ? games
+        .map((x) => gameCard(x, scoreLine(team, stateById.get(x.id), scorers.get(x.id) ?? [])))
+        .join("\n")
     : `<li class="game empty">No games scheduled yet.</li>`;
 
   return `<!doctype html>
@@ -171,6 +247,31 @@ export function renderScheduleHtml(team: Team, gameStates: GameState[] = []): st
   .game-opponent { margin-top: 0.35rem; font-size: 1.1rem; }
   .game-score { grid-column: 1; margin-top: 0.25rem; font-weight: 600; }
   .game-location { color: var(--location-fg); }
+  .score-button {
+    font: inherit;
+    color: inherit;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    text-decoration: underline dotted;
+    text-underline-offset: 0.2em;
+  }
+  .scorers {
+    border: 1px solid var(--card-border);
+    border-radius: 0.5rem;
+    padding: 1rem 1.25rem;
+    background: var(--card-bg);
+    color: var(--fg);
+    min-width: min(16rem, calc(100vw - 4rem));
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  }
+  .scorers::backdrop { background: rgba(0, 0, 0, 0.2); }
+  .scorers h2 { margin: 0 0 0.75rem; font-size: 1rem; }
+  .scorers ul { list-style: none; margin: 0; padding: 0; }
+  .scorers li { display: flex; justify-content: space-between; gap: 1.5rem; padding: 0.2rem 0; }
+  .scorers li span:last-child { color: var(--meta-fg); }
+  .scorers li.scorer-other { color: var(--muted-fg); }
   .badge {
     display: inline-block;
     margin-left: 0.5rem;
