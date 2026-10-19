@@ -60,8 +60,8 @@ function render(o: PlayersEditView) {
     <div id=team-active>
         <label class=toggle>
             <input name=active type=checkbox $${when(team.active, "checked")}>
-            <span class="off" role="button">Inactive</span>
-            <span class="on" role="button">Active</span>
+            <span class="off nc-button" role="button">Inactive</span>
+            <span class="on nc-button" role="button">Active</span>
         </label>
     </div>
 </form>
@@ -111,7 +111,7 @@ function playerView(player: TeamPlayer, teamId: number) {
         method=post
         action="?handler=editPlayer&$${teamPlayerQuery}"
         >
-        <fieldset role=group>
+        <fieldset class=nc-join>
             <input class="basis-175" name=name type=text value="${player.name}" placeholder="Player name">
             <input name=number type=number value="${player.number}" placeholder="#">
         </fieldset>
@@ -121,8 +121,8 @@ function playerView(player: TeamPlayer, teamId: number) {
                     name=active
                     type=checkbox
                     $${when(player.active, "checked")}>
-                <span class="off full-width" role="button">Inactive</span>
-                <span class="on full-width" role="button">Active</span>
+                <span class="off full-width nc-button" role="button">Inactive</span>
+                <span class="on full-width nc-button" role="button">Active</span>
             </label>
         </div>
     </form>

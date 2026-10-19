@@ -139,11 +139,11 @@ const render = async () => {
 </form>
 
 <h3>Data</h3>
-<p><a href="/web/settings?handler=export" role="button" target="_self">Download data as JSON</a></p>
+<p><a href="/web/settings?handler=export" role="button" class="nc-button" target="_self">Download data as JSON</a></p>
 <p>Saves all synced app data to a JSON file on your device.</p>
 
 <h3>Diagnostics</h3>
-<p><a href="/web/settings?handler=syncLog" role="button" target="_self">Download sync log</a></p>
+<p><a href="/web/settings?handler=syncLog" role="button" class="nc-button" target="_self">Download sync log</a></p>
 <p class=muted>
   Records what happens on each sync (kept locally only, never sent to the
   server, and cleared after a week). Useful for troubleshooting a sync count

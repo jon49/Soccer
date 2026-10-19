@@ -16,7 +16,8 @@ export async function outPlayersView(o: PlayerStateView) {
         <a href="?${queryTeamGame}&playerId=${x.playerId}&handler=playerSwap"
            aria-label="Immediately Swap Player"
            title="Immediately Swap Player"
-           role="button">&#10166;</a>
+           role="button"
+           class="nc-button">&#10166;</a>
     </div>
     <div>
         <button

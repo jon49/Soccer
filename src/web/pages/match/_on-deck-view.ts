@@ -15,7 +15,7 @@ export async function onDeckView(state: PlayerStateView) {
     return html`
 <li id="${id}">
     <div>
-        <a href="?${queryTeamGame}&playerId=${x.playerId}&handler=playerSwap"  role=button>(${x.name}${when(x.number, (x) => ` ${x}`)})</a>
+        <a href="?${queryTeamGame}&playerId=${x.playerId}&handler=playerSwap"  role=button class=nc-button>(${x.name}${when(x.number, (x) => ` ${x}`)})</a>
     </div>
     <form
         method=post

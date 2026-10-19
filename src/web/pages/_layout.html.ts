@@ -16,7 +16,7 @@ export function themeView(theme: Theme | undefined) {
   const current: "light" | "dark" = theme === "dark" ? "dark" : "light";
   const next: "light" | "dark" = current === "dark" ? "light" : "dark";
   const icon = current === "dark" ? sunIcon : moonIcon;
-  // id="theme" is intentional — base.css selects light/dark via
+  // id="theme" is intentional — app.css selects light/dark via
   // :has(#theme input[value="..."]:checked), so the rendered radio
   // below must live inside an element with that id for the swap to
   // actually flip the theme.
@@ -85,7 +85,7 @@ const render = async ({
 <body $${bodyAttr}>
 <script>window.app = {}</script>
 <div id=head>$${head}</div>
-    <div class=container>
+    <div>
     <div id=sw-message></div>
     <header>
         <nav role=navigation>
@@ -102,12 +102,12 @@ const render = async ({
 
                     ${syncCountView(updatedCount)}
 
-                    <a href="/web/settings" role="button" target="_self" aria-label="Settings">&#9881;</a>
+                    <a href="/web/settings" role="button" class="nc-button" target="_self" aria-label="Settings">&#9881;</a>
 
                     ${
                       isLoggedIn
                         ? html`
-                            <a id="auth-link" href="/login?logout" role="button" target="_self">Logout</a>
+                            <a id="auth-link" href="/login?logout" role="button" class="nc-button" target="_self">Logout</a>
                           `
                         : loginView()
                     }

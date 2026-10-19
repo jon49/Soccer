@@ -65,8 +65,8 @@ function playerView(
   staleAfterMs: number | null,
 ) {
   return html`
-<fieldset class="mb-0" role="group">
-    <a class="in-play-button"
+<fieldset class="mb-0 nc-join">
+    <a class="in-play-button nc-button"
        href="?$${queryTeamGame}&playerId=${player?.playerId}&handler=playerSwap"
        role="button"
        >${player?.name}</a>
@@ -96,7 +96,7 @@ function subPlayerView(
   containerId: string,
 ) {
   return html`
-<fieldset class="mb-0" role="group">
+<fieldset class="mb-0 nc-join">
     <button
         class="in-play-button"
         style="border-top-left-radius: unset;"

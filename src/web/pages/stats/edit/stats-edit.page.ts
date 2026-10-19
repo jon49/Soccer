@@ -39,8 +39,8 @@ async function render(o: StatsView) {
             <br>
             <label class=toggle>
                 <input type=checkbox name=active $${when(x.active, "checked")}>
-                <span class="off" role="button">Inactive</span>
-                <span class="on" role="button">Active</span>
+                <span class="off nc-button" role="button">Inactive</span>
+                <span class="on nc-button" role="button">Active</span>
             </label>
             <br>
             <br>
@@ -62,8 +62,8 @@ async function render(o: StatsView) {
     <input type=hidden name=value value="${team.basketballMode ? 1 : 0}">
     <label class=toggle>
         <input type=checkbox name=basketballMode $${when(team.basketballMode, "checked")}>
-        <span class="off" role="button">Soccer Mode</span>
-        <span class="on" role="button">Basketball Mode</span>
+        <span class="off nc-button" role="button">Soccer Mode</span>
+        <span class="on nc-button" role="button">Basketball Mode</span>
     </label>
 </form>
 

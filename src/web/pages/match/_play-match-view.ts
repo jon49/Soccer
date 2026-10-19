@@ -114,7 +114,7 @@ ${opponentPointsView(queryTeamGame, gameCalc)}
 ${when(
   countOnDeckWithNoPosition > 1,
   () => html`
-<a class="condense-padding" href="?${queryTeamGame}&handler=rapidFire" role="button">Rapid Fire</a>
+<a class="condense-padding nc-button" href="?${queryTeamGame}&handler=rapidFire" role="button">Rapid Fire</a>
 `,
 )}
 

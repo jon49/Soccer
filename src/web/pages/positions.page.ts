@@ -35,7 +35,7 @@ function render({ team, positions }: PositionView) {
 <h2>${team.name} — Formation</h2>
 
 <p>
-  <a href="?handler=showTemplates&teamId=${team.id}" role="button">Use a template.</a>
+  <a href="?handler=showTemplates&teamId=${team.id}" role="button" class="nc-button">Use a template.</a>
 </p>
 
 <h3>Grid</h3>
@@ -61,7 +61,7 @@ function positionsNameView(positions: string[][], teamId: number) {
     for (let xs of positions) {
       yield html`<div class="names-row">
 <button id="dec-${row}" formaction="?teamId=${teamId}&handler=gridSize&action=dec&row=${row}" class=inc>-</button>
-            <fieldset class="names" role=group>`;
+            <fieldset class="names nc-join">`;
       yield xs.map((x) => html`<input id="position${count++}" name="names[]" value="${x}">`);
       yield html`</fieldset>
 <button id="inc-${row}" formaction="?teamId=${teamId}&handler=gridSize&action=inc&row=${row}" class=inc>+</button>
@@ -329,6 +329,7 @@ const getHandlers: RouteGetHandler = {
 .inc {
   font-size: 2em;
   height: 1.5em;
+  min-height: 0;
   padding-top: 0;
   padding-bottom: 0;
 }

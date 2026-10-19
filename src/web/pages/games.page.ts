@@ -85,8 +85,8 @@ function render({ team, gameStates }: GameView) {
 
     <label class=toggle>
         <input id=home type=checkbox name=home>
-        <span class="off full-width condense-padding" role="button">Visiting</span>
-        <span class="on full-width condense-padding" role="button">Home</span>
+        <span class="off full-width condense-padding nc-button" role="button">Visiting</span>
+        <span class="on full-width condense-padding nc-button" role="button">Home</span>
     </label>
 
     <button>Save</button>
@@ -185,8 +185,8 @@ function getGamePartialView(teamId: number, game: Game, gameState?: GameState) {
 </div>
 <label class=toggle>
     <input form=${formId} id="home-${game.id}" type=checkbox name=home $${when(game.home, "checked")}>
-    <span class="off full-width condense-padding" role="button">Visiting</span>
-    <span class="on full-width condense-padding" role="button">Home</span>
+    <span class="off full-width condense-padding nc-button" role="button">Visiting</span>
+    <span class="on full-width condense-padding nc-button" role="button">Home</span>
 </label>
 <form
     id=${formId}

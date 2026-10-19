@@ -32,7 +32,8 @@ async function render(query: any) {
       ["percentagePlayed", "Percentage of Games Played"],
       ["activitiesPerformed", "Player Points"],
     ].map(
-      ([handler, label]) => html`<a id="${handler}" $${href(handler)} role="button">$${label}</a>`,
+      ([handler, label]) =>
+        html`<a id="${handler}" $${href(handler)} role="button" class="nc-button">$${label}</a>`,
     )}
   </div>
   </div>

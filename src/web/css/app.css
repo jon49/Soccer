@@ -7,19 +7,111 @@
  */
 @import url("/web/css/base.css");
 
-/* Theme color — muted slate-blue. Set via the pico accent vars so
-   hover/focus/border/inverse all derive consistently from one source
-   (see :root block in base.css). The SVG and inline diagram fills use
-   the sRGB equivalent (#506f8d) so they read as the same color as the
-   button background. */
+/* Theme color — muted slate-blue, kept from the old Pico build
+   (oklch 0.53 0.06 248). nimble derives hover/focus from it. The SVG and
+   inline diagram fills use the sRGB equivalent (#506f8d) so they read as
+   the same color as the button background. */
 :root {
-  --accent-h: 248;
-  --accent-c: 0.06;
-  --accent-l: 0.53;
+  --nc-primary: light-dark(oklch(0.53 0.06 248), oklch(0.63 0.06 248));
+  --nc-content-width: 1200px;
+}
+
+/* Theme toggle: the radio rendered inside #theme (see themeView in
+ * _layout.html.ts) forces the scheme, which flips every light-dark() value. */
+:root:has(#theme input[value="light"]:checked) {
+  color-scheme: light;
+}
+
+:root:has(#theme input[value="dark"]:checked) {
+  color-scheme: dark;
+}
+
+/* Step the base size up with the viewport like Pico did, topping out at
+ * 1.25em on desktop. */
+html {
+  font-size: 1em;
+}
+
+@media (min-width: 576px) {
+  html {
+    font-size: 1.0625em;
+  }
+}
+
+@media (min-width: 768px) {
+  html {
+    font-size: 1.125em;
+  }
+}
+
+@media (min-width: 1024px) {
+  html {
+    font-size: 1.1875em;
+  }
+}
+
+@media (min-width: 1280px) {
+  html {
+    font-size: 1.25em;
+  }
 }
 
 body {
-  padding: 1em 0.5em 50vh 0.5em;
+  padding-bottom: 50vh;
+}
+
+/* nimble's content-panel shadow collapses to a visible 1px seam whenever the
+ * viewport is narrower than --nc-content-width; Pico had no panel anyway. */
+body::before {
+  content: none;
+}
+
+/* nimble tints visited links purple; keep them the same color as unvisited. */
+a:not(.nc-button):visited {
+  color: var(--nc-primary);
+  text-decoration-color: color-mix(in oklch, var(--nc-primary), transparent 50%);
+}
+
+/* nimble adds a top margin to every field after the first in a form/fieldset,
+ * which pushes later grid columns down. The grid's gap already spaces them. */
+.grid > * {
+  margin-block-start: 0;
+}
+
+/* Joined controls (Pico's role=group): a full-width row without the
+ * fieldset's border and padding. */
+fieldset.nc-join {
+  display: flex;
+  width: 100%;
+  border: 0;
+  padding: 0;
+}
+
+.nc-join > input {
+  flex: 1;
+  min-width: 0;
+}
+
+/* nimble doesn't style <nav>; lay it out like Pico did. */
+nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+nav ul {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  margin: 0;
+  padding: 0;
+}
+
+nav li {
+  margin: 0;
 }
 
 textarea {
@@ -88,9 +180,11 @@ textarea {
   bottom: 10px;
   left: 0;
   right: 0;
+  max-width: none;
+  margin: 0;
   padding: 1em;
-  color: var(--pico-primary-inverse);
-  background-color: color-mix(in srgb, var(--pico-primary-background) 80%, transparent);
+  color: var(--nc-primary-contrast);
+  background-color: color-mix(in srgb, var(--nc-primary) 80%, transparent);
   border: none;
   display: flex;
   align-items: center;
@@ -102,7 +196,7 @@ textarea {
   margin: 0;
   width: 100%;
   text-align: center;
-  color: var(--pico-primary-inverse);
+  color: var(--nc-primary-contrast);
   font-weight: 600;
 }
 
@@ -215,10 +309,4 @@ input:indeterminate ~ .none {
   border: 2px solid gray;
   border-radius: 0.5em;
   padding: 1em;
-}
-
-/* Keep visited links the same color as unvisited ones. Zero specificity so
-   links styled as buttons or nav items keep their own colors. */
-:where(a:visited) {
-  color: LinkText;
 }

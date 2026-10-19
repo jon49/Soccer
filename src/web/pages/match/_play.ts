@@ -17,9 +17,9 @@ export async function play({
   let state = new PlayerStateView(teamId, gameId);
   let { disableAutoSyncDuringGame, theme } = await globalDb.settings();
   // This page is rendered outside of the layout, so there is no #theme radio
-  // for base.css to key off of. Emit data-theme when the setting is set;
-  // when it isn't, leave the attribute off so base.css can fall through to
-  // the prefers-color-scheme media query.
+  // for app.css to key off of. Emit data-theme when the setting is set
+  // (nimble maps it to color-scheme); when it isn't, leave the attribute off
+  // so nimble's `color-scheme: light dark` follows the system preference.
   let themeAttr = theme ? ` data-theme="${theme}"` : "";
   return html`
 <!DOCTYPE html>
@@ -50,7 +50,7 @@ export async function play({
             border-bottom-left-radius: unset;
         }
         .in-play-button + .in-play-button {
-            border-left: 1px solid var(--pico-color);
+            border-left: 1px solid var(--nc-text);
             border-bottom-right-radius: unset;
         }
         .in-play-timer {
