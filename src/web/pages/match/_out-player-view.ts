@@ -1,10 +1,12 @@
 import type { PlayerStateView } from "./shared.js";
 
-let { html } = self.sw;
+let {
+  html,
+  utils: { when },
+} = self.sw;
 
 export async function outPlayersView(o: PlayerStateView) {
-  let outPlayers = await o.outPlayers();
-  let queryTeamGame = o.queryTeamGame;
+  let [outPlayers, isGameInPlay] = await Promise.all([o.outPlayers(), o.isGameInPlay()]);
 
   return html`
     ${outPlayers.map((x) => {
@@ -12,30 +14,17 @@ export async function outPlayersView(o: PlayerStateView) {
 
       return html`
 <li id="${outPlayerId}">
-    <div>
-        <a href="?${queryTeamGame}&playerId=${x.playerId}&handler=playerSwap"
-           aria-label="Immediately Swap Player"
-           title="Immediately Swap Player"
-           role="button"
-           class="nc-button">&#10166;</a>
-    </div>
-    <div>
-        <button
-            form=post
-            formaction="?$${queryTeamGame}&playerId=${x.playerId}&handler=playerOnDeck"
-            _click="anchor"
-            data-anchor="#outPlayers"
-        >${x.name} ${x.number}</button>
-    </div>
-    <div>
-        <span id="${outPlayerId}-timer" _load="gameTimer" data-total="${x.calc.total()}" data-static>00:00</span>
-    </div>
-    <div>
-        <button
-            form=post
-            formaction="?$${queryTeamGame}&playerId=$${x.playerId}&handler=notPlaying"
-        >X</button>
-    </div>
+    <button type=button class="bench-item game-shader" data-player-id="${x.playerId}" data-status=out>
+        <span class=player-name>${x.name} ${x.number}</span>
+        <span
+            id="${outPlayerId}-timer"
+            class=player-time
+            _load="gameTimer"
+            data-total="${x.calc.total()}"
+            data-game-total="${x.calc.gameCalc.total()}"
+            $${when(isGameInPlay, () => `data-game-start="${x.calc.gameCalc.getLastStartTime()}"`)}
+            data-static>00:00</span>
+    </button>
 </li>`;
     })}`;
 }
