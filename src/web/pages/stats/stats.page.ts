@@ -45,8 +45,12 @@ const getHandler: RouteGetHandler = {
   async get({ query }) {
     return layout({
       head: `<style>
+.overflow-auto:has(> table.sticky) {
+  max-height: 75vh;
+}
+
 table.sticky {
-  th {
+  thead th {
     position: sticky;
     top: 0;
     z-index: 2;
@@ -56,6 +60,10 @@ table.sticky {
     position: sticky;
     left: 0;
     z-index: 1;
+  }
+
+  thead th:first-child {
+    z-index: 3;
   }
 
   tbody th:first-child {
