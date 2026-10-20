@@ -19,7 +19,8 @@ export async function percentagePlayed(o: StatsView) {
 
   return html`
     <h3>Average Percentage of Games Played</h3>
-    <table>
+    <div class=overflow-auto>
+    <table class="sticky striped">
     <thead>
         <tr>
             <th>Player</th>
@@ -58,5 +59,6 @@ export async function percentagePlayed(o: StatsView) {
           }
         }}
     </tbody>
-    </table>`;
+    </table>
+    </div>`;
 }

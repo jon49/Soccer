@@ -12,7 +12,8 @@ export async function playerPointsView(o: StatsView) {
 
   return html`
     <h3>Player Points</h3>
-    <table>
+    <div class=overflow-auto>
+    <table class="sticky striped">
         <thead>
             <tr>
                 <th>Player</th>
@@ -37,5 +38,6 @@ export async function playerPointsView(o: StatsView) {
           }
         }}
         </tbody>
-    </table>`;
+    </table>
+    </div>`;
 }

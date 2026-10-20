@@ -57,6 +57,14 @@ table.sticky {
     left: 0;
     z-index: 1;
   }
+
+  tbody th:first-child {
+    background-color: var(--nc-surface-1);
+  }
+
+  &.striped tbody tr:nth-child(even) th:first-child {
+    background-color: var(--nc-surface-2);
+  }
 }
     </style>`,
       main: await render(query),
