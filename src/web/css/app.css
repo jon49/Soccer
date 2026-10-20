@@ -14,6 +14,11 @@
 :root {
   --nc-primary: light-dark(oklch(0.53 0.06 248), oklch(0.63 0.06 248));
   --nc-content-width: 1200px;
+  /* On is teal, off is amber. Text colors are set explicitly because nimble's
+   * button contrast color is dark in dark mode; each pair is at least 5.7:1. */
+  --app-on: light-dark(oklch(0.48 0.09 175), oklch(0.72 0.1 175));
+  --app-off: light-dark(oklch(0.52 0.13 55), oklch(0.78 0.12 70));
+  --app-on-off-text: light-dark(#fff, oklch(0.2 0.02 250));
 }
 
 /* Theme toggle: the radio rendered inside #theme (see themeView in
@@ -211,15 +216,18 @@ input:indeterminate ~ .off,
   border: none;
 }
 
+/* inline-flex, not inline-block, so nimble's .nc-button centering applies. */
 .off {
-  display: inline-block;
-  background-color: firebrick;
+  display: inline-flex;
+  background-color: var(--app-off);
+  color: var(--app-on-off-text);
   border: none;
 }
 
 input:checked ~ .on {
-  display: inline-block;
-  background-color: green;
+  display: inline-flex;
+  background-color: var(--app-on);
+  color: var(--app-on-off-text);
 }
 
 input:indeterminate ~ .none {
