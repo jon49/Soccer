@@ -136,6 +136,17 @@ export async function play({
         .bench-list:empty {
             display: none;
         }
+        /* Bench hidden: the field takes the screen, but the Bench / Not
+           playing boxes still show while a player is selected. */
+        body[data-bench="hidden"] .match-bench > :not(.match-targets) {
+            display: none;
+        }
+        body[data-bench="hidden"]:not([data-selecting]) .match-bench {
+            display: none;
+        }
+        .bench-toggle[aria-expanded="true"] {
+            background: color-mix(in oklch, var(--nc-primary) 15%, transparent);
+        }
         @media (orientation: portrait) {
             .match-body {
                 flex-direction: column;

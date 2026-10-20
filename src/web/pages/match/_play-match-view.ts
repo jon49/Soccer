@@ -95,6 +95,13 @@ export default async function playMatchView(state: PlayerStateView) {
         >Swap ${countOnDeckPlayersWithPosition}</button>`,
     )}
     <button
+        type=button
+        class="match-end bench-toggle"
+        data-bench-toggle
+        aria-controls=matchBench
+        aria-expanded=true
+        >Bench (${countOnDeckWithNoPosition + outPlayers.length})</button>
+    <button
         class=match-end
         form=post
         formaction="?$${queryTeamGame}&handler=${isGameEnded ? "restartGame" : "endGame"}"
@@ -107,7 +114,7 @@ export default async function playMatchView(state: PlayerStateView) {
 <div class=match-body>
 <section class=match-field aria-label="On field">${inPlayersView(state)}</section>
 
-<aside class=match-bench>
+<aside id=matchBench class=match-bench>
     <div class=match-targets>
         <button type=button class=drop-target data-target=bench>Bench</button>
         <button type=button class=drop-target data-target=notPlaying>Not playing</button>

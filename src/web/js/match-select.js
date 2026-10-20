@@ -78,9 +78,45 @@ function onScoreSelected(t) {
   }
 }
 
+// The Bench button hides the bench so the field gets the whole screen. The
+// choice is remembered on this device.
+const BENCH_HIDDEN_KEY = "match-bench-hidden";
+
+/**
+ * @param {boolean} hidden
+ */
+function showBench(hidden) {
+  if (hidden) {
+    document.body.dataset.bench = "hidden";
+  } else {
+    delete document.body.dataset.bench;
+  }
+  document.querySelector("[data-bench-toggle]")?.setAttribute("aria-expanded", String(!hidden));
+}
+
+function toggleBench() {
+  let hidden = document.body.dataset.bench !== "hidden";
+  showBench(hidden);
+  try {
+    localStorage.setItem(BENCH_HIDDEN_KEY, hidden ? "1" : "0");
+  } catch {}
+}
+
+try {
+  showBench(localStorage.getItem(BENCH_HIDDEN_KEY) === "1");
+} catch {}
+// The page is re-rendered after each action; keep the button's state in sync.
+document.addEventListener("hz:completed", () =>
+  showBench(document.body.dataset.bench === "hidden"),
+);
+
 document.addEventListener("click", (e) => {
   let t = e.target;
   if (!(t instanceof Element)) return;
+  if (t.closest("[data-bench-toggle]")) {
+    toggleBench();
+    return;
+  }
   let player = t.closest("[data-player-id]");
   let position = t.closest("[data-position]");
   let target = t.closest("[data-target]");
