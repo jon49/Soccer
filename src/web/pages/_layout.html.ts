@@ -116,7 +116,7 @@ const render = async ({
         </nav>
 
         <nav role=navigation>
-            <ul>
+            <ul class=overflow-auto>
                 <li><a href="/web/teams" target="_self">Teams</a></li>
                 ${
                   !nav || nav.length === 0
