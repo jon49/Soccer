@@ -150,6 +150,7 @@ export default async function playMatchView(state: PlayerStateView) {
         )}
     </div>
 
+    <div class=bench-scroll>
     <ul id=onDeckList class=bench-list>${onDeckView(state)}</ul>
     <ul id=outPlayersList class=bench-list>${outPlayersView(state)}</ul>
 
@@ -161,6 +162,7 @@ export default async function playMatchView(state: PlayerStateView) {
         <ul id=notPlayingList class=bench-list>${notPlayingPlayersView(state)}</ul>
     </details>`,
     )}
+    </div>
 </aside>
 </div>
 </main>`;

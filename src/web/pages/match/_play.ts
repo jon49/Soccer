@@ -107,9 +107,23 @@ export async function play({
             flex: 1;
             min-width: 0;
         }
+        /* The page scrolls with the field, but the bench is never taller
+           than the screen; its player lists scroll on their own. */
         .match-bench {
             width: 13rem;
             flex-shrink: 0;
+            position: sticky;
+            top: 0.5rem;
+            max-height: calc(100dvh - 1rem);
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .bench-scroll {
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+            overscroll-behavior: contain;
             display: flex;
             flex-direction: column;
             gap: 0.5rem;
@@ -152,8 +166,14 @@ export async function play({
                 flex-direction: column;
                 align-items: stretch;
             }
+            /* Below the field there is nothing to stick to, and the page
+               needs to scroll on past the bench list's ends. */
             .match-bench {
                 width: auto;
+                position: static;
+            }
+            .bench-scroll {
+                overscroll-behavior: auto;
             }
             .bench-list {
                 display: grid;
