@@ -1,16 +1,26 @@
-import { Stats, Stat, get, getMany, PlayerGame, Positions, PositionsV0, set } from "./db.js";
+import {
+  Stats,
+  Stat,
+  get,
+  getMany,
+  PlayerGame,
+  Positions,
+  PositionsV0,
+  set,
+  type TeamId,
+} from "./db.js";
 import { teamGet } from "./repo-team.js";
 import { reject } from "@jon49/sw/validation.js";
 
-function getPlayerGameKey(teamId: number, gameId: number, playerId: number) {
+function getPlayerGameKey(teamId: TeamId, gameId: number, playerId: number) {
   return ["player-game", teamId, playerId, gameId];
 }
 
-export async function playerGameSave(teamId: number, playerGame: PlayerGame) {
+export async function playerGameSave(teamId: TeamId, playerGame: PlayerGame) {
   await set(getPlayerGameKey(teamId, playerGame.gameId, playerGame.playerId), playerGame);
 }
 
-export async function playerGameAllGet(teamId: number, gameId: number, playerIds: number[]) {
+export async function playerGameAllGet(teamId: TeamId, gameId: number, playerIds: number[]) {
   if (playerIds.length === 0) {
     playerIds = await teamGet(teamId).then((x) => x.players.map((x) => x.id));
   }
@@ -33,11 +43,11 @@ export async function playerGameAllGet(teamId: number, gameId: number, playerIds
 
 /*** Positions ***/
 
-function getPositionsId(teamId: number) {
+function getPositionsId(teamId: TeamId) {
   return ["positions", teamId];
 }
 
-export async function positionGetAll(teamId: number): Promise<PositionsV0> {
+export async function positionGetAll(teamId: TeamId): Promise<PositionsV0> {
   let positions = await get<Positions | PositionsV0>(getPositionsId(teamId));
   if (!positions) {
     positions = {
@@ -69,7 +79,7 @@ function positionsToV0(positionsOld: Positions | PositionsV0): PositionsV0 {
   };
 }
 
-export async function positionsSave(teamId: number, positions: PositionsV0) {
+export async function positionsSave(teamId: TeamId, positions: PositionsV0) {
   await areUnique(positions.positions.flat().filter((x) => x));
   await set(getPositionsId(teamId), positions);
 }
@@ -113,7 +123,7 @@ export function getStatDescription(id: number) {
 
 export type StatName = keyof typeof statDescriptions;
 
-export async function statsGetAll(teamId: number): Promise<Stats> {
+export async function statsGetAll(teamId: TeamId): Promise<Stats> {
   return (
     (await get<Stats>(getStatsId(teamId))) ?? {
       stats: Object.keys(statDescriptions).map((x, i) => ({
@@ -126,7 +136,7 @@ export async function statsGetAll(teamId: number): Promise<Stats> {
   );
 }
 
-export async function statSave(teamId: number, stat: Stat) {
+export async function statSave(teamId: TeamId, stat: Stat) {
   let { stats, _rev } = await statsGetAll(teamId);
 
   let index = stats.findIndex((x) => x.id === stat.id);
@@ -139,12 +149,12 @@ export async function statSave(teamId: number, stat: Stat) {
   await statsSave(teamId, { stats, _rev });
 }
 
-export async function statsSave(teamId: number, { stats, _rev }: Stats) {
+export async function statsSave(teamId: TeamId, { stats, _rev }: Stats) {
   await areUnique(stats.map((x) => x.name));
   await set(getStatsId(teamId), { stats, _rev } as Stats);
 }
 
-function getStatsId(teamId: number) {
+function getStatsId(teamId: TeamId) {
   return ["stats", teamId];
 }
 

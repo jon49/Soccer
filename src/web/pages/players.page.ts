@@ -1,10 +1,10 @@
-import type { Team, TeamPlayer } from "../server/db.js";
+import type { Team, TeamId, TeamPlayer } from "../server/db.js";
 import type { RoutePostHandler, RoutePage, RouteGetHandler } from "@jon49/sw/routes.middleware.js";
 
 const {
   html,
   layout,
-  repo: { teamGet, playerCreate, teamSave },
+  repo: { isSharedTeamId, teamGet, playerCreate, teamSave },
   utils: { equals, when, cssRes },
   validation: {
     assert,
@@ -41,6 +41,9 @@ function render(o: PlayersEditView) {
     <ul>
         <li><a href="#team" target="_self">Team</a></li>
         <li><a href="#players" target="_self">Players</a></li>
+        <li><a href="/web/share?teamId=${team.id}" target="_self">${
+          isSharedTeamId(team.id) ? "Sharing" : "Share"
+        }</a></li>
     </ul>
 </nav>
 
@@ -99,7 +102,7 @@ ${when(
 `;
 }
 
-function playerView(player: TeamPlayer, teamId: number) {
+function playerView(player: TeamPlayer, teamId: TeamId) {
   let teamPlayerQuery = `teamId=${teamId}&playerId=${player.id}`;
   let playerId_: string = `edit-player${player.id}`;
 

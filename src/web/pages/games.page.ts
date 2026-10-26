@@ -1,4 +1,4 @@
-import type { Game, GameState, Team } from "../server/db.js";
+import type { Game, GameState, Team, TeamId } from "../server/db.js";
 import type { RoutePostHandler, RoutePage } from "@jon49/sw/routes.middleware.js";
 
 const {
@@ -117,7 +117,7 @@ async function renderMain(query: any) {
   return render(await start(query));
 }
 
-function getGameView(teamId: number, game: Game, gameState?: GameState, hz: string = "") {
+function getGameView(teamId: TeamId, game: Game, gameState?: GameState, hz: string = "") {
   return html`<li id=game-${game.id} $${hz}>
         ${getGamePartialView(teamId, game, gameState)}
     </li>`;
@@ -134,7 +134,7 @@ function formatScore(gameState: GameState | undefined) {
   return `${gameState.points} – ${gameState.opponentPoints}`;
 }
 
-function getGamePartialView(teamId: number, game: Game, gameState?: GameState) {
+function getGamePartialView(teamId: TeamId, game: Game, gameState?: GameState) {
   let teamQuery = `teamId=${teamId}`;
   let formId = `game-form-${game.id}`;
   let datetime = game.date && game.time ? `${game.date}T${game.time}` : "";
@@ -298,7 +298,7 @@ const router: RoutePage = {
   async get({ query }) {
     return layout({
       main: await renderMain(query),
-      nav: teamNav(+query.teamId),
+      nav: teamNav((await validateObject(query, queryTeamIdValidator)).teamId),
       title: "Games",
     });
   },

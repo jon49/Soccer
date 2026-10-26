@@ -288,6 +288,18 @@ input:indeterminate ~ .none {
   padding: 5px 10px;
 }
 
+/** Small inline label, e.g. "Shared" on a team **/
+
+.badge {
+  display: inline-block;
+  padding: 0 0.4em;
+  border: 1px solid currentColor;
+  border-radius: var(--nc-radius);
+  font-size: 0.75em;
+  vertical-align: middle;
+  color: var(--nc-secondary);
+}
+
 /** Editable text area that looks normal **/
 
 .editable:not(:focus):not(:focus-within) {

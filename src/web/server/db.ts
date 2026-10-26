@@ -1,4 +1,12 @@
-import { get as get1, getMany, setMany, set as set1, update as update1 } from "idb-keyval";
+import {
+  delMany,
+  get as get1,
+  getMany,
+  keys,
+  setMany,
+  set as set1,
+  update as update1,
+} from "idb-keyval";
 import { reject } from "@jon49/sw/validation.js";
 
 const get: DBGet = get1;
@@ -54,7 +62,7 @@ async function update(key: string, f: (v: any) => any, options = { sync: true })
   }
 }
 
-export { update, set, get, getMany, setMany };
+export { update, set, get, getMany, setMany, keys, delMany };
 
 export const themes = ["dark", "light", null] as const;
 export type Theme = (typeof themes)[number];
@@ -62,6 +70,9 @@ export type Theme = (typeof themes)[number];
 export interface Settings {
   earliestDate?: string;
   lastSyncedId: number;
+  // Space uuid -> sync cursor for every shared team we're in. Local-only,
+  // like lastSyncedId (which now only covers personal rows).
+  spaces?: Record<string, number>;
   lastSynced?: number;
   theme: Theme;
   disableAutoSyncDuringGame?: boolean;
@@ -176,8 +187,12 @@ export interface TeamPlayer {
   number?: number;
 }
 
+// A personal team's id is a per-user integer. A shared team's id is its
+// space uuid, so its keys can never collide with another coach's teams.
+export type TeamId = number | string;
+
 export interface Team extends Revision, PositionsV0 {
-  id: number;
+  id: TeamId;
   name: string;
   active: boolean;
   year: string;
@@ -189,14 +204,18 @@ export interface Team extends Revision, PositionsV0 {
 }
 
 export interface TeamSingle {
-  id: number;
+  id: TeamId;
   active: boolean;
   name: string;
   year: string;
 }
 
 export interface Teams extends Revision {
+  // Personal teams only. Shared teams are found through `Settings.spaces`.
   teams: TeamSingle[];
+  // Ids of personal teams that were moved into a shared team. Never reuse
+  // one: the server still holds the old team's rows under it.
+  retiredIds?: number[];
 }
 
 export type Updated = Set<IDBValidKey>;

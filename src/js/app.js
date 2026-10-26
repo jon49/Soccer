@@ -67,7 +67,10 @@
 
     if (action.includes("/api/auth/v1/login")) {
       if (data?.auth_token) await saveTokens(data);
-      location.href = "/web/?login=success";
+      // e.g. /login?return=/web/join/?code=... from an invite link. Only
+      // in-app paths, so the param can't send anyone off-site.
+      let back = new URLSearchParams(location.search).get("return");
+      location.href = back?.startsWith("/web/") ? back : "/web/?login=success";
       return;
     }
 

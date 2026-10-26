@@ -1,4 +1,5 @@
-export function teamNav(teamId: number) {
+import type { TeamId } from "../server/db.js";
+export function teamNav(teamId: TeamId) {
   return [
     { name: "Players", url: `/web/players?teamId=${teamId}` },
     { name: "Games", url: `/web/games?teamId=${teamId}` },

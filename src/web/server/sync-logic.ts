@@ -8,7 +8,7 @@ import type { Updated } from "./db.js";
 // before comparing, or a bare-string key (currently just "teams") never
 // matches what the server confirms and stays queued forever, even though
 // the server did save it.
-function canonicalKey(key: unknown): string {
+export function canonicalKey(key: unknown): string {
   let value = typeof key === "string" && key.startsWith("[") ? JSON.parse(key) : key;
   return JSON.stringify(value);
 }
@@ -25,6 +25,73 @@ export function pendingAfterSync(
   let savedKeys = new Set(saved.map((x) => x.key));
   for (let key of updated) {
     if (savedKeys.has(canonicalKey(key))) updated.delete(key);
+  }
+  return updated;
+}
+
+// Space uuid -> sync cursor, one per shared team this user belongs to.
+export type SpaceCursors = Record<string, number>;
+
+const has = (o: object, k: string) => Object.prototype.hasOwnProperty.call(o, k);
+
+// A key belongs to a space when its second element (the team id) is one of
+// the spaces we're in. Everything else, including the bare "teams" key, is
+// personal.
+export function spaceOf(key: unknown, spaces: SpaceCursors): string | undefined {
+  return Array.isArray(key) && typeof key[1] === "string" && has(spaces, key[1])
+    ? key[1]
+    : undefined;
+}
+
+export interface SyncItem {
+  key: unknown;
+  data: any;
+  id: number;
+  space?: string;
+}
+
+export function syncRequest(
+  lastSyncedId: number,
+  spaces: SpaceCursors,
+  items: { key: unknown; data: any }[],
+) {
+  let data: SyncItem[] = items.map(({ key, data }) => {
+    let item: SyncItem = { key, data, id: data?._rev ?? 0 };
+    let space = spaceOf(key, spaces);
+    if (space) item.space = space;
+    return item;
+  });
+  return { lastSyncedId, spaces, data };
+}
+
+// `remote` is the server's full list of spaces we're in. Anything we track
+// that it leaves out means we were removed or the space was deleted.
+export function spacesDiff(
+  local: SpaceCursors,
+  remote: SpaceCursors,
+): { added: string[]; removed: string[] } {
+  return {
+    added: Object.keys(remote).filter((x) => !has(local, x)),
+    removed: Object.keys(local).filter((x) => !has(remote, x)),
+  };
+}
+
+export function keysInSpaces<K>(keys: K[], spaces: string[]): K[] {
+  let set = new Set(spaces);
+  return keys.filter((key) => Array.isArray(key) && set.has(key[1]));
+}
+
+// Drops pending keys that belong to spaces we lost access to. Sending one
+// would get the whole batch refused with a 403, forever.
+export function pendingWithoutSpaces(
+  updated: Updated | undefined,
+  spaces: string[],
+): Updated | undefined {
+  if (!updated || !spaces.length) return updated;
+  let set = new Set(spaces);
+  for (let key of updated) {
+    let value = typeof key === "string" && key.startsWith("[") ? JSON.parse(key) : key;
+    if (Array.isArray(value) && set.has(value[1])) updated.delete(key);
   }
   return updated;
 }

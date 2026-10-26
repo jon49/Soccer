@@ -76,7 +76,7 @@ table.sticky {
 }
     </style>`,
       main: await render(query),
-      nav: teamNav(+query.teamId),
+      nav: teamNav((await validateObject(query, queryTeamIdValidator)).teamId),
       title: "Player Points",
     });
   },

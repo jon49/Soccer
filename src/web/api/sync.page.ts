@@ -11,14 +11,16 @@ let refresh = html`
 const postHandlers: RoutePostHandler = {
   async post() {
     let result = await sync();
+    let message = result.messages.join(" ");
     switch (result.status) {
       case 200:
         return {
           status: 200,
           body: refresh,
+          message,
         };
       default:
-        return { status: 204, message: "" };
+        return { status: 204, message };
     }
   },
   async auto() {
@@ -43,7 +45,7 @@ const postHandlers: RoutePostHandler = {
     switch (result.status) {
       case 200:
         return {
-          message: "Synced!",
+          message: [...result.messages, "Synced!"].join(" "),
           status: 200,
           body: refresh,
         };

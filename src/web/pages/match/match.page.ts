@@ -1,3 +1,4 @@
+import type { TeamId } from "../../server/db.js";
 import type { RoutePostHandler, RoutePage, RouteGetHandler } from "@jon49/sw/routes.middleware.js";
 import {
   GameTimeCalculator,
@@ -117,7 +118,7 @@ interface PlayerStatUpdatedArgs {
   activityId: number;
   action: string;
   playerId: number;
-  teamId: number;
+  teamId: TeamId;
   gameId: number;
 }
 
@@ -223,14 +224,15 @@ const getHandlers: RouteGetHandler = {
   },
 
   async get({ query }) {
-    let team = await teamGet(+query.teamId);
+    let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator);
+    let team = await teamGet(teamId);
     let game = await required(
-      team.games.find((x) => x.id === +query.gameId),
+      team.games.find((x) => x.id === gameId),
       `Could not find game! ${query.gameId}`,
     );
     return layout({
       main: await render(query),
-      nav: teamNav(+query.teamId),
+      nav: teamNav(teamId),
       scripts: ["/web/js/game-timer.js"],
       title: `Match — ${team.name} VS ${game.opponent}`,
     });

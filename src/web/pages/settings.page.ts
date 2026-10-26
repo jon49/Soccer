@@ -1,6 +1,7 @@
 import type { RoutePage, RoutePostHandler } from "@jon49/sw/routes.middleware.js";
 import { entries } from "idb-keyval";
 import { syncLogEntries } from "../server/sync-log.js";
+import type { TeamId } from "../server/db.js";
 
 const {
   globalDb,
@@ -8,17 +9,17 @@ const {
   layout,
   repo: { teamGet, teamGetAll, gameStateGet, gameStateSave, playerGameAllGet, playerGameSave },
   utils: { when },
-  validation: { validateObject, createIdNumber },
+  validation: { validateObject, createIdNumber, createTeamId },
   views: { themeView },
 } = self.sw;
 
 const dataTeamIdGameIdValidator = {
-  teamId: createIdNumber("Team ID"),
+  teamId: createTeamId("Team ID"),
   gameId: createIdNumber("Game ID"),
 };
 
 interface ResyncTeamOption {
-  id: number;
+  id: TeamId;
   name: string;
   year: string;
   active: boolean;

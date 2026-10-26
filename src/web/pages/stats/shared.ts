@@ -1,3 +1,4 @@
+import type { TeamId } from "../../server/db.js";
 import type { DbCache as DbCacheType } from "@jon49/sw/utils.js";
 
 const {
@@ -8,8 +9,8 @@ const {
 
 export class StatsView {
   #cache: DbCacheType;
-  teamId: number;
-  constructor(teamId: number) {
+  teamId: TeamId;
+  constructor(teamId: TeamId) {
     this.teamId = teamId;
     this.#cache = new DbCache();
   }

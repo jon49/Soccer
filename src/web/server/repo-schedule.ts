@@ -1,5 +1,5 @@
 import type { GameState, Team } from "./db.js";
-import { gameStatesGet, teamSave } from "./repo-team.js";
+import { gameStatesGet, isSharedTeamId, teamSave } from "./repo-team.js";
 import { playerGameAllGet, statIds } from "./repo-player-game.js";
 import { authFetch, OFFLINE_STATUS } from "./api-client.js";
 import { renderScheduleHtml, type GameGoals } from "../pages/schedule-html.js";
@@ -49,6 +49,8 @@ export async function publishTeamSchedule(team: Team): Promise<{ url: string }> 
     body: JSON.stringify({
       id: guid,
       app: SCHEDULE_APP,
+      // Any member of a shared team's space may publish or overwrite its page.
+      ...(isSharedTeamId(team.id) ? { space: team.id } : {}),
       html: {
         filename: "schedule.html",
         content_type: "text/html",
@@ -61,6 +63,13 @@ export async function publishTeamSchedule(team: Team): Promise<{ url: string }> 
   if (res.status === OFFLINE_STATUS) {
     throw new Error(
       "Could not publish the schedule — you appear to be offline. Try again once you're connected.",
+    );
+  }
+  if (res.status === 403) {
+    throw new Error(
+      isSharedTeamId(team.id)
+        ? "Could not publish the schedule: it was first published before this team was shared. Ask the coach who shared it to republish it once."
+        : "Only the app owner can publish a schedule for a team that isn't shared.",
     );
   }
   if (!res.ok) {

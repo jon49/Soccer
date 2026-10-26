@@ -4,7 +4,7 @@ import type { RoutePage, RoutePostHandler } from "@jon49/sw/routes.middleware.js
 const {
   html,
   layout,
-  repo: { teamGetAll, teamsCreate },
+  repo: { isSharedTeamId, teamGetAll, teamsCreate },
   utils: { when },
   validation: { dataTeamNameYearValidator, validateObject },
 } = self.sw;
@@ -60,7 +60,12 @@ function getTeamView(team: Team, includeSwap = false) {
   let teamId = team.id;
   return html`
     <li $${when(includeSwap, `hz-target="#teams" hz-swap="append"`)}>
-        <a target="_self" href="/web/players?teamId=${team.id}">${team.name} - ${team.year}</a>
+        <a target="_self" href="/web/players?teamId=${team.id}">${team.name} - ${team.year}${when(
+          isSharedTeamId(teamId),
+          html`
+            <span class="badge">Shared</span>
+          `,
+        )}</a>
         <a target="_self" href="/web/games?teamId=${team.id}">Games</a>
         ${
           when(

@@ -1,3 +1,5 @@
+import type { Teams } from "./db.js";
+
 export const isSelected =
   <T extends string>(currentValue: string | undefined) =>
   (value: T) =>
@@ -29,6 +31,15 @@ export function sort<T>(array: T[], f: (x: T) => string) {
 
 export function getNewId(ids: number[]) {
   return Math.max(0, ...ids) + 1;
+}
+
+// New personal team ids skip shared (uuid) ids and any id retired by moving
+// that team into a shared one.
+export function getNewTeamId(teams: Teams | undefined) {
+  return getNewId([
+    ...(teams?.teams ?? []).map((x) => x.id).filter((x): x is number => typeof x === "number"),
+    ...(teams?.retiredIds ?? []),
+  ]);
 }
 
 export function tail<T>(xs: T[]): T {

@@ -1,4 +1,4 @@
-import type { Team } from "../server/db.js";
+import type { Team, TeamId } from "../server/db.js";
 import type { RoutePostHandler, RoutePage, RouteGetHandler } from "@jon49/sw/routes.middleware.js";
 
 const {
@@ -43,7 +43,7 @@ function render({ team, positions }: PositionView) {
 ${positionsNameView(positions, team.id)}`;
 }
 
-function positionsNameView(positions: string[][], teamId: number) {
+function positionsNameView(positions: string[][], teamId: TeamId) {
   return html`<form
   id=positionsForm
   class=form
@@ -142,7 +142,7 @@ function getTemplate(positions: number[]) {
 `;
 }
 
-function getTemplates(teamId: number, numberOfPlayers: number) {
+function getTemplates(teamId: TeamId, numberOfPlayers: number) {
   let playerCount = getNumberOfPlayers(numberOfPlayers);
   let grid = templates[playerCount];
   return html`
@@ -158,7 +158,7 @@ function getTemplates(teamId: number, numberOfPlayers: number) {
 </div>`;
 }
 
-async function getPositionTemplates(teamId: number) {
+async function getPositionTemplates(teamId: TeamId) {
   let { positions } = await positionGetAll(teamId);
   let positionCount = positions.reduce((acc, xs) => acc + xs.length, 0) || 4;
 

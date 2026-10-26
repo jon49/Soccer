@@ -1,3 +1,4 @@
+import type { TeamId } from "../../../server/db.js";
 import type { RoutePostHandler, RoutePage } from "@jon49/sw/routes.middleware.js";
 import type { DbCache as DbCacheType } from "@jon49/sw/utils.js";
 import { DEFAULT_STALE_AFTER_MINUTES } from "../../match/shared.js";
@@ -137,9 +138,9 @@ const postHandlers: RoutePostHandler = {
 
 class StatsView {
   cache: DbCacheType;
-  teamId: number;
+  teamId: TeamId;
   query: any;
-  constructor(teamId: number, query: any) {
+  constructor(teamId: TeamId, query: any) {
     this.teamId = teamId;
     this.cache = new DbCache();
     this.query = query;

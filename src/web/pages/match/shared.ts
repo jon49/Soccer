@@ -7,6 +7,7 @@ import type {
   PlayerStatus,
   TeamPlayer,
   GameState,
+  TeamId,
 } from "../../server/db.js";
 import {
   PlayerGameTimeCalculatorBase,
@@ -37,7 +38,7 @@ let {
 } = self.sw;
 
 export class PlayerGameTimeCalculator extends PlayerGameTimeCalculatorBase {
-  async save(teamId: number) {
+  async save(teamId: TeamId) {
     await playerGameSave(teamId, {
       playerId: this.player.playerId,
       gameId: this.player.gameId,
@@ -77,10 +78,10 @@ export async function createPlayersView<T extends PlayerStatus>(
 export const DEFAULT_STALE_AFTER_MINUTES = 8;
 
 export class PlayerStateView {
-  teamId: number;
+  teamId: TeamId;
   gameId: number;
   #cache: DbCacheType;
-  constructor(teamId: number, gameId: number) {
+  constructor(teamId: TeamId, gameId: number) {
     this.teamId = teamId;
     this.gameId = gameId;
     this.#cache = new DbCache();
