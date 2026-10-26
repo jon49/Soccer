@@ -1,5 +1,5 @@
 import { test, expect } from "./fixtures.js";
-import { isRunning, matchSetup, playedMs } from "./match-page.js";
+import { isRunning, matchSetup, playedMs, setTeamStat } from "./match-page.js";
 
 const GOAL = 1;
 
@@ -155,5 +155,208 @@ test.describe("running a match", () => {
     expect(await other.idb(["player-game", match.teamId, match.playerId("Dee"), 1])).toMatchObject({
       stats: [{ statId: GOAL, count: 1 }],
     });
+  });
+
+  test("a goal with no scorer counts for the team only", async ({ newCoach }) => {
+    let match = await matchSetup(await newCoach("coach"));
+    await match.lineup("Ann", "Bo", "Cy", "Dee");
+    await match.start();
+
+    await match.goalNoScorer();
+
+    expect(await match.score()).toBe("1-0");
+    for (let name of ["Ann", "Bo", "Cy", "Dee"]) {
+      expect((await match.playerGame(name))?.stats ?? [], name).toEqual([]);
+    }
+  });
+
+  test("with the Goal stat off, tapping the score just adds a point", async ({ newCoach }) => {
+    let coach = await newCoach("coach");
+    let match = await matchSetup(coach);
+    await setTeamStat(coach, match.teamId, "goal", false);
+    await match.open();
+    await match.lineup("Ann", "Bo", "Cy", "Dee");
+
+    await match.act("scorePoint", () => match.page.click(".match-bar .score"));
+
+    expect(await match.score()).toBe("1-0");
+    expect((await match.playerGame("Ann"))?.stats ?? []).toEqual([]);
+  });
+
+  test("basketball mode scores 1, 2 or 3 points a basket", async ({ newCoach }) => {
+    let coach = await newCoach("coach");
+    let match = await matchSetup(coach);
+    await setTeamStat(coach, match.teamId, "basketballMode", true);
+    await match.open();
+    await match.lineup("Ann", "Bo", "Cy", "Dee");
+    await match.start();
+
+    await match.goal("Ann", 3);
+    await match.goal("Ann", 2);
+    await match.goal("Bo", 1);
+
+    expect(await match.score()).toBe("6-0");
+    expect((await match.playerGame("Ann"))?.stats).toEqual([{ statId: GOAL, count: 5 }]);
+    expect((await match.playerGame("Bo"))?.stats).toEqual([{ statId: GOAL, count: 1 }]);
+  });
+
+  test("an ended game can be restarted and its clock run again", async ({ newCoach }) => {
+    let match = await matchSetup(await newCoach("coach"));
+    await match.lineup("Ann", "Bo", "Cy", "Dee");
+    await match.start();
+    await match.end();
+
+    await match.restart();
+    expect((await match.gameState())?.status).toBe("paused");
+    await expect(match.page.locator("#gameStatus")).toContainText("tap to start");
+
+    await match.start();
+    let game = await match.gameState();
+    expect(game?.status).toBe("play");
+    expect(game?.gameTime).toHaveLength(2);
+    expect(isRunning(game?.gameTime)).toBe(true);
+  });
+
+  test("deleting a game removes it from the schedule", async ({ newCoach }) => {
+    let coach = await newCoach("coach");
+    let match = await matchSetup(coach);
+    await match.lineup("Ann", "Bo", "Cy", "Dee");
+    await match.start();
+    await match.goal("Ann");
+
+    await coach.goto(`/web/match?teamId=${match.teamId}&gameId=1`);
+    await coach.page.click("button:has-text('Delete')");
+    await coach.page.waitForURL(/\/web\/games/);
+    await coach.page.waitForLoadState("networkidle");
+
+    await expect(coach.page.locator("#game-1")).toHaveCount(0);
+    expect((await coach.idb(["team", match.teamId]))?.games).toEqual([]);
+    expect(await match.gameState()).toMatchObject({ points: 0, gameTime: [] });
+    let ann = await match.playerGame("Ann");
+    expect(ann?.stats ?? []).toEqual([]);
+    expect(ann?.gameTime ?? []).toEqual([]);
+  });
+});
+
+test.describe("moving players during a match", () => {
+  test("a field player moved to an empty spot keeps playing there", async ({ newCoach }) => {
+    let match = await matchSetup(await newCoach("coach"));
+    let names = await match.positionNames();
+    await match.lineup("Ann", "Bo", "Cy");
+    await match.start();
+    await match.page.waitForTimeout(500);
+
+    await match.move("Ann", 3);
+
+    await expect(match.position(0)).toHaveClass(/is-empty/);
+    await expect(match.position(3)).toContainText("Ann");
+    let ann = await match.playerGame("Ann");
+    expect(ann?.status).toEqual({ _: "inPlay", position: 3 });
+    expect(ann?.gameTime.map((x) => x.position)).toEqual([names[0], names[3]]);
+    expect(playedMs(ann?.gameTime)).toBeGreaterThanOrEqual(500);
+    expect(isRunning(ann?.gameTime)).toBe(true);
+  });
+
+  test("moving onto another field player swaps the two, clocks running", async ({ newCoach }) => {
+    let match = await matchSetup(await newCoach("coach"));
+    let names = await match.positionNames();
+    await match.lineup("Ann", "Bo", "Cy", "Dee");
+    await match.start();
+
+    await match.move("Ann", 1);
+
+    expect(await match.field()).toEqual(["Bo", "Ann", "Cy", "Dee"]);
+    let [ann, bo] = [await match.playerGame("Ann"), await match.playerGame("Bo")];
+    expect(ann?.status).toEqual({ _: "inPlay", position: 1 });
+    expect(bo?.status).toEqual({ _: "inPlay", position: 0 });
+    expect(ann?.gameTime.map((x) => x.position)).toEqual([names[0], names[1]]);
+    expect(bo?.gameTime.map((x) => x.position)).toEqual([names[1], names[0]]);
+    expect(isRunning(ann?.gameTime)).toBe(true);
+    expect(isRunning(bo?.gameTime)).toBe(true);
+  });
+
+  test("moving players while paused changes only their positions", async ({ newCoach }) => {
+    let match = await matchSetup(await newCoach("coach"));
+    let names = await match.positionNames();
+    await match.lineup("Ann", "Bo", "Cy", "Dee");
+    await match.start();
+    await match.pause();
+    let before = playedMs((await match.playerGame("Ann"))?.gameTime);
+
+    await match.move("Ann", 1);
+
+    expect(await match.field()).toEqual(["Bo", "Ann", "Cy", "Dee"]);
+    let ann = await match.playerGame("Ann");
+    expect(isRunning(ann?.gameTime)).toBe(false);
+    expect(playedMs(ann?.gameTime)).toBe(before);
+    expect(ann?.gameTime.at(-1)).toEqual({ position: names[1] });
+
+    await match.start();
+    ann = await match.playerGame("Ann");
+    expect(ann?.gameTime.at(-1)).toEqual({ start: expect.any(Number), position: names[1] });
+    expect((await match.playerGame("Bo"))?.gameTime.at(-1)?.position).toBe(names[0]);
+  });
+
+  test("one queued player can be swapped on alone", async ({ newCoach }) => {
+    let match = await matchSetup(await newCoach("coach"));
+    await match.lineup("Ann", "Bo", "Cy", "Dee");
+    await match.start();
+    await match.queue("Eve", 0);
+    await match.queue("Fay", 1);
+    await expect(match.page.locator(".swap-all")).toHaveText("Swap 2");
+
+    await match.swapOne(0);
+
+    expect(await match.field()).toEqual(["Eve", "Bo", "Cy", "Dee"]);
+    await expect(match.queued(1)).toContainText("Fay next");
+    await expect(match.page.locator(".swap-all")).toHaveText("Swap 1");
+    expect((await match.playerGame("Ann"))?.status).toEqual({ _: "out" });
+    expect(isRunning((await match.playerGame("Eve"))?.gameTime)).toBe(true);
+    expect(isRunning((await match.playerGame("Fay"))?.gameTime)).toBe(false);
+  });
+
+  test("a queued player can go to an empty spot alone", async ({ newCoach }) => {
+    let match = await matchSetup(await newCoach("coach"));
+    await match.lineup("Ann", "Bo", "Cy");
+    await match.start();
+    await match.queue("Eve", 3);
+    await expect(match.position(3)).toHaveClass(/is-queued/);
+
+    await match.swapOne(3);
+
+    expect(await match.field()).toEqual(["Ann", "Bo", "Cy", "Eve"]);
+    expect(isRunning((await match.playerGame("Eve"))?.gameTime)).toBe(true);
+  });
+
+  test("a queued player sent back to the bench is no longer queued", async ({ newCoach }) => {
+    let match = await matchSetup(await newCoach("coach"));
+    await match.lineup("Ann", "Bo", "Cy", "Dee");
+    await match.queue("Eve", 0);
+
+    await match.cancelQueued(0);
+
+    await expect(match.queued(0)).toHaveCount(0);
+    await expect(match.page.locator(".swap-all")).toHaveCount(0);
+    expect(await match.bench()).toContain("Eve");
+    expect((await match.playerGame("Eve"))?.status).toEqual({ _: "out" });
+    expect(await match.field()).toEqual(["Ann", "Bo", "Cy", "Dee"]);
+  });
+
+  test("All Out takes everyone off the field and stops their clocks", async ({ newCoach }) => {
+    let match = await matchSetup(await newCoach("coach"));
+    await match.lineup("Ann", "Bo", "Cy", "Dee");
+    await match.start();
+    await match.queue("Eve", 0);
+
+    await match.allOut();
+
+    expect(await match.field()).toEqual([]);
+    expect((await match.bench()).sort()).toEqual(["Ann", "Bo", "Cy", "Dee", "Eve", "Fay"]);
+    for (let name of ["Ann", "Bo", "Cy", "Dee", "Eve"]) {
+      let player = await match.playerGame(name);
+      expect(player?.status, name).toEqual({ _: "out" });
+      expect(isRunning(player?.gameTime), name).toBe(false);
+    }
+    expect((await match.gameState())?.status).toBe("play");
   });
 });

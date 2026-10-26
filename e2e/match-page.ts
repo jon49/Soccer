@@ -79,6 +79,30 @@ export class MatchPage {
     await this.act("swapAll", () => this.page.click(".swap-all"));
   }
 
+  // The player queued for `position` (the "next" button in that spot).
+  queued(position: number) {
+    return this.position(position).locator(".player-next");
+  }
+
+  // Queued player, then their own spot: swaps just that one player on.
+  async swapOne(position: number) {
+    await this.queued(position).click();
+    let spot = this.position(position).locator(".player-main, .position-name").first();
+    await this.act("swap", () => spot.click());
+  }
+
+  async cancelQueued(position: number) {
+    await this.queued(position).click();
+    await this.act("cancelOnDeck", () => this.page.click("[data-target=bench]"));
+  }
+
+  // Field player -> another field position: moves them there, swapping with
+  // whoever plays it.
+  async move(name: string, position: number) {
+    await this.player(name).click();
+    await this.act("updateUserPosition", () => this.position(position).click());
+  }
+
   // Fills positions 0.. with `names`, then swaps them all on.
   async lineup(...names: string[]) {
     for (let [i, name] of names.entries()) await this.queue(name, i);
@@ -97,9 +121,26 @@ export class MatchPage {
     await this.act("endGame", () => this.page.click(".match-bar .match-end:has-text('End')"));
   }
 
-  async goal(scorer: string) {
+  async restart() {
+    await this.act("restartGame", () =>
+      this.page.click(".match-bar .match-end:has-text('Restart')"),
+    );
+  }
+
+  async allOut() {
+    await this.act("allOut", () => this.page.click("button:has-text('All Out')"));
+  }
+
+  // `points` picks 1, 2 or 3 in basketball mode.
+  async goal(scorer: string, points?: 1 | 2 | 3) {
     await this.page.click(".match-bar .score[data-status=score]");
+    if (points) await this.page.click(`.score-points label:has(input[value="${points}"])`);
     await this.act("scorePoint", () => this.player(scorer).click());
+  }
+
+  async goalNoScorer() {
+    await this.page.click(".match-bar .score[data-status=score]");
+    await this.act("scorePoint", () => this.page.click("[data-target=noScorer]"));
   }
 
   async opponentGoal() {
@@ -149,6 +190,10 @@ export class MatchPage {
 
   /*** Saved data ***/
 
+  async positionNames(): Promise<string[]> {
+    return (await this.coach.idb(["positions", this.teamId]))!.positions.flat();
+  }
+
   gameState() {
     return this.coach.idb<{
       status?: string;
@@ -176,4 +221,24 @@ export function isRunning(gameTime: { start?: number; end?: number }[] = []) {
 // Total milliseconds of closed intervals; open intervals count as zero.
 export function playedMs(gameTime: { start?: number; end?: number }[] = []) {
   return gameTime.reduce((sum, x) => sum + (x.start && x.end ? x.end - x.start : 0), 0);
+}
+
+// Team settings on the stats page that change how the match page scores.
+export async function setTeamStat(
+  coach: Coach,
+  teamId: number | string,
+  setting: "basketballMode" | "goal",
+  on: boolean,
+) {
+  await coach.goto(`/web/stats/edit/?teamId=${teamId}`);
+  let form =
+    setting === "basketballMode"
+      ? coach.page.locator("form:has(input[name=basketballMode])")
+      : coach.page.locator("form:has(input[name=id][value='1'])");
+  let input = form.locator("input[type=checkbox]");
+  if ((await input.isChecked()) === on) return;
+  let handler = setting === "basketballMode" ? "basketballMode" : "updateStat";
+  let saved = coach.page.waitForResponse((x) => x.url().includes(`handler=${handler}`));
+  await form.locator("label.toggle").click();
+  expect((await saved).ok()).toBe(true);
 }
