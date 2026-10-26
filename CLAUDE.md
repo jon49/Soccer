@@ -9,9 +9,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `npm run start:full` — runs `start`, `server`, and `make -C ../ImageBase dev` (TrailBase backend) concurrently.
 - `./server/start.sh [--rebuild]` — production-shaped local harness: builds into `./server/public`, starts TrailBase on :4000, and runs a tiny Node static + reverse proxy on :8009.
 - `npm run build` — production build into `./deploy`.
-- `npm run check` — `tsc --noEmit` typecheck.
+- `npm run check` — `tsc --noEmit` typecheck of `src/`, then of `e2e/` (its own `e2e/tsconfig.json`).
 - `npm test` — runs every `src/**/*.test.ts` via `tsx --test`. Single test: `tsx --test src/web/pages/match/state-logic.test.ts`.
 - `npm run fmt` / `fmt:check` — format with oxfmt.
+- `npm run e2e` — Playwright end-to-end tests (`e2e/*.spec.ts`) against the real app in Chromium. Starts its own throwaway TrailBase on :4010 (fresh depot in `e2e/.depot`, seeded from `../ImageBase`, which must be on a branch with the features under test) and dev server on :8010, so it can run beside `npm start`. Needs `trail`, `sqlite3`, and the Rust toolchain for the ImageBase guest wasm. Single test: `npx playwright test -g "removing a coach"`. Each test makes fresh users with `trail user add`; the `Coach` fixture in `e2e/fixtures.ts` is one logged-in device, with background auto-sync stubbed out (call `coach.sync()`).
 
 The `/api` path is owned by TrailBase (separate repo at `../ImageBase`). The Node dev proxy and NGINX in production both forward `/api/*` there.
 

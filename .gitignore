@@ -5,3 +5,6 @@ node_modules
 src/web/entry-points.ts
 config.json
 *.db
+e2e/.depot
+test-results
+playwright-report
