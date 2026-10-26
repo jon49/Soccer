@@ -133,11 +133,6 @@ export default async function playMatchView(state: PlayerStateView) {
     <div class=match-bench-head>
         <h2>Bench (${countOnDeckWithNoPosition + outPlayers.length})</h2>
         ${when(
-          countOnDeckWithNoPosition > 1,
-          () => html`
-        <a class="condense-padding nc-button" href="?${queryTeamGame}&handler=rapidFire" role="button">Rapid Fire</a>`,
-        )}
-        ${when(
           playersExist,
           () => html`
         <button

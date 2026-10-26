@@ -9,7 +9,6 @@ import {
   applyStatOperation,
   endInPlayPlayers,
   isValidPointsValue,
-  nextRapidFireTarget,
   pauseInPlayPlayers,
   resetGameStateForDeletedGame,
   resetPlayerForDeletedGame,
@@ -75,20 +74,6 @@ describe("applyStatOperation", () => {
   it("subtracts the points beyond the first directly from the game score on decrement", () => {
     let result = applyStatOperation(5, "dec", 3);
     assert.deepEqual(result, { newCount: 2, gameScoreDelta: -2 });
-  });
-});
-
-describe("nextRapidFireTarget", () => {
-  it("finds the first on-deck player without a target position", () => {
-    let a = { status: { targetPosition: 0 } };
-    let b = { status: { targetPosition: null } };
-    let c = { status: { targetPosition: null } };
-    assert.equal(nextRapidFireTarget([a, b, c]), b);
-  });
-
-  it("returns undefined when every on-deck player already has a target", () => {
-    let a = { status: { targetPosition: 0 } };
-    assert.equal(nextRapidFireTarget([a]), undefined);
   });
 });
 

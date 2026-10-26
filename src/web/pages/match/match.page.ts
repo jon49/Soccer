@@ -9,7 +9,6 @@ import {
 } from "./shared.js";
 import render, { getPointsView } from "./_game-play-view.js";
 import { swapAll } from "./player-swap.js";
-import targetPositionView from "./_target-position-view.js";
 import targetPosition from "./player-target-position.js";
 import { activityPlayerSelectorView } from "./_activity-position-view.js";
 import playMatchView, { opponentPointsView } from "./_play-match-view.js";
@@ -21,7 +20,6 @@ import {
   applyStatOperation,
   endInPlayPlayers,
   isValidPointsValue,
-  nextRapidFireTarget,
   pauseInPlayPlayers,
   resetGameStateForDeletedGame,
   resetPlayerForDeletedGame,
@@ -29,7 +27,6 @@ import {
 } from "./match-page-logic.js";
 
 const {
-  db,
   html,
   layout,
   repo: {
@@ -174,25 +171,6 @@ const getHandlers: RouteGetHandler = {
     return getApp(new PlayerStateView(query.teamId, query.gameId));
   },
 
-  async playerSwap({ query }) {
-    return targetPositionView(query);
-  },
-
-  async rapidFire({ query }) {
-    let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator);
-    let state = new PlayerStateView(teamId, gameId);
-    let onDeckPlayers = await state.onDeckPlayers();
-
-    let firstPlayer = nextRapidFireTarget(onDeckPlayers);
-    if (firstPlayer) {
-      await db.set("rapidFire", true, false);
-      return targetPositionView({ teamId, gameId, playerId: firstPlayer.playerId });
-    }
-
-    await db.set("rapidFire", false, false);
-    return playMatchView(state);
-  },
-
   async activityPlayerSelector(o) {
     let { query } = o;
     return play({
@@ -321,25 +299,7 @@ const postHandlers: RoutePostHandler = {
   async updateUserPosition({ query }) {
     let o = await validateObject(query, queryPositionUpdateValidator);
     await targetPosition(query, o.position);
-
-    let rapidFire = await db.get("rapidFire");
-
-    if (rapidFire) {
-      // @ts-expect-error
-      return getHandlers.rapidFire({ query });
-    }
-
     return playMatchView(new PlayerStateView(o.teamId, o.gameId));
-  },
-
-  async playerOnDeck({ query }) {
-    let { teamId, playerId, gameId } = await validateObject(query, queryTeamGamePlayerValidator);
-    let state = new PlayerStateView(teamId, gameId);
-    let player = await state.playerGame(playerId);
-    player.status = { _: "onDeck", targetPosition: null };
-    await playerGameSave(teamId, player);
-
-    return getApp(new PlayerStateView(teamId, gameId));
   },
 
   async playerNowOut({ query }) {

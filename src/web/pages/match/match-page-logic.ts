@@ -32,14 +32,6 @@ export function applyStatOperation(
   return { newCount, gameScoreDelta };
 }
 
-// --- rapid fire -----------------------------------------------------------
-
-export function nextRapidFireTarget<T extends { status: { targetPosition: number | null } }>(
-  onDeckPlayers: T[],
-): T | undefined {
-  return onDeckPlayers.find((x) => x.status.targetPosition == null);
-}
-
 // --- player-out transitions -------------------------------------------------
 
 export function applyInPlayerOut(player: PlayerGame, gameCalc: GameTimeCalculator): void {
