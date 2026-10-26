@@ -167,10 +167,6 @@ async function addPlayerStat(
 }
 
 const getHandlers: RouteGetHandler = {
-  async cancelSwap({ query }) {
-    return getApp(new PlayerStateView(query.teamId, query.gameId));
-  },
-
   async activityPlayerSelector(o) {
     let { query } = o;
     return play({
@@ -184,10 +180,6 @@ const getHandlers: RouteGetHandler = {
 }
 </style>`,
     });
-  },
-
-  async showInPlay({ query }) {
-    return getApp(new PlayerStateView(query.teamId, query.gameId));
   },
 
   async points({ query }) {
