@@ -31,7 +31,7 @@ function loginView(code: string) {
   let back = encodeURIComponent(`/web/join/?code=${code}`);
   return joinView(html`
 <p>Log in to join this team.</p>
-<p><a href="/login?return=${back}" target="_self" role=button class=nc-button>Log in</a></p>`);
+<p><a href="/login/?return=${back}" target="_self" role=button class=nc-button>Log in</a></p>`);
 }
 
 async function render(query: any) {

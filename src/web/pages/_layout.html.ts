@@ -107,7 +107,7 @@ const render = async ({
                     ${
                       isLoggedIn
                         ? html`
-                            <a id="auth-link" href="/login?logout" role="button" class="nc-button" target="_self">Logout</a>
+                            <a id="auth-link" href="/login/?logout" role="button" class="nc-button" target="_self">Logout</a>
                           `
                         : loginView()
                     }
