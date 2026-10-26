@@ -39,9 +39,7 @@ export function computeSwapAll(
     );
     if (currentPlayer) {
       let inPlayerCalc = new PlayerGameTimeCalculatorBase(currentPlayer, gameCalc);
-      if (inPlayerCalc.hasStarted()) {
-        inPlayerCalc.end();
-      }
+      inPlayerCalc.end();
       currentPlayer.status = { _: "out" };
       playersToSave.push(currentPlayer);
     }

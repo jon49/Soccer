@@ -69,16 +69,8 @@ export function applySwapWhenInGame(
 
   let gameCalc = new GameTimeCalculator(gameState);
   let playerCalc = new PlayerGameTimeCalculatorBase(player, gameCalc);
-  let gameOn = playerCalc.isGameOn();
-
-  let positionName = positions[targetPosition];
-  if (gameOn) {
-    playerCalc.end();
-    playerCalc.position(positionName);
-    playerCalc.start();
-  } else {
-    playerCalc.position(positionName);
-  }
+  playerCalc.position(positions[targetPosition]);
+  playerCalc.start();
 
   let playersToSave = [player];
   if (inGamePlayer) {
@@ -87,14 +79,8 @@ export function applySwapWhenInGame(
     // (the slot they inherit) — not `player.status.position`, which is now
     // player's *new* position (the slot they came from getting swapped OUT
     // of by player, not the one they landed on).
-    let inGamePositionName = positions[inGamePlayer.status.position];
-    if (gameOn) {
-      inGamePlayerCalc.end();
-      inGamePlayerCalc.position(inGamePositionName);
-      inGamePlayerCalc.start();
-    } else {
-      inGamePlayerCalc.position(inGamePositionName);
-    }
+    inGamePlayerCalc.position(positions[inGamePlayer.status.position]);
+    inGamePlayerCalc.start();
     playersToSave.push(inGamePlayer);
   }
 
