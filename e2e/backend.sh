@@ -17,5 +17,5 @@ cp "$IMAGEBASE/traildepot/config.textproto" "$DEPOT/"
 cp -r "$IMAGEBASE/traildepot/migrations" "$DEPOT/"
 cp "$IMAGEBASE/traildepot/wasm/imagebase_guest.wasm" "$DEPOT/wasm/"
 
-exec trail --data-dir="$DEPOT" run --address="localhost:$PORT" --dev \
+exec trail --depot="$DEPOT" run --address="localhost:$PORT" --dev \
   --runtime-root-fs="$DEPOT/uploads"

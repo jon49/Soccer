@@ -7,7 +7,7 @@ import {
 } from "@playwright/test";
 import { execFileSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
-import { DEPOT } from "./env.js";
+import { API_PORT, DEPOT } from "./env.js";
 
 const PASSWORD = "E2eTest!12345";
 
@@ -23,6 +23,22 @@ export const hex = (uuid: string) => uuid.replace(/-/g, "").toUpperCase();
 export function makeAppOwner(email: string) {
   sql(`INSERT INTO app_owners (app, owner) SELECT 'soccer', id FROM _user WHERE email = '${email}'
        ON CONFLICT(app) DO UPDATE SET owner = excluded.owner;`);
+}
+
+// Signs up through the API like a coach would, then marks the address
+// verified (unverified users can't log in). `trail user add` would do both,
+// but fails with an internal error as of TrailBase v0.35. Plain sqlite3 lacks
+// the is_email() that _user's CHECK constraints call, so skip those.
+async function registerVerified(email: string) {
+  let res = await fetch(`http://localhost:${API_PORT}/api/auth/v1/register`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password: PASSWORD, password_repeat: PASSWORD }),
+  });
+  expect(res.ok, `register ${email}: ${res.status}`).toBe(true);
+  sql(`PRAGMA ignore_check_constraints = ON;
+       UPDATE _user SET email = unverified_email, unverified_email = NULL
+       WHERE unverified_email = '${email}';`);
 }
 
 export interface SyncResult {
@@ -259,9 +275,7 @@ export const test = base.extend<Fixtures>({
   newCoach: async ({ device }, use) => {
     await use(async (name) => {
       let email = `${name}-${randomUUID().slice(0, 8)}@example.com`;
-      execFileSync("trail", ["--data-dir", DEPOT, "user", "add", email, PASSWORD], {
-        stdio: "ignore",
-      });
+      await registerVerified(email);
       return device(email);
     });
   },
