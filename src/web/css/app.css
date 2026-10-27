@@ -231,6 +231,12 @@ textarea {
 
 /** Fancy Checkbox **/
 
+/* nimble makes labels display: block, which lets a tap anywhere across the
+ * row flip the toggle. Keep the hit area to the button itself. */
+.toggle {
+  display: inline-block;
+}
+
 .toggle > [type="checkbox"],
 .on,
 input:checked ~ .off,

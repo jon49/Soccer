@@ -124,8 +124,8 @@ function playerView(player: TeamPlayer, teamId: TeamId) {
                     name=active
                     type=checkbox
                     $${when(player.active, "checked")}>
-                <span class="off full-width nc-button" role="button">Inactive</span>
-                <span class="on full-width nc-button" role="button">Active</span>
+                <span class="off nc-button" role="button">Inactive</span>
+                <span class="on nc-button" role="button">Active</span>
             </label>
         </div>
     </form>
