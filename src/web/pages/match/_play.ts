@@ -82,7 +82,18 @@ export async function play({
         }
         .score {
             min-width: 2.75rem;
+            flex-direction: column;
+            gap: 0;
+            padding-block: 0.15rem;
+            line-height: 1.1;
             font-weight: 700;
+        }
+        .score-label {
+            font-size: 0.6rem;
+            font-weight: 600;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            opacity: 0.85;
         }
         .score-them,
         .match-end {

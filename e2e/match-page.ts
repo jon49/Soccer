@@ -183,8 +183,8 @@ export class MatchPage {
   }
 
   async score() {
-    let ours = await this.page.locator(".match-bar .score").first().innerText();
-    let theirs = await this.page.locator("#opponentPoints").innerText();
+    let ours = await this.page.locator(".match-bar .score .score-value").first().innerText();
+    let theirs = await this.page.locator("#opponentPoints .score-value").innerText();
     return `${ours.trim()}-${theirs.trim()}`;
   }
 

@@ -57,13 +57,13 @@ export default async function playMatchView(state: PlayerStateView) {
     <a class=match-back href="?${queryTeamGame}" target="_self" aria-label="Back to game">&lsaquo;</a>
     ${
       creditScorer
-        ? html`<button type=button class=score data-status=score aria-label="Game points ${points}. Tap, then tap the scorer.">${points}</button>`
+        ? html`<button type=button class=score data-status=score aria-label="Our points ${points}. Tap, then tap the scorer.">${scoreView("Us", points)}</button>`
         : html`<button
         class=score
         form=post
         formaction="?${queryTeamGame}&handler=scorePoint"
-        aria-label="Game points ${points}"
-        >${points}</button>`
+        aria-label="Our points ${points}"
+        >${scoreView("Us", points)}</button>`
     }
     <span aria-hidden=true>&ndash;</span>
     ${opponentPointsView(queryTeamGame, gameCalc)}
@@ -170,5 +170,9 @@ class="score score-them"
 form=post
 formaction="?$${queryTeamGame}&handler=oPointsIncPlay"
 aria-label="Opponent points ${gameCalc.gameState.opponentPoints}"
->${gameCalc.gameState.opponentPoints}</button>`;
+>${scoreView("Them", gameCalc.gameState.opponentPoints)}</button>`;
+}
+
+function scoreView(label: string, points: number) {
+  return html`<span class=score-label aria-hidden=true>${label}</span><span class=score-value>${points}</span>`;
 }
