@@ -5,6 +5,7 @@ import { spacesForget, teamMoveLocal } from "./repo-share.js";
 import { isMovedTeam, isTeamKey, movesIn } from "./share-logic.js";
 import {
   canonicalKey,
+  confirmSaved,
   pendingAfterSync,
   pendingWithoutSpaces,
   spacesDiff,
@@ -15,7 +16,7 @@ import {
 import { errorToPlain, logSyncError, logSyncInfo } from "./sync-log.js";
 
 const {
-  db: { getMany, setMany, set, update, get },
+  db: { getMany, setMany, update, get, transaction, promisifyRequest },
   globalDb,
 } = self.sw;
 
@@ -26,7 +27,18 @@ export interface SyncResult {
   messages: string[];
 }
 
-export default async function sync(): Promise<SyncResult> {
+// One sync at a time: a manual sync, auto-sync and other tabs all share this
+// service worker, and two rounds in flight at once would each confirm keys
+// against stale reads. A sync asked for while one runs waits its turn.
+let running: Promise<unknown> = Promise.resolve();
+
+export default function sync(): Promise<SyncResult> {
+  let result = running.then(syncWithRetry, syncWithRetry);
+  running = result.catch(() => {});
+  return result;
+}
+
+async function syncWithRetry(): Promise<SyncResult> {
   let result = await syncOnce(true);
   if (result.status !== 403) return result;
 
@@ -112,18 +124,14 @@ async function syncOnce(withData: boolean): Promise<SyncResult> {
   );
   await setMany(toSaveNewData);
 
-  let updatedData = await getMany(newData.saved.map((x) => parse(x.key)));
-  let updatedRevisionsTask = [];
-  for (let index = 0; index < updatedData.length; index++) {
-    let d = updatedData[index];
-    let { key, id } = newData.saved[index];
-    if (d) {
-      d._rev = id;
-      updatedRevisionsTask.push(set(parse(key), updatedData[index], false));
-    } else {
-      console.error("Could not find the key to update the revision!", key, id);
-      await logSyncError("could not find key to update revision", { key, id });
-    }
+  let sent = new Map(keys.map((key, i) => [canonicalKey(key), items[i]]));
+  let { missing, kept } = await applySaved(
+    newData.saved.map((x) => ({ key: parse(x.key), id: x.id })),
+    sent,
+  );
+  for (let key of missing) {
+    console.error("Could not find the key to update the revision!", key);
+    await logSyncError("could not find key to update revision", { key });
   }
 
   if (newData.conflicted?.length) {
@@ -141,7 +149,6 @@ async function syncOnce(withData: boolean): Promise<SyncResult> {
   let messages = (await spacesForget(removed)).map((x) => `You no longer have access to "${x}".`);
 
   await Promise.all([
-    ...updatedRevisionsTask,
     update(
       "settings",
       (val) => ({
@@ -154,11 +161,7 @@ async function syncOnce(withData: boolean): Promise<SyncResult> {
       }),
       { sync: false },
     ),
-    update(
-      "updated",
-      (val) => pendingWithoutSpaces(pendingAfterSync(val, newData.saved), removed) ?? val,
-      { sync: false },
-    ),
+    update("updated", (val) => pendingWithoutSpaces(val, removed) ?? val, { sync: false }),
   ]);
 
   // Runs after the pending set is updated so a re-queued tombstone isn't
@@ -180,6 +183,7 @@ async function syncOnce(withData: boolean): Promise<SyncResult> {
     spacesAdded: added,
     spacesRemoved: removed,
     teamsMoved: moves,
+    editedInFlight: kept,
     pendingRawAfter: Array.from(rawUpdatedAfter ?? []),
   });
 
@@ -187,6 +191,27 @@ async function syncOnce(withData: boolean): Promise<SyncResult> {
     return { status: 200, messages };
   }
   return { status: 204, messages };
+}
+
+// Stamps the server's new revisions onto the saved records and drops them from
+// the pending queue, in one transaction so no edit can land between reading a
+// record and dequeuing it. A record edited since it was sent stays queued.
+async function applySaved(saved: { key: any; id: number }[], sent: Map<string, unknown>) {
+  return transaction("readwrite", async (store) => {
+    let [updated, ...current] = await Promise.all([
+      promisifyRequest<Set<IDBValidKey> | undefined>(store.get("updated")),
+      ...saved.map((x) => promisifyRequest(store.get(x.key))),
+    ]);
+    let { records, confirmed, missing } = confirmSaved(saved, sent, current);
+    for (let [key, record] of records) store.put(record, key as IDBValidKey);
+    let pending = pendingAfterSync(updated, confirmed);
+    if (pending) store.put(pending, "updated");
+    await promisifyRequest(store.transaction);
+    let kept = records
+      .map(([key]) => key)
+      .filter((key) => !confirmed.some((x) => x.key === canonicalKey(key)));
+    return { missing, kept };
+  });
 }
 
 // Personal team ids among `keys` whose local ["team", t] is already a

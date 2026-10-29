@@ -29,6 +29,42 @@ export function pendingAfterSync(
   return updated;
 }
 
+// Compares two versions of a record by content, ignoring `_rev`.
+function sameContent(a: unknown, b: unknown): boolean {
+  let strip = (x: any) => (x && typeof x === "object" ? { ...x, _rev: undefined } : x);
+  return JSON.stringify(strip(a)) === JSON.stringify(strip(b));
+}
+
+// Applies the server's confirmation of `saved` to the records as they are
+// locally *now*. Every record takes its new revision, but only one that is
+// still what was sent leaves the pending queue: a record edited while the
+// request was in flight has a change the server never got, so it stays
+// queued. `sent` maps canonical keys to the data that went out; `current`
+// lines up with `saved`.
+export function confirmSaved(
+  saved: { key: unknown; id: number }[],
+  sent: Map<string, unknown>,
+  current: unknown[],
+): { records: [unknown, any][]; confirmed: { key: string }[]; missing: unknown[] } {
+  let records: [unknown, any][] = [];
+  let confirmed: { key: string }[] = [];
+  let missing: unknown[] = [];
+  saved.forEach(({ key, id }, i) => {
+    let record: any = current[i];
+    if (!record) {
+      missing.push(key);
+      return;
+    }
+    let canonical = canonicalKey(key);
+    let wasSent = sent.has(canonical);
+    if (wasSent && sameContent(sent.get(canonical), record)) {
+      confirmed.push({ key: canonical });
+    }
+    records.push([key, { ...record, _rev: id }]);
+  });
+  return { records, confirmed, missing };
+}
+
 // Space uuid -> sync cursor, one per shared team this user belongs to.
 export type SpaceCursors = Record<string, number>;
 

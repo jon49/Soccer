@@ -1,6 +1,8 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import {
+  canonicalKey,
+  confirmSaved,
   keysInSpaces,
   pendingAfterSync,
   pendingWithoutSpaces,
@@ -51,6 +53,56 @@ describe("pendingAfterSync", () => {
     let updated = new Set(["x", "y"]);
     let result = pendingAfterSync(updated, []);
     assert.deepEqual(Array.from(result ?? []).sort(), ["x", "y"]);
+  });
+});
+
+describe("confirmSaved", () => {
+  let key = ["player-game", 1, 2, 3];
+  let sentA = { status: { _: "inPlay", position: 0 }, _rev: 4 };
+  let sent = new Map([[canonicalKey(key), sentA]]);
+
+  it("confirms a record that is still what was sent and stamps its revision", () => {
+    let result = confirmSaved([{ key, id: 812 }], sent, [{ ...sentA }]);
+    assert.deepEqual(result.confirmed, [{ key: canonicalKey(key) }]);
+    assert.deepEqual(result.records, [[key, { ...sentA, _rev: 812 }]]);
+    assert.deepEqual(result.missing, []);
+  });
+
+  it("keeps a record edited while the request was in flight queued, with the new revision", () => {
+    // Regression: the coach benches a player while a sync is out. The newer
+    // edit used to take the server's revision and leave the queue, so it
+    // never reached the server.
+    let edited = { status: { _: "out" }, _rev: 4 };
+    let result = confirmSaved([{ key, id: 812 }], sent, [edited]);
+    assert.deepEqual(result.confirmed, []);
+    assert.deepEqual(result.records, [[key, { ...edited, _rev: 812 }]]);
+  });
+
+  it("ignores only the revision when comparing", () => {
+    let result = confirmSaved([{ key, id: 812 }], sent, [{ ...sentA, _rev: 900 }]);
+    assert.deepEqual(result.confirmed, [{ key: canonicalKey(key) }]);
+  });
+
+  it("does not confirm a key that was not sent", () => {
+    let result = confirmSaved([{ key: "teams", id: 5 }], sent, [{ teams: [], _rev: 1 }]);
+    assert.deepEqual(result.confirmed, []);
+    assert.deepEqual(result.records, [["teams", { teams: [], _rev: 5 }]]);
+  });
+
+  it("reports records that no longer exist locally", () => {
+    let result = confirmSaved([{ key, id: 812 }], sent, [undefined]);
+    assert.deepEqual(result.missing, [key]);
+    assert.deepEqual(result.records, []);
+  });
+
+  it("matches the bare teams key against the server's quoted form", () => {
+    let teams = { teams: [], _rev: 1 };
+    let result = confirmSaved(
+      [{ key: "teams", id: 2 }],
+      new Map([[canonicalKey("teams"), teams]]),
+      [{ ...teams }],
+    );
+    assert.deepEqual(result.confirmed, [{ key: '"teams"' }]);
   });
 });
 

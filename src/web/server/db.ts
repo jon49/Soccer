@@ -1,11 +1,14 @@
 import {
+  createStore,
   delMany,
   get as get1,
   getMany,
   keys,
+  promisifyRequest,
   setMany,
   set as set1,
   update as update1,
+  type UseStore,
 } from "idb-keyval";
 import { reject } from "@jon49/sw/validation.js";
 
@@ -33,15 +36,12 @@ function set<K extends keyof DBAccessors>(
 ): Promise<void>;
 function set<T>(key: string | any[], value: T, sync?: boolean): Promise<void>;
 async function set(key: string | any[], value: any, sync = true) {
-  if (sync && "_rev" in value) {
-    if ("_rev" in value) {
-      await _updated(key);
-    } else {
-      return reject(`Revision number not specified! For "${key}".`);
-    }
-  }
+  // Write before queueing: a sync that confirms this key in between then sees
+  // the new value, differing from what it sent, and leaves the key queued.
   await set1(key, value);
-  return;
+  if (sync && "_rev" in value) {
+    await _updated(key);
+  }
 }
 
 function update<K extends keyof DBAccessors>(
@@ -62,7 +62,21 @@ async function update(key: string, f: (v: any) => any, options = { sync: true })
   }
 }
 
-export { update, set, get, getMany, setMany, keys, delMany };
+// idb-keyval's own default database and store.
+let store: UseStore | undefined;
+
+// Runs `callback` in one transaction over the whole store, for reads and
+// writes that must not interleave with other writes. Only await requests on
+// `store` inside it, or the transaction commits early.
+function transaction<T>(
+  mode: IDBTransactionMode,
+  callback: (store: IDBObjectStore) => T | PromiseLike<T>,
+): Promise<T> {
+  store ??= createStore("keyval-store", "keyval");
+  return store(mode, callback);
+}
+
+export { update, set, get, getMany, setMany, keys, delMany, transaction, promisifyRequest };
 
 export const themes = ["dark", "light", null] as const;
 export type Theme = (typeof themes)[number];
