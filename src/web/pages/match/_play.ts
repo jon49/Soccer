@@ -32,6 +32,8 @@ export async function play({
     <base target=htmz>
     <title>Match - Soccer</title>
     <link rel="icon" type="image/x-icon" href="/web/images/soccer.ico">
+    <link rel="apple-touch-icon" href="/web/images/soccer.png">
+    <meta name="theme-color" content="#506f8d">
     <link href="/web/css/app.css" rel=stylesheet>
     $${head}
     <style>

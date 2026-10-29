@@ -82,6 +82,8 @@ const render = async ({
     <base target=htmz>
     <title>${title} - Soccer</title>
     <link rel="icon" type="image/x-icon" href="/web/images/soccer.ico">
+    <link rel="apple-touch-icon" href="/web/images/soccer.png">
+    <meta name="theme-color" content="#506f8d">
     <link href="/web/css/app.css" rel=stylesheet>
     ${cssLinks?.map((x) => html`<link href="${x}" rel=stylesheet>`)}
     <link rel="manifest" href="/web/manifest.json">
