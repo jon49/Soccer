@@ -74,3 +74,11 @@ export function formatGameTime(time: string | undefined): string {
   if (isNaN(d.getTime())) return time;
   return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 }
+
+// Today in the device's time zone, as a game date ("2026-11-01").
+export function todayDateString(): string {
+  let d = new Date();
+  let month = String(d.getMonth() + 1).padStart(2, "0");
+  let day = String(d.getDate()).padStart(2, "0");
+  return `${d.getFullYear()}-${month}-${day}`;
+}

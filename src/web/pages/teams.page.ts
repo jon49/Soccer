@@ -5,7 +5,7 @@ const {
   html,
   layout,
   repo: { isSharedTeamId, teamGetAll, teamsCreate },
-  utils: { when },
+  utils: { formatGameDate, formatGameTime, todayDateString, when },
   validation: { dataTeamNameYearValidator, validateObject },
 } = self.sw;
 
@@ -16,7 +16,7 @@ const render = async () => {
   return html`
 <h2>Teams</h2>
 
-<ul id=teams class=list>
+<ul id=teams class=team-list>
     ${teams.map((x) => getTeamView(x))}
 </ul>
 
@@ -54,34 +54,34 @@ ${
 </form>`;
 };
 
+// A team's soonest game today or later.
+function nextGame(team: Team): Game | undefined {
+  let today = todayDateString();
+  return [...team.games]
+    .filter((x) => x.date >= today)
+    .sort((a, b) => a.date.localeCompare(b.date) || (a.time ?? "").localeCompare(b.time ?? ""))[0];
+}
+
 function getTeamView(team: Team, includeSwap = false) {
   let teamId = team.id;
+  let next = nextGame(team);
   return html`
-    <li $${when(includeSwap, `hz-target="#teams" hz-swap="append"`)}>
-        <a target="_self" href="/web/players?teamId=${team.id}">${team.name} - ${team.year}${when(
+    <li class=team-card $${when(includeSwap, `hz-target="#teams" hz-swap="append"`)}>
+        <a class=team-name target="_self" href="/web/players?teamId=${teamId}">${team.name} - ${team.year}${when(
           isSharedTeamId(teamId),
           html`
             <span class="badge">Shared</span>
           `,
         )}</a>
-        <a target="_self" href="/web/games?teamId=${team.id}">Games</a>
         ${
-          when(
-            (() => {
-              let d = new Date();
-              let currentDate = `${d.getFullYear()}-${("" + (d.getMonth() + 1)).padStart(2, "0")}-${("" + d.getDate()).padStart(2, "0")}`;
-              let result = [...team.games]
-                .sort((a, b) => a.date.localeCompare(b.date))
-                .find((x) => x.date >= currentDate);
-              return result;
-            })(),
-            (x: Game) =>
-              html`<a href="/web/match?teamId=${teamId}&gameId=${x.id}" target="_self">${x.date}</a>`,
-          ) ??
-          html`
-            <span>&nbsp;</span>
-          `
+          next
+            ? html`<p class=team-next>Next:
+                <a href="/web/match?teamId=${teamId}&gameId=${next.id}" target="_self">${formatGameDate(next.date)}${when(next.time, (time) => ` · ${formatGameTime(time)}`)} vs ${next.opponent}</a></p>`
+            : html`
+                <p class="team-next team-next-none">No upcoming games</p>
+              `
         }
+        <a class=team-games target="_self" href="/web/games?teamId=${teamId}">Games</a>
     </li>`;
 }
 
