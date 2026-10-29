@@ -1,6 +1,10 @@
 import { PlayerStateView } from "./shared.js";
+import { gameStatusText } from "./match-page-logic.js";
 
-let { html } = self.sw;
+let {
+  html,
+  utils: { formatGameDate, formatGameTime, when },
+} = self.sw;
 
 export function getPointsView(points: number) {
   return html`${points || "0"}`;
@@ -8,11 +12,12 @@ export function getPointsView(points: number) {
 
 export default async function render(query: any) {
   let state = await PlayerStateView.create(query),
-    [notes, game, gameState, team] = await Promise.all([
+    [notes, game, gameState, team, gameCalc] = await Promise.all([
       state.notes(),
       state.game(),
       state.gameState(),
       state.team(),
+      state.gameCalc(),
     ]),
     queryTeamGame = state.queryTeamGame;
 
@@ -20,7 +25,14 @@ export default async function render(query: any) {
   let opponentPointAction = `?${queryTeamGame}&handler=oPoints`;
 
   return html`
-<h2>${team.name} ($${game.home ? "Home" : "Away"}) vs ${game.opponent}</h2>
+<h2 class=game-title>${team.name} vs ${game.opponent}</h2>
+<p class=game-details>
+    <span>${formatGameDate(game.date)}</span>
+    ${when(game.time, (time) => html`<span>${formatGameTime(time)}</span>`)}
+    <span>${game.home ? "Home" : "Away"}</span>
+    ${when(game.location, (location) => html`<span>${location}</span>`)}
+    <span class=badge>${gameStatusText(gameState.status, gameCalc.total())}</span>
+</p>
 
 <p>
     <a href="?${queryTeamGame}&handler=play" role=button class="nc-button button-large" target="_self">Open match</a>

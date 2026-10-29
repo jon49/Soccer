@@ -1,5 +1,32 @@
-import type { GameState, GameTime, PlayerGame } from "../../server/db.js";
+import type { GameState, GameStatus, GameTime, PlayerGame } from "../../server/db.js";
 import { GameTimeCalculator, PlayerGameTimeCalculatorBase, isInPlayPlayer } from "./state-logic.js";
+
+// --- game status ---------------------------------------------------------
+
+// "12:05", or "1:02:05" past an hour.
+export function formatClock(ms: number): string {
+  let total = Math.floor(ms / 1000);
+  let hours = Math.floor(total / 3600);
+  let minutes = Math.floor((total % 3600) / 60);
+  let seconds = String(total % 60).padStart(2, "0");
+  return hours
+    ? `${hours}:${String(minutes).padStart(2, "0")}:${seconds}`
+    : `${minutes}:${seconds}`;
+}
+
+// Where a game stands, for the game page: `playedMs` is its clock so far.
+export function gameStatusText(status: GameStatus | undefined, playedMs: number): string {
+  switch (status) {
+    case "play":
+      return "In progress";
+    case "paused":
+      return `Paused at ${formatClock(playedMs)}`;
+    case "ended":
+      return `Ended at ${formatClock(playedMs)}`;
+    default:
+      return "Not started";
+  }
+}
 
 // --- points -----------------------------------------------------------
 

@@ -378,6 +378,26 @@ input:indeterminate ~ .none {
   transform: rotate(90deg);
 }
 
+/** Game page: date, time, home/away, location and status under the title **/
+
+.game-title {
+  margin-bottom: 0.25rem;
+}
+
+.game-details {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.5rem;
+  margin-top: 0;
+}
+
+.game-details > span:has(+ span:not(.badge))::after {
+  content: "·";
+  margin-left: 0.5rem;
+  color: var(--nc-secondary);
+}
+
 /* A page's main action, e.g. Open match. Full width on phones. */
 .button-large {
   width: 100%;

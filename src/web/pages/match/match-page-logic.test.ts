@@ -8,6 +8,8 @@ import {
   applyOnDeckPlayerOut,
   applyStatOperation,
   endInPlayPlayers,
+  formatClock,
+  gameStatusText,
   isValidPointsValue,
   pauseInPlayPlayers,
   resetGameStateForDeletedGame,
@@ -37,6 +39,20 @@ function makePlayer(playerId: number, overrides: Partial<PlayerGame> = {}): Play
     ...overrides,
   };
 }
+
+describe("gameStatusText", () => {
+  it("names each status, with the clock once the game has run", () => {
+    assert.equal(gameStatusText(undefined, 0), "Not started");
+    assert.equal(gameStatusText("play", 125_000), "In progress");
+    assert.equal(gameStatusText("paused", 725_000), "Paused at 12:05");
+    assert.equal(gameStatusText("ended", 3_002_000), "Ended at 50:02");
+  });
+
+  it("shows hours past an hour", () => {
+    assert.equal(formatClock(3_725_000), "1:02:05");
+    assert.equal(formatClock(59_999), "0:59");
+  });
+});
 
 describe("takeBackPointsError", () => {
   it("allows taking back points the team and the scorer have", () => {

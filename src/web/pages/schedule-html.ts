@@ -1,4 +1,5 @@
 import type { Game, GameState, Team } from "../server/db.js";
+import { formatGameDate as formatDate, formatGameTime as formatTime } from "../server/utils.js";
 
 function escapeHtml(value: string): string {
   return value
@@ -6,24 +7,6 @@ function escapeHtml(value: string): string {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
-}
-
-function formatDate(date: string): string {
-  let d = new Date(`${date}T00:00:00`);
-  if (isNaN(d.getTime())) return date;
-  return d.toLocaleDateString([], {
-    weekday: "short",
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-}
-
-function formatTime(time: string | undefined): string {
-  if (!time) return "TBD";
-  let d = new Date(`2000-01-01T${time}`);
-  if (isNaN(d.getTime())) return time;
-  return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 }
 
 // One player's points in one game, from their Goal stat.

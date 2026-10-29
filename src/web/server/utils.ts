@@ -54,3 +54,23 @@ export function cssRes(css: string) {
     },
   };
 }
+
+// A game's date ("2026-11-01") for people: "Sun, Nov 1, 2026".
+export function formatGameDate(date: string): string {
+  let d = new Date(`${date}T00:00:00`);
+  if (isNaN(d.getTime())) return date;
+  return d.toLocaleDateString([], {
+    weekday: "short",
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+// A game's start time ("10:00") for people: "10:00 AM", or "TBD" if unset.
+export function formatGameTime(time: string | undefined): string {
+  if (!time) return "TBD";
+  let d = new Date(`2000-01-01T${time}`);
+  if (isNaN(d.getTime())) return time;
+  return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+}
