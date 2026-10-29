@@ -47,6 +47,21 @@ if (isDev) {
   });
 }
 
+// The framework toasts this after every successful POST.
+const savedMessage = "Saved!";
+
+// Pages the coach uses during a game (rendered by match/_play.ts). Their
+// toasts show failures only: a "Saved!" on every tap would get in the way.
+function isFromGamePlay(req: Request) {
+  if (!req.referrer) return false;
+  let referrer = new URL(req.referrer);
+  let handler = referrer.searchParams.get("handler");
+  return (
+    /\/web\/match\/?$/.test(referrer.pathname) &&
+    (handler === "play" || handler === "activityPlayerSelector")
+  );
+}
+
 swFramework.use(useRoutes);
 swFramework.use(async function useHtmz(req, res, ctx): Promise<void> {
   if (req.method !== "POST") return;
@@ -54,6 +69,9 @@ swFramework.use(async function useHtmz(req, res, ctx): Promise<void> {
   let updated = await dbUpdated();
 
   let messages = (ctx.messages || []) as string[];
+  if (isFromGamePlay(req)) {
+    messages = messages.filter((x) => x !== savedMessage);
+  }
 
   if (res.error) {
     messages.push(res.error);

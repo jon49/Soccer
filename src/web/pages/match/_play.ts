@@ -387,6 +387,7 @@ export async function play({
 
 ${app ? app : playMatchView(state)}
 
+<div id=toasts></div>
 <div id=temp></div>
 
 <form id=post method=post hidden></form>
