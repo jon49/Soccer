@@ -87,13 +87,6 @@ ${syncCountView(updated.length)}
 });
 swFramework.use(useResponse);
 
-self.addEventListener("message", async function (event) {
-  if (event.data === "skipWaiting") {
-    // @ts-ignore
-    self.skipWaiting();
-  }
-});
-
 self.addEventListener("install", (e: Event) => {
   console.log("Service worker installed.");
 
@@ -115,32 +108,32 @@ self.addEventListener("fetch", (e: FetchEvent) => {
   e.respondWith(swFramework.start(e));
 });
 
+// waitUntil must be called before the handler first awaits, or it throws.
 // @ts-ignore
-self.addEventListener("activate", async (e: ExtendableEvent) => {
+self.addEventListener("activate", (e: ExtendableEvent) => {
   console.log("Service worker activated.");
-
-  if (isDev) {
-    let keys = await caches.keys();
-    e.waitUntil(
-      Promise.all([
-        ...keys.map((key) => caches.delete(key)),
-        // @ts-ignore
-        self.clients.claim(),
-      ]),
-    );
-    return;
-  }
-
-  let keys = await caches.keys(),
-    deleteMe = keys.map((x: string) => version !== x && caches.delete(x)).filter((x) => x);
-  if (deleteMe.length === 0) return;
-  e.waitUntil(Promise.all(deleteMe));
+  e.waitUntil(
+    (async () => {
+      let keys = await caches.keys();
+      if (isDev) {
+        await Promise.all([
+          ...keys.map((key) => caches.delete(key)),
+          // @ts-ignore
+          self.clients.claim(),
+        ]);
+        return;
+      }
+      await Promise.all(keys.filter((x) => x !== version).map((x) => caches.delete(x)));
+    })(),
+  );
 });
 
+// new-app-notifier posts { action: "skipWaiting" }; also accept the bare
+// string form.
 self.addEventListener("message", (event) => {
-  if (event.data.action === "skipWaiting") {
+  if (event.data === "skipWaiting" || event.data?.action === "skipWaiting") {
     console.log("Skip waiting!");
     // @ts-ignore
-    return self.skipWaiting();
+    self.skipWaiting();
   }
 });
