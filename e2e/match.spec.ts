@@ -247,6 +247,18 @@ test.describe("running a match", () => {
     expect((await match.playerGame("Ann"))?.stats).toEqual([{ statId: GOAL, count: 1 }]);
   });
 
+  test("bench players show their time against a fair share", async ({ newCoach }) => {
+    let match = await matchSetup(await newCoach("coach"));
+    await match.lineup("Ann", "Bo", "Cy", "Dee");
+    let eve = match.player("Eve").locator(".fair-delta");
+    await expect(eve).toHaveText("");
+
+    await match.start();
+
+    // Four spots for six players: Eve's fair share grows at 2/3 of the clock.
+    await expect(eve).toHaveText(/^−00:0[1-9] vs fair$/);
+  });
+
   test("an ended game can be restarted and its clock run again", async ({ newCoach }) => {
     let match = await matchSetup(await newCoach("coach"));
     await match.lineup("Ann", "Bo", "Cy", "Dee");

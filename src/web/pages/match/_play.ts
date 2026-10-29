@@ -289,7 +289,26 @@ export async function play({
         .player-card[data-stint="stale"] .stint-bar {
             background: oklch(0.52 0.13 55);
         }
-        .bench-item .tag {
+        .bench-times {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            padding: 0;
+            line-height: 1.15;
+        }
+        .fair-delta {
+            padding: 0;
+            font-size: 0.72rem;
+            font-variant-numeric: tabular-nums;
+            white-space: nowrap;
+        }
+        .fair-delta:empty {
+            display: none;
+        }
+        .fair-delta[data-behind] {
+            font-weight: 700;
+        }
+                .bench-item .tag {
             padding: 0.15rem 0.4rem;
             border-radius: 0.5rem;
             font-size: 0.75rem;

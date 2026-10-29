@@ -247,3 +247,53 @@ class GameTimer {
 
 // @ts-ignore
 window.app.gameTimer = ({ el }) => new GameTimer(el);
+
+// A bench player's time against their fair share of the game so far, e.g.
+// "−03:20 vs fair" for a player who is owed time. Their own total is fixed
+// while they sit, but their fair share grows with the game clock.
+class FairShareDelta {
+  /**
+   * @param {HTMLElement} el
+   */
+  constructor(el) {
+    this.el = el;
+    this.interval = 1e3;
+    document.addEventListener("hz:completed", this);
+    this.update(Date.now());
+  }
+
+  handleEvent() {
+    this.update(Date.now());
+  }
+
+  disconnectedCallback() {
+    timer.remove(this);
+    document.removeEventListener("hz:completed", this);
+  }
+
+  /**
+   * @param {number} currentTime
+   */
+  update(currentTime) {
+    let el = this.el;
+    let { total, gameStart, gameTotal } = el.dataset;
+    if (gameStart) {
+      timer.add(this);
+    } else {
+      timer.remove(this);
+    }
+    let game = computeTotal(currentTime, gameStart, gameTotal);
+    if (game < 1e3) {
+      el.textContent = "";
+      return;
+    }
+    let ahead = aheadOfFairShare(el, +(total || 0), game);
+    let behind = ahead < 0;
+    el.toggleAttribute("data-behind", behind);
+    el.textContent = `${behind ? "−" : "+"}${formatTime(Math.abs(ahead))} vs fair`;
+    el.title = `${formatTime(Math.abs(ahead))} ${behind ? "short of" : "over"} a fair share of the game`;
+  }
+}
+
+// @ts-ignore
+window.app.fairShareDelta = ({ el }) => new FairShareDelta(el);
