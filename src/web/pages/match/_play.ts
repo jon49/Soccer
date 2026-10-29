@@ -15,10 +15,9 @@ export async function play({
   let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator);
   let state = new PlayerStateView(teamId, gameId);
   let { disableAutoSyncDuringGame, theme } = await globalDb.settings();
-  // This page is rendered outside of the layout, so there is no #theme radio
-  // for app.css to key off of. Emit data-theme when the setting is set
-  // (nimble maps it to color-scheme); when it isn't, leave the attribute off
-  // so nimble's `color-scheme: light dark` follows the system preference.
+  // As in the layout: data-theme when a theme is saved (nimble maps it to
+  // color-scheme); without one, nimble's `color-scheme: light dark` follows
+  // the system.
   let themeAttr = theme ? ` data-theme="${theme}"` : "";
   return html`
 <!DOCTYPE html>

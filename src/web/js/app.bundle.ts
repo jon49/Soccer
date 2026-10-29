@@ -6,3 +6,4 @@ import "@jon49/web/toast.js";
 import "@jon49/web/anchor.js";
 import "@jon49/web/htmz-morph.js";
 import "./auto-sync.ts";
+import "./theme.ts";

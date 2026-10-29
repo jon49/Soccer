@@ -44,16 +44,6 @@
   --nc-secondary-contrast: #fff;
 }
 
-/* Theme toggle: the radio rendered inside #theme (see themeView in
- * _layout.html.ts) forces the scheme, which flips every light-dark() value. */
-:root:has(#theme input[value="light"]:checked) {
-  color-scheme: light;
-}
-
-:root:has(#theme input[value="dark"]:checked) {
-  color-scheme: dark;
-}
-
 /* With no saved theme, #theme holds a button for each system scheme; show
  * the one that switches away from what the system is showing. */
 @media (prefers-color-scheme: light) {

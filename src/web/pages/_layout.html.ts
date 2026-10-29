@@ -11,11 +11,10 @@ interface Nav {
 const sunIcon = "&#127774;",
   moonIcon = "&#127762;";
 
+// The page's theme is <html data-theme> (nimble maps it to color-scheme),
+// rendered by the server. After the theme button's response swaps in a new
+// #theme, js/theme.ts copies its data-theme onto <html>.
 export function themeView(theme: Theme | undefined) {
-  // id="theme" is intentional — app.css selects light/dark via
-  // :has(#theme input[value="..."]:checked), so the rendered radio
-  // below must live inside an element with that id for the swap to
-  // actually flip the theme.
   if (theme !== "light" && theme !== "dark") {
     // No saved theme: the page follows the system, so offer whichever theme
     // the system isn't showing. app.css hides the other button.
@@ -24,9 +23,8 @@ ${themeButton("dark", "theme-system-light")}
 ${themeButton("light", "theme-system-dark")}
 </span>`;
   }
-  return html`<span id=theme>
+  return html`<span id=theme data-theme="${theme}">
 ${themeButton(theme === "dark" ? "light" : "dark")}
-<input type=radio name=theme value="${theme}" checked hidden>
 </span>`;
 }
 
@@ -73,7 +71,7 @@ const render = async ({
 
   return html`
 <!DOCTYPE html>
-<html lang=en>
+<html lang=en$${theme ? ` data-theme="${theme}"` : ""}>
  <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
