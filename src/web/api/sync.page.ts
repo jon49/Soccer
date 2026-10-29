@@ -4,7 +4,9 @@ import { errorToPlain, logSyncError } from "../server/sync-log.js";
 
 const { html } = self.sw;
 
-let refresh = html`
+// A fresh template per response: an html`` template is a stream that can
+// only be read once, so a shared one comes back empty after the first sync.
+const refresh = () => html`
   <i _load="refresh" id="temp"></i>
 `;
 
@@ -16,7 +18,7 @@ const postHandlers: RoutePostHandler = {
       case 200:
         return {
           status: 200,
-          body: refresh,
+          body: refresh(),
           message,
         };
       default:
@@ -36,7 +38,7 @@ const postHandlers: RoutePostHandler = {
       return { status: 204, message: "" };
     }
     if (result.status === 200) {
-      return { status: 200, body: refresh, message: "" };
+      return { status: 200, body: refresh(), message: "" };
     }
     return { status: 204, message: "" };
   },
@@ -47,13 +49,13 @@ const postHandlers: RoutePostHandler = {
         return {
           message: [...result.messages, "Synced!"].join(" "),
           status: 200,
-          body: refresh,
+          body: refresh(),
         };
       case 204:
         return {
           message: "Synced!",
           response: null,
-          body: refresh,
+          body: refresh(),
         };
       case 401:
       case 403:
