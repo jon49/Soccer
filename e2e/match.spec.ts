@@ -236,12 +236,11 @@ test.describe("running a match", () => {
     await match.lineup("Ann", "Bo", "Cy", "Dee");
     await match.goal("Ann");
 
-    // Both are refused with a failure toast. (Its text is the framework's
-    // generic error until @jon49/sw passes string errors through.)
     await match.takeBackGoal("Bo");
-    await expect(match.toast()).toHaveCount(1);
+    await expect(match.toast()).toHaveText("Bo doesn't have a goal to take back.");
+
     await match.takeBackOpponentGoal();
-    await expect(match.toast()).not.toHaveCount(0);
+    await expect(match.toast().last()).toHaveText("Points cannot be negative!");
 
     expect(await match.score()).toBe("1-0");
     expect((await match.playerGame("Ann"))?.stats).toEqual([{ statId: GOAL, count: 1 }]);
