@@ -12,33 +12,32 @@ const sunIcon = "&#127774;",
   moonIcon = "&#127762;";
 
 export function themeView(theme: Theme | undefined) {
-  const isSet = theme === "light" || theme === "dark";
-  const current: "light" | "dark" = theme === "dark" ? "dark" : "light";
-  const next: "light" | "dark" = current === "dark" ? "light" : "dark";
-  const icon = current === "dark" ? sunIcon : moonIcon;
   // id="theme" is intentional — app.css selects light/dark via
   // :has(#theme input[value="..."]:checked), so the rendered radio
   // below must live inside an element with that id for the swap to
   // actually flip the theme.
-  return html`<span id=theme>
-<button form=post formaction="/web/settings?handler=theme" name=theme value="${next}">$${icon}</button>
-${when(isSet, () => html`<input type=radio name=theme value="${current}" checked hidden>`)}
-${when(
-  !isSet,
-  () => html`
-    <script>
-      (function () {
-        var btn = document.currentScript.parentNode.querySelector("button");
-        btn.value =
-          window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
-            ? "dark"
-            : "light";
-        btn.click();
-      })();
-    </script>
-  `,
-)}
+  if (theme !== "light" && theme !== "dark") {
+    // No saved theme: the page follows the system, so offer whichever theme
+    // the system isn't showing. app.css hides the other button.
+    return html`<span id=theme>
+${themeButton("dark", "theme-system-light")}
+${themeButton("light", "theme-system-dark")}
 </span>`;
+  }
+  return html`<span id=theme>
+${themeButton(theme === "dark" ? "light" : "dark")}
+<input type=radio name=theme value="${theme}" checked hidden>
+</span>`;
+}
+
+function themeButton(next: "light" | "dark", className = "") {
+  return html`<button
+    form=post
+    formaction="/web/settings?handler=theme"
+    name=theme
+    value="${next}"
+    class="${className}"
+    aria-label="Switch to ${next} theme">$${next === "dark" ? moonIcon : sunIcon}</button>`;
 }
 
 export function syncCountView(count: number) {

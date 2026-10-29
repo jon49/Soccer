@@ -54,6 +54,20 @@
   color-scheme: dark;
 }
 
+/* With no saved theme, #theme holds a button for each system scheme; show
+ * the one that switches away from what the system is showing. */
+@media (prefers-color-scheme: light) {
+  #theme .theme-system-dark {
+    display: none;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  #theme .theme-system-light {
+    display: none;
+  }
+}
+
 /* Step the base size up with the viewport like Pico did, topping out at
  * 1.25em on desktop. */
 html {
