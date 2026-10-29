@@ -378,6 +378,15 @@ input:indeterminate ~ .none {
   transform: rotate(90deg);
 }
 
+/* A page's main action, e.g. Open match. Full width on phones. */
+.button-large {
+  width: 100%;
+  max-width: 20rem;
+  padding: 0.75em 1.5em;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
 /* Utility Classes */
 
 .grid-center {

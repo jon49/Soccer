@@ -29,8 +29,9 @@ export default async function render(query: any) {
     _click="confirm"
     >Delete</button>
 
-<br>
-<br>
+<p>
+    <a href="?${queryTeamGame}&handler=play" role=button class="nc-button button-large" target="_self">Open match</a>
+</p>
 
 <ul class=list>
     <li>
@@ -51,10 +52,6 @@ export default async function render(query: any) {
         </form>
     </li>
 </ul>
-
-<div>
-    <a href="?${queryTeamGame}&handler=play" target="_self">Show Game Play View</a>
-</div>
 
 <h3>Notes</h3>
 
