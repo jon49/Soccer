@@ -547,6 +547,19 @@ table.sticky {
   }
 }
 
+/* A per-game column: the date over the opponent. */
+th.game-column {
+  white-space: nowrap;
+}
+
+th.game-column > * {
+  display: block;
+}
+
+th.game-column small {
+  font-weight: 400;
+}
+
 /** Players list: one compact row per player **/
 
 .player-list {

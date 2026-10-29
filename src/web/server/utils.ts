@@ -82,3 +82,10 @@ export function todayDateString(): string {
   let day = String(d.getDate()).padStart(2, "0");
   return `${d.getFullYear()}-${month}-${day}`;
 }
+
+// A game's date in a narrow column: "Nov 1".
+export function formatShortDate(date: string): string {
+  let d = new Date(`${date}T00:00:00`);
+  if (isNaN(d.getTime())) return date;
+  return d.toLocaleDateString([], { month: "short", day: "numeric" });
+}

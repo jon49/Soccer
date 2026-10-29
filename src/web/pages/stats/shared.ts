@@ -1,9 +1,11 @@
 import type { TeamId } from "../../server/db.js";
 import type { DbCache as DbCacheType } from "@jon49/sw/utils.js";
+import { playedInOrder } from "./stats-logic.js";
 
 const {
+  html,
   repo: { teamGet, playerGameAllGet, gameStatesGet },
-  utils: { DbCache },
+  utils: { DbCache, formatShortDate },
   validation: { validateObject, queryTeamIdValidator },
 } = self.sw;
 
@@ -41,6 +43,20 @@ export class StatsView {
     return this.#cache.get("gameStates", async () =>
       gameStatesGet(this.teamId, (await this.team()).games),
     );
+  }
+
+  // Played games in date order, each with its state and players' records.
+  async playedGames() {
+    return this.#cache.get("playedGames", async () => {
+      let [team, playerGames, gameStates] = await Promise.all([
+        this.team(),
+        this.playerGames(),
+        this.gameStates(),
+      ]);
+      return playedInOrder(
+        team.games.map((game, i) => ({ game, players: playerGames[i], state: gameStates[i] })),
+      );
+    });
   }
 
   async positionPlayerStats() {
@@ -92,4 +108,9 @@ export class StatsView {
     let { teamId } = await validateObject(query, queryTeamIdValidator);
     return new StatsView(teamId);
   }
+}
+
+// A per-game column's header: the date over the opponent.
+export function gameColumnHeader({ game }: { game: { date: string; opponent?: string } }) {
+  return html`<th class=game-column><span>${formatShortDate(game.date)}</span> <small>${game.opponent}</small></th>`;
 }

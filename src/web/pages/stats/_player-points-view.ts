@@ -1,13 +1,12 @@
-import type { StatsView } from "./shared.js";
+import { gameColumnHeader, type StatsView } from "./shared.js";
 
 const { html } = self.sw;
 
 export async function playerPointsView(o: StatsView) {
-  let [playerIdList, playerMap, playersGames, team] = await Promise.all([
+  let [playerIdList, playerMap, games] = await Promise.all([
     o.playerIdList(),
     o.playerMap(),
-    o.playerGames(),
-    o.team(),
+    o.playedGames(),
   ]);
 
   return html`
@@ -18,14 +17,14 @@ export async function playerPointsView(o: StatsView) {
             <tr>
                 <th>Player</th>
                 <th>Total Points</th>
-                ${team.games.map((_, index) => html`<th>${index + 1}</th>`)}
+                ${games.map(gameColumnHeader)}
             </tr>
         </thead>
         <tbody>
         ${function* () {
           for (let playerId of playerIdList) {
-            let perGame = playersGames.map((xs) => {
-              let pg = xs.find((x) => x.playerId === playerId);
+            let perGame = games.map(({ players }) => {
+              let pg = players.find((x) => x.playerId === playerId);
               if (!pg) return 0;
               return pg.stats.reduce((acc, s) => acc + (s.count || 0), 0);
             });

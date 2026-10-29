@@ -1,20 +1,18 @@
 import { getCurrentTotal } from "../match/state-logic.js";
-import type { StatsView } from "./shared.js";
+import { gameColumnHeader, type StatsView } from "./shared.js";
 
 const { html } = self.sw;
 
 export async function percentagePlayed(o: StatsView) {
-  let [playerIdList, playerMap, playersGames, gameStates, team] = await Promise.all([
+  let [playerIdList, playerMap, games] = await Promise.all([
     o.playerIdList(),
     o.playerMap(),
-    o.playerGames(),
-    o.gameStates(),
-    o.team(),
+    o.playedGames(),
   ]);
 
   let gameTimes = new Map<number, number>();
-  for (let gameState of gameStates) {
-    gameTimes.set(gameState.gameId, getCurrentTotal(gameState.gameTime));
+  for (let { state } of games) {
+    gameTimes.set(state.gameId, getCurrentTotal(state.gameTime));
   }
 
   return html`
@@ -26,7 +24,7 @@ export async function percentagePlayed(o: StatsView) {
             <th>Player</th>
             <th>Total Games</th>
             <th>% Played</th>
-            ${team.games.map((_, index) => html`<th>${index + 1}</th>`)}
+            ${games.map(gameColumnHeader)}
         </tr>
     </thead>
     <tbody>
@@ -34,7 +32,9 @@ export async function percentagePlayed(o: StatsView) {
           for (let playerId of playerIdList) {
             yield html`<tr><th>${playerMap.get(playerId)}</th>`;
 
-            let playerGames = playersGames.map((xs) => xs.find((x) => x.playerId === playerId));
+            let playerGames = games.map(({ players }) =>
+              players.find((x) => x.playerId === playerId),
+            );
             let { rate, total } = playerGames.reduce(
               (acc, val) => {
                 if ((val?.gameTime.length ?? 0) > 0) {
