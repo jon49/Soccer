@@ -215,7 +215,7 @@ const getHandlers: RouteGetHandler = {
       cssLinks: ["?handler=css"],
       main: render(result),
       nav: teamNav(result.team.id),
-      title: `Players - ${result.team.name} (${result.team.year})}`,
+      title: `Players - ${result.team.name} (${result.team.year})`,
     });
   },
 };
