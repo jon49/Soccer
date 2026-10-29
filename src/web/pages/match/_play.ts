@@ -23,7 +23,7 @@ export async function play({
   let themeAttr = theme ? ` data-theme="${theme}"` : "";
   return html`
 <!DOCTYPE html>
-<html$${themeAttr}>
+<html lang=en$${themeAttr}>
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">

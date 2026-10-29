@@ -73,7 +73,7 @@ const render = async ({
 
   return html`
 <!DOCTYPE html>
-<html>
+<html lang=en>
  <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -96,7 +96,7 @@ const render = async ({
             <ul>
                 <li>
                     <a href="/web/teams" target="_self">
-                        <img style="height:2.5em;" src="/web/images/soccer.svg"></img>
+                        <img style="height:2.5em;" src="/web/images/soccer.svg" alt="Soccer Tracker: your teams">
                     </a>
                 </li>
             </ul>
