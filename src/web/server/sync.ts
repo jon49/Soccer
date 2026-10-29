@@ -134,14 +134,13 @@ async function syncOnce(withData: boolean): Promise<SyncResult> {
     await logSyncError("could not find key to update revision", { key });
   }
 
+  // The server saves every upload, so the latest write wins. `conflicted`
+  // lists keys another device also changed since our last sync: our version
+  // was saved over theirs.
   if (newData.conflicted?.length) {
-    console.error(
-      "soccer sync: server rejected local change(s); keeping them queued for retry:",
-      newData.conflicted,
-    );
-    await logSyncError("server rejected local change(s); keeping them queued for retry", {
-      conflicted: newData.conflicted,
-    });
+    let message = "another device also changed these; this device's version was saved over theirs";
+    console.warn(`soccer sync: ${message}:`, newData.conflicted);
+    await logSyncInfo(message, { conflicted: newData.conflicted });
   }
 
   let remoteSpaces = newData.spaces ?? {};
