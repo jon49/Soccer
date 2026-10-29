@@ -117,7 +117,7 @@ function getCircles({ count, y, total }: { count: number; y: number; total: numb
   let cy = 90 * (y / total);
   let circles = "";
   for (let i = 0; i < count; i++) {
-    circles += `<circle cx="${x * (i + 1)}%" cy="${cy}%" r="3%" fill="#506f8d" />`;
+    circles += `<circle cx="${x * (i + 1)}%" cy="${cy}%" r="3%" fill="currentColor" />`;
   }
   return circles;
 }
@@ -129,7 +129,7 @@ function getTemplate(positions: number[]) {
       : [...positions].reverse().slice(1).join(" - ");
   return html`
 <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
-  <text x="1%" y="10%" fill="#506f8d" font-weight="bold" font-size="20">$${formationName}</text>
+  <text x="1%" y="10%" fill="currentColor" font-weight="bold" font-size="20">$${formationName}</text>
   $${function* rows() {
     let total = positions.length;
     let y = 1;
@@ -150,7 +150,7 @@ function getTemplates(teamId: TeamId, numberOfPlayers: number) {
     ${grid.map(
       (x, i) => html`
   <form method=post action="?handler=createFormation&teamId=${teamId}" class=inline>
-  <button class="outline secondary">${getTemplate(x)}</button>
+  <button class="outline secondary formation">${getTemplate(x)}</button>
   <input type=hidden name=index value="${i}">
   <input type=hidden name=numberOfPlayers value="${numberOfPlayers}">
   </form>`,
