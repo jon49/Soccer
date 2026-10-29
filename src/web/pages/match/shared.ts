@@ -18,7 +18,7 @@ import {
   isOnDeckPlayer,
   isOutPlayer,
 } from "./state-logic.js";
-import { isRosterFull, staleAfterMs } from "./player-state-logic.js";
+import { fairShareRatio, isRosterFull, staleAfterMs } from "./player-state-logic.js";
 
 export { GameTimeCalculator, isInPlayPlayer, isOnDeckPlayer, isOutPlayer };
 
@@ -255,6 +255,29 @@ export class PlayerStateView {
       let team = await this.team();
       return staleAfterMs(team.staleAfterMinutes, DEFAULT_STALE_AFTER_MINUTES);
     });
+  }
+
+  // Each available player's even share of the game (see fairShareRatio).
+  // Players marked not playing don't count.
+  async fairShare() {
+    return this.#cache.get("fairShare", async () => {
+      let [inPlay, onDeck, out, { positions }] = await Promise.all([
+        this.inPlayPlayers(),
+        this.onDeckPlayers(),
+        this.outPlayers(),
+        this.positions(),
+      ]);
+      return fairShareRatio(positions.flat().length, inPlay.length + onDeck.length + out.length);
+    });
+  }
+
+  // game-timer.js data for shading a player by how far past their fair share
+  // they are: fully shaded once ahead by a whole stint (the team's stale
+  // limit, or the default when that highlight is off).
+  async fairShareAttrs() {
+    let [fairShare, staleAfter] = await Promise.all([this.fairShare(), this.staleAfterMs()]);
+    let scale = staleAfter ?? DEFAULT_STALE_AFTER_MINUTES * 60 * 1000;
+    return `data-fair-share="${fairShare}" data-shade-scale="${scale}"`;
   }
 
   isInPlayersFull() {

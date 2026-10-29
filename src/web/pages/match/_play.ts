@@ -234,7 +234,8 @@ export async function play({
             gap: 0;
             padding: 0.35rem 0.4rem 0;
         }
-        /* Darker the more of the game they have played (game-timer.js). */
+        /* Darker the further past their fair share of the game they are
+           (game-timer.js). */
         .player-main.game-shader,
         .bench-item.game-shader {
             background: var(--game-shader-background);

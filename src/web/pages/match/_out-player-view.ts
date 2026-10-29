@@ -6,7 +6,11 @@ let {
 } = self.sw;
 
 export async function outPlayersView(o: PlayerStateView) {
-  let [outPlayers, isGameInPlay] = await Promise.all([o.outPlayers(), o.isGameInPlay()]);
+  let [outPlayers, isGameInPlay, fairShareAttrs] = await Promise.all([
+    o.outPlayers(),
+    o.isGameInPlay(),
+    o.fairShareAttrs(),
+  ]);
 
   return html`
     ${outPlayers.map((x) => {
@@ -23,6 +27,7 @@ export async function outPlayersView(o: PlayerStateView) {
             data-total="${x.calc.total()}"
             data-game-total="${x.calc.gameCalc.total()}"
             $${when(isGameInPlay, () => `data-game-start="${x.calc.gameCalc.getLastStartTime()}"`)}
+            $${fairShareAttrs}
             data-static>00:00</span>
     </button>
 </li>`;

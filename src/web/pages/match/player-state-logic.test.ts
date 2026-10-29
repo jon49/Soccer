@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { isRosterFull, staleAfterMs } from "./player-state-logic.js";
+import { fairShareRatio, isRosterFull, staleAfterMs } from "./player-state-logic.js";
 
 describe("staleAfterMs", () => {
   it("converts minutes to milliseconds", () => {
@@ -27,5 +27,21 @@ describe("isRosterFull", () => {
 
   it("is true when there are more players slotted than positions", () => {
     assert.equal(isRosterFull(6, 2, 7), true);
+  });
+});
+
+describe("fairShareRatio", () => {
+  it("splits the field spots evenly across the players available", () => {
+    assert.equal(fairShareRatio(4, 8), 0.5);
+    assert.equal(fairShareRatio(7, 10), 0.7);
+  });
+
+  it("is 1 when everyone fits on the field", () => {
+    assert.equal(fairShareRatio(4, 4), 1);
+    assert.equal(fairShareRatio(4, 3), 1);
+  });
+
+  it("is 1 with no field spots", () => {
+    assert.equal(fairShareRatio(0, 6), 1);
   });
 });

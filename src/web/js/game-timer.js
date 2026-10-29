@@ -96,8 +96,10 @@ function formatTime(grandTotal) {
 // --- Shading -------------------------------------------------------------
 // Elements with the `game-shader` class (or a `game-shader` ancestor, for a
 // timer nested inside a shaded button) get a background/text color that
-// shifts toward the theme's contrast color as a player's time on the field
-// approaches the game's total elapsed time. Computing it here — on the same
+// shifts toward the theme's contrast color as a player gets further past
+// their fair share of the game: the game's elapsed time times
+// `data-fair-share` (field spots over players available). They're fully
+// shaded once ahead by `data-shade-scale` ms. Computing it here — on the same
 // tick that updates the timer text — keeps it live instead of only
 // refreshing on the next full page morph.
 
@@ -149,12 +151,24 @@ function contrast(a, b) {
 }
 
 /**
- * @param {HTMLElement} el
+ * How far `playerTotal` is past the player's fair share of `gameTotal`;
+ * negative when behind.
+ * @param {HTMLElement} el the timer, carrying data-fair-share
  * @param {number} playerTotal
  * @param {number} gameTotal
  */
-function applyShade(el, playerTotal, gameTotal) {
-  let alpha = Math.min(1, +(playerTotal / (gameTotal || 1)).toFixed(3));
+function aheadOfFairShare(el, playerTotal, gameTotal) {
+  let fairShare = +(el.dataset.fairShare || 1);
+  return playerTotal - gameTotal * fairShare;
+}
+
+/**
+ * @param {HTMLElement} el
+ * @param {number} ahead ms past the player's fair share
+ * @param {number} scale ms ahead at which the shade is full
+ */
+function applyShade(el, ahead, scale) {
+  let alpha = Math.min(1, Math.max(0, +(ahead / scale).toFixed(3)));
   let [shade, surface] = shadeColors();
   let background = shade.map((c, i) => surface[i] * (1 - alpha) + c * alpha);
   let text =
@@ -225,7 +239,8 @@ class GameTimer {
     let shadeEl = el.classList.contains("game-shader") ? el : el.closest(".game-shader");
     if (shadeEl instanceof HTMLElement) {
       let gameTotal = computeTotal(currentTime, el.dataset.gameStart, el.dataset.gameTotal);
-      applyShade(shadeEl, grandTotal, gameTotal);
+      let scale = +(el.dataset.shadeScale || 0) || DEFAULT_STALE_AFTER_MS;
+      applyShade(shadeEl, aheadOfFairShare(el, grandTotal, gameTotal), scale);
     }
   }
 }

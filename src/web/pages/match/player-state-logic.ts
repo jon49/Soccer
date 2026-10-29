@@ -15,3 +15,10 @@ export function isRosterFull(
 ): boolean {
   return countInPlayPlayers + countPlayersOnDeck >= totalPositions;
 }
+
+// The share of the game each available player would get if field time were
+// split evenly: field spots over players available. 1 when everyone fits on
+// the field (or there are no spots), so no one is ever ahead.
+export function fairShareRatio(spots: number, available: number): number {
+  return spots > 0 && available > spots ? spots / available : 1;
+}

@@ -14,10 +14,19 @@ export function inPlayersView(state: PlayerStateView) {
     async ({ player, playerOnDeck, positionIndex, positionName }) => {
       let isGameInPlay = await state.isGameInPlay();
       let staleAfterMs = await state.staleAfterMs();
+      let fairShareAttrs = await state.fairShareAttrs();
       let id = `in-player-${positionIndex}`;
 
       return player
-        ? playerCard(player, playerOnDeck, isGameInPlay, id, positionIndex, staleAfterMs)
+        ? playerCard(
+            player,
+            playerOnDeck,
+            isGameInPlay,
+            id,
+            positionIndex,
+            staleAfterMs,
+            fairShareAttrs,
+          )
         : playerOnDeck
           ? html`
 <div id="${id}" class="player-card is-queued" data-position="${positionIndex}">
@@ -37,6 +46,7 @@ function playerCard(
   id: string,
   positionIndex: number,
   staleAfterMs: number | null,
+  fairShareAttrs: string,
 ) {
   return html`
 <div id="${id}" class=player-card data-position="${positionIndex}">
@@ -50,6 +60,7 @@ function playerCard(
             data-total="${player.calc.total()}"
             data-game-total="${player.calc.gameCalc.total()}"
             $${when(isGameInPlay, () => `data-game-start="${player.calc.gameCalc.getLastStartTime()}"`)}
+            $${fairShareAttrs}
             $${when(staleAfterMs != null, () => `data-highlight-stale data-stale-after="${staleAfterMs}"`)}
             ${when(!isGameInPlay, "data-static")}>00:00</span>
         <span class=stint-bar></span>
