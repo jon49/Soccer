@@ -5,7 +5,7 @@ const {
   html,
   layout,
   repo: { isSharedTeamId, teamGet, playerCreate, teamSave },
-  utils: { equals, when, cssRes },
+  utils: { equals, when },
   validation: {
     assert,
     validate,
@@ -74,30 +74,32 @@ ${when(
   !team.players.length,
   () =>
     html`
-      <p>No players have been added.</p>
+      <p id="noPlayers">No players have been added.</p>
     `,
 )}
 
-<div id=playerCards  class=grid style="--grid-item-width: 200px;">
+<ul id=playerCards class=player-list>
     ${team.players.map((x) => playerView(x, team.id))}
-</div>
+</ul>
 
 <form
-    class=form
+    class="form add-player"
     method=post
     action="?handler=addPlayer&teamId=${team.id}"
     _submit=reset
     >
-    <div>
-        <label for=newPlayer>Add Player Name</label>
+    <label for=newPlayer>Add a player</label>
+    <fieldset class=nc-join>
         <input
             id=newPlayer
             name=newPlayerName
             type=text
+            placeholder="Player name"
             required
             ${when(!team.players.length, "autofocus")}
             _submit=clearAutoFocus>
-    </div>
+        <button>Add</button>
+    </fieldset>
 </form>
 `;
 }
@@ -107,29 +109,36 @@ function playerView(player: TeamPlayer, teamId: TeamId) {
   let playerId_: string = `edit-player${player.id}`;
 
   return html`
-<article id="active-${playerId_}" class="player-card" hz-target="#playerCards" hz-swap="append">
+<li id="active-${playerId_}" class="player-row" hz-target="#playerCards" hz-swap="append">
     <form
         _change=submit
-        class=form
         method=post
         action="?handler=editPlayer&$${teamPlayerQuery}"
         >
-        <fieldset class=nc-join>
-            <input class="basis-175" name=name type=text value="${player.name}" placeholder="Player name">
-            <input name=number type=number value="${player.number}" placeholder="#">
-        </fieldset>
-        <div>
-            <label class=toggle>
-                <input
-                    name=active
-                    type=checkbox
-                    $${when(player.active, "checked")}>
-                <span class="off nc-button" role="button">Inactive</span>
-                <span class="on nc-button" role="button">Active</span>
-            </label>
-        </div>
+        <input
+            class=player-number
+            name=number
+            type=number
+            value="${player.number}"
+            placeholder="#"
+            aria-label="Number">
+        <input
+            class=player-name-input
+            name=name
+            type=text
+            value="${player.name}"
+            placeholder="Player name"
+            aria-label="Name">
+        <label class=toggle>
+            <input
+                name=active
+                type=checkbox
+                $${when(player.active, "checked")}>
+            <span class="off condense-padding nc-button" role="button">Inactive</span>
+            <span class="on condense-padding nc-button" role="button">Active</span>
+        </label>
     </form>
-</article>`;
+</li>`;
 }
 
 const postHandlers: RoutePostHandler = {
@@ -178,7 +187,7 @@ const postHandlers: RoutePostHandler = {
 
     return {
       status: 200,
-      body: playerView(player, teamId),
+      body: html`${playerView(player, teamId)}<template id=noPlayers></template>`,
     };
   },
 
@@ -198,21 +207,9 @@ const postHandlers: RoutePostHandler = {
 };
 
 const getHandlers: RouteGetHandler = {
-  css() {
-    return cssRes(
-      `.player-card {
-    min-width: 200px;
-}
-.basis-175 {
-    flex-basis: 175%;
-}`,
-    );
-  },
-
   async get({ query }) {
     let result = await start(query);
     return layout({
-      cssLinks: ["?handler=css"],
       main: render(result),
       nav: teamNav(result.team.id),
       title: `Players - ${result.team.name} (${result.team.year})`,

@@ -482,6 +482,45 @@ a.game-card-main:visited {
   justify-self: start;
 }
 
+/** Players list: one compact row per player **/
+
+.player-list {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr));
+  gap: 0.5rem 1rem;
+  margin: 0 0 1.5rem;
+  padding: 0;
+}
+
+.player-row {
+  margin: 0;
+}
+
+.player-row form {
+  display: grid;
+  grid-template-columns: 4rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.player-row :is(input, .toggle) {
+  margin: 0;
+}
+
+.player-number {
+  text-align: center;
+}
+
+/* Same width for Active and Inactive, so the name fields line up. */
+.player-row .toggle .nc-button {
+  min-width: 5.5rem;
+}
+
+.add-player .nc-join > button {
+  flex: none;
+}
+
 /** Teams list: a card per team **/
 
 .team-list {
