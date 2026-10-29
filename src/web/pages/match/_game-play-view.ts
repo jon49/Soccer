@@ -20,14 +20,7 @@ export default async function render(query: any) {
   let opponentPointAction = `?${queryTeamGame}&handler=oPoints`;
 
   return html`
-<h2 class=inline>${team.name} ($${game.home ? "Home" : "Away"}) vs ${game.opponent}</h2>
-<button
-    class=condense-padding
-    form=post
-    formaction="?${queryTeamGame}&handler=deleteGame"
-    data-confirm="Are you sure you would like to delete this game?"
-    _click="confirm"
-    >Delete</button>
+<h2>${team.name} ($${game.home ? "Home" : "Away"}) vs ${game.opponent}</h2>
 
 <p>
     <a href="?${queryTeamGame}&handler=play" role=button class="nc-button button-large" target="_self">Open match</a>
@@ -61,5 +54,17 @@ export default async function render(query: any) {
     _change=submit>
     <textarea name=notes>${notes}</textarea>
 </form>
+
+<section class=danger-zone>
+    <h3>Delete game</h3>
+    <p>Removes the game from the schedule, along with its score and every player's time and stats for it.</p>
+    <button
+        class=danger
+        form=post
+        formaction="?${queryTeamGame}&handler=deleteGame"
+        data-confirm="Are you sure you would like to delete this game?"
+        _click="confirm"
+        >Delete game</button>
+</section>
 `;
 }
