@@ -16,16 +16,14 @@ const render = async () => {
   return html`
 <h2>Teams</h2>
 
-${
-  teams
-    ? html`
 <ul id=teams class=list>
-    ${teams?.map((x) => getTeamView(x))}
-</ul>`
-    : html`
-        <p>No teams found. Please add one!</p>
-      `
-}
+    ${teams.map((x) => getTeamView(x))}
+</ul>
+
+${when(
+  !teams.length,
+  () => html`<p id=noTeams>${total ? "No active teams." : "No teams yet. Add one below."}</p>`,
+)}
 
 ${
   wasFiltered
@@ -44,7 +42,7 @@ ${
         id=name
         name=name
         type=text
-        $${when(!teams?.length, "autofocus")}
+        $${when(!teams.length, "autofocus")}
         _change=clearAutoFocus
         required>
   </div>
@@ -91,7 +89,7 @@ const postHandlers: RoutePostHandler = {
   post: async function post({ data }) {
     let d = await validateObject(data, dataTeamNameYearValidator);
     let team = await teamsCreate(d);
-    return getTeamView(team, true);
+    return html`${getTeamView(team, true)}<template id=noTeams></template>`;
   },
 };
 
@@ -109,7 +107,8 @@ const route: RoutePage = {
 <template id="teams" hz-swap="append">
     ${teams.map((x) => getTeamView(x))}
 </template>
-<template id="allTeams"></template>`;
+<template id="allTeams"></template>
+<template id="noTeams"></template>`;
     },
   },
 
