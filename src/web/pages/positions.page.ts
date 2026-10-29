@@ -38,9 +38,24 @@ function render({ team, positions }: PositionView) {
   <a href="?handler=showTemplates&teamId=${team.id}" role="button" class="nc-button">Use a template.</a>
 </p>
 
-<h3>Grid</h3>
+<div class=formation-editor>
+  ${formationPreview(positions)}
+  <div>
+    <h3>Grid</h3>
+    ${positionsNameView(positions, team.id)}
+  </div>
+</div>`;
+}
 
-${positionsNameView(positions, team.id)}`;
+// The formation as it stands, on a small pitch. Rebuilt with the grid
+// whenever a row changes size.
+function formationPreview(positions: string[][]) {
+  let grid = positions.map((x) => x.length).filter((x) => x);
+  let name = formationName(grid);
+  return html`<figure id=formationPreview class=formation-preview>
+    <div class=pitch>${getTemplate(grid, { preview: true })}</div>
+    <figcaption>${name ? `Formation: ${name}` : "No positions yet"}</figcaption>
+  </figure>`;
 }
 
 function positionsNameView(positions: string[][], teamId: TeamId) {
@@ -110,9 +125,21 @@ function getNumberOfPlayers(numberOfPlayers: number): PossibleTemplatePlayerCoun
   return "4";
 }
 
-function getCircles({ count, y, total }: { count: number; y: number; total: number }) {
+// Rows run down from the top. A template keeps the top clear for its name;
+// the preview spreads them over the whole pitch.
+function getCircles({
+  count,
+  y,
+  total,
+  spread,
+}: {
+  count: number;
+  y: number;
+  total: number;
+  spread?: boolean;
+}) {
   let x = Math.round(1e4 / (count + 1)) / 100;
-  let cy = 90 * (y / total);
+  let cy = spread ? (100 * (y - 0.5)) / total : 90 * (y / total);
   let circles = "";
   for (let i = 0; i < count; i++) {
     circles += `<circle cx="${x * (i + 1)}%" cy="${cy}%" r="3%" fill="currentColor" />`;
@@ -120,19 +147,24 @@ function getCircles({ count, y, total }: { count: number; y: number; total: numb
   return circles;
 }
 
-function getTemplate(positions: number[]) {
-  let formationName =
-    positions.length === 3
-      ? [...positions].reverse().join("-")
-      : [...positions].reverse().slice(1).join(" - ");
+// Defenders first, as formations are named: "1-2-1". With four or more rows
+// the last is the goalkeeper, who isn't counted.
+function formationName(positions: number[]) {
+  return positions.length === 3
+    ? [...positions].reverse().join("-")
+    : [...positions].reverse().slice(1).join(" - ");
+}
+
+function getTemplate(positions: number[], { preview = false } = {}) {
+  let name = formationName(positions);
   return html`
 <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
-  <text x="1%" y="10%" fill="currentColor" font-weight="bold" font-size="20">$${formationName}</text>
+  $${preview ? "" : `<text x="1%" y="10%" fill="currentColor" font-weight="bold" font-size="20">${name}</text>`}
   $${function* rows() {
     let total = positions.length;
     let y = 1;
     for (let count of positions) {
-      yield getCircles({ count, y, total });
+      yield getCircles({ count, y, total, spread: preview });
       y++;
     }
   }}
@@ -271,7 +303,7 @@ const postHandlers: RoutePostHandler = {
       positions,
     });
 
-    return positionsNameView(positions, teamId);
+    return html`${positionsNameView(positions, teamId)}${formationPreview(positions)}`;
   },
 
   async editPositions({ query, data }) {

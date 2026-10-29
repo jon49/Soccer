@@ -112,7 +112,7 @@ export default async function playMatchView(state: PlayerStateView) {
 </header>
 
 <div class=match-body>
-<section class=match-field aria-label="On field">${inPlayersView(state)}</section>
+<section class="match-field pitch" aria-label="On field">${inPlayersView(state)}</section>
 
 <aside id=matchBench class=match-bench>
     <div class=match-targets>

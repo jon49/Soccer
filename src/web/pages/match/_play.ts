@@ -126,40 +126,11 @@ export async function play({
             gap: 0.75rem;
             padding-top: 0.5rem;
         }
-        /* A pitch behind the positions: the attacking end at the top, our
-           goal at the bottom, as the formation rows run. */
+        /* On a pitch (app.css), the attacking end at the top. */
         .match-field {
-            --pitch: light-dark(oklch(0.94 0.035 150), oklch(0.25 0.035 150));
-            --pitch-line: light-dark(oklch(0.82 0.06 150), oklch(0.37 0.05 150));
             flex: 1;
             min-width: 0;
-            position: relative;
-            isolation: isolate;
             padding: 1.25rem 0.5rem 0.75rem;
-            border: 2px solid var(--pitch-line);
-            border-radius: var(--nc-radius);
-            background:
-                radial-gradient(circle at 50% 50%, transparent 2.9rem, var(--pitch-line) 2.9rem 3.025rem, transparent 3.025rem),
-                linear-gradient(to bottom, transparent calc(50% - 1px), var(--pitch-line) calc(50% - 1px) calc(50% + 1px), transparent calc(50% + 1px)),
-                var(--pitch);
-        }
-        .match-field::before,
-        .match-field::after {
-            content: "";
-            position: absolute;
-            z-index: -1;
-            left: 25%;
-            width: 50%;
-            height: 3rem;
-            border: 2px solid var(--pitch-line);
-        }
-        .match-field::before {
-            top: -2px;
-            border-top: 0;
-        }
-        .match-field::after {
-            bottom: -2px;
-            border-bottom: 0;
         }
         /* The page scrolls with the field, but the bench is never taller
            than the screen; its player lists scroll on their own. */
