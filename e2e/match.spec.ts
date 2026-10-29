@@ -50,6 +50,25 @@ test.describe("running a match", () => {
     await expect(total("Cy")).toHaveText("-");
   });
 
+  test("a second start, before the page catches up, keeps one clock running", async ({
+    newCoach,
+  }) => {
+    let match = await matchSetup(await newCoach("coach"));
+    await match.lineup("Ann", "Bo", "Cy", "Dee");
+    await match.start();
+
+    // A double tap sends startGame twice before the button turns to pause.
+    await match.act("startGame", () =>
+      match.page.evaluate(() => {
+        let form = document.getElementById("post") as HTMLFormElement;
+        form.action = location.search.replace("handler=play", "handler=startGame");
+        form.requestSubmit();
+      }),
+    );
+
+    expect((await match.gameState())?.gameTime).toEqual([{ start: expect.any(Number) }]);
+  });
+
   test("a substitution stops one player's time and starts the other's", async ({ newCoach }) => {
     let match = await matchSetup(await newCoach("coach"));
     await match.lineup("Ann", "Bo", "Cy", "Dee");

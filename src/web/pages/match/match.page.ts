@@ -1,4 +1,4 @@
-import type { TeamId } from "../../server/db.js";
+import type { GameState, PlayerGame, TeamId } from "../../server/db.js";
 import type { RoutePostHandler, RoutePage, RouteGetHandler } from "@jon49/sw/routes.middleware.js";
 import {
   GameTimeCalculator,
@@ -83,6 +83,38 @@ function opponentPointsPlay(delta: 1 | -1) {
     let state = new PlayerStateView(teamId, gameId);
     return html`${opponentPointsView(state.queryTeamGame, await state.gameCalc())}`;
   };
+}
+
+// Starts, pauses or ends the game clock (`update`) and moves every in-play
+// player's clock with it (`updatePlayers`, which returns the players it
+// changed), then saves both.
+async function changeGameClock(
+  query: any,
+  update: (gameState: GameState, calc: GameTimeCalculator) => void,
+  updatePlayers: (players: PlayerGame[], calc: GameTimeCalculator) => PlayerGame[],
+) {
+  let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator);
+  let team = await teamGet(teamId);
+  let game = await required(
+    team.games.find((x) => x.id === gameId),
+    `Could not find game! ${gameId}`,
+  );
+  let gameState = await gameStateGet(teamId, gameId, game);
+  let calc = new GameTimeCalculator(gameState);
+  update(gameState, calc);
+  await gameStateSave(teamId, gameState);
+
+  let players = await playerGameAllGet(
+    teamId,
+    gameId,
+    team.players.map((x) => x.id),
+  );
+  await Promise.all(
+    updatePlayers(players, calc).map((player) =>
+      new PlayerGameTimeCalculator(player, calc).save(teamId),
+    ),
+  );
+  return { team, teamId, gameId };
 }
 
 async function inPlayerOut(state: PlayerStateView, playerId: number) {
@@ -355,86 +387,38 @@ const postHandlers: RoutePostHandler = {
   },
 
   async startGame({ query }) {
-    let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator);
-    let timestamp = +new Date();
-    let team = await teamGet(teamId);
-
-    let game = await required(
-      team.games.find((x) => x.id === gameId),
-      `Could not find game! ${gameId}`,
+    let { teamId, gameId } = await changeGameClock(
+      query,
+      (gameState, calc) => {
+        gameState.status = "play";
+        calc.start();
+      },
+      startInPlayPlayers,
     );
-    let gameState = await gameStateGet(teamId, gameId, game);
-    gameState.status = "play";
-    gameState.gameTime.push({
-      start: timestamp,
-    });
-    await gameStateSave(teamId, gameState);
-
-    let players = await playerGameAllGet(
-      teamId,
-      gameId,
-      team.players.map((x) => x.id),
-    );
-    let gameCalc = new GameTimeCalculator(gameState);
-    let inPlayPlayers = startInPlayPlayers(players, gameCalc);
-    await Promise.all(
-      inPlayPlayers.map((player) => new PlayerGameTimeCalculator(player, gameCalc).save(teamId)),
-    );
-
     return getApp(new PlayerStateView(teamId, gameId));
   },
 
   async pauseGame({ query }) {
-    let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator);
-    let team = await teamGet(teamId);
-
-    let game = await required(
-      team.games.find((x) => x.id === gameId),
-      `Could not find game! ${gameId}`,
+    let { teamId, gameId } = await changeGameClock(
+      query,
+      (gameState, calc) => {
+        gameState.status = "paused";
+        calc.end();
+      },
+      pauseInPlayPlayers,
     );
-    let gameState = await gameStateGet(teamId, gameId, game);
-    gameState.status = "paused";
-    let gameCalc = new GameTimeCalculator(gameState);
-    gameCalc.end();
-    await gameStateSave(teamId, gameState);
-
-    let players = await playerGameAllGet(
-      teamId,
-      gameId,
-      team.players.map((x) => x.id),
-    );
-    let inPlayPlayers = pauseInPlayPlayers(players, gameCalc);
-    await Promise.all(
-      inPlayPlayers.map((player) => new PlayerGameTimeCalculator(player, gameCalc).save(teamId)),
-    );
-
     return getApp(new PlayerStateView(teamId, gameId));
   },
 
   async endGame({ query }) {
-    let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator);
-    let team = await teamGet(teamId);
-
     let now = Date.now();
-
-    let game = await required(
-      team.games.find((x) => x.id === gameId),
-      `Could not find game! ${gameId}`,
-    );
-    let gameState = await gameStateGet(teamId, gameId, game);
-    gameState.status = "ended";
-    let calc = new GameTimeCalculator(gameState);
-    calc.end(now);
-    await gameStateSave(teamId, gameState);
-
-    let players = await playerGameAllGet(
-      teamId,
-      gameId,
-      team.players.map((x) => x.id),
-    );
-    let inPlayPlayers = endInPlayPlayers(players, calc, now);
-    await Promise.all(
-      inPlayPlayers.map((player) => new PlayerGameTimeCalculator(player, calc).save(teamId)),
+    let { team, teamId, gameId } = await changeGameClock(
+      query,
+      (gameState, calc) => {
+        gameState.status = "ended";
+        calc.end(now);
+      },
+      (players, calc) => endInPlayPlayers(players, calc, now),
     );
 
     // Keep an already-shared schedule current with the final score. Ending the
