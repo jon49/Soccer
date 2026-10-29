@@ -200,6 +200,53 @@ test.describe("running a match", () => {
     expect((await match.playerGame("Bo"))?.stats).toEqual([{ statId: GOAL, count: 1 }]);
   });
 
+  test("holding a score takes a point back, from the scorer too", async ({ newCoach }) => {
+    let match = await matchSetup(await newCoach("coach"));
+    await match.lineup("Ann", "Bo", "Cy", "Dee");
+    await match.start();
+    await match.goal("Ann");
+    await match.goal("Bo");
+    await match.opponentGoal();
+    await match.opponentGoal();
+
+    await match.takeBackGoal("Ann");
+    await match.takeBackOpponentGoal();
+
+    expect(await match.score()).toBe("1-1");
+    expect(await match.gameState()).toMatchObject({ points: 1, opponentPoints: 1 });
+    expect((await match.playerGame("Ann"))?.stats).toEqual([{ statId: GOAL, count: 0 }]);
+    expect((await match.playerGame("Bo"))?.stats).toEqual([{ statId: GOAL, count: 1 }]);
+  });
+
+  test("with the Goal stat off, holding the score takes a point back", async ({ newCoach }) => {
+    let coach = await newCoach("coach");
+    let match = await matchSetup(coach);
+    await setTeamStat(coach, match.teamId, "goal", false);
+    await match.open();
+    await match.act("scorePoint", () => match.page.click(".match-bar .score"));
+    await match.act("scorePoint", () => match.page.click(".match-bar .score"));
+
+    await match.takeBackPoint();
+
+    expect(await match.score()).toBe("1-0");
+  });
+
+  test("a point is only taken back from someone who has it", async ({ newCoach }) => {
+    let match = await matchSetup(await newCoach("coach"));
+    await match.lineup("Ann", "Bo", "Cy", "Dee");
+    await match.goal("Ann");
+
+    // Both are refused with a failure toast. (Its text is the framework's
+    // generic error until @jon49/sw passes string errors through.)
+    await match.takeBackGoal("Bo");
+    await expect(match.toast()).toHaveCount(1);
+    await match.takeBackOpponentGoal();
+    await expect(match.toast()).not.toHaveCount(0);
+
+    expect(await match.score()).toBe("1-0");
+    expect((await match.playerGame("Ann"))?.stats).toEqual([{ statId: GOAL, count: 1 }]);
+  });
+
   test("an ended game can be restarted and its clock run again", async ({ newCoach }) => {
     let match = await matchSetup(await newCoach("coach"));
     await match.lineup("Ann", "Bo", "Cy", "Dee");

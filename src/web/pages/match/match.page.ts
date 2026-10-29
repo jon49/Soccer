@@ -24,6 +24,7 @@ import {
   resetGameStateForDeletedGame,
   resetPlayerForDeletedGame,
   startInPlayPlayers,
+  takeBackPointsError,
 } from "./match-page-logic.js";
 
 const {
@@ -71,6 +72,16 @@ function setPoints(target: string, field: "points" | "opponentPoints", delta: 1 
       return reject("Points cannot be negative!");
     }
     return html`<span id="${target}">${getPointsView(points)}</span>`;
+  };
+}
+
+// The play view's opponent score, after changing it by `delta`.
+function opponentPointsPlay(delta: 1 | -1) {
+  return async (o: { query: any }) => {
+    let { teamId, gameId } = await validateObject(o.query, queryTeamIdGameIdValidator);
+    await setPoints("o-points", "opponentPoints", delta)(o);
+    let state = new PlayerStateView(teamId, gameId);
+    return html`${opponentPointsView(state.queryTeamGame, await state.gameCalc())}`;
   };
 }
 
@@ -224,12 +235,9 @@ const postHandlers: RoutePostHandler = {
   pointsDec: setPoints("points", "points", -1),
   pointsInc: setPoints("points", "points", 1),
 
-  async oPointsIncPlay(o) {
-    let { teamId, gameId } = await validateObject(o.query, queryTeamIdGameIdValidator);
-    await setPoints("o-points", "opponentPoints", 1)(o);
-    let state = new PlayerStateView(teamId, gameId);
-    return html`${opponentPointsView(state.queryTeamGame, await state.gameCalc())}`;
-  },
+  oPointsIncPlay: opponentPointsPlay(1),
+  // Holding the opponent's score on the play view.
+  oPointsDecPlay: opponentPointsPlay(-1),
 
   async points(o) {
     let { query, req } = o;
@@ -482,6 +490,36 @@ const postHandlers: RoutePostHandler = {
     } else {
       let gameState = await state.gameState();
       gameState.points += points ?? 1;
+      await gameStateSave(teamId, gameState);
+    }
+
+    return getApp(new PlayerStateView(teamId, gameId));
+  },
+
+  // Holding the play view's score takes points back: from the scorer when
+  // one was picked (Goal stat on), otherwise just from the team's score.
+  async removePoint({ query }) {
+    let {
+      teamId,
+      gameId,
+      playerId,
+      points = 1,
+    } = await validateObject(query, queryScorePointValidator);
+    let state = new PlayerStateView(teamId, gameId);
+    let gameState = await state.gameState();
+    if (playerId) {
+      let [player, { name }] = await Promise.all([
+        state.playerGame(playerId),
+        state.player(playerId),
+      ]);
+      let goals = player.stats.find((x) => x.statId === statIds.Goal)?.count ?? 0;
+      let error = takeBackPointsError(points, gameState.points, { name, goals });
+      if (error) return reject(error);
+      await addPlayerStat(state, { activityId: statIds.Goal, playerId, operation: "dec", points });
+    } else {
+      let error = takeBackPointsError(points, gameState.points);
+      if (error) return reject(error);
+      gameState.points -= points;
       await gameStateSave(teamId, gameState);
     }
 

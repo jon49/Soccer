@@ -11,6 +11,20 @@ export function isValidPointsValue(points: number): boolean {
   return points >= 0;
 }
 
+// Why `points` can't be taken back from the team's score, or from a scorer
+// with `goals` points credited this game; null when it can.
+export function takeBackPointsError(
+  points: number,
+  teamPoints: number,
+  scorer?: { name: string; goals: number },
+): string | null {
+  if (!isValidPointsValue(teamPoints - points)) return "Points cannot be negative!";
+  if (scorer && scorer.goals < points) {
+    return `${scorer.name} doesn't have ${points === 1 ? "a goal" : `${points} points`} to take back.`;
+  }
+  return null;
+}
+
 // --- player stat counts -------------------------------------------------
 
 export interface StatOperationResult {

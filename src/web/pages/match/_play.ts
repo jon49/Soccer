@@ -88,6 +88,16 @@ export async function play({
             line-height: 1.1;
             font-weight: 700;
         }
+        /* Hold a score to take a point back (match-select.js). */
+        .score {
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+        }
+        .score.is-pressing {
+            transform: scale(0.92);
+            transition: transform 0.5s;
+        }
         .score-label {
             font-size: 0.6rem;
             font-weight: 600;
@@ -316,6 +326,7 @@ export async function play({
         }
         .match-targets {
             display: none;
+            flex-wrap: wrap;
             gap: 0.5rem;
         }
         body[data-selecting] .match-targets {
@@ -331,19 +342,37 @@ export async function play({
             color: var(--nc-text);
             border: 2px dashed var(--nc-primary);
         }
-        /* Scoring: the score is selected and the next player tapped scores. */
-        .score-only {
+        /* Scoring: the score is selected and the next player tapped scores.
+           Held instead (unscore), the next player tapped loses a goal. */
+        .score-only,
+        .unscore-only {
             display: none;
         }
-        body[data-selecting="score"] .score-only {
+        body:is([data-selecting="score"], [data-selecting="unscore"]) .score-only {
             display: flex;
         }
-        body[data-selecting="score"] .drop-target:not(.score-only) {
+        body[data-selecting="unscore"] .unscore-only {
+            display: block;
+        }
+        body:is([data-selecting="score"], [data-selecting="unscore"]) .drop-target:not(.score-only) {
             display: none;
         }
-        body[data-selecting="score"] .bench-item {
+        body:is([data-selecting="score"], [data-selecting="unscore"]) .bench-item {
             border-style: dashed;
             border-color: var(--nc-primary);
+        }
+        body[data-selecting="unscore"] .score.is-selected {
+            outline-color: var(--app-off);
+        }
+        .score-hint {
+            flex-basis: 100%;
+            margin: 0;
+            padding: 0.5rem 0.75rem;
+            font-weight: 600;
+            text-align: center;
+            background: var(--nc-surface-1);
+            border: 2px solid var(--app-off);
+            border-radius: var(--nc-radius);
         }
         .score-points {
             align-items: center;
@@ -368,7 +397,8 @@ export async function play({
                 right: 1rem;
                 bottom: calc(1rem + env(safe-area-inset-bottom));
             }
-            .drop-target {
+            .drop-target,
+            .score-hint {
                 box-shadow: 0 6px 20px rgb(0 0 0 / 0.25);
             }
         }

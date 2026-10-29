@@ -13,6 +13,7 @@ import {
   resetGameStateForDeletedGame,
   resetPlayerForDeletedGame,
   startInPlayPlayers,
+  takeBackPointsError,
 } from "./match-page-logic.js";
 
 function makeGameState(overrides: Partial<GameState> = {}): GameState {
@@ -36,6 +37,33 @@ function makePlayer(playerId: number, overrides: Partial<PlayerGame> = {}): Play
     ...overrides,
   };
 }
+
+describe("takeBackPointsError", () => {
+  it("allows taking back points the team and the scorer have", () => {
+    assert.equal(takeBackPointsError(1, 3), null);
+    assert.equal(takeBackPointsError(1, 1, { name: "Ann", goals: 1 }), null);
+    assert.equal(takeBackPointsError(3, 5, { name: "Ann", goals: 3 }), null);
+  });
+
+  it("refuses to take the team's score below zero", () => {
+    assert.equal(takeBackPointsError(1, 0), "Points cannot be negative!");
+    assert.equal(
+      takeBackPointsError(3, 2, { name: "Ann", goals: 3 }),
+      "Points cannot be negative!",
+    );
+  });
+
+  it("refuses to take back more than the scorer was credited", () => {
+    assert.equal(
+      takeBackPointsError(1, 2, { name: "Ann", goals: 0 }),
+      "Ann doesn't have a goal to take back.",
+    );
+    assert.equal(
+      takeBackPointsError(3, 5, { name: "Bo", goals: 2 }),
+      "Bo doesn't have 3 points to take back.",
+    );
+  });
+});
 
 describe("adjustPoints / isValidPointsValue", () => {
   it("increments and decrements", () => {

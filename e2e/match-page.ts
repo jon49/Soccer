@@ -1,3 +1,4 @@
+import type { Locator } from "@playwright/test";
 import { expect, type Coach } from "./fixtures.js";
 
 const PLAYERS = ["Ann", "Bo", "Cy", "Dee", "Eve", "Fay"];
@@ -145,6 +146,36 @@ export class MatchPage {
 
   async opponentGoal() {
     await this.act("oPointsIncPlay", () => this.page.click("#opponentPoints"));
+  }
+
+  // Press and hold, the way a coach takes a point back.
+  async hold(target: Locator) {
+    let box = (await target.boundingBox())!;
+    await this.page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await this.page.mouse.down();
+    await this.page.waitForTimeout(700);
+    await this.page.mouse.up();
+  }
+
+  // Goal stat on: hold our score, then tap whose goal it was.
+  async takeBackGoal(scorer: string, points?: 1 | 2 | 3) {
+    await this.hold(this.page.locator(".match-bar .score[data-status=score]"));
+    await expect(this.page.locator("body[data-selecting=unscore]")).toHaveCount(1);
+    if (points) await this.page.click(`.score-points label:has(input[value="${points}"])`);
+    await this.act("removePoint", () => this.player(scorer).click());
+  }
+
+  // Goal stat off: holding our score takes a point straight back.
+  async takeBackPoint() {
+    await this.act("removePoint", () => this.hold(this.page.locator(".match-bar .score").first()));
+  }
+
+  async takeBackOpponentGoal() {
+    await this.act("oPointsDecPlay", () => this.hold(this.page.locator("#opponentPoints")));
+  }
+
+  toast() {
+    return this.page.locator("#toasts .message");
   }
 
   async toBench(name: string) {

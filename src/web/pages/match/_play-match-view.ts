@@ -57,12 +57,12 @@ export default async function playMatchView(state: PlayerStateView) {
     <a class=match-back href="?${queryTeamGame}" target="_self" aria-label="Back to game">&lsaquo;</a>
     ${
       creditScorer
-        ? html`<button type=button class=score data-status=score aria-label="Our points ${points}. Tap, then tap the scorer.">${scoreView("Us", points)}</button>`
+        ? html`<button type=button class=score data-status=score aria-label="Our points ${points}. Tap, then tap the scorer. Press and hold to take a goal back.">${scoreView("Us", points)}</button>`
         : html`<button
         class=score
         form=post
         formaction="?${queryTeamGame}&handler=scorePoint"
-        aria-label="Our points ${points}"
+        aria-label="Our points ${points}. Press and hold to take a point back."
         >${scoreView("Us", points)}</button>`
     }
     <span aria-hidden=true>&ndash;</span>
@@ -116,6 +116,7 @@ export default async function playMatchView(state: PlayerStateView) {
 
 <aside id=matchBench class=match-bench>
     <div class=match-targets>
+        <p class="score-hint unscore-only">Take back a goal: tap who scored it.</p>
         <button type=button class=drop-target data-target=bench>Bench</button>
         <button type=button class=drop-target data-target=notPlaying>Not playing</button>
         <button type=button class="drop-target score-only" data-target=noScorer>No scorer</button>
@@ -169,7 +170,7 @@ id=opponentPoints
 class="score score-them"
 form=post
 formaction="?$${queryTeamGame}&handler=oPointsIncPlay"
-aria-label="Opponent points ${gameCalc.gameState.opponentPoints}"
+aria-label="Opponent points ${gameCalc.gameState.opponentPoints}. Press and hold to take a point back."
 >${scoreView("Them", gameCalc.gameState.opponentPoints)}</button>`;
 }
 
