@@ -1,5 +1,5 @@
 import { test, expect } from "./fixtures.js";
-import { isRunning, matchSetup, playedMs, setTeamStat } from "./match-page.js";
+import { MatchPage, isRunning, matchSetup, playedMs, setTeamStat } from "./match-page.js";
 
 const GOAL = 1;
 
@@ -155,6 +155,38 @@ test.describe("running a match", () => {
     expect(await other.idb(["player-game", match.teamId, match.playerId("Dee"), 1])).toMatchObject({
       stats: [{ statId: GOAL, count: 1 }],
     });
+  });
+
+  test("auto-sync merges new data into the match without a reload", async ({
+    newCoach,
+    device,
+  }) => {
+    let coach = await newCoach("coach");
+    let match = await matchSetup(coach);
+    await match.lineup("Ann", "Bo", "Cy", "Dee");
+    await coach.sync();
+
+    let other = await device(coach.email);
+    await other.sync();
+    let otherMatch = new MatchPage(other, match.teamId, match.gameId, match.players);
+    await otherMatch.open();
+    await other.autoSync();
+    await other.page.evaluate(() => ((window as any).notReloaded = true));
+
+    await match.goal("Ann");
+    await coach.sync();
+
+    // A change on the other device sets off its auto-sync. (Not to the score:
+    // both devices changing it would be a conflict, which the last upload
+    // wins.) A bench player selected before the new data arrives stays
+    // selected.
+    await otherMatch.toBench("Dee");
+    await otherMatch.player("Eve").click();
+
+    await expect.poll(() => otherMatch.score(), { timeout: 10_000 }).toBe("1-0");
+    expect(await other.page.evaluate(() => (window as any).notReloaded)).toBe(true);
+    await expect(otherMatch.player("Eve")).toHaveClass(/is-selected/);
+    await expect(other.page.locator("body[data-selecting=out]")).toHaveCount(1);
   });
 
   test("a goal with no scorer counts for the team only", async ({ newCoach }) => {

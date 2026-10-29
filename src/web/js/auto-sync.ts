@@ -9,7 +9,9 @@
 // updates because the SW post middleware appends syncCountView; we morph
 // only that node so existing toasts and DOM state are left alone. The page
 // reloads only when the server returns the refresh marker (i.e. it actually
-// delivered new data).
+// delivered new data). A page that can't be reloaded under the coach (the
+// match play view) names a fragment URL in `data-sync-refresh` instead, and
+// that fragment is morphed in.
 
 const SYNC_URL = "/web/api/sync?handler=auto";
 const SESSION_KEY = "auto-sync:init";
@@ -18,6 +20,26 @@ const DEBOUNCE_MS = 1500;
 let inflight: Promise<void> | null = null;
 let pending = false;
 let debounceTimer: number | null = null;
+// Set while a sync's own refresh is being morphed in, so the hz:completed it
+// fires doesn't schedule yet another sync.
+let refreshing = false;
+
+// Morphs in fresh content from `url` through htmz, in an iframe of its own so
+// it can't cancel a tap's request in the shared htmz iframe.
+function morphFrom(url: string) {
+  let name = "htmz-sync-refresh";
+  if (!document.querySelector(`iframe[name="${name}"]`)) {
+    document.body.insertAdjacentHTML(
+      "beforeend",
+      `<iframe hidden name="${name}" onload="window.htmz(this)"></iframe>`,
+    );
+  }
+  refreshing = true;
+  let link = document.createElement("a");
+  link.href = url;
+  link.target = name;
+  link.click();
+}
 
 function isDuringGame(): boolean {
   return location.pathname.startsWith("/web/match");
@@ -56,8 +78,13 @@ async function runSync() {
   let doc = new DOMParser().parseFromString(body, "text/html");
 
   if (doc.querySelector('[_load="refresh"]')) {
-    location.reload();
-    return;
+    let refresh = document.querySelector<HTMLElement>("[data-sync-refresh]")?.dataset.syncRefresh;
+    if (refresh) {
+      morphFrom(refresh);
+    } else {
+      location.reload();
+      return;
+    }
   }
 
   let newCount = doc.querySelector("#syncCount");
@@ -85,6 +112,10 @@ async function trigger() {
 }
 
 function scheduleDebounced() {
+  if (refreshing) {
+    refreshing = false;
+    return;
+  }
   if (debounceTimer != null) clearTimeout(debounceTimer);
   debounceTimer = window.setTimeout(() => {
     debounceTimer = null;

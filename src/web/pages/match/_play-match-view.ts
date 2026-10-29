@@ -52,7 +52,7 @@ export default async function playMatchView(state: PlayerStateView) {
   let creditScorer = stats.find((x) => x.id === statIds.Goal)?.active;
 
   return html`
-<main id=main>
+<main id=main data-sync-refresh="?$${queryTeamGame}&handler=playMain">
 <header class=match-bar>
     <a class=match-back href="?${queryTeamGame}" target="_self" aria-label="Back to game">&lsaquo;</a>
     ${

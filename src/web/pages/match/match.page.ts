@@ -204,6 +204,13 @@ const getHandlers: RouteGetHandler = {
     return play(o);
   },
 
+  // Just the play view's <main>, which auto-sync morphs in when a sync
+  // brings new data, so the page isn't reloaded mid-game.
+  async playMain({ query }) {
+    let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator);
+    return playMatchView(new PlayerStateView(teamId, gameId));
+  },
+
   async get({ query }) {
     let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator);
     let team = await teamGet(teamId);

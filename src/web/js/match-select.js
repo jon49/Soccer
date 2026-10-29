@@ -200,10 +200,27 @@ function toggleBench() {
 try {
   showBench(localStorage.getItem(BENCH_HIDDEN_KEY) === "1");
 } catch {}
-// The page is re-rendered after each action; keep the button's state in sync.
-document.addEventListener("hz:completed", () =>
-  showBench(document.body.dataset.bench === "hidden"),
-);
+// The page is re-rendered after each action, or when a sync brings new data;
+// keep the button's state in sync, and keep a selection made before it.
+document.addEventListener("hz:completed", () => {
+  showBench(document.body.dataset.bench === "hidden");
+  if (!selected) return;
+  if (!selected.isConnected) {
+    // Replaced by the morph: pick up the same player (or score) again.
+    let { playerId, status } = selected.dataset;
+    let same = document.querySelector(
+      playerId
+        ? `[data-player-id="${playerId}"][data-status="${status}"]`
+        : `[data-status="${status}"]`,
+    );
+    if (!(same instanceof HTMLElement)) {
+      clear();
+      return;
+    }
+    selected = same;
+  }
+  selected.classList.add("is-selected");
+});
 
 document.addEventListener("click", (e) => {
   let t = e.target;

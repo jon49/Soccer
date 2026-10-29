@@ -57,10 +57,12 @@ export class Coach {
   static async create(browser: Browser, email: string) {
     let context = await browser.newContext();
     // Background auto-sync reloads the page whenever the server has new data,
-    // which races with clicks. Tests sync explicitly with `sync()` instead.
+    // which races with clicks. Tests sync explicitly with `sync()` instead,
+    // unless they turn it back on with `autoSync()`.
     await context.addInitScript(() => {
       let fetch_ = window.fetch;
       window.fetch = (input, init) =>
+        !(window as any).e2eAutoSync &&
         String(input instanceof Request ? input.url : input).includes("handler=auto")
           ? Promise.resolve(new Response(null, { status: 204 }))
           : fetch_(input, init);
@@ -115,6 +117,11 @@ export class Coach {
     await this.page.waitForURL(/\/web\/teams/);
     await this.page.waitForLoadState("networkidle");
     expect(await this.idb("auth_token")).toBeFalsy();
+  }
+
+  // Lets this page's background auto-sync run, until it navigates.
+  async autoSync() {
+    await this.page.evaluate(() => ((window as any).e2eAutoSync = true));
   }
 
   async sync(): Promise<SyncResult> {
