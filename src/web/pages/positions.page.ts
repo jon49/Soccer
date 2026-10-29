@@ -54,24 +54,22 @@ function positionsNameView(positions: string[][], teamId: TeamId) {
     let count = 0;
     let row = 0;
     yield html`<div class="names-row empty-row">
-<button id="dec--1" formaction="?teamId=${teamId}&handler=gridSize&action=dec&row=-1" disabled class=inc>-</button>
-<button id="inc--1" formaction="?teamId=${teamId}&handler=gridSize&action=inc&row=-1" class=inc>+</button>
+<button id="inc--1" formaction="?teamId=${teamId}&handler=gridSize&action=inc&row=-1" class="inc add-row" aria-label="Add a row at the top">+ Row</button>
 </div>`;
 
     for (let xs of positions) {
       yield html`<div class="names-row">
-<button id="dec-${row}" formaction="?teamId=${teamId}&handler=gridSize&action=dec&row=${row}" class=inc>-</button>
+<button id="dec-${row}" formaction="?teamId=${teamId}&handler=gridSize&action=dec&row=${row}" class=inc aria-label="Remove a position from row ${row + 1}">&minus;</button>
             <fieldset class="names nc-join">`;
       yield xs.map((x) => html`<input id="position${count++}" name="names[]" value="${x}">`);
       yield html`</fieldset>
-<button id="inc-${row}" formaction="?teamId=${teamId}&handler=gridSize&action=inc&row=${row}" class=inc>+</button>
+<button id="inc-${row}" formaction="?teamId=${teamId}&handler=gridSize&action=inc&row=${row}" class=inc aria-label="Add a position to row ${row + 1}">+</button>
     </div>`;
       row++;
     }
 
     yield html`<div class="names-row empty-row">
-<button id="dec-${row}" formaction="?teamId=${teamId}&handler=gridSize&action=dec&row=${row}" disabled class=inc>-</button>
-<button id="inc-${row}" formaction="?teamId=${teamId}&handler=gridSize&action=inc&row=${row}" class=inc>+</button>
+<button id="inc-${row}" formaction="?teamId=${teamId}&handler=gridSize&action=inc&row=${row}" class="inc add-row" aria-label="Add a row at the bottom">+ Row</button>
 </div>`;
   }}
 </form>`;
@@ -317,38 +315,6 @@ const getHandlers: RouteGetHandler = {
       return html`<main id=main>${render(result)}</main>`;
     }
     return layout({
-      head: `<style>
-.names {
-  justify-content: center;
-}
-
-.names > * {
-  max-width: 200px;
-}
-
-.inc {
-  font-size: 2em;
-  height: 1.5em;
-  min-height: 0;
-  padding-top: 0;
-  padding-bottom: 0;
-}
-
-.names-row {
-  display: flex;
-}
-
-.empty-row {
-  justify-content: space-between;
-  margin-bottom: 1em;
-}
-
-@media (max-width: 768px) {
-    .names {
-        flex-wrap: wrap;
-    }
-}
-</style>`,
       main: render(result),
       nav: teamNav(result.team.id),
       title: `Formation - ${result.team.name} (${result.team.year})`,

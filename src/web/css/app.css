@@ -279,6 +279,60 @@ textarea {
   --nc-primary-focus: light-dark(oklch(0.43 0.06 248 / 0.4), oklch(0.75 0.06 248 / 0.4));
 }
 
+/** Formation editor: a row of position names between − and + **/
+
+.names-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.names-row .names {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  justify-content: center;
+}
+
+.names > * {
+  max-width: 200px;
+}
+
+.inc {
+  flex: none;
+  width: 2.5rem;
+  height: 2.5rem;
+  min-height: 0;
+  padding: 0;
+  font-size: 1.25rem;
+}
+
+.inc.add-row {
+  width: auto;
+  padding-inline: 0.75rem;
+  font-size: 1rem;
+}
+
+.empty-row {
+  justify-content: center;
+}
+
+/* Rows wrap on a phone rather than cutting names short. */
+@media (max-width: 768px) {
+  .names {
+    flex-wrap: wrap;
+  }
+
+  .names > input {
+    min-width: 6.5rem;
+  }
+}
+
+#positionsForm {
+  max-width: 44rem;
+}
+
 /** Fancy Checkbox **/
 
 /* nimble makes labels display: block, which lets a tap anywhere across the
