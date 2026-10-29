@@ -482,6 +482,71 @@ a.game-card-main:visited {
   justify-self: start;
 }
 
+/** Tabs: links that swap in one view at a time **/
+
+nav.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 0.25rem;
+  margin: 1rem 0;
+  border-bottom: 1px solid var(--nc-border);
+}
+
+.tabs a {
+  padding: 0.5rem 0.75rem;
+  margin-bottom: -1px;
+  border-bottom: 3px solid transparent;
+  color: var(--nc-text);
+  text-decoration: none;
+}
+
+.tabs a:visited {
+  color: var(--nc-text);
+}
+
+.tabs a:hover {
+  border-bottom-color: var(--nc-border);
+}
+
+.tabs a[aria-current="page"] {
+  border-bottom-color: var(--nc-primary);
+  font-weight: 700;
+}
+
+/** Stats tables: sticky header row and player column **/
+
+.overflow-auto:has(> table.sticky) {
+  max-height: 75vh;
+}
+
+table.sticky {
+  thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+
+  td:first-child,
+  th:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+  }
+
+  thead th:first-child {
+    z-index: 3;
+  }
+
+  tbody th:first-child {
+    background-color: var(--nc-surface-1);
+  }
+
+  &.striped tbody tr:nth-child(even) th:first-child {
+    background-color: var(--nc-surface-2);
+  }
+}
+
 /** Players list: one compact row per player **/
 
 .player-list {

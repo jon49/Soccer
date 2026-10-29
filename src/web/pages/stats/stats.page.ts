@@ -3,104 +3,72 @@ import { StatsView } from "./shared.js";
 import { timePlayedView } from "./_positions-played-view.js";
 import { playerPointsView } from "./_player-points-view.js";
 import { percentagePlayed } from "./_percentage-played.js";
+import type { TeamId } from "../../server/db.js";
 
 const {
   html,
   layout,
   repo: { teamGet },
+  utils: { when },
   validation: { validateObject, queryTeamIdValidator },
   views: { teamNav },
 } = self.sw;
+
+type StatTab = "timePlayed" | "percentagePlayed" | "activitiesPerformed";
+
+const tabs: [StatTab, string][] = [
+  ["timePlayed", "Time played"],
+  ["percentagePlayed", "% played"],
+  ["activitiesPerformed", "Points"],
+];
+
+const tables: Record<StatTab, (o: StatsView) => Promise<AsyncGenerator<any, void, unknown>>> = {
+  timePlayed: timePlayedView,
+  percentagePlayed,
+  activitiesPerformed: playerPointsView,
+};
+
+function tabsView(teamId: TeamId, active: StatTab) {
+  return html`
+  <nav id=statTabs class=tabs aria-label="Stats">
+    ${tabs.map(
+      ([handler, label]) =>
+        html`<a id="${handler}" href="?teamId=${teamId}&handler=${handler}" $${when(handler === active, `aria-current=page`)}>${label}</a>`,
+    )}
+  </nav>`;
+}
+
+// One table at a time: a tab swaps in its table and marks itself current.
+async function tabView(query: any, active: StatTab) {
+  let stats = await StatsView.create(query);
+  return html`
+  ${tabsView(stats.teamId, active)}
+  <div id=statTables>${tables[active](stats)}</div>`;
+}
 
 async function render(query: any) {
   let { teamId } = await validateObject(query, queryTeamIdValidator);
   let team = await teamGet(teamId);
 
-  let href = (handler: string) => `href="?teamId=${teamId}&handler=${handler}"`;
-
   return html`
   <h2 class=inline>${team.name} — Stats</h2>
   <a href="/web/stats/edit?teamId=${teamId}" target="_self">Edit</a>
 
-  <div style="margin-bottom: 1em;">
-  <div
-    id=statButtons
-    class=grid
-    style="--grid-item-width: 150px;">
-    ${[
-      ["timePlayed", "Time Played"],
-      ["percentagePlayed", "Percentage of Games Played"],
-      ["activitiesPerformed", "Player Points"],
-    ].map(
-      ([handler, label]) =>
-        html`<a id="${handler}" $${href(handler)} role="button" class="nc-button">$${label}</a>`,
-    )}
-  </div>
-  </div>
-
-  <div id=statTables></div>`;
+  ${tabView(query, "timePlayed")}`;
 }
 
 const getHandler: RouteGetHandler = {
   async get({ query }) {
     return layout({
-      head: `<style>
-.overflow-auto:has(> table.sticky) {
-  max-height: 75vh;
-}
-
-table.sticky {
-  thead th {
-    position: sticky;
-    top: 0;
-    z-index: 2;
-  }
-
-  td:first-child, th:first-child {
-    position: sticky;
-    left: 0;
-    z-index: 1;
-  }
-
-  thead th:first-child {
-    z-index: 3;
-  }
-
-  tbody th:first-child {
-    background-color: var(--nc-surface-1);
-  }
-
-  &.striped tbody tr:nth-child(even) th:first-child {
-    background-color: var(--nc-surface-2);
-  }
-}
-    </style>`,
       main: await render(query),
       nav: teamNav((await validateObject(query, queryTeamIdValidator)).teamId),
       title: "Stats",
     });
   },
 
-  async timePlayed({ query }) {
-    let playersView = await StatsView.create(query);
-    return html`
-  <template id="statTables" hz-swap="prepend">${timePlayedView(playersView)}</template>
-  <template id=timePlayed></template>`;
-  },
-
-  async percentagePlayed({ query }) {
-    let playersView = await StatsView.create(query);
-    return html`
-  <template id="statTables" hz-swap="prepend">${percentagePlayed(playersView)}</template>
-  <template id=percentagePlayed></template>`;
-  },
-
-  async activitiesPerformed({ query }) {
-    let playersView = await StatsView.create(query);
-    return html`
-  <template id="statTables" hz-swap="prepend">${playerPointsView(playersView)}</template>
-  <template id=activitiesPerformed></template>`;
-  },
+  timePlayed: ({ query }) => tabView(query, "timePlayed"),
+  percentagePlayed: ({ query }) => tabView(query, "percentagePlayed"),
+  activitiesPerformed: ({ query }) => tabView(query, "activitiesPerformed"),
 };
 
 const router: RoutePage = {
