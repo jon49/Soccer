@@ -41,11 +41,16 @@ function themeButton(next: "light" | "dark", className = "") {
 }
 
 export function syncCountView(count: number) {
+  let label = count
+    ? `${count} ${count === 1 ? "change" : "changes"} not synced yet. Tap to sync now.`
+    : "Everything is synced. Tap to sync now.";
   return html`
     <button
         id=syncCount
         form=post
         formaction="/web/api/sync?handler=force"
+        title="${label}"
+        aria-label="${label}"
         >&#128259; ${when(count, (count) => html`(${count})`)}</button>`;
 }
 
