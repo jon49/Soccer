@@ -520,6 +520,43 @@ nav.tabs {
   max-height: 75vh;
 }
 
+/* Fade the right edge while more columns are off to the right, using a
+ * scroll-driven animation. Where that isn't supported, or nothing
+ * overflows, the timeline is inactive and there's no fade. */
+.table-fade {
+  position: relative;
+  timeline-scope: --table-scroll;
+}
+
+.table-scroll {
+  scroll-timeline: --table-scroll inline;
+}
+
+.table-fade::after {
+  content: "";
+  position: absolute;
+  z-index: 4;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 2.5rem;
+  pointer-events: none;
+  background: linear-gradient(to right, transparent, var(--nc-surface-1));
+  opacity: 0;
+  animation: table-fade linear both;
+  animation-timeline: --table-scroll;
+}
+
+@keyframes table-fade {
+  from,
+  90% {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
 table.sticky {
   thead th {
     position: sticky;

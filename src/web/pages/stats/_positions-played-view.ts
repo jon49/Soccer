@@ -14,7 +14,7 @@ export async function timePlayedView(o: StatsView) {
 
   return html`
     <h3>Positions Played (Hours:Minutes:Seconds)</h3>
-    <div class=overflow-auto>
+    <div class=table-fade><div class="overflow-auto table-scroll">
     <table class="sticky striped">
     <thead>
         <tr>
@@ -52,7 +52,7 @@ export async function timePlayedView(o: StatsView) {
         }}
     </tbody>
     </table>
-    </div>`;
+    </div></div>`;
 }
 
 function millisecondsToHourMinutes(milliseconds: number) {
