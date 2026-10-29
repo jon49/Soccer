@@ -4,8 +4,8 @@ import type { RoutePostHandler, RoutePage } from "@jon49/sw/routes.middleware.js
 const {
   html,
   layout,
-  repo: { teamGet, teamSave, publishTeamSchedule, getScheduleUrl, gameStateGet, gameStatesGet },
-  utils: { when, equals, getNewId },
+  repo: { teamGet, teamSave, publishTeamSchedule, getScheduleUrl, gameStatesGet },
+  utils: { when, equals, getNewId, formatGameDate, formatGameTime, todayDateString },
   validation: {
     assert,
     createCheckbox,
@@ -40,13 +40,6 @@ function isUpcoming(game: Game): boolean {
   return todayDateString() <= game.date;
 }
 
-function todayDateString(): string {
-  let d = new Date();
-  let month = String(d.getMonth() + 1).padStart(2, "0");
-  let day = String(d.getDate()).padStart(2, "0");
-  return `${d.getFullYear()}-${month}-${day}`;
-}
-
 // Soonest game first; once a game is more than a day past, it moves to the
 // bottom (oldest-played last), without disturbing the upcoming order above it.
 function orderedGames(games: Game[]): Game[] {
@@ -63,6 +56,8 @@ function render({ team, gameStates }: GameView) {
 </div>
 
 ${gamesView({ team, gameStates })}
+
+<h3>Add a game</h3>
 
 <form class="form" method=post action="?teamId=${team.id}"  _submit="clearAutoFocus reset">
     <label for=gameDate>Date/Time</label>
@@ -91,10 +86,17 @@ ${gamesView({ team, gameStates })}
 }
 
 function gamesView({ team, gameStates }: GameView) {
+  let games = orderedGames(team.games);
+  let next = games.find(isUpcoming);
   return html`
-<ul id=games class=list>
-    ${orderedGames(team.games).map((x) => getGameView(team.id, x, gameStates.get(x.id)))}
+<ul id=games class=game-list>
+    ${games.map((x) => getGameView(team.id, x, gameStates.get(x.id), x === next))}
 </ul>`;
+}
+
+async function gamesViewFor(team: Team) {
+  let states = await gameStatesGet(team.id, team.games);
+  return gamesView({ team, gameStates: new Map(states.map((x) => [x.gameId, x])) });
 }
 
 function getScheduleShareView(team: Team) {
@@ -120,85 +122,60 @@ async function renderMain(query: any) {
   return render(await start(query));
 }
 
-function getGameView(teamId: TeamId, game: Game, gameState?: GameState) {
-  return html`<li id=game-${game.id}>
-        ${getGamePartialView(teamId, game, gameState)}
-    </li>`;
-}
-
-function formatTime(date: Date | undefined) {
-  if (!date) return "";
-  return date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
-}
-
 // Only games that have been started have a meaningful score.
 function formatScore(gameState: GameState | undefined) {
   if (!gameState?.status) return "";
   return `${gameState.points} – ${gameState.opponentPoints}`;
 }
 
-function getGamePartialView(teamId: TeamId, game: Game, gameState?: GameState) {
+// A card per game, opening its game page. The next game is marked and past
+// games are muted. Edit opens a form in the card.
+function getGameView(
+  teamId: TeamId,
+  game: Game,
+  gameState: GameState | undefined,
+  isNext: boolean,
+) {
   let teamQuery = `teamId=${teamId}`;
-  let formId = `game-form-${game.id}`;
+  let id = game.id;
   let datetime = game.date && game.time ? `${game.date}T${game.time}` : "";
-  let d = new Date(datetime);
-  return html`
-<input form=${formId} type=hidden name=gameId value="${game.id}">
-<div>
-    <input
-        id="game-date-${game.id}"
-        form=${formId}
-        class=editable
-        type=datetime-local
-        name=date
-        required
-        value="$${datetime}"
-        >
-    <label for="game-date-${game.id}">
-        <a href="/web/match?$${teamQuery}&gameId=${game.id}" target="_self">${game.date} (${formatTime(d)})</a>
-        <span class=editable-pencil>&#9998;</span>
-    </label>
-</div>
-<div>
-    <input
-        id="game-opponent-${game.id}"
-        form=${formId}
-        class=editable
-        type=text
-        name=opponent
-        value="${game.opponent}">
-    <label for="game-opponent-${game.id}">
-        <a href="/web/match?$${teamQuery}&gameId=${game.id}" target="_self">${game.opponent}</a>
-        <span class=editable-pencil>&#9998;</span>
-    </label>
-</div>
-<div>${formatScore(gameState)}</div>
-<div>
-    <input
-        id="game-location-${game.id}"
-        form=${formId}
-        class=editable
-        type=text
-        name=location
-        value="${game.location}">
-    <label for="game-location-${game.id}">
-        ${game.location || "?"}
-        <span class=editable-pencil>&#9998;</span>
-    </label>
-</div>
-<label class=toggle>
-    <input form=${formId} id="home-${game.id}" type=checkbox name=home $${when(game.home, "checked")}>
-    <span class="off full-width condense-padding nc-button" role="button">Visiting</span>
-    <span class="on full-width condense-padding nc-button" role="button">Home</span>
-</label>
-<form
-    id=${formId}
-    hidden
-    method=post
-    action="?${teamQuery}&handler=edit"
-    _change=submit
-    ></form>
-`;
+  let score = formatScore(gameState);
+  let past = !isUpcoming(game);
+  return html`<li id=game-${id} class="game-card$${isNext ? " is-next" : ""}$${past ? " is-past" : ""}">
+    <a class=game-card-main href="/web/match?$${teamQuery}&gameId=${id}" target="_self">
+        <span class=game-when>${when(
+          isNext,
+          () =>
+            html`
+              <span class="game-next-tag">Next</span>
+            `,
+        )}${formatGameDate(game.date)}${when(game.time, (time) => ` · ${formatGameTime(time)}`)}</span>
+        <span class=game-opponent>vs ${game.opponent}</span>
+        ${when(game.location, (location) => html`<span class=game-where>${location}</span>`)}
+    </a>
+    <span class=game-side>
+        <span class=badge>${game.home ? "Home" : "Away"}</span>
+        ${when(score, (score) => html`<span class=game-score>${score}</span>`)}
+    </span>
+    <details class=game-edit>
+        <summary aria-label="Edit the game vs ${game.opponent}">&#9998; Edit</summary>
+        <form class=game-edit-form method=post action="?${teamQuery}&handler=edit">
+            <input type=hidden name=gameId value="${id}">
+            <label for="edit-date-${id}">Date/Time</label>
+            <input id="edit-date-${id}" type=datetime-local name=date required value="$${datetime}">
+            <label for="edit-opponent-${id}">Opponent</label>
+            <input id="edit-opponent-${id}" type=text name=opponent required value="${game.opponent}">
+            <label for="edit-location-${id}">Location</label>
+            <input id="edit-location-${id}" type=text name=location value="${game.location}">
+            <label class=toggle>
+                <input type=checkbox name=home $${when(game.home, "checked")}>
+                <span class="off condense-padding nc-button" role="button">Visiting</span>
+                <span class="on condense-padding nc-button" role="button">Home</span>
+            </label>
+            <button>Save</button>
+        </form>
+    </details>
+</li>`;
 }
 
 let addGameValidator = {
@@ -247,8 +224,7 @@ const postHandlers: RoutePostHandler = {
     await teamSave(team);
 
     // The whole list, so the new game lands in date order.
-    let states = await gameStatesGet(teamId, team.games);
-    return gamesView({ team, gameStates: new Map(states.map((x) => [x.gameId, x])) });
+    return gamesViewFor(team);
   },
 
   async edit({ data, query }) {
@@ -279,7 +255,8 @@ const postHandlers: RoutePostHandler = {
 
     await teamSave(team);
 
-    return getGameView(teamId, game, await gameStateGet(teamId, gameId, game));
+    // The whole list, so a game whose date changed moves into place.
+    return gamesViewFor(team);
   },
 
   async publishSchedule({ query }) {
