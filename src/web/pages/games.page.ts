@@ -55,8 +55,6 @@ function orderedGames(games: Game[]): Game[] {
 }
 
 function render({ team, gameStates }: GameView) {
-  let games = orderedGames(team.games);
-
   return html`
 <h2>${team.name} — Games</h2>
 
@@ -64,9 +62,7 @@ function render({ team, gameStates }: GameView) {
     ${getScheduleShareView(team)}
 </div>
 
-<ul id=games class=list>
-    ${games.map((x) => getGameView(team.id, x, gameStates.get(x.id)))}
-</ul>
+${gamesView({ team, gameStates })}
 
 <form class="form" method=post action="?teamId=${team.id}"  _submit="clearAutoFocus reset">
     <label for=gameDate>Date/Time</label>
@@ -94,6 +90,13 @@ function render({ team, gameStates }: GameView) {
 `;
 }
 
+function gamesView({ team, gameStates }: GameView) {
+  return html`
+<ul id=games class=list>
+    ${orderedGames(team.games).map((x) => getGameView(team.id, x, gameStates.get(x.id)))}
+</ul>`;
+}
+
 function getScheduleShareView(team: Team) {
   let teamQuery = `teamId=${team.id}`;
   if (!team.scheduleFileId) {
@@ -117,8 +120,8 @@ async function renderMain(query: any) {
   return render(await start(query));
 }
 
-function getGameView(teamId: TeamId, game: Game, gameState?: GameState, hz: string = "") {
-  return html`<li id=game-${game.id} $${hz}>
+function getGameView(teamId: TeamId, game: Game, gameState?: GameState) {
+  return html`<li id=game-${game.id}>
         ${getGamePartialView(teamId, game, gameState)}
     </li>`;
 }
@@ -243,12 +246,9 @@ const postHandlers: RoutePostHandler = {
 
     await teamSave(team);
 
-    return getGameView(
-      teamId,
-      team.games.find((x) => x.id === gameId)!,
-      undefined,
-      `hz-target="#games" hz-swap="prepend"`,
-    );
+    // The whole list, so the new game lands in date order.
+    let states = await gameStatesGet(teamId, team.games);
+    return gamesView({ team, gameStates: new Map(states.map((x) => [x.gameId, x])) });
   },
 
   async edit({ data, query }) {
