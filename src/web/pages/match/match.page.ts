@@ -183,13 +183,6 @@ const getHandlers: RouteGetHandler = {
     return play({
       ...o,
       app: activityPlayerSelectorView(query),
-      head: `
-<style>
-.points {
-  margin-top: 1em;
-  margin-bottom: 1em;
-}
-</style>`,
     });
   },
 
@@ -221,7 +214,6 @@ const getHandlers: RouteGetHandler = {
     return layout({
       main: await render(query),
       nav: teamNav(teamId),
-      scripts: ["/web/js/game-timer.js"],
       title: `Match — ${team.name} VS ${game.opponent}`,
     });
   },

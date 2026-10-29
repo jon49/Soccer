@@ -48,25 +48,6 @@ let timer = new Timer();
 // data-stale-after (see team settings).
 const DEFAULT_STALE_AFTER_MS = 8 * 60 * 1e3;
 
-document.head.insertAdjacentHTML(
-  "beforeend",
-  `<style>
-.flash {
-    background-color: yellow;
-    animation: 2s flash infinite;
-}
-span {
-    padding: 0.25em;
-    border-radius: 5px;
-}
-@keyframes flash {
-    50% {
-        background-color: transparent;
-    }
-}
-</style>`,
-);
-
 /**
  * Total elapsed time represented by a start/total pair, as of `currentTime`.
  * When `start` is absent (the interval isn't currently running), this is
