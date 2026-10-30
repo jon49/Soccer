@@ -539,6 +539,12 @@ pub fn (mut ui Ui) push_clip(r Rect) {
 	ui.apply_clip()
 }
 
+// clip_rect is the area drawing is clipped to: inside a scroll area, the part
+// of it on screen.
+pub fn (ui &Ui) clip_rect() Rect {
+	return ui.clip
+}
+
 pub fn (mut ui Ui) pop_clip() {
 	if ui.clips.len > 0 {
 		ui.clip = ui.clips.pop()

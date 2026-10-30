@@ -103,37 +103,17 @@ fn (mut app App) draw_table(table core.StatsTable, x f32, y0 f32, w f32) f32 {
 	}
 	body_h := head_h + f32(table.rows.len) * row_h
 	total_h := body_h + gui.hscroll_bar_height
-	// Stripes and the header background span the whole table.
-	ui.rect(gui.Rect{x, y0, w, head_h}, t.surface)
+	// Stripes span the whole table.
 	for i in 0 .. table.rows.len {
 		if i % 2 == 1 {
 			ui.rect(gui.Rect{x, y0 + head_h + f32(i) * row_h, w, row_h}, t.surface_alt)
 		}
 	}
+	scroll_id := 'stats-${app.route.team_id}-${app.stats.tab}'
 	scroll_r := gui.Rect{x + name_w, y0, w - name_w, total_h}
-	off := ui.begin_hscroll('stats-${app.route.team_id}-${app.stats.tab}', scroll_r)
+	off := ui.begin_hscroll(scroll_id, scroll_r)
 	mut cx := scroll_r.x - off
-	for i, h in table.headers {
-		cw := col_w[i]
-		sub := table.sub_headers[i] or { '' }
-		if sub != '' {
-			ui.text(cx + cw - 12, y0 + 7, h, gui.TextStyle{
-				bold:  true
-				align: .right
-			})
-			ui.text(cx + cw - 12, y0 + 7 + lh, ui.fit(sub, cw - 12, gui.TextStyle{ size: 12 }),
-				gui.TextStyle{
-					size:  12
-					color: t.muted
-					align: .right
-				})
-		} else {
-			ui.text(cx + cw - 12, y0 + head_h / 2, h, gui.TextStyle{
-				bold:   true
-				align:  .right
-				valign: .middle
-			})
-		}
+	for i, cw in col_w {
 		for ri, r in table.rows {
 			ry := y0 + head_h + f32(ri) * row_h
 			ui.text(cx + cw - 12, ry + row_h / 2, r.cells[i] or { '' }, gui.TextStyle{
@@ -143,12 +123,8 @@ fn (mut app App) draw_table(table core.StatsTable, x f32, y0 f32, w f32) f32 {
 		}
 		cx += cw
 	}
-	ui.end_hscroll('stats-${app.route.team_id}-${app.stats.tab}', scroll_r, content_w)
+	ui.end_hscroll(scroll_id, scroll_r, content_w)
 	// The sticky player column.
-	ui.text(x + 10, y0 + head_h / 2, 'Player', gui.TextStyle{
-		bold:   true
-		valign: .middle
-	})
 	for ri, r in table.rows {
 		ry := y0 + head_h + f32(ri) * row_h
 		ui.text(x + 10, ry + row_h / 2, ui.fit(r.name, name_w - 16, bold), gui.TextStyle{
@@ -157,8 +133,62 @@ fn (mut app App) draw_table(table core.StatsTable, x f32, y0 f32, w f32) f32 {
 		})
 	}
 	ui.rect(gui.Rect{x + name_w - 1, y0, 1, body_h}, t.border)
-	ui.hline(x, y0 + head_h - 1, w, t.border)
+	// The header row, kept at the top of the screen while the rows under it
+	// are scrolled past, until the table's end pushes it off.
+	// The clip starts on a whole pixel (gg's scissor rounds down); so does
+	// the header, or a sliver of the row beneath shows above it.
+	visible_top := f32(int(ui.clip_rect().y))
+	head_y := if y0 >= visible_top {
+		y0
+	} else if visible_top < y0 + body_h - head_h {
+		visible_top
+	} else {
+		y0 + body_h - head_h
+	}
+	app.draw_table_head(table, gui.Rect{x, head_y, w, head_h}, name_w, col_w, off)
 	return y0 + total_h + 8
+}
+
+// draw_table_head draws a stats table's header row in r, its columns
+// scrolled sideways by `off` like the rows below.
+fn (mut app App) draw_table_head(table core.StatsTable, r gui.Rect, name_w f32, col_w []f32, off f32) {
+	mut ui := app.ui
+	t := ui.theme
+	lh := ui.line_height(0)
+	ui.rect(r, t.surface)
+	cols := gui.Rect{r.x + name_w, r.y, r.w - name_w, r.h}
+	ui.push_clip(cols)
+	mut cx := cols.x - off
+	for i, h in table.headers {
+		cw := col_w[i]
+		sub := table.sub_headers[i] or { '' }
+		if sub != '' {
+			ui.text(cx + cw - 12, r.y + 7, h, gui.TextStyle{
+				bold:  true
+				align: .right
+			})
+			ui.text(cx + cw - 12, r.y + 7 + lh, ui.fit(sub, cw - 12, gui.TextStyle{ size: 12 }),
+				gui.TextStyle{
+					size:  12
+					color: t.muted
+					align: .right
+				})
+		} else {
+			ui.text(cx + cw - 12, r.y + r.h / 2, h, gui.TextStyle{
+				bold:   true
+				align:  .right
+				valign: .middle
+			})
+		}
+		cx += cw
+	}
+	ui.pop_clip()
+	ui.text(r.x + 10, r.y + r.h / 2, 'Player', gui.TextStyle{
+		bold:   true
+		valign: .middle
+	})
+	ui.rect(gui.Rect{r.x + name_w - 1, r.y, 1, r.h}, t.border)
+	ui.hline(r.x, r.y + r.h - 1, r.w, t.border)
 }
 
 // ---- settings ----
