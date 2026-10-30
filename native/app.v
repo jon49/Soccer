@@ -658,11 +658,30 @@ fn (mut app App) draw_header(w f32) f32 {
 		bold:   true
 		valign: .middle
 	}
+	logged_in := app.store.auth.logged_in()
+	auth_label := if logged_in { 'Logout' } else { 'Login' }
+	aw := ui.button_width(auth_label)
+	pending := app.store.pending.len
+	sync_label := if app.syncing {
+		'↻ …'
+	} else if pending > 0 {
+		'↻ (${pending})'
+	} else {
+		'↻'
+	}
+	sw := ui.button_width(sync_label)
+	// Where the buttons on the right start; on a narrow phone the name gives
+	// way to them and the ball stands alone.
+	right_x := w - pad - aw - sw - 2 * bh - 3 * 6
 	ball := f32(12)
-	tw := ball * 2 + 8 + ui.text_width('Soccer', title)
+	mut tw := ball * 2 + 8 + ui.text_width('Soccer', title)
+	if lx + tw + 8 > right_x {
+		tw = ball * 2
+	} else {
+		ui.text(lx + ball * 2 + 8, top_h / 2, 'Soccer', title)
+	}
 	brand := gui.Rect{lx, 8, tw, bh}
 	draw_ball(ui, lx + ball, top_h / 2, ball)
-	ui.text(lx + ball * 2 + 8, top_h / 2, 'Soccer', title)
 	ui.pointer_cursor(brand)
 	if ui.clicked(brand) {
 		app.go(Route{
@@ -672,9 +691,6 @@ fn (mut app App) draw_header(w f32) f32 {
 
 	// Right: theme, sync, settings, login.
 	mut rx := w - pad
-	logged_in := app.store.auth.logged_in()
-	auth_label := if logged_in { 'Logout' } else { 'Login' }
-	aw := ui.button_width(auth_label)
 	rx -= aw
 	if ui.button(gui.Rect{rx, 8, aw, bh}, auth_label, .outline) {
 		if logged_in {
@@ -695,15 +711,6 @@ fn (mut app App) draw_header(w f32) f32 {
 			screen: .settings
 		})
 	}
-	pending := app.store.pending.len
-	sync_label := if app.syncing {
-		'↻ …'
-	} else if pending > 0 {
-		'↻ (${pending})'
-	} else {
-		'↻'
-	}
-	sw := ui.button_width(sync_label)
 	rx -= sw + 6
 	if ui.button(gui.Rect{rx, 8, sw, bh}, sync_label, .ghost) {
 		app.start_sync(true)

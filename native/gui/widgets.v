@@ -105,42 +105,36 @@ pub fn (ui &Ui) scroll_offset(id string) f32 {
 
 // ---- toggles and choices ----
 
-// toggle draws a two-sided switch like the web app's Inactive | Active
-// buttons and returns true when clicked (the caller flips the value).
+// toggle draws a button showing a two-way setting's current state,
+// `on_label` (green) or `off_label` (orange), and returns true when clicked:
+// the caller flips the value, and the button then shows the other state.
 pub fn (mut ui Ui) toggle(r Rect, off_label string, on_label string, value bool) bool {
 	t := ui.theme
-	half := r.w / 2
-	left := Rect{r.x, r.y, half, r.h}
-	right := Rect{r.x + half, r.y, r.w - half, r.h}
-	ui.rounded(r, 6, t.surface)
-	active := if value { right } else { left }
-	ui.rounded(active, 6, if value { t.on } else { t.off })
-	ui.rounded_border(r, 6, t.border)
-	for side in [false, true] {
-		rr := if side { right } else { left }
-		label := if side { on_label } else { off_label }
-		selected := side == value
-		style := TextStyle{
-			color:  if selected { t.on_text } else { t.muted }
-			bold:   selected
-			align:  .center
-			valign: .middle
-		}
-		ui.text(rr.x + rr.w / 2, rr.y + rr.h / 2, ui.fit(label, rr.w - 8, style), style)
+	ui.rounded(r, 6, if value { t.on } else { t.off })
+	if ui.pressing(r) {
+		ui.rounded(r, 6, hexa(0x000000, 50))
+	} else if ui.hovered(r) {
+		ui.rounded(r, 6, hexa(0xffffff, 40))
 	}
-	if ui.hovered(r) {
-		ui.rounded(r, 6, hexa(0x808080, 30))
+	style := TextStyle{
+		color:  t.on_text
+		bold:   true
+		align:  .center
+		valign: .middle
 	}
+	label := if value { on_label } else { off_label }
+	ui.text(r.x + r.w / 2, r.y + r.h / 2, ui.fit(label, r.w - 8, style), style)
 	ui.pointer_cursor(r)
 	return ui.clicked(r)
 }
 
-// toggle_width is the natural width of a toggle with these labels.
+// toggle_width fits the longer label, so the button keeps its size when it
+// flips.
 pub fn (ui &Ui) toggle_width(off_label string, on_label string) f32 {
 	a := ui.text_width(off_label, TextStyle{ bold: true })
 	b := ui.text_width(on_label, TextStyle{ bold: true })
 	w := if a > b { a } else { b }
-	return 2 * (w + f32(ui.font_size) * 1.4)
+	return w + f32(ui.font_size) * 2
 }
 
 // segmented draws a row of choices and returns the index clicked, or -1.
