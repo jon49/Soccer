@@ -8,10 +8,9 @@ sharing a team with other coaches and joining one, and login, registration
 and password reset on their own screens. It syncs with the same TrailBase
 backend and record format, so the web and native clients share data.
 
-It builds and runs on Linux today. Windows and macOS type-check and generate
-C (`make check`). Android generates C and needs its SDK to build; iOS waits
-on a fix in V (see below). The plan is desktop first, then the phones: the
-code is already shared, only packaging and a few platform details differ.
+It builds and runs on Linux and Android. Windows and macOS type-check and
+generate C (`make check`); iOS waits on a fix in V (see below). The code is
+shared; only packaging and a few platform details differ.
 
 ## Build and run
 
@@ -21,6 +20,8 @@ make build        # optimized ./soccer
 make install      # ./soccer to ~/.local/bin, plus a launcher and icon
 make test         # unit tests for core/ (the server test skips without a server)
 make check        # type-check and generate C for Linux, Windows and macOS
+make android      # ./soccer.apk (needs the Android SDK, NDK and vab)
+make install-apk  # install it on the connected phone or emulator
 ```
 
 Set `V=/path/to/v` if `v` is not on your `PATH`. From the repo root,
@@ -49,7 +50,10 @@ screen_*.v          the screens: teams (and joining), team (players), share,
                     games (and one game, the goal picker), match, stats,
                     formation (and templates), settings (and login, register,
                     forgot password)
-platform_*.c.v      per-platform bits (Android's data folder and back button)
+platform_*.c.v      per-platform bits: Android's data folder, screen density,
+                    HTTPS roots, keyboard, insets and Back button
+android/            the Android manifest and activity (Java), and the JNI
+                    bridge between them and the app (text_bridge.h)
 autopilot.v         --script and --demo, for checking the app without a person
 gui/                the immediate-mode toolkit from the weight app, plus long
                     press, right click, horizontal scrolling, toggles,
@@ -124,18 +128,44 @@ Touch (tap, drag to scroll, long press) and the on-screen keyboard are
 handled, and the match view has a portrait layout with the bench below the
 field and the drop targets floating at the bottom.
 
-- **Android:** `v -os android .` generates C. To build an APK, install the
-  SDK, NDK and [vab](https://github.com/vlang/vab), then
-  `vab --name Soccer --package-id com.jnyman.soccer --icon ../src/web/images/soccer.png -o soccer.apk .`
-  The data folder and the back button (which goes back a screen) are
-  handled. Still to check on a device: HTTPS certificate validation (V's
-  bundled mbedtls needs CA roots), the INTERNET permission in vab's
-  manifest, and status bar insets.
+- **Android** (6.0 and up, OpenGL ES 3.1): install the SDK (platform 34,
+  build-tools 34), NDK r27 and [vab](https://github.com/vlang/vab), set
+  `ANDROID_HOME` and `ANDROID_NDK_ROOT`, then `make android`. It was checked
+  on an Android 14 emulator: login over HTTPS, adding a team, the keyboard,
+  Back, rotation, and leaving and returning to the app. Things that differ
+  from the desktop, all in `platform_android.c.v` and `android/`:
+  - `android/AndroidManifest.xml` replaces vab's, which lacks the INTERNET
+    permission. vab edits nothing in a manifest you supply, so the package
+    id, version and SDK levels are written there too; keep them in step with
+    the Makefile.
+  - `android/src/io/v/android/VActivity.java` replaces vab's activity.
+    sokol drops Android's key events and can't show the keyboard, so a
+    hidden view takes the keyboard's input (including words it is still
+    composing) and passes characters, Backspace and Enter to the app through
+    `android/text_bridge.h`. It also reports what the status bar and keyboard
+    cover, so the gui lays out between them and scrolls the focused field
+    into view.
+  - sokol ends the app on Back. A `#flag` hides Back from it, so Java gets
+    it: Back closes a dialog or goes back a screen, and on the first screen
+    puts the app in the background.
+  - Text is scaled by the screen's density; gg on Android would fit the
+    window size we ask for to the screen instead.
+  - V's TLS looks for a CA bundle in the usual Linux places. Android keeps
+    one file per root, so they are joined into `ca-roots.pem` in the data
+    folder at startup and `$SSL_CERT_FILE` points at it.
+  - `-d sokol_gles3`: vab builds sokol for GLES 3 but doesn't tell V, and
+    gg would compile desktop GLSL. `-prod` for an optimized build (vab
+    signs it with its debug key; pass `--keystore` for a release).
+  - stderr goes to logcat (`adb logcat -s soccer V`), for sokol's messages.
+  - The emulator's default software GPU only has GLES 3.0; start it with
+    `-gpu swangle_indirect` (or `host`).
+  - Not done: a hardware keyboard's keys (sokol drops them), copy and paste,
+    and the export, which writes inside the app's private folder.
 - **iOS:** `v -os ios .` stops inside V's own `net` module
   (`unknown struct Ip6`): `vlib/net` defines its address structs per OS and
   has no iOS variant. That needs fixing in V (or routing `core/api.v`'s `http_request`
   through `NSURLSession`). Also keep tokens in the Keychain instead of
   `auth.json`, and handle safe-area insets.
 
-Clipboard on phones and the share sheet for invite links are not done yet;
-the Open button opens the link in the browser.
+The share sheet for invite links is not done yet; the Open button opens the
+link in the browser.

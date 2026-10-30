@@ -512,6 +512,8 @@ fn (mut app App) frame() {
 	mut ui := app.ui
 	ui.begin_frame()
 	app.gg.begin()
+	// The status bar's strip, on phones, in the web app's theme color.
+	ui.begin_drawing(ui.theme.primary)
 	w := ui.width()
 	h := ui.height()
 	modal := app.confirm.action != .none_

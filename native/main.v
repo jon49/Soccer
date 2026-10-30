@@ -12,6 +12,7 @@ const font_bold = $embed_file('assets/fonts/DejaVuSans-Bold.ttf')
 const usage = 'Usage: soccer [--data-dir DIR] [--size WxH] [--server URL]'
 
 fn main() {
+	platform_init()
 	mut data_dir := core.default_data_dir()
 	if dir := platform_data_dir() {
 		data_dir = dir
@@ -21,7 +22,8 @@ fn main() {
 	mut server := ''
 	mut script := ''
 	mut demo := false
-	args := os.args[1..]
+	// Android starts the app with no arguments at all, not even its name.
+	args := if os.args.len > 1 { os.args[1..] } else { []string{} }
 	for i, a in args {
 		next := if i + 1 < args.len { args[i + 1] } else { '' }
 		match a {
@@ -98,8 +100,9 @@ fn main() {
 }
 
 fn on_init(mut app App) {
-	app.base_scale = app.gg.scale
+	app.base_scale = platform_scale() or { app.gg.scale }
 	app.apply_zoom()
+	platform_start(mut app)
 	if app.autopilot == none {
 		app.start_sync(false)
 	}
@@ -107,11 +110,12 @@ fn on_init(mut app App) {
 
 // gg has just reset its scale for the window's screen; zoom it again.
 fn on_resized(_ &gg.Event, mut app App) {
-	app.base_scale = app.gg.scale
+	app.base_scale = platform_scale() or { app.gg.scale }
 	app.apply_zoom()
 }
 
 fn on_frame(mut app App) {
+	platform_poll(mut app)
 	app.frame()
 	app.autopilot_step()
 }
@@ -123,9 +127,6 @@ fn on_event(e &gg.Event, mut app App) {
 			app.on_focus()
 		}
 		.quit_requested {
-			if back_instead_of_quit(mut app) {
-				return
-			}
 			app.commit_forms()
 		}
 		.unfocused, .suspended {

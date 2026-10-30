@@ -163,11 +163,28 @@ mut:
 	right_released bool
 	rx             f32
 	ry             f32
+	// The keyboard as this frame left it, applied in end_frame: moving
+	// from one field to the next hides and shows it in the same frame, and
+	// Android drops a show that comes right after a hide.
+	keyboard KeyboardRequest
+	// Screen edges the system covers, in pixels: the status bar at the top,
+	// and the navigation bar or the on-screen keyboard at the bottom. Layout
+	// starts below the first, and height() leaves out both.
+	inset_top_px    int
+	inset_bottom_px int
+	// Scroll the focused field into view at the end of its scroll area: it
+	// was just focused, or the keyboard came up over it.
+	reveal_focus bool
+	focus_rect   Rect
+	focus_drawn  bool
 pub mut:
 	// While set, widgets draw but ignore the pointer (under a modal dialog).
 	blocked bool
 	// Reads the system clipboard for Ctrl+V in fields; nil: no paste.
 	paste_fn fn () string = unsafe { nil }
+	// Shows (or hides) the on-screen keyboard for a field of `kind` whose
+	// text before the cursor is `before`; nil: sokol's own, on phones.
+	keyboard_fn fn (show bool, kind FieldKind, before string) = unsafe { nil }
 }
 
 pub fn new_ui() &Ui {
@@ -181,7 +198,34 @@ pub fn (ui &Ui) width() f32 {
 }
 
 pub fn (ui &Ui) height() f32 {
-	return f32(sapp.height()) / ui.scale()
+	return f32(sapp.height() - ui.inset_top_px - ui.inset_bottom_px) / ui.scale()
+}
+
+// top is where layout starts on the screen, below the status bar.
+fn (ui &Ui) top() f32 {
+	return f32(ui.inset_top_px) / ui.scale()
+}
+
+// set_insets tells the gui which screen edges the system covers, in pixels.
+pub fn (mut ui Ui) set_insets(top int, bottom int) {
+	if top == ui.inset_top_px && bottom == ui.inset_bottom_px {
+		return
+	}
+	if bottom > ui.inset_bottom_px {
+		ui.reveal_focus = true
+	}
+	ui.inset_top_px = top
+	ui.inset_bottom_px = bottom
+	ui.redraw = true
+}
+
+// begin_drawing, right after gg's begin, paints the status bar's strip in
+// `bar` and moves the origin below it.
+pub fn (ui &Ui) begin_drawing(bar gg.Color) {
+	if ui.inset_top_px > 0 {
+		ui.ctx.draw_rect_filled(0, 0, ui.width(), ui.top(), bar)
+		ui.ctx.r.translate(0, f32(ui.inset_top_px), 0)
+	}
 }
 
 fn (ui &Ui) scale() f32 {
@@ -210,7 +254,7 @@ pub fn (mut ui Ui) handle_event(e &gg.Event) {
 		.mouse_move {
 			ui.touch = false
 			ui.mx = e.mouse_x
-			ui.my = e.mouse_y
+			ui.my = e.mouse_y - ui.top()
 			if ui.down && (abs(ui.mx - ui.press_x) > 10 || abs(ui.my - ui.press_y) > 10) {
 				ui.moved = true
 			}
@@ -219,11 +263,11 @@ pub fn (mut ui Ui) handle_event(e &gg.Event) {
 			if e.mouse_button == .left {
 				ui.touch = false
 				ui.mx = e.mouse_x
-				ui.my = e.mouse_y
+				ui.my = e.mouse_y - ui.top()
 				ui.down = true
 				ui.pressed = true
 				ui.press_x = e.mouse_x
-				ui.press_y = e.mouse_y
+				ui.press_y = e.mouse_y - ui.top()
 				ui.drag = false
 				ui.moved = false
 				ui.press_ms = time.ticks()
@@ -233,13 +277,13 @@ pub fn (mut ui Ui) handle_event(e &gg.Event) {
 		.mouse_up {
 			if e.mouse_button == .left {
 				ui.mx = e.mouse_x
-				ui.my = e.mouse_y
+				ui.my = e.mouse_y - ui.top()
 				ui.down = false
 				ui.released = true
 			} else if e.mouse_button == .right {
 				ui.right_released = true
 				ui.rx = e.mouse_x
-				ui.ry = e.mouse_y
+				ui.ry = e.mouse_y - ui.top()
 			}
 		}
 		.mouse_scroll {
@@ -262,7 +306,7 @@ pub fn (mut ui Ui) handle_event(e &gg.Event) {
 			}
 			scale := ui.scale()
 			x := e.touches[0].pos_x / scale
-			y := e.touches[0].pos_y / scale
+			y := e.touches[0].pos_y / scale - ui.top()
 			ui.touch = true
 			ui.mx = x
 			ui.my = y
@@ -329,6 +373,8 @@ pub fn (mut ui Ui) end_frame() bool {
 	if ui.focus != '' && ui.focus !in ui.focus_ids {
 		ui.blur()
 	}
+	ui.apply_keyboard()
+	ui.reveal_focus = false
 	ui.tab_from = ''
 	ui.pressed = false
 	ui.released = false
@@ -370,23 +416,47 @@ pub fn (mut ui Ui) key_pressed(code gg.KeyCode, ctrl bool) bool {
 pub fn (mut ui Ui) blur() {
 	if ui.focus != '' {
 		ui.focus = ''
-		$if ios || android {
-			sapp.show_keyboard(false)
-		}
+		ui.show_keyboard(false, .text, '')
 		ui.redraw = true
 	}
 }
 
-fn (mut ui Ui) set_focus(id string, value string, cursor int) {
+struct KeyboardRequest {
+	pending bool
+	show    bool
+	kind    FieldKind
+	before  string
+}
+
+fn (mut ui Ui) show_keyboard(show bool, kind FieldKind, before string) {
+	ui.keyboard = KeyboardRequest{true, show, kind, before}
+}
+
+fn (mut ui Ui) apply_keyboard() {
+	k := ui.keyboard
+	if !k.pending {
+		return
+	}
+	ui.keyboard = KeyboardRequest{}
+	if ui.keyboard_fn != unsafe { nil } {
+		ui.keyboard_fn(k.show, k.kind, k.before)
+		return
+	}
+	$if ios || android {
+		sapp.show_keyboard(k.show)
+	}
+}
+
+fn (mut ui Ui) set_focus(id string, value string, cursor int, kind FieldKind) {
 	ui.focus = id
 	ui.focus_request = ''
 	ui.fields[id] = FieldState{
 		cursor:   cursor
 		original: value
 	}
-	$if ios || android {
-		sapp.show_keyboard(true)
-	}
+	ui.reveal_focus = true
+	runes := value.runes()
+	ui.show_keyboard(true, kind, runes[..if cursor < runes.len { cursor } else { runes.len }].string())
 	ui.redraw = true
 }
 
@@ -478,7 +548,7 @@ pub fn (mut ui Ui) pop_clip() {
 
 fn (ui &Ui) apply_clip() {
 	c := ui.clip
-	ui.ctx.scissor_rect(int(c.x), int(c.y), int(c.w + 0.999), int(c.h + 0.999))
+	ui.ctx.scissor_rect(int(c.x), int(c.y + ui.top()), int(c.w + 0.999), int(c.h + 0.999))
 }
 
 // begin_scroll starts a vertical scroll area and returns its scroll offset.
@@ -523,6 +593,7 @@ pub fn (mut ui Ui) begin_scroll(id string, r Rect) f32 {
 	}
 	ui.scrolls[id] = off
 	ui.push_clip(r)
+	ui.focus_drawn = false
 	return off
 }
 
@@ -530,7 +601,22 @@ pub fn (mut ui Ui) end_scroll(id string, r Rect, content_h f32) {
 	ui.pop_clip()
 	ui.content_hs[id] = content_h
 	max := if content_h > r.h { content_h - r.h } else { 0 }
-	off := ui.scrolls[id] or { 0 }
+	mut off := ui.scrolls[id] or { 0 }
+	if ui.reveal_focus && ui.focus_drawn {
+		ui.reveal_focus = false
+		f := ui.focus_rect
+		margin := f32(12)
+		if f.y + f.h + margin > r.y + r.h {
+			off += f.y + f.h + margin - (r.y + r.h)
+		} else if f.y - margin < r.y {
+			off -= r.y - (f.y - margin)
+		}
+		if off < 0 {
+			off = 0
+		}
+		ui.scrolls[id] = off
+		ui.redraw = true
+	}
 	if off > max {
 		ui.scrolls[id] = max
 		ui.redraw = true
@@ -834,9 +920,9 @@ pub fn (mut ui Ui) field(id string, r Rect, mut input Input, kind FieldKind, pla
 	// Tab from the previous field moves focus here.
 	if ui.tab_from != '' && ui.focus_ids.len >= 2 && ui.focus_ids[ui.focus_ids.len - 2] == ui.tab_from {
 		ui.tab_from = ''
-		ui.set_focus(id, value, value.runes().len)
+		ui.set_focus(id, value, value.runes().len, kind)
 	} else if ui.focus_request == id {
-		ui.set_focus(id, value, value.runes().len)
+		ui.set_focus(id, value, value.runes().len, kind)
 	}
 
 	mut focused := ui.focus == id
@@ -850,22 +936,24 @@ pub fn (mut ui Ui) field(id string, r Rect, mut input Input, kind FieldKind, pla
 				mut st := ui.fields[id] or { FieldState{} }
 				st.cursor = pos
 				ui.fields[id] = st
+				// Brings the keyboard back if it was put away.
+				ui.show_keyboard(true, kind, value.runes()[..pos].string())
 			} else {
-				ui.set_focus(id, value, pos)
+				ui.set_focus(id, value, pos, kind)
 				focused = true
 			}
 		} else if focused {
 			ui.focus = ''
 			focused = false
-			$if ios || android {
-				sapp.show_keyboard(false)
-			}
+			ui.show_keyboard(false, kind, '')
 			return .committed
 		}
 	}
 
 	mut st := ui.fields[id] or { FieldState{} }
 	if focused {
+		ui.focus_rect = r
+		ui.focus_drawn = true
 		mut runes := value.runes()
 		if st.cursor > runes.len {
 			st.cursor = runes.len

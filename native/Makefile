@@ -4,7 +4,7 @@ V ?= v
 BIN ?= soccer
 PREFIX ?= $(HOME)/.local
 
-.PHONY: build dev run test fmt check android install uninstall clean
+.PHONY: build dev run test fmt check android install-apk install uninstall clean
 
 build:
 	$(V) -prod -o $(BIN) .
@@ -30,8 +30,18 @@ check:
 	@rm -rf .check
 
 # Android APK. Needs the Android SDK and NDK and vab; see README.md.
+# vab builds sokol for GLES 3 but doesn't tell V, so gg would hand the GLES
+# driver desktop GLSL; `-d sokol_gles3` makes it pick its GLSL ES shaders.
+# -prod: optimized, as a phone should get it. vab warns that it signs with
+# its debug key; pass --keystore for a release.
 android:
-	vab --name Soccer --package-id com.jnyman.soccer --icon ../src/web/images/soccer.png -o $(BIN).apk .
+	vab -prod -f '-d sokol_gles3' --name Soccer --package-id com.jnyman.soccer --version-code 1 --min-sdk-version 23 \
+		--package-overrides android --icon ../src/web/images/soccer.png -o $(BIN).apk .
+
+# Install the APK on the connected phone or emulator (adb from the SDK's
+# platform-tools).
+install-apk: android
+	adb install -r $(BIN).apk
 
 install: build
 	install -Dm755 $(BIN) $(PREFIX)/bin/$(BIN)
