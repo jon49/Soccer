@@ -1,4 +1,4 @@
-# Soccer Tracker
+# Soccer
 
 Track players time in and out of the game and their positions. Also, you can
 take notes for games.

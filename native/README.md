@@ -1,6 +1,6 @@
 # Soccer (native)
 
-A native client for the soccer tracker, written in [V](https://vlang.io) with
+A native client for the soccer app, written in [V](https://vlang.io) with
 the same toolkit as `../weight/desktop`. It does what the web app does and
 works offline: teams and players, games and the published schedule, the
 match view (positions, substitutions, clocks, goals), stats, formations,
@@ -131,9 +131,9 @@ field and the drop targets floating at the bottom.
   handled. Still to check on a device: HTTPS certificate validation (V's
   bundled mbedtls needs CA roots), the INTERNET permission in vab's
   manifest, and status bar insets.
-- **iOS:** `v -os ios .` stops inside V's own `net` module (`unknown struct
-  Ip6`): `vlib/net` defines its address structs per OS and has no iOS
-  variant. That needs fixing in V (or routing `core/api.v`'s `http_request`
+- **iOS:** `v -os ios .` stops inside V's own `net` module
+  (`unknown struct Ip6`): `vlib/net` defines its address structs per OS and
+  has no iOS variant. That needs fixing in V (or routing `core/api.v`'s `http_request`
   through `NSURLSession`). Also keep tokens in the Keychain instead of
   `auth.json`, and handle safe-area insets.
 

@@ -96,7 +96,7 @@ const render = async ({
             <ul>
                 <li>
                     <a href="/web/teams" target="_self">
-                        <img style="height:2.5em;" src="/web/images/soccer.svg" alt="Soccer Tracker: your teams">
+                        <img style="height:2.5em;" src="/web/images/soccer.svg" alt="Soccer: your teams">
                     </a>
                 </li>
             </ul>

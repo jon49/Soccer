@@ -1,0 +1,3 @@
+# Must stay byte-for-byte the web app's published schedule page
+# (src/web/pages/schedule-html.ts).
+native/core/schedule_template.html
