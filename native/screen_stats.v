@@ -22,7 +22,7 @@ fn (mut app App) draw_stats(x f32, y0 f32, w f32) f32 {
 	t := ui.theme
 	team := app.store.team_get(app.route.team_id) or { return y0 }
 	bh := ui.button_height()
-	mut y := app.heading(x, y0, '${team.name} — Stats')
+	mut y := app.heading(x, y0, team.name)
 	ew := ui.button_width('Edit')
 	if ui.button(gui.Rect{x + w - ew, y0 - 4, ew, bh}, 'Edit', .outline) {
 		app.go(Route{
@@ -224,7 +224,7 @@ fn (mut app App) draw_stats_edit(x f32, y0 f32, w f32) f32 {
 	stats := app.store.stats_get(team.id)
 	bh := ui.button_height()
 	fh := ui.field_height()
-	mut y := app.heading(x, y0, '${team.name} — Stats')
+	mut y := app.heading(x, y0, team.name)
 	y = app.subheading(x, y, 'Stats')
 	tw := ui.toggle_width('Inactive', 'Active')
 	for s in stats.stats {

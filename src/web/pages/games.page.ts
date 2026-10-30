@@ -49,7 +49,7 @@ function orderedGames(games: Game[]): Game[] {
 
 function render({ team, gameStates }: GameView) {
   return html`
-<h2>${team.name} — Games</h2>
+<h2>${team.name}</h2>
 
 <div id=schedule-share>
     ${getScheduleShareView(team)}

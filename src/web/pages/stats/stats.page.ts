@@ -51,7 +51,7 @@ async function render(query: any) {
   let team = await teamGet(teamId);
 
   return html`
-  <h2 class=inline>${team.name} — Stats</h2>
+  <h2 class=inline>${team.name}</h2>
   <a href="/web/stats/edit?teamId=${teamId}" target="_self">Edit</a>
 
   ${tabView(query, "timePlayed")}`;

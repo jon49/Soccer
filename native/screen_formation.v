@@ -36,7 +36,7 @@ fn (mut app App) draw_formation(x f32, y0 f32, w f32) f32 {
 	team := app.store.team_get(app.route.team_id) or { return y0 }
 	bh := ui.button_height()
 	fh := ui.field_height()
-	mut y := app.heading(x, y0, '${team.name} — Formation')
+	mut y := app.heading(x, y0, team.name)
 	uw := ui.button_width('Use a template')
 	if ui.button(gui.Rect{x, y - 8, uw, bh}, 'Use a template', .outline) {
 		app.go(Route{

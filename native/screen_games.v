@@ -60,7 +60,7 @@ fn (mut app App) draw_games(x f32, y0 f32, w f32) f32 {
 	team := app.store.team_get(app.route.team_id) or { return y0 }
 	bh := ui.button_height()
 	lh := ui.line_height(0)
-	mut y := app.heading(x, y0, '${team.name} — Games')
+	mut y := app.heading(x, y0, team.name)
 
 	// The published schedule.
 	pub_label := if app.is_busy(.publish) {

@@ -32,7 +32,7 @@ async function start(query: any): Promise<PositionView> {
 
 function render({ team, positions }: PositionView) {
   return html`
-<h2>${team.name} — Formation</h2>
+<h2>${team.name}</h2>
 
 <p>
   <a href="?handler=showTemplates&teamId=${team.id}" role="button" class="nc-button">Use a template.</a>
