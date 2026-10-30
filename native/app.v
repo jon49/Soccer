@@ -92,12 +92,14 @@ mut:
 	toast_until i64
 	confirm     Confirm
 	// Sync runs on a worker thread; results come back on this channel.
-	syncing      bool
-	sync_ch      chan SyncDone
-	sync_phase   SyncPhase
-	sync_manual  bool
-	sync_due     i64
-	last_sync    i64
+	syncing     bool
+	sync_ch     chan SyncDone
+	sync_phase  SyncPhase
+	sync_manual bool
+	sync_due    i64
+	last_sync   i64
+	// The screen whose tab the navigation last scrolled into view.
+	nav_screen   Screen
 	after_sync   []AfterSync
 	sync_message string
 	// Other network calls (login, sharing, publishing) report here.
@@ -715,7 +717,8 @@ fn (mut app App) draw_header(w f32) f32 {
 	// Navigation: the teams, and the team's pages when one is open.
 	nav_y := top_h
 	nav_h := bh + 8
-	ui.rect(gui.Rect{0, nav_y, w, nav_h}, t.bg)
+	nav_r := gui.Rect{0, nav_y, w, nav_h}
+	ui.rect(nav_r, t.bg)
 	ui.hline(0, nav_y + nav_h - 1, w, t.border)
 	mut items := [NavItem{'Teams', Route{
 		screen: .teams
@@ -739,7 +742,11 @@ fn (mut app App) draw_header(w f32) f32 {
 			team_id: tid
 		}}
 	}
+	// The tabs scroll sideways when they don't fit, as on a phone, and a
+	// newly opened screen brings its tab into view.
+	off := ui.begin_hscroll('nav', nav_r)
 	mut nx := pad
+	mut active_x, mut active_w := f32(0), f32(0)
 	for item in items {
 		bw := ui.button_width(item.label)
 		active := item.route.screen == app.route.screen
@@ -747,11 +754,24 @@ fn (mut app App) draw_header(w f32) f32 {
 			|| (item.route.screen == .formation && app.route.screen == .templates)
 			|| (item.route.screen == .games && app.route.screen in [.game, .goal_picker])
 			|| (item.route.screen == .team && app.route.screen == .share)
+		if active {
+			active_x, active_w = nx, bw
+		}
 		style := if active { gui.ButtonStyle.tab_active } else { gui.ButtonStyle.tab }
-		if ui.button(gui.Rect{nx, nav_y + 4, bw, bh}, item.label, style) {
+		if ui.button(gui.Rect{nx - off, nav_y + 4, bw, bh}, item.label, style) {
 			app.go(item.route)
 		}
 		nx += bw + 4
+	}
+	content_w := nx - 4 + pad
+	ui.end_hscroll('nav', nav_r, content_w)
+	if app.nav_screen != app.route.screen {
+		app.nav_screen = app.route.screen
+		if active_x + active_w + pad > off + w {
+			ui.set_hscroll('nav', active_x + active_w + pad - w)
+		} else if active_x - pad < off {
+			ui.set_hscroll('nav', active_x - pad)
+		}
 	}
 	return nav_y + nav_h
 }

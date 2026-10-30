@@ -49,6 +49,11 @@ pub fn (mut ui Ui) begin_hscroll(id string, r Rect) f32 {
 	return off
 }
 
+pub fn (mut ui Ui) set_hscroll(id string, off f32) {
+	ui.hscrolls[id] = if off < 0 { 0 } else { off }
+	ui.redraw = true
+}
+
 pub fn (mut ui Ui) end_hscroll(id string, r Rect, content_w f32) {
 	ui.pop_clip()
 	ui.content_ws[id] = content_w
