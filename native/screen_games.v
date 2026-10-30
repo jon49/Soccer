@@ -485,7 +485,9 @@ fn (mut app App) delete_game(team_id string, game_id int) {
 		return
 	}
 	app.changed()
-	app.history = app.history.filter(it.game_id != game_id || it.team_id != team_id)
+	app.forget_routes(fn [team_id, game_id] (r Route) bool {
+		return r.team_id == team_id && r.game_id == game_id
+	})
 	app.replace(Route{
 		screen:  .games
 		team_id: team_id

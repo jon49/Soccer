@@ -84,8 +84,9 @@ mut:
 	ui    &gui.Ui
 	store &core.Store
 	route Route
-	// Screens to go back to.
+	// Screens to go back to, and to go forward to again after going back.
 	history []Route
+	forward []Route
 	// Toast message at the bottom of the window.
 	toast       string
 	toast_error bool
@@ -275,6 +276,7 @@ fn (mut app App) go(r Route) {
 	if app.history.len > 50 {
 		app.history.delete(0)
 	}
+	app.forward.clear()
 	app.route = r
 	app.enter_screen()
 }
@@ -296,8 +298,27 @@ fn (mut app App) back() {
 		return
 	}
 	app.leave_screen()
+	app.forward << app.route
 	app.route = app.history.pop()
 	app.enter_screen()
+}
+
+// go_forward undoes a back().
+fn (mut app App) go_forward() {
+	if app.forward.len == 0 {
+		return
+	}
+	app.leave_screen()
+	app.history << app.route
+	app.route = app.forward.pop()
+	app.enter_screen()
+}
+
+// forget_routes drops the screens `gone` says no longer exist from the
+// back and forward history.
+fn (mut app App) forget_routes(gone fn (r Route) bool) {
+	app.history = app.history.filter(!gone(it))
+	app.forward = app.forward.filter(!gone(it))
 }
 
 fn (mut app App) leave_screen() {
@@ -335,6 +356,7 @@ fn (mut app App) load_screen() {
 				screen: .teams
 			}
 			app.history.clear()
+			app.forward.clear()
 			app.load_teams()
 		}
 	}
@@ -618,8 +640,11 @@ fn (mut app App) shortcuts() {
 	if ui.key_pressed(.backspace, false) && !ui.has_focus() && app.history.len > 0 {
 		app.back()
 	}
-	if ui.key_pressed(.left, true) {
+	if ui.key_pressed(.left, true) || ui.alt_pressed(.left) {
 		app.back()
+	}
+	if ui.alt_pressed(.right) {
+		app.go_forward()
 	}
 	if ui.key_pressed(.equal, true) || ui.key_pressed(.kp_add, true) {
 		app.zoom_by(1)

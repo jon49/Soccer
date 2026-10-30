@@ -287,6 +287,7 @@ fn (mut app App) on_job_done(job JobDone) {
 			}
 			app.store.spaces_forget([job.team_id]) or { app.show_error(err.msg()) }
 			app.history.clear()
+			app.forward.clear()
 			app.replace(Route{
 				screen: .teams
 			})

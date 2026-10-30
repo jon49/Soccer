@@ -177,7 +177,10 @@ fn (mut app App) on_space_created(job JobDone) {
 		had_schedule: team.schedule_file_id != ''
 	}
 	// The old team's screens are gone; show the shared one.
-	app.history = app.history.filter(it.team_id != job.team_id)
+	old_team := job.team_id
+	app.forget_routes(fn [old_team] (r Route) bool {
+		return r.team_id == old_team
+	})
 	app.share = ShareForm{
 		team_id: space
 	}

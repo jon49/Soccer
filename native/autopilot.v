@@ -11,7 +11,7 @@ import core
 //
 //   click X Y | rclick X Y | down X Y | up X Y   pointer, in layout units
 //   type TEXT                                  typed characters
-//   key NAME [ctrl]                            enter, tab, escape, backspace, ...
+//   key NAME [ctrl|alt]                        enter, tab, escape, backspace, ...
 //   wait N | sleep MS                          frames / milliseconds
 //   shot FILE.png                              screenshot
 //   go SCREEN [TEAM [GAME]]                    open a screen directly
@@ -106,10 +106,16 @@ fn (mut app App) autopilot_step() {
 				'escape' { gg.KeyCode.escape }
 				'backspace' { gg.KeyCode.backspace }
 				'down' { gg.KeyCode.down }
+				'left' { gg.KeyCode.left }
+				'right' { gg.KeyCode.right }
 				'page_down' { gg.KeyCode.page_down }
 				else { gg.KeyCode.invalid }
 			}
-			mods := if parts.len > 2 && parts[2] == 'ctrl' { u32(2) } else { u32(0) }
+			mods := match parts[2] or { '' } {
+				'ctrl' { u32(2) }
+				'alt' { u32(4) }
+				else { u32(0) }
+			}
 			app.ui.handle_event(gg.Event{
 				typ:       .key_down
 				key_code:  code

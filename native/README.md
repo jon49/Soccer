@@ -124,8 +124,9 @@ of its calculator classes, and extend `core/core_test.v` with them.
   our score and then the scorer (or No scorer). Hold a score (or right click
   it) to take a point back. Tap the clock to start or pause.
 - **Text size:** Ctrl + and Ctrl − (also Ctrl with the scroll wheel), Ctrl 0
-  to reset, or Settings. **Back:** ‹ in the header, Escape, Backspace or
-  Ctrl+←. **Paste** into fields with Ctrl+V.
+  to reset, or Settings. **Back:** ‹ in the header, Escape, Backspace,
+  Ctrl+← or Alt+←; **forward** again with Alt+→. **Paste** into fields with
+  Ctrl+V.
 
 ## Phones
 
