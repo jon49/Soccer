@@ -14,6 +14,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `npm run fmt` / `fmt:check` — format with oxfmt.
 - `npm run e2e` — Playwright end-to-end tests (`e2e/*.spec.ts`) against the real app in Chromium. Starts its own throwaway TrailBase on :4010 (fresh depot in `e2e/.depot`, seeded from `../ImageBase`, which must be on a branch with the features under test) and dev server on :8010, so it can run beside `npm start`. Needs `trail`, `sqlite3`, and the Rust toolchain for the ImageBase guest wasm. Single test: `npx playwright test -g "removing a coach"`. Each test registers fresh users through the API and marks them verified in SQL (`trail user add` fails on TrailBase v0.35); the `Coach` fixture in `e2e/fixtures.ts` is one logged-in device, with background auto-sync stubbed out (call `coach.sync()`). `MatchPage` in `e2e/match-page.ts` drives the match play view by tapping like a coach does (`lineup`, `start`, `goal`, `queue` + `swapAll` / `swapOne`, `move`, `toBench`, `end`); `setTeamStat` flips basketball mode or the Goal stat.
 
+- `npm run build:native` / `install:native` / `test:native` — the native desktop (and, next, mobile) client in `native/`, written in V. See `native/README.md`.
+
 The `/api` path is owned by TrailBase (separate repo at `../ImageBase`). The Node dev proxy and NGINX in production both forward `/api/*` there.
 
 ## Architecture
@@ -48,6 +50,10 @@ The build emits hashed filenames (`base.4e713321.css`) but `src/web/css/app.css`
 3. NGINX in production (`try_files $uri /web/$1.*.$2 =404;` or a generated `map`).
 
 Auth pages (`/login`, `/register`, `/forgot-password`, `/reset-password`) live **outside** the SW scope and load `/web/css/app.css` directly, so the rewrite must work at the static-server / NGINX layer too.
+
+### Native client
+
+`native/` is a second client, written in V on gg/sokol (the same stack as `../weight/desktop`). It syncs with the same TrailBase endpoint and stores records under the same keys and shapes, so changes to a record's shape, its key, or the sync protocol must be made in both clients. `native/core/` ports the TypeScript logic file by file (each file names what it ports); `native/core/match.v` mirrors `state-logic.ts` and its tests.
 
 ### Code conventions
 

@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Soccer
+Comment=Track players' time, positions and goals
+Exec=soccer
+Icon=soccer
+Terminal=false
+Categories=Utility;Sports;
