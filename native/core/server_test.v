@@ -176,3 +176,42 @@ fn test_sync_between_devices_and_coaches() {
 	// Logging out ends the session.
 	logout(server, a.auth.refresh_token)
 }
+
+fn test_deleting_an_account() {
+	server := live_server() or {
+		println('skipped: set SOCCER_TEST_SERVER and SOCCER_TEST_DB')
+		return
+	}
+	mut a := new_coach(server)!
+	email := a.auth.email
+	team := a.team_create('Hawks', '2026')!
+	a.player_create(team.id, 'Ava')!
+	sync_now(mut a)!
+	id := sql("SELECT hex(id) FROM _user WHERE email = '${email}'")
+	assert sql("SELECT COUNT(*) FROM user_data WHERE hex(user) = '${id}'").int() > 0
+	// A second device of the same coach, still logged in afterwards.
+	mut a2 := device(server, email)!
+
+	// The account and the data it synced are gone.
+	deleted := delete_account(server, a.auth)
+	assert deleted.ok, deleted.message
+	assert sql("SELECT COUNT(*) FROM _user WHERE hex(id) = '${id}'") == '0'
+	assert sql("SELECT COUNT(*) FROM user_data WHERE hex(user) = '${id}'") == '0'
+	a.wipe()!
+	assert a.records.len == 0 && !a.auth.logged_in()
+
+	// The other device's still-unexpired token is refused, it can't refresh,
+	// and the password no longer logs in.
+	if _ := sync_now(mut a2) {
+		assert false, 'a deleted account must not sync'
+	}
+	assert !a2.auth.logged_in()
+	if _ := login(server, email, test_password) {
+		assert false, 'a deleted account must not log in'
+	}
+	again := delete_account(server, AuthTokens{
+		email:      email
+		auth_token: 'stale'
+	})
+	assert again.status == 401
+}

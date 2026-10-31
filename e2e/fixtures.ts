@@ -119,6 +119,17 @@ export class Coach {
     expect(await this.idb("auth_token")).toBeFalsy();
   }
 
+  // Deletes the account from Settings (the confirm is accepted); returns the
+  // toasts the app showed.
+  async deleteAccount(): Promise<string[]> {
+    await this.goto("/web/settings");
+    let done = this.page.waitForResponse((x) => x.url().includes("handler=deleteAccount"));
+    await this.page.click("#account button:has-text('Delete account')");
+    let doc = await (await done).text();
+    await this.page.waitForLoadState("networkidle");
+    return Array.from(doc.matchAll(/<p class=message>([^<]*)<\/p>/g), (x) => x[1]);
+  }
+
   // Lets this page's background auto-sync run, until it navigates.
   async autoSync() {
     await this.page.evaluate(() => ((window as any).e2eAutoSync = true));
