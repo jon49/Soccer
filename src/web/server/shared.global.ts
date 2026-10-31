@@ -1,4 +1,4 @@
-import layout, { syncCountView, themeView } from "../pages/_layout.html.js";
+import layout, { loginView, syncCountView, themeView } from "../pages/_layout.html.js";
 import * as globalDb from "./global-model.js";
 import * as utils from "@jon49/sw/utils.js";
 import html from "html-template-tag-stream";
@@ -23,7 +23,7 @@ let app = {
   repo: { ...repo, ...repoPlayerGame, ...repoSchedule, ...repoShare },
   utils: { ...utils, ...serverUtils },
   validation: { ...validation, ...validators, ...v },
-  views: { ...sharedViews, themeView, syncCountView },
+  views: { ...sharedViews, themeView, syncCountView, loginView },
 };
 
 export type SharedApp = typeof app;

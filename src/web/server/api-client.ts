@@ -34,9 +34,10 @@ export async function authFetch(url: string, init: RequestInit): Promise<Respons
   return res;
 }
 
-// Status 0 is not a real HTTP status — it's this module's sentinel for "the
-// request never reached the network" (offline, DNS failure, server
-// unreachable), as opposed to a real error response from the server.
+// Status 0 is not a real HTTP status — it's the status of a network error
+// (`Response.error()`): the request never reached the server (offline, DNS
+// failure, server unreachable), as opposed to an error response from it.
+// `new Response(null, { status: 0 })` would throw, as 0 is out of range.
 export const OFFLINE_STATUS = 0;
 
 function fetchWithToken(url: string, init: RequestInit, authToken: string) {
@@ -45,7 +46,7 @@ function fetchWithToken(url: string, init: RequestInit, authToken: string) {
     headers: { ...init.headers, Authorization: `Bearer ${authToken}` },
     credentials: "same-origin",
     mode: "same-origin",
-  }).catch(() => new Response(null, { status: OFFLINE_STATUS }));
+  }).catch(() => Response.error());
 }
 
 async function refreshAuthToken(refreshToken: string): Promise<string | null> {

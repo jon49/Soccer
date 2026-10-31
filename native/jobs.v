@@ -20,6 +20,7 @@ enum JobKind {
 	publish
 	invite_preview
 	invite_accept
+	delete_account
 }
 
 struct JobDone {
@@ -157,6 +158,7 @@ fn api_worker(ch chan JobDone, kind JobKind, server string, auth core.AuthTokens
 		.leave { core.space_member_remove(server, auth, team_id, 'me') }
 		.invite_preview { core.invite_preview(server, auth, arg) }
 		.invite_accept { core.invite_accept(server, auth, arg) }
+		.delete_account { core.delete_account(server, auth) }
 		else { core.ApiResult{} }
 	}
 	send_job(ch, JobDone{
@@ -319,6 +321,9 @@ fn (mut app App) on_job_done(job JobDone) {
 		}
 		.invite_accept {
 			app.on_invite_accepted(job)
+		}
+		.delete_account {
+			app.on_account_deleted(job)
 		}
 	}
 }

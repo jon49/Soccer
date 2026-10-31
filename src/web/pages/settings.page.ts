@@ -2,15 +2,16 @@ import type { RoutePage, RoutePostHandler } from "@jon49/sw/routes.middleware.js
 import { entries } from "idb-keyval";
 import { syncLogEntries } from "../server/sync-log.js";
 import type { TeamId } from "../server/db.js";
+import { deleteAccount } from "../server/account.js";
 
 const {
   globalDb,
   html,
   layout,
   repo: { teamGet, teamGetAll, gameStateGet, gameStateSave, playerGameAllGet, playerGameSave },
-  utils: { when },
+  utils: { reject, when },
   validation: { validateObject, createIdNumber, createTeamId },
-  views: { themeView },
+  views: { themeView, loginView },
 } = self.sw;
 
 const dataTeamIdGameIdValidator = {
@@ -107,9 +108,10 @@ function forceResyncScript(teams: ResyncTeamOption[]): string {
 }
 
 const render = async () => {
-  let [{ disableAutoSyncDuringGame }, { teams }] = await Promise.all([
+  let [{ disableAutoSyncDuringGame }, { teams }, loggedIn] = await Promise.all([
     globalDb.settings(),
     teamGetAll("all"),
+    globalDb.isLoggedIn(),
   ]);
 
   let resyncPickerData: ResyncTeamOption[] = teams.map((team) => ({
@@ -182,8 +184,36 @@ const render = async () => {
 <script>
   $${forceResyncScript(resyncPickerData)}
 </script>
+
+${accountView(loggedIn)}
 `;
 };
+
+// accountView: deleting the account, while logged in.
+function accountView(loggedIn: boolean) {
+  if (!loggedIn)
+    return html`
+      <div id="account"></div>
+    `;
+  return html`
+    <section id="account" class="danger-zone">
+      <h3>Delete account</h3>
+      <p>
+        Permanently deletes your account and the teams, games and stats you've synced, from the server
+        and from this device. Teams you share with other coaches stay with them. This can't be undone.
+      </p>
+      <button
+        class="danger"
+        form="post"
+        formaction="/web/settings?handler=deleteAccount"
+        data-confirm="Delete your account and all of its data? This can't be undone."
+        _click="confirm"
+      >
+        Delete account
+      </button>
+    </section>
+  `;
+}
 
 async function exportData() {
   let all = await entries();
@@ -222,6 +252,24 @@ async function exportSyncLog() {
 }
 
 const postHandlers: RoutePostHandler = {
+  async deleteAccount() {
+    let status = await deleteAccount();
+    if (status === 401) {
+      return { status: 401, message: "Log in again, then delete your account." };
+    }
+    if (status === 0) {
+      return reject("You appear to be offline. Connect to the internet and try again.");
+    }
+    if (status < 200 || status >= 300) {
+      return reject(`Could not delete your account (status ${status}).`);
+    }
+    return {
+      status: 200,
+      body: html`${accountView(false)}${loginView()}`,
+      message: "Your account and its data were deleted.",
+    };
+  },
+
   async theme({ data }) {
     const submitted = (data as { theme?: string } | undefined)?.theme;
     const theme = submitted === "dark" ? "dark" : "light";

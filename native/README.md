@@ -92,7 +92,10 @@ of its calculator classes, and extend `core/core_test.v` with them.
   Settings > Disable auto-sync during games is on), when the window regains
   focus (at most once a minute), and on demand (↻ or Ctrl+R).
 - Settings has the web app's data export, sync log and force-resync tools;
-  exports go to `~/Downloads`.
+  exports go to `~/Downloads`. While logged in, it can also delete the
+  account (`DELETE /api/auth/v1/delete`): the server deletes the synced
+  data, and this device forgets everything but its theme, text size and
+  server.
 
 ## Checking it
 

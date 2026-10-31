@@ -552,6 +552,41 @@ fn test_store_persists_records_pending_and_settings() {
 	assert r.export_json().contains('"teams"')
 }
 
+fn test_wipe_forgets_everything_but_device_preferences() {
+	dir := os.join_path(os.temp_dir(), 'soccer-test-${rand.ulid()}')
+	defer {
+		os.rmdir_all(dir) or {}
+	}
+	mut s := open_store(dir)!
+	s.team_create('Hawks', '2026')!
+	s.settings.theme = 'dark'
+	s.settings.zoom = 1.25
+	s.settings.server_url = 'http://localhost:4000'
+	s.settings.last_synced_id = 42
+	s.settings.spaces[test_space] = 3
+	s.log_sync('info', 'synced', '{}')
+	s.auth = AuthTokens{
+		email:         'coach@example.com'
+		auth_token:    'a'
+		refresh_token: 'r'
+	}
+	s.save()!
+	s.save_auth()!
+	s.wipe()!
+	r := open_store(dir)!
+	assert r.records.len == 0
+	assert r.pending.len == 0
+	assert r.sync_log.len == 0
+	assert r.settings.last_synced_id == 0
+	assert r.settings.spaces.len == 0
+	assert r.settings.theme == 'dark'
+	assert r.settings.zoom == 1.25
+	assert r.settings.server_url == 'http://localhost:4000'
+	assert !r.auth.logged_in()
+	assert r.auth.email == ''
+	assert !os.exists(os.join_path(dir, 'auth.json'))
+}
+
 // ---- dates and the schedule page ----
 
 fn test_dates_and_times() {

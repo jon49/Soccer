@@ -143,7 +143,33 @@ fn (mut app App) draw_settings(x f32, y0 f32, w f32) f32 {
 	y = app.paragraph(x, y, w, 'Data folder: ${app.store.dir}', true)
 
 	y += 10
-	return app.draw_force_resync(x, y, w)
+	y = app.draw_force_resync(x, y, w)
+	if app.store.auth.logged_in() {
+		y = app.draw_delete_account(x, y + 30, w)
+	}
+	return y
+}
+
+// draw_delete_account is the danger zone at the bottom of Settings.
+fn (mut app App) draw_delete_account(x f32, y f32, w f32) f32 {
+	mut ui := app.ui
+	bh := ui.button_height()
+	mut zy := app.subheading(x + 16, y + 16, 'Delete account')
+	zy = app.paragraph(x + 16, zy, w - 32, "Permanently deletes your account and the teams, games and stats you've synced, from the server and from this device. Teams you share with other coaches stay with them. This can't be undone.",
+		false)
+	label := if app.is_busy(.delete_account) { 'Deleting…' } else { 'Delete account' }
+	dw := ui.button_width('Delete account')
+	if ui.named_button(gui.Rect{x + 16, zy, dw, bh}, label, .danger, 'delete-account')
+		&& !app.is_busy(.delete_account) {
+		app.ask(Confirm{
+			message: "Delete your account and all of its data? This can't be undone."
+			yes:     'Delete account'
+			action:  .delete_account
+		})
+	}
+	zy += bh + 16
+	ui.rounded_border(gui.Rect{x, y, w, zy - y}, 8, ui.theme.danger)
+	return zy
 }
 
 fn (mut app App) draw_force_resync(x f32, y0 f32, w f32) f32 {

@@ -226,6 +226,26 @@ fn write_atomic(path string, text string) ! {
 	os.mv(tmp, path)!
 }
 
+// wipe forgets everything on this device once the account is deleted: the
+// records, what was waiting to sync, the sync log and the login. Only the
+// device's own preferences stay: theme, text size, bench and server.
+pub fn (mut s Store) wipe() ! {
+	old := s.settings
+	s.records.clear()
+	s.pending.clear()
+	s.sync_log.clear()
+	s.settings = Settings{
+		theme:        old.theme
+		zoom:         old.zoom
+		server_url:   old.server_url
+		bench_hidden: old.bench_hidden
+	}
+	s.auth = AuthTokens{}
+	s.version++
+	s.save()!
+	s.save_auth()!
+}
+
 // begin_batch and end_batch wrap several changes so the file is written
 // once, at the end.
 pub fn (mut s Store) begin_batch() {

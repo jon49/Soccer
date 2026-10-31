@@ -10,6 +10,7 @@ import rand
 // Store on the UI thread.
 //
 //   POST   /api/auth/v1/{login,register,refresh,logout,reset_password/request}
+//   DELETE /api/auth/v1/delete                  delete the account
 //   POST   /api/data/soccer                     sync (see sync.v)
 //   POST   /api/spaces/soccer                   share a team
 //   GET    /api/spaces/soccer/{space}/members
@@ -211,6 +212,12 @@ pub fn logout(server string, refresh_token string) {
 		'refresh_token': json2.Any(refresh_token)
 	})
 	http_request(.post, server + '/api/auth/v1/logout', body.json_str(), '') or {}
+}
+
+// delete_account deletes the caller's account. The server then deletes the
+// data it synced; teams shared with other coaches stay with them.
+pub fn delete_account(server string, auth AuthTokens) ApiResult {
+	return auth_request(.delete, server, '/api/auth/v1/delete', '', auth)
 }
 
 // ---- sharing ----

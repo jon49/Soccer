@@ -75,6 +75,7 @@ enum ConfirmAction {
 	leave_team
 	remove_coach
 	logout
+	delete_account
 }
 
 @[heap]
@@ -93,7 +94,9 @@ mut:
 	toast_until i64
 	confirm     Confirm
 	// Sync runs on a worker thread; results come back on this channel.
-	syncing     bool
+	syncing bool
+	// Ignore the answer to the sync in flight (the account was deleted).
+	drop_sync   bool
 	sync_ch     chan SyncDone
 	sync_phase  SyncPhase
 	sync_manual bool
@@ -435,6 +438,10 @@ fn sync_worker(ch chan SyncDone, req core.SyncRequest, ctx &gg.Context) {
 
 fn (mut app App) on_sync_done(done SyncDone) {
 	app.syncing = false
+	if app.drop_sync {
+		app.drop_sync = false
+		return
+	}
 	outcome := app.store.finish_sync(done.req, done.res) or {
 		if app.sync_manual || !app.store.auth.logged_in() {
 			app.show_error(err.msg())
@@ -520,6 +527,36 @@ fn (mut app App) logout() {
 	}
 	app.store.save_auth() or {}
 	app.show_toast('Logged out.')
+}
+
+// delete_account deletes the account on the server; on_account_deleted
+// then forgets this device's copy.
+fn (mut app App) delete_account() {
+	app.start_api(.delete_account, '', '')
+}
+
+fn (mut app App) on_account_deleted(job JobDone) {
+	if !job.res.ok {
+		msg := if job.res.status == 401 {
+			'Log in again, then delete your account.'
+		} else {
+			job.res.message
+		}
+		app.show_error('Could not delete your account. ${msg}')
+		return
+	}
+	// A sync in flight was sent before the delete; its answer must not
+	// write anything back.
+	app.drop_sync = app.syncing
+	app.sync_due = 0
+	app.after_sync.clear()
+	app.store.wipe() or { app.show_error(err.msg()) }
+	app.history.clear()
+	app.forward.clear()
+	app.replace(Route{
+		screen: .teams
+	})
+	app.show_toast('Your account and its data were deleted.')
 }
 
 fn open_in_browser(url string) {
@@ -934,6 +971,7 @@ fn (mut app App) draw_confirm(w f32, h f32) {
 		.delete_game,
 		.leave_team,
 		.remove_coach,
+		.delete_account,
 	] {
 		gui.ButtonStyle.danger
 	} else {
@@ -965,6 +1003,7 @@ fn (mut app App) confirm_yes() {
 		.leave_team { app.share_leave(c.team_id) }
 		.remove_coach { app.share_remove(c.team_id, c.user) }
 		.logout { app.logout() }
+		.delete_account { app.delete_account() }
 	}
 }
 
