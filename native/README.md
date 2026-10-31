@@ -127,9 +127,9 @@ of its calculator classes, and extend `core/core_test.v` with them.
   our score and then the scorer (or No scorer). Hold a score (or right click
   it) to take a point back. Tap the clock to start or pause.
 - **Text size:** Ctrl + and Ctrl − (also Ctrl with the scroll wheel), Ctrl 0
-  to reset, or Settings. **Back:** ‹ in the header, Escape, Backspace,
-  Ctrl+← or Alt+←; **forward** again with Alt+→. **Paste** into fields with
-  Ctrl+V.
+  to reset, or Settings. **Back:** ‹ in the header, Escape (when nothing
+  has focus), Backspace, Ctrl+← or Alt+←; **forward** again with Alt+→.
+  **Paste** into fields with Ctrl+V.
 - **Close:** Ctrl+W closes the window (on the desktop).
 - **Keyboard focus:** Tab and Shift+Tab move through every button, link and
   field; Tab into a field starts editing it, and Tab out moves on. With
@@ -137,8 +137,8 @@ of its calculator classes, and extend `core/core_test.v` with them.
   Shift+Tab at the last tab. When not typing, j k l ; move focus left,
   down, up and right (vim's h j k l, one key over; j and ; stay in the
   row), Enter or Space presses the focused button, and Enter edits a
-  focused field. Escape stops editing and keeps
-  focus there. Focus stays on a button whose label changes when pressed,
+  focused field. Escape drops keyboard focus; in a field it also undoes
+  the edit. Focus stays on a button whose label changes when pressed,
   and goes back to what opened a dialog when it closes. A click drops
   keyboard focus, as does opening another screen.
 - **Tabs:** ← and → open the previous and next tab under the header (Teams,

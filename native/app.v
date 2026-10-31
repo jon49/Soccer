@@ -676,7 +676,11 @@ fn (mut app App) shortcuts() {
 		app.start_sync(true)
 	}
 	if ui.key_pressed(.escape, false) {
-		if app.route.screen == .match && app.match.sel.kind != .none_ {
+		// Escape drops keyboard focus first; with none, it clears the
+		// match's selection or goes back.
+		if ui.has_nav() {
+			ui.clear_nav()
+		} else if app.route.screen == .match && app.match.sel.kind != .none_ {
 			app.match.clear()
 		} else if !ui.has_focus() && app.history.len > 0 {
 			app.back()

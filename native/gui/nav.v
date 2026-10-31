@@ -7,8 +7,9 @@ module gui
 // next and previous stop in drawing order, and j k l ; move it to the
 // nearest stop left, down, up and right (vim's h j k l, one key over).
 // Enter or Space presses the focused control; Enter on a field starts
-// editing it, and Tab into a field starts editing straight away. Clicking or
-// touching anywhere drops keyboard focus.
+// editing it, and Tab into a field starts editing straight away. Escape in a
+// field undoes the edit and drops focus; clicking or touching anywhere drops
+// keyboard focus too, and the app drops it on Escape (see clear_nav).
 
 struct Stop {
 	id    string
@@ -86,9 +87,17 @@ fn (ui &Ui) nav_ring(r Rect) {
 	ui.rounded_border(r.inset(-2, -2), 7, t.primary)
 }
 
-// clear_nav drops keyboard focus, as when a new screen opens.
+// has_nav: a control has keyboard focus (it isn't being typed in).
+pub fn (ui &Ui) has_nav() bool {
+	return ui.nav != ''
+}
+
+// clear_nav drops keyboard focus, as on Escape or when a new screen opens.
 pub fn (mut ui Ui) clear_nav() {
-	ui.nav = ''
+	if ui.nav != '' {
+		ui.nav = ''
+		ui.redraw = true
+	}
 }
 
 fn (ui &Ui) stop_index(id string) int {

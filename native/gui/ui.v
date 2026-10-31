@@ -1137,7 +1137,6 @@ pub fn (mut ui Ui) field(id string, r Rect, mut input Input, kind FieldKind, pla
 					ui.fields[id] = st
 					ui.keys.clear()
 					ui.blur()
-					ui.nav = id
 					return .cancelled
 				}
 				else {
