@@ -4,5 +4,6 @@ Name=Soccer
 Comment=Track players' time, positions and goals
 Exec=soccer
 Icon=soccer
+StartupWMClass=soccer
 Terminal=false
 Categories=Utility;Sports;

@@ -144,7 +144,7 @@ of its calculator classes, and extend `core/core_test.v` with them.
 - **Remapped keys:** on Linux, Escape, Caps Lock, Tab, Backspace, Enter,
   Delete and the modifiers do what the keymap makes them (Caps Lock and
   Escape swapped with `caps:swapescape`, say), not what is printed on
-  them; sokol alone goes by the printed key (`keymap_linux.h`).
+  them; sokol alone goes by the printed key (`x11_linux.h`).
 
 ## Phones
 

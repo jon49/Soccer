@@ -1,13 +1,19 @@
-// sokol maps X11 keys by their physical position (XKB key names), so a key
-// the keymap remaps -- Caps Lock and Escape swapped with caps:swapescape, or
-// Caps Lock as another Control -- still reports what is printed on it.
-// soccer_x11_respect_keymap fixes sokol's table for the keys that don't type
+// Fixes for what sokol leaves out on X11. They reach into sokol_app.h's
+// private state (_sapp), so this is included after sokol's implementation
+// (#postinclude); call them once sokol is running (init_cb).
+//
+// soccer_x11_respect_keymap: sokol maps X11 keys by their physical position
+// (XKB key names), so a key the keymap remaps -- Caps Lock and Escape swapped
+// with caps:swapescape, or Caps Lock as another Control -- still reports what
+// is printed on it. This fixes sokol's table for the keys that don't type
 // text: each key reports what the keymap makes it. Letters, digits and
 // punctuation keep sokol's position-based codes.
 //
-// It reaches into sokol_app.h's private state (_sapp), so it must be included
-// after sokol's implementation; call it once sokol is running (init_cb).
+// soccer_x11_set_class: sokol sets no WM_CLASS, so the desktop can't match
+// the window to soccer.desktop (StartupWMClass) and shows no icon for it in
+// the task switcher.
 #include <X11/XKBlib.h>
+#include <X11/Xutil.h>
 #include <X11/keysym.h>
 
 void soccer_x11_respect_keymap(void) {
@@ -47,4 +53,15 @@ void soccer_x11_respect_keymap(void) {
       }
     }
   }
+}
+
+void soccer_x11_set_class(char *name) {
+  Display *display = _sapp.x11.display;
+  Window window = _sapp.x11.window;
+  if (display == NULL || window == 0) {
+    return;
+  }
+  XClassHint hint = {name, name};
+  XSetClassHint(display, window, &hint);
+  XFlush(display);
 }
