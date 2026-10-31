@@ -157,12 +157,14 @@ fn (mut app App) draw_delete_account(x f32, y f32, w f32) f32 {
 	mut zy := app.subheading(x + 16, y + 16, 'Delete account')
 	zy = app.paragraph(x + 16, zy, w - 32, "Permanently deletes your account and the teams, games and stats you've synced, from the server and from this device. Teams you share with other coaches stay with them. This can't be undone.",
 		false)
+	zy = app.paragraph(x + 16, zy, w - 32, "Other devices you use this app on keep their own copy of your data. They are logged out the next time they sync, but you'll need to remove the data on each of them yourself.",
+		false)
 	label := if app.is_busy(.delete_account) { 'Deleting…' } else { 'Delete account' }
 	dw := ui.button_width('Delete account')
 	if ui.named_button(gui.Rect{x + 16, zy, dw, bh}, label, .danger, 'delete-account')
 		&& !app.is_busy(.delete_account) {
 		app.ask(Confirm{
-			message: "Delete your account and all of its data? This can't be undone."
+			message: "Delete your account and all of its data? This can't be undone. Other devices keep their copy until you remove it there."
 			yes:     'Delete account'
 			action:  .delete_account
 		})

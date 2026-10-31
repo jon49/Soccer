@@ -11,7 +11,7 @@ import core
 //
 //   click X Y | rclick X Y | down X Y | up X Y   pointer, in layout units
 //   type TEXT                                  typed characters
-//   key NAME [ctrl|alt|shift]                  enter, tab, escape, j, semicolon, ...
+//   key NAME [ctrl|alt|shift]                  enter, tab, escape, semicolon, a-z, ...
 //   wait N | sleep MS                          frames / milliseconds
 //   shot FILE.png                              screenshot
 //   go SCREEN [TEAM [GAME]]                    open a screen directly
@@ -112,11 +112,7 @@ fn (mut app App) autopilot_step() {
 				'page_down' { gg.KeyCode.page_down }
 				'space' { gg.KeyCode.space }
 				'semicolon' { gg.KeyCode.semicolon }
-				'j' { gg.KeyCode.j }
-				'k' { gg.KeyCode.k }
-				'l' { gg.KeyCode.l }
-				'w' { gg.KeyCode.w }
-				else { gg.KeyCode.invalid }
+				else { letter_key(parts[1] or { '' }) }
 			}
 			mods := match parts[2] or { '' } {
 				'ctrl' { u32(2) }
@@ -235,4 +231,12 @@ fn seed_demo(mut s core.Store) ! {
 	s.game_notes_save(team.id, 2, 'Windy. Press high in the second half.')!
 	s.pending.clear()
 	s.save()!
+}
+
+// letter_key is the key for a single lowercase letter, else invalid.
+fn letter_key(name string) gg.KeyCode {
+	if name.len == 1 && name[0] >= `a` && name[0] <= `z` {
+		return unsafe { gg.KeyCode(int(name[0]) - 32) }
+	}
+	return .invalid
 }

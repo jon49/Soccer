@@ -202,11 +202,15 @@ function accountView(loggedIn: boolean) {
         Permanently deletes your account and the teams, games and stats you've synced, from the server
         and from this device. Teams you share with other coaches stay with them. This can't be undone.
       </p>
+      <p>
+        Other devices you use this app on keep their own copy of your data. They are logged out the next
+        time they sync, but you'll need to remove the data on each of them yourself.
+      </p>
       <button
         class="danger"
         form="post"
         formaction="/web/settings?handler=deleteAccount"
-        data-confirm="Delete your account and all of its data? This can't be undone."
+        data-confirm="Delete your account and all of its data? This can't be undone. Other devices keep their copy until you remove it there."
         _click="confirm"
       >
         Delete account
