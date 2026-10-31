@@ -139,8 +139,8 @@ mut:
 	focus_request string
 	focus_ids     []string
 	// Keyboard focus on a control that isn't being typed in: a button, a
-	// link, or a field before Enter starts editing it. Tab, Shift+Tab and
-	// j k l ; move it between this frame's stops; Enter or Space presses it.
+	// link, or a field before Enter starts editing it. Tab and Shift+Tab move
+	// it between this frame's stops; Enter or Space presses it.
 	nav      string
 	nav_rect Rect // where the control with keyboard focus was last drawn
 	// A dialog covers the page this frame; keyboard focus goes back to
@@ -1141,7 +1141,7 @@ pub fn (mut ui Ui) field(id string, r Rect, mut input Input, kind FieldKind, pla
 				}
 				else {
 					// Keys that type text were taken as characters above; keep
-					// them from also moving keyboard focus.
+					// them from also acting as shortcuts.
 					if int(k.code) < 256 && !k.ctrl() && !k.alt() {
 						continue
 					}

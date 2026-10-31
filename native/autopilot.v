@@ -11,7 +11,7 @@ import core
 //
 //   click X Y | rclick X Y | down X Y | up X Y   pointer, in layout units
 //   type TEXT                                  typed characters
-//   key NAME [ctrl|alt|shift]                  enter, tab, escape, semicolon, a-z, ...
+//   key NAME [ctrl|alt|shift]                  enter, tab, escape, a-z, ...
 //   wait N | sleep MS                          frames / milliseconds
 //   shot FILE.png                              screenshot
 //   go SCREEN [TEAM [GAME]]                    open a screen directly
@@ -111,7 +111,6 @@ fn (mut app App) autopilot_step() {
 				'up' { gg.KeyCode.up }
 				'page_down' { gg.KeyCode.page_down }
 				'space' { gg.KeyCode.space }
-				'semicolon' { gg.KeyCode.semicolon }
 				else { letter_key(parts[1] or { '' }) }
 			}
 			mods := match parts[2] or { '' } {

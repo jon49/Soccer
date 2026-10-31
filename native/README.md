@@ -134,13 +134,11 @@ of its calculator classes, and extend `core/core_test.v` with them.
 - **Keyboard focus:** Tab and Shift+Tab move through every button, link and
   field; Tab into a field starts editing it, and Tab out moves on. With
   nothing focused, Tab starts at the first control below the tabs, and
-  Shift+Tab at the last tab. When not typing, j k l ; move focus left,
-  down, up and right (vim's h j k l, one key over; j and ; stay in the
-  row), Enter or Space presses the focused button, and Enter edits a
-  focused field. Escape drops keyboard focus; in a field it also undoes
-  the edit. Focus stays on a button whose label changes when pressed,
-  and goes back to what opened a dialog when it closes. A click drops
-  keyboard focus, as does opening another screen.
+  Shift+Tab at the last tab. Enter or Space presses the focused button,
+  and Enter edits a focused field. Escape drops keyboard focus; in a field
+  it also undoes the edit. Focus stays on a button whose label changes
+  when pressed, and goes back to what opened a dialog when it closes. A
+  click drops keyboard focus, as does opening another screen.
 - **Tabs:** ← and → open the previous and next tab under the header (Teams,
   Players, Games, Stats, Formation) when not typing.
 - **Remapped keys:** on Linux, Escape, Caps Lock, Tab, Backspace, Enter,

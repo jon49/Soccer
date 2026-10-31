@@ -2,12 +2,10 @@ module gui
 
 // ---- keyboard navigation ----
 //
-// Every control that can be clicked is also a stop for the keyboard. While
-// no field is being typed in, Tab and Shift+Tab move keyboard focus to the
-// next and previous stop in drawing order, and j k l ; move it to the
-// nearest stop left, down, up and right (vim's h j k l, one key over).
-// Enter or Space presses the focused control; Enter on a field starts
-// editing it, and Tab into a field starts editing straight away. Escape in a
+// Every control that can be clicked is also a stop for the keyboard. Tab and
+// Shift+Tab move keyboard focus to the next and previous stop in drawing
+// order. Enter or Space presses the focused control; Tab into a field starts
+// editing it (and Enter on a field that has focus but isn't being edited). Escape in a
 // field undoes the edit and drops focus; clicking or touching anywhere drops
 // keyboard focus too, and the app drops it on Escape (see clear_nav).
 
@@ -19,13 +17,6 @@ struct Stop {
 	// The scroll areas the stop is drawn in, to bring it into view.
 	vscroll string
 	hscroll string
-}
-
-enum NavDir {
-	left
-	down
-	up
-	right
 }
 
 fn (mut ui Ui) add_stop(id string, r Rect, field bool) {
@@ -140,31 +131,15 @@ fn (s Stop) visible() bool {
 	return v.w > 0 && v.h > 0
 }
 
-// keyboard_nav moves keyboard focus for the Tab and j k l ; presses no
-// control used this frame. end_frame calls it while no field is focused.
+// keyboard_nav moves keyboard focus for the Tab presses no control used this
+// frame. end_frame calls it while no field is focused.
 fn (mut ui Ui) keyboard_nav() {
 	for k in ui.keys {
-		if k.ctrl() || k.alt() {
-			continue
-		}
-		target := match k.code {
-			.tab { ui.tab_target(k.shift()) }
-			.j {
-				if k.shift() { -1 } else { ui.spatial_target(.left) }
+		if k.code == .tab && !k.ctrl() && !k.alt() {
+			target := ui.tab_target(k.shift())
+			if target >= 0 {
+				ui.move_nav(target)
 			}
-			.k {
-				if k.shift() { -1 } else { ui.spatial_target(.down) }
-			}
-			.l {
-				if k.shift() { -1 } else { ui.spatial_target(.up) }
-			}
-			.semicolon {
-				if k.shift() { -1 } else { ui.spatial_target(.right) }
-			}
-			else { -1 }
-		}
-		if target >= 0 {
-			ui.move_nav(target, k.code == .tab)
 		}
 	}
 }
@@ -214,113 +189,12 @@ fn (ui &Ui) content_start() int {
 	return -1
 }
 
-// spatial_target is the nearest stop in `dir` from the focused one. With
-// nothing focused it is the first one in the page's content (see
-// content_start), or else the first in view.
-fn (ui &Ui) spatial_target(dir NavDir) int {
-	cur := ui.stop_index(ui.nav)
-	if cur < 0 {
-		start := ui.content_start()
-		if start >= 0 {
-			return start
-		}
-		for i, s in ui.stops {
-			if s.visible() {
-				return i
-			}
-		}
-		return -1
-	}
-	from := ui.stops[cur].r
-	mut best := -1
-	mut best_score := f32(0)
-	for i, s in ui.stops {
-		if i == cur || !s.reachable() {
-			continue
-		}
-		score := nav_score(from, s.r, dir) or { continue }
-		if best < 0 || score < best_score {
-			best = i
-			best_score = score
-		}
-	}
-	return best
-}
-
-// nav_score rates how near `to` is from `from` going `dir`, lower being
-// nearer, or none when it isn't that way (or, going sideways, not in the
-// same row). The gap along the way counts once, the gap across it three
-// times (stay in the column), and the distance between centers breaks ties.
-fn nav_score(from Rect, to Rect, dir NavDir) ?f32 {
-	fx, fy := from.x + from.w / 2, from.y + from.h / 2
-	tx, ty := to.x + to.w / 2, to.y + to.h / 2
-	mut ahead := f32(0)
-	mut gap := f32(0)
-	mut across := f32(0)
-	mut off := f32(0)
-	match dir {
-		.down {
-			ahead = ty - fy
-			gap = to.y - from.bottom()
-			across = span_gap(from.x, from.right(), to.x, to.right())
-			off = abs(tx - fx)
-		}
-		.up {
-			ahead = fy - ty
-			gap = from.y - to.bottom()
-			across = span_gap(from.x, from.right(), to.x, to.right())
-			off = abs(tx - fx)
-		}
-		.right {
-			ahead = tx - fx
-			gap = to.x - from.right()
-			across = span_gap(from.y, from.bottom(), to.y, to.bottom())
-			off = abs(ty - fy)
-		}
-		.left {
-			ahead = fx - tx
-			gap = from.x - to.right()
-			across = span_gap(from.y, from.bottom(), to.y, to.bottom())
-			off = abs(ty - fy)
-		}
-	}
-	// It must start past the middle of `from`, not just reach past it.
-	lead := match dir {
-		.down { to.y - fy }
-		.up { fy - to.bottom() }
-		.right { to.x - fx }
-		.left { fx - to.right() }
-	}
-	if ahead < 1 || lead < 0 {
-		return none
-	}
-	// j and ; stay in the row.
-	if dir in [.left, .right] && across > 0 {
-		return none
-	}
-	if gap < 0 {
-		gap = 0
-	}
-	return gap + 3 * across + 0.1 * off + 0.01 * ahead
-}
-
-// span_gap is the distance between two spans, 0 when they overlap.
-fn span_gap(a1 f32, a2 f32, b1 f32, b2 f32) f32 {
-	if b1 > a2 {
-		return b1 - a2
-	}
-	if a1 > b2 {
-		return a1 - b2
-	}
-	return 0
-}
-
-// move_nav gives stop i keyboard focus and scrolls it into view. Tab into a
-// field starts editing it.
-fn (mut ui Ui) move_nav(i int, edit bool) {
+// move_nav gives stop i keyboard focus and scrolls it into view. A field
+// starts editing.
+fn (mut ui Ui) move_nav(i int) {
 	s := ui.stops[i]
 	ui.nav = s.id
-	if edit && s.field {
+	if s.field {
 		ui.focus_request = s.id
 	}
 	margin := f32(12)
