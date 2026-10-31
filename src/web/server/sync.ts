@@ -18,6 +18,7 @@ import { errorToPlain, logSyncError, logSyncInfo } from "./sync-log.js";
 const {
   db: { getMany, setMany, update, get, transaction, promisifyRequest },
   globalDb,
+  syncQueue: { afterSync },
 } = self.sw;
 
 const SYNC_URL = "/api/data/soccer";
@@ -29,19 +30,11 @@ export interface SyncResult {
 
 // One sync at a time: a manual sync, auto-sync and other tabs all share this
 // service worker, and two rounds in flight at once would each confirm keys
-// against stale reads. A sync asked for while one runs waits its turn.
-let running: Promise<unknown> = Promise.resolve();
-
+// against stale reads. A sync asked for while one runs waits its turn. The
+// queue is on self.sw (sync-queue.ts), as each page has its own copy of
+// this module.
 export default function sync(): Promise<SyncResult> {
   return afterSync(syncWithRetry);
-}
-
-// afterSync runs `f` once the sync in flight (if any) is done, and holds
-// back any sync asked for meanwhile until `f` is done too.
-export function afterSync<T>(f: () => Promise<T>): Promise<T> {
-  let result = running.then(f, f);
-  running = result.catch(() => {});
-  return result;
 }
 
 async function syncWithRetry(): Promise<SyncResult> {

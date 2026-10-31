@@ -12,6 +12,7 @@ import * as repoSchedule from "./repo-schedule.js";
 import * as repoShare from "./repo-share.js";
 import * as sharedViews from "../pages/_shared-views.js";
 import * as serverUtils from "./utils.js";
+import * as syncQueue from "./sync-queue.js";
 
 self.sw = self.sw || {};
 
@@ -21,6 +22,7 @@ let app = {
   html,
   layout,
   repo: { ...repo, ...repoPlayerGame, ...repoSchedule, ...repoShare },
+  syncQueue,
   utils: { ...utils, ...serverUtils },
   validation: { ...validation, ...validators, ...v },
   views: { ...sharedViews, themeView, syncCountView, loginView },

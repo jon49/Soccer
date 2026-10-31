@@ -113,6 +113,36 @@ test.describe("deleting your account", () => {
     await expect(a.page.locator("#account button")).toHaveText("Delete account");
   });
 
+  test("waits for a sync in flight, even one started from another page", async ({ newCoach }) => {
+    let a = await newCoach("a");
+    let teamId = await a.createTeam("Hawks", "2026");
+    // Hold the sync at the server for a while, and note when it goes through
+    // and when the delete is sent.
+    let syncHeld = false;
+    let syncReleased = 0;
+    let deleteSent = 0;
+    await a.context.route("**/api/data/soccer", async (route) => {
+      syncHeld = true;
+      await new Promise((x) => setTimeout(x, 2000));
+      syncReleased = Date.now();
+      await route.continue();
+    });
+    await a.context.route("**/api/auth/v1/delete", async (route) => {
+      deleteSent = Date.now();
+      await route.continue();
+    });
+
+    // The sync runs in the sync page's code, the delete in Settings'.
+    a.sync().catch(() => {}); // the page navigates away before it answers
+    await expect.poll(() => syncHeld).toBe(true);
+    expect(await a.deleteAccount()).toEqual(["Your account and its data were deleted."]);
+
+    expect(syncReleased).toBeGreaterThan(0);
+    expect(deleteSent).toBeGreaterThanOrEqual(syncReleased);
+    expect(await a.idb(["team", teamId])).toBeUndefined();
+    expect(await a.teamNames()).toEqual([]);
+  });
+
   test("is offered only while logged in", async ({ newCoach }) => {
     let a = await newCoach("a");
     await a.goto("/web/settings");
