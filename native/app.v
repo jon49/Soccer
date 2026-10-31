@@ -618,6 +618,13 @@ fn (mut app App) scroll_keys(area gui.Rect, content_h f32) {
 // shortcuts handles the keys no field used.
 fn (mut app App) shortcuts() {
 	mut ui := app.ui
+	$if !android {
+		// Ctrl+W closes the window, which quits (on_cleanup saves any typing).
+		if ui.key_pressed(.w, true) {
+			app.gg.quit()
+			return
+		}
+	}
 	if app.confirm.action != .none_ {
 		if ui.key_pressed(.escape, false) {
 			app.confirm = Confirm{}

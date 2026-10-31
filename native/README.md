@@ -127,6 +127,7 @@ of its calculator classes, and extend `core/core_test.v` with them.
   to reset, or Settings. **Back:** ‹ in the header, Escape, Backspace,
   Ctrl+← or Alt+←; **forward** again with Alt+→. **Paste** into fields with
   Ctrl+V.
+- **Close:** Ctrl+W closes the window (on the desktop).
 
 ## Phones
 

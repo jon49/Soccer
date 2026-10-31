@@ -109,6 +109,7 @@ fn (mut app App) autopilot_step() {
 				'left' { gg.KeyCode.left }
 				'right' { gg.KeyCode.right }
 				'page_down' { gg.KeyCode.page_down }
+				'w' { gg.KeyCode.w }
 				else { gg.KeyCode.invalid }
 			}
 			mods := match parts[2] or { '' } {
