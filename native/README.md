@@ -143,6 +143,10 @@ of its calculator classes, and extend `core/core_test.v` with them.
   keyboard focus, as does opening another screen.
 - **Tabs:** ← and → open the previous and next tab under the header (Teams,
   Players, Games, Stats, Formation) when not typing.
+- **Remapped keys:** on Linux, Escape, Caps Lock, Tab, Backspace, Enter,
+  Delete and the modifiers do what the keymap makes them (Caps Lock and
+  Escape swapped with `caps:swapescape`, say), not what is printed on
+  them; sokol alone goes by the printed key (`keymap_linux.h`).
 
 ## Phones
 
