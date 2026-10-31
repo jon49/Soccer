@@ -11,7 +11,7 @@ import core
 //
 //   click X Y | rclick X Y | down X Y | up X Y   pointer, in layout units
 //   type TEXT                                  typed characters
-//   key NAME [ctrl|alt]                        enter, tab, escape, backspace, ...
+//   key NAME [ctrl|alt|shift]                  enter, tab, escape, j, semicolon, ...
 //   wait N | sleep MS                          frames / milliseconds
 //   shot FILE.png                              screenshot
 //   go SCREEN [TEAM [GAME]]                    open a screen directly
@@ -108,13 +108,20 @@ fn (mut app App) autopilot_step() {
 				'down' { gg.KeyCode.down }
 				'left' { gg.KeyCode.left }
 				'right' { gg.KeyCode.right }
+				'up' { gg.KeyCode.up }
 				'page_down' { gg.KeyCode.page_down }
+				'space' { gg.KeyCode.space }
+				'semicolon' { gg.KeyCode.semicolon }
+				'j' { gg.KeyCode.j }
+				'k' { gg.KeyCode.k }
+				'l' { gg.KeyCode.l }
 				'w' { gg.KeyCode.w }
 				else { gg.KeyCode.invalid }
 			}
 			mods := match parts[2] or { '' } {
 				'ctrl' { u32(2) }
 				'alt' { u32(4) }
+				'shift' { u32(1) }
 				else { u32(0) }
 			}
 			app.ui.handle_event(gg.Event{

@@ -170,7 +170,7 @@ fn (mut app App) draw_game_card(team core.Team, g core.Game, is_next bool, x f32
 			gui.TextStyle{ color: t.muted, size: 14 })
 	}
 	ui.pointer_cursor(main_r)
-	if ui.clicked(main_r) {
+	if ui.tap(main_r, 'game-${g.id}') {
 		app.go(Route{
 			screen:  .game
 			team_id: team.id

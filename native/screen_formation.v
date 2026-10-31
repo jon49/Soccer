@@ -196,7 +196,7 @@ fn (mut app App) draw_templates(x f32, y0 f32, w f32) f32 {
 			bold: true
 		})
 		ui.pointer_cursor(r)
-		if ui.clicked(r) {
+		if ui.tap(r, core.formation_name(grid)) {
 			if app.save_formation(core.template_positions(grid)) {
 				app.back()
 			}

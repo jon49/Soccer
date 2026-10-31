@@ -185,7 +185,7 @@ fn (mut app App) draw_match_bar(m core.Match, w f32, now i64) f32 {
 			valign: .middle
 		})
 		ui.pointer_cursor(clock)
-		if ui.clicked(clock) {
+		if ui.tap(clock, 'clock') {
 			app.match_clock(if m.state.is_in_play() {
 				core.ClockChange.pause
 			} else {
@@ -237,7 +237,7 @@ fn (mut app App) draw_match_bar(m core.Match, w f32, now i64) f32 {
 			valign: .middle
 		})
 		ui.pointer_cursor(sr)
-		if ui.clicked(sr) {
+		if ui.tap(sr, 'swap') {
 			app.match_swap(0)
 		}
 	}
@@ -282,7 +282,7 @@ fn (mut app App) draw_score(r gui.Rect, label string, value int, ours bool, m co
 		app.take_back(ours, m)
 		return
 	}
-	if ui.clicked(r) {
+	if ui.tap(r, if ours { 'score-ours' } else { 'score-theirs' }) {
 		if !ours {
 			app.match_opponent(1)
 		} else if m.credit_scorer() {
@@ -364,7 +364,7 @@ fn (mut app App) draw_field(m core.Match, area gui.Rect, now i64) f32 {
 				color:  t.muted
 			})
 		r := gui.Rect{field.x, field.y, field.w, field.h}
-		if ui.clicked(r) {
+		if ui.tap(r, 'formation') {
 			app.go(Route{
 				screen:  .formation
 				team_id: m.team_id
@@ -537,7 +537,7 @@ fn (mut app App) draw_position(m core.Match, pos int, name string, r gui.Rect, s
 		}
 		ui.pointer_cursor(card)
 		if q := queued {
-			if ui.clicked(sub_r) {
+			if ui.tap(sub_r, 'queued-${pos}') {
 				app.match_tap(Hit{
 					player_id: q.player_id
 					status:    .on_deck
@@ -546,7 +546,7 @@ fn (mut app App) draw_position(m core.Match, pos int, name string, r gui.Rect, s
 				return h
 			}
 		}
-		if ui.clicked(main_r) {
+		if ui.tap(main_r, 'position-${pos}') {
 			app.match_tap(Hit{
 				player_id: p.player_id
 				status:    .in_play
@@ -576,7 +576,9 @@ fn (mut app App) draw_position(m core.Match, pos int, name string, r gui.Rect, s
 		ui.rounded_border(card, 4, t.on)
 		app.selection_ring(sub_r, q.player_id, .on_deck)
 		ui.pointer_cursor(card)
-		if ui.clicked(sub_r) {
+		// For the keyboard, the position is the strip above the queued player.
+		to_pos := ui.focusable(gui.Rect{r.x, r.y, r.w, sub_r.y - r.y}, 'position-${pos}')
+		if ui.tap(sub_r, 'queued-${pos}') {
 			app.match_tap(Hit{
 				player_id: q.player_id
 				status:    .on_deck
@@ -584,7 +586,7 @@ fn (mut app App) draw_position(m core.Match, pos int, name string, r gui.Rect, s
 			}, m)
 			return h
 		}
-		if ui.clicked(card) {
+		if ui.clicked(card) || to_pos {
 			app.match_tap(Hit{
 				position: pos
 			}, m)
@@ -602,7 +604,7 @@ fn (mut app App) draw_position(m core.Match, pos int, name string, r gui.Rect, s
 	}
 	ui.text(r.x + r.w / 2, r.y + r.h / 2, ui.fit(name, r.w - 8, st), st)
 	ui.pointer_cursor(card)
-	if ui.clicked(card) {
+	if ui.tap(card, 'position-${pos}') {
 		app.match_tap(Hit{
 			position: pos
 		}, m)
@@ -732,7 +734,7 @@ fn (mut app App) drop_target(r gui.Rect, label string) bool {
 		valign: .middle
 	})
 	ui.pointer_cursor(r)
-	return ui.clicked(r)
+	return ui.tap(r, label)
 }
 
 // draw_bench draws the bench (queued players without a position, players
@@ -791,7 +793,7 @@ fn (mut app App) draw_bench(m core.Match, area gui.Rect, cols int, now i64) f32 
 		})
 		app.selection_ring(r, p.player_id, .on_deck)
 		ui.pointer_cursor(r)
-		if ui.clicked(r) {
+		if ui.tap(r, 'player-${p.player_id}') {
 			app.match_tap(Hit{
 				player_id: p.player_id
 				status:    .on_deck
@@ -846,7 +848,7 @@ fn (mut app App) draw_bench(m core.Match, area gui.Rect, cols int, now i64) f32 
 		})
 		app.selection_ring(r, p.player_id, p.status.kind)
 		ui.pointer_cursor(r)
-		if ui.clicked(r) {
+		if ui.tap(r, 'player-${p.player_id}') {
 			app.match_tap(Hit{
 				player_id: p.player_id
 				status:    p.status.kind
@@ -884,7 +886,7 @@ fn (mut app App) draw_bench(m core.Match, area gui.Rect, cols int, now i64) f32 
 					color:  t.muted
 				})
 				ui.pointer_cursor(r)
-				if ui.clicked(r) {
+				if ui.tap(r, 'back-in-${p.player_id}') {
 					app.match.clear()
 					app.match_back_in(p.player_id)
 				}

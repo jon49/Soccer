@@ -46,6 +46,8 @@ pub fn (mut ui Ui) begin_hscroll(id string, r Rect) f32 {
 	}
 	ui.hscrolls[id] = off
 	ui.push_clip(r)
+	ui.hscroll_ids << id
+	ui.hareas[id] = r
 	return off
 }
 
@@ -56,6 +58,9 @@ pub fn (mut ui Ui) set_hscroll(id string, off f32) {
 
 pub fn (mut ui Ui) end_hscroll(id string, r Rect, content_w f32) {
 	ui.pop_clip()
+	if ui.hscroll_ids.len > 0 {
+		ui.hscroll_ids.delete_last()
+	}
 	ui.content_ws[id] = content_w
 	max := if content_w > r.w { content_w - r.w } else { 0 }
 	if (ui.hscrolls[id] or { 0 }) > max {
@@ -125,7 +130,8 @@ pub fn (mut ui Ui) toggle(r Rect, off_label string, on_label string, value bool)
 	label := if value { on_label } else { off_label }
 	ui.text(r.x + r.w / 2, r.y + r.h / 2, ui.fit(label, r.w - 8, style), style)
 	ui.pointer_cursor(r)
-	return ui.clicked(r)
+	// Named by both labels: the shown one changes when it flips.
+	return ui.tap(r, '${off_label}|${on_label}')
 }
 
 // toggle_width fits the longer label, so the button keeps its size when it
@@ -165,7 +171,7 @@ pub fn (mut ui Ui) segmented(r Rect, labels []string, selected int) int {
 		}
 		ui.text(cell.x + w / 2, cell.y + r.h / 2, ui.fit(label, w - 6, style), style)
 		ui.pointer_cursor(cell)
-		if ui.clicked(cell) {
+		if ui.tap(cell, label) {
 			clicked = i
 		}
 	}
@@ -194,7 +200,7 @@ pub fn (mut ui Ui) checkbox(x f32, y f32, label string, value bool) (bool, f32) 
 	}
 	ui.text(x + s + 10, row.y + row.h / 2, label, TextStyle{ valign: .middle })
 	ui.pointer_cursor(row)
-	return ui.clicked(row), row.h
+	return ui.tap(row, label), row.h
 }
 
 // circle draws a filled circle.

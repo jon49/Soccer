@@ -324,6 +324,7 @@ fn (mut app App) forget_routes(gone fn (r Route) bool) {
 fn (mut app App) leave_screen() {
 	app.commit_forms()
 	app.ui.blur()
+	app.ui.clear_nav()
 	app.match.clear()
 }
 
@@ -653,6 +654,15 @@ fn (mut app App) shortcuts() {
 	if ui.alt_pressed(.right) {
 		app.go_forward()
 	}
+	// ← and → step through the tabs under the header.
+	if !ui.has_focus() && app.route.screen != .match {
+		if ui.key_pressed(.left, false) {
+			app.next_tab(-1)
+		}
+		if ui.key_pressed(.right, false) {
+			app.next_tab(1)
+		}
+	}
 	if ui.key_pressed(.equal, true) || ui.key_pressed(.kp_add, true) {
 		app.zoom_by(1)
 	}
@@ -715,16 +725,31 @@ fn (mut app App) draw_header(w f32) f32 {
 	brand := gui.Rect{lx, 8, tw, bh}
 	draw_ball(ui, lx + ball, top_h / 2, ball)
 	ui.pointer_cursor(brand)
-	if ui.clicked(brand) {
+	if ui.tap(brand, 'Soccer') {
 		app.go(Route{
 			screen: .teams
 		})
 	}
 
-	// Right: theme, sync, settings, login.
-	mut rx := w - pad
-	rx -= aw
-	if ui.button(gui.Rect{rx, 8, aw, bh}, auth_label, .outline) {
+	// Right: theme, sync, settings, login, drawn left to right for Tab.
+	// Buttons whose label changes keep a name, so keyboard focus stays.
+	mut rx := right_x
+	theme_label := if app.theme_resolved == 'dark' { '☀' } else { '☾' }
+	if ui.named_button(gui.Rect{rx, 8, bh, bh}, theme_label, .ghost, 'theme') {
+		app.toggle_theme()
+	}
+	rx += bh + 6
+	if ui.named_button(gui.Rect{rx, 8, sw, bh}, sync_label, .ghost, 'sync') {
+		app.start_sync(true)
+	}
+	rx += sw + 6
+	if ui.button(gui.Rect{rx, 8, bh, bh}, '⚙', .ghost) {
+		app.go(Route{
+			screen: .settings
+		})
+	}
+	rx += bh + 6
+	if ui.named_button(gui.Rect{rx, 8, aw, bh}, auth_label, .outline, 'auth') {
 		if logged_in {
 			app.ask(Confirm{
 				message: 'Log out? Changes not synced yet stay on this device.'
@@ -737,21 +762,6 @@ fn (mut app App) draw_header(w f32) f32 {
 			})
 		}
 	}
-	rx -= bh + 6
-	if ui.button(gui.Rect{rx, 8, bh, bh}, '⚙', .ghost) {
-		app.go(Route{
-			screen: .settings
-		})
-	}
-	rx -= sw + 6
-	if ui.button(gui.Rect{rx, 8, sw, bh}, sync_label, .ghost) {
-		app.start_sync(true)
-	}
-	theme_label := if app.theme_resolved == 'dark' { '☀' } else { '☾' }
-	rx -= bh + 6
-	if ui.button(gui.Rect{rx, 8, bh, bh}, theme_label, .ghost) {
-		app.toggle_theme()
-	}
 
 	// Navigation: the teams, and the team's pages when one is open.
 	nav_y := top_h
@@ -759,28 +769,7 @@ fn (mut app App) draw_header(w f32) f32 {
 	nav_r := gui.Rect{0, nav_y, w, nav_h}
 	ui.rect(nav_r, t.bg)
 	ui.hline(0, nav_y + nav_h - 1, w, t.border)
-	mut items := [NavItem{'Teams', Route{
-		screen: .teams
-	}}]
-	tid := app.route.team_id
-	if tid != '' && app.route.screen !in [.settings, .login, .register, .forgot, .join] {
-		items << NavItem{'Players', Route{
-			screen:  .team
-			team_id: tid
-		}}
-		items << NavItem{'Games', Route{
-			screen:  .games
-			team_id: tid
-		}}
-		items << NavItem{'Stats', Route{
-			screen:  .stats
-			team_id: tid
-		}}
-		items << NavItem{'Formation', Route{
-			screen:  .formation
-			team_id: tid
-		}}
-	}
+	items := app.nav_items()
 	// The tabs scroll sideways when they don't fit, as on a phone, and a
 	// newly opened screen brings its tab into view.
 	off := ui.begin_hscroll('nav', nav_r)
@@ -788,11 +777,7 @@ fn (mut app App) draw_header(w f32) f32 {
 	mut active_x, mut active_w := f32(0), f32(0)
 	for item in items {
 		bw := ui.button_width(item.label)
-		active := item.route.screen == app.route.screen
-			|| (item.route.screen == .stats && app.route.screen == .stats_edit)
-			|| (item.route.screen == .formation && app.route.screen == .templates)
-			|| (item.route.screen == .games && app.route.screen in [.game, .goal_picker])
-			|| (item.route.screen == .team && app.route.screen == .share)
+		active := app.nav_active(item)
 		if active {
 			active_x, active_w = nx, bw
 		}
@@ -818,6 +803,57 @@ fn (mut app App) draw_header(w f32) f32 {
 struct NavItem {
 	label string
 	route Route
+}
+
+// nav_items are the tabs under the header: the teams, and the team's pages
+// when one is open.
+fn (app &App) nav_items() []NavItem {
+	mut items := [NavItem{'Teams', Route{
+		screen: .teams
+	}}]
+	tid := app.route.team_id
+	if tid != '' && app.route.screen !in [.settings, .login, .register, .forgot, .join] {
+		items << NavItem{'Players', Route{
+			screen:  .team
+			team_id: tid
+		}}
+		items << NavItem{'Games', Route{
+			screen:  .games
+			team_id: tid
+		}}
+		items << NavItem{'Stats', Route{
+			screen:  .stats
+			team_id: tid
+		}}
+		items << NavItem{'Formation', Route{
+			screen:  .formation
+			team_id: tid
+		}}
+	}
+	return items
+}
+
+// nav_active: the tab is for this screen, or the page this screen is in.
+fn (app &App) nav_active(item NavItem) bool {
+	return item.route.screen == app.route.screen
+		|| (item.route.screen == .stats && app.route.screen == .stats_edit)
+		|| (item.route.screen == .formation && app.route.screen == .templates)
+		|| (item.route.screen == .games && app.route.screen in [.game, .goal_picker])
+		|| (item.route.screen == .team && app.route.screen == .share)
+}
+
+// next_tab opens the tab `step` places from the current one (← and →).
+fn (mut app App) next_tab(step int) {
+	items := app.nav_items()
+	for i, item in items {
+		if app.nav_active(item) {
+			j := i + step
+			if j >= 0 && j < items.len {
+				app.go(items[j].route)
+			}
+			return
+		}
+	}
 }
 
 // draw_ball is the app's icon: a ball with a pentagon patch.
