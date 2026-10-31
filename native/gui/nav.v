@@ -161,12 +161,23 @@ fn (mut ui Ui) keyboard_nav() {
 }
 
 // tab_target is the next (or, going back, previous) stop in drawing order.
+// With nothing focused, Tab starts at the page's content, below the header
+// and its tabs, and Shift+Tab as if from there: at the header's last tab.
 fn (ui &Ui) tab_target(back bool) int {
 	n := ui.stops.len
 	if n == 0 {
 		return -1
 	}
-	cur := ui.stop_index(ui.nav)
+	mut cur := ui.stop_index(ui.nav)
+	if cur < 0 {
+		start := ui.content_start()
+		if start >= 0 {
+			if !back {
+				return start
+			}
+			cur = start
+		}
+	}
 	mut i := cur
 	for _ in 0 .. n {
 		i = if i < 0 {
@@ -183,16 +194,26 @@ fn (ui &Ui) tab_target(back bool) int {
 	return -1
 }
 
+// content_start is the first stop in view in a scroll area: the page's
+// content rather than its header. -1 when there is none.
+fn (ui &Ui) content_start() int {
+	for i, s in ui.stops {
+		if s.vscroll != '' && s.visible() {
+			return i
+		}
+	}
+	return -1
+}
+
 // spatial_target is the nearest stop in `dir` from the focused one. With
-// nothing focused it is the first one in view in a scroll area (the page's
-// content rather than its header), or else the first in view.
+// nothing focused it is the first one in the page's content (see
+// content_start), or else the first in view.
 fn (ui &Ui) spatial_target(dir NavDir) int {
 	cur := ui.stop_index(ui.nav)
 	if cur < 0 {
-		for i, s in ui.stops {
-			if s.vscroll != '' && s.visible() {
-				return i
-			}
+		start := ui.content_start()
+		if start >= 0 {
+			return start
 		}
 		for i, s in ui.stops {
 			if s.visible() {
