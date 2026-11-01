@@ -4,6 +4,8 @@ import type { SettingsApp } from "../web/settings.global.ts";
 declare global {
   interface Window {
     htmz: (frame: HTMLIFrameElement) => void;
+    // Swaps a response document into the page (@jon49/web/htmz-morph.js).
+    htmzSwap: (doc: Document, detail?: unknown) => void;
     dataAction: (event: Event) => void;
     sw: App; // Add the sw property with proper typing
     // `app` is declared by @jon49/web/app-actions.js (Record<string, AppAction>).

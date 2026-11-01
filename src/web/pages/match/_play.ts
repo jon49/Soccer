@@ -39,6 +39,7 @@ export async function play({
     <script src="/web/js/app.bundle.js" type="module"></script>
     <script src="/web/js/game-timer.js" type="module"></script>
     <script src="/web/js/match-select.js" type="module"></script>
+    <script src="/web/js/match.bundle.js" type="module"></script>
 </head>
 <body>
 <script>window.app = {}</script>
