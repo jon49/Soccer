@@ -1,0 +1,1086 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Startup and Size</title>
+    <meta
+      name="description"
+      content="How long the soccer web app and native app take to start on a phone, and how big the native builds are."
+    />
+    <style>
+      :root {
+        color-scheme: light;
+        --surface: #fcfcfb;
+        --surface-2: #f3f2ef;
+        --border: #dddcd7;
+        --text: #0b0b0b;
+        --text-2: #52514e;
+        --text-3: #75746f;
+        --accent: #2a78d6;
+        --s1: #2a78d6; /* Chrome starting */
+        --s2: #eb6834; /* service worker */
+        --s3: #1baf7a; /* rest of the page load */
+        --s4: #eda100; /* native app */
+        --grid: #e6e5e0;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme="light"]) {
+          color-scheme: dark;
+          --surface: #1a1a19;
+          --surface-2: #232322;
+          --border: #3a3a38;
+          --text: #f0efec;
+          --text-2: #c3c2b7;
+          --text-3: #9a998f;
+          --accent: #3987e5;
+          --s1: #3987e5;
+          --s2: #d95926;
+          --s3: #199e70;
+          --s4: #c98500;
+          --grid: #2e2e2c;
+        }
+      }
+      :root[data-theme="dark"] {
+        color-scheme: dark;
+        --surface: #1a1a19;
+        --surface-2: #232322;
+        --border: #3a3a38;
+        --text: #f0efec;
+        --text-2: #c3c2b7;
+        --text-3: #9a998f;
+        --accent: #3987e5;
+        --s1: #3987e5;
+        --s2: #d95926;
+        --s3: #199e70;
+        --s4: #c98500;
+        --grid: #2e2e2c;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--surface);
+        color: var(--text);
+        font:
+          16px/1.55 system-ui,
+          -apple-system,
+          "Segoe UI",
+          Roboto,
+          sans-serif;
+      }
+      main {
+        max-width: 780px;
+        margin: 0 auto;
+        padding: 32px 16px 64px;
+      }
+      h1 {
+        font-size: 1.9rem;
+        line-height: 1.2;
+        margin: 0 0 6px;
+      }
+      h2 {
+        font-size: 1.3rem;
+        margin: 44px 0 10px;
+        padding-top: 8px;
+        border-top: 1px solid var(--border);
+      }
+      h3 {
+        font-size: 1.05rem;
+        margin: 26px 0 8px;
+      }
+      p,
+      li {
+        color: var(--text);
+      }
+      .lede {
+        color: var(--text-2);
+        margin: 0 0 20px;
+      }
+      .meta {
+        color: var(--text-3);
+        font-size: 0.9rem;
+      }
+      code {
+        font:
+          0.88em ui-monospace,
+          "SF Mono",
+          Menlo,
+          Consolas,
+          monospace;
+        background: var(--surface-2);
+        padding: 1px 5px;
+        border-radius: 4px;
+      }
+      ul {
+        padding-left: 1.2rem;
+      }
+      li {
+        margin: 4px 0;
+      }
+
+      .tiles {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 12px;
+        margin: 20px 0 8px;
+      }
+      .tile {
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 14px 16px;
+      }
+      .tile .num {
+        font-size: 1.7rem;
+        font-weight: 650;
+        line-height: 1.1;
+        font-variant-numeric: tabular-nums;
+      }
+      .tile .label {
+        color: var(--text-2);
+        font-size: 0.88rem;
+        margin-top: 4px;
+      }
+
+      /* Tables */
+      .table-wrap {
+        overflow-x: auto;
+        margin: 12px 0;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 0.93rem;
+        font-variant-numeric: tabular-nums;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 7px 10px;
+        border-bottom: 1px solid var(--border);
+        vertical-align: top;
+      }
+      th {
+        color: var(--text-2);
+        font-weight: 600;
+        font-size: 0.85rem;
+      }
+      td.n,
+      th.n {
+        text-align: right;
+        white-space: nowrap;
+      }
+      tr.strong td {
+        font-weight: 650;
+      }
+      .note {
+        color: var(--text-3);
+        font-size: 0.85rem;
+      }
+
+      /* Charts */
+      figure {
+        margin: 18px 0 8px;
+      }
+      figcaption {
+        font-weight: 600;
+        margin-bottom: 4px;
+      }
+      .sub {
+        color: var(--text-2);
+        font-size: 0.88rem;
+        margin-bottom: 12px;
+      }
+      .legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 18px;
+        font-size: 0.85rem;
+        color: var(--text-2);
+        margin: 0 0 12px;
+      }
+      .legend span {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .legend i {
+        width: 12px;
+        height: 12px;
+        border-radius: 3px;
+        display: inline-block;
+      }
+      .chart {
+        display: grid;
+        grid-template-columns: minmax(110px, 190px) 1fr;
+        gap: 10px 12px;
+        align-items: center;
+      }
+      .row-label {
+        font-size: 0.88rem;
+        color: var(--text-2);
+        line-height: 1.3;
+      }
+      .track {
+        position: relative;
+        height: 26px;
+      }
+      .track::before {
+        /* recessive grid at each second */
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: repeating-linear-gradient(
+          to right,
+          var(--grid) 0 1px,
+          transparent 1px calc(100% / var(--ticks))
+        );
+        background-size: 100% 100%;
+      }
+      .bar {
+        position: absolute;
+        top: 3px;
+        bottom: 3px;
+        left: 0;
+        display: flex;
+        gap: 2px;
+      }
+      .seg {
+        height: 100%;
+        min-width: 2px;
+        outline: none;
+      }
+      .seg:first-child {
+        border-radius: 0;
+      }
+      .seg:last-child {
+        border-radius: 0 4px 4px 0;
+      }
+      .seg:focus-visible {
+        box-shadow:
+          0 0 0 2px var(--surface),
+          0 0 0 4px var(--text);
+      }
+      .val {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 0.82rem;
+        color: var(--text);
+        font-weight: 600;
+        white-space: nowrap;
+        padding-left: 6px;
+        font-variant-numeric: tabular-nums;
+      }
+      .axis {
+        grid-column: 2;
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.75rem;
+        color: var(--text-3);
+        font-variant-numeric: tabular-nums;
+      }
+      .tip {
+        position: fixed;
+        pointer-events: none;
+        z-index: 10;
+        max-width: 260px;
+        background: var(--text);
+        color: var(--surface);
+        font-size: 0.82rem;
+        line-height: 1.35;
+        padding: 6px 9px;
+        border-radius: 6px;
+        opacity: 0;
+        transition: opacity 0.08s;
+      }
+      .tip.on {
+        opacity: 1;
+      }
+      @media (max-width: 520px) {
+        .chart {
+          grid-template-columns: 1fr;
+          gap: 2px 0;
+        }
+        .row-label {
+          margin-top: 8px;
+        }
+        .axis {
+          grid-column: 1;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Startup time and size of the clients</h1>
+      <p class="lede">
+        How long the web app and the native app (<code>native/</code>, V on sokol) take to start on
+        a phone, and how big each one is. Measured to weigh the web app against the native client
+        and the other ways to ship the app.
+      </p>
+      <p class="meta">
+        Measured 2026-10-31. Rerun the startup numbers with <code>tasks/measure-startup.sh</code>.
+      </p>
+
+      <div class="tiles">
+        <div class="tile">
+          <div class="num">2.1–3.2 s</div>
+          <div class="label">Web app, cold start</div>
+        </div>
+        <div class="tile">
+          <div class="num">~1.1 s</div>
+          <div class="label">Web app, Chrome already running</div>
+        </div>
+        <div class="tile">
+          <div class="num">~0.23 s</div>
+          <div class="label">Native app, cold start</div>
+        </div>
+        <div class="tile">
+          <div class="num">~0.09 s</div>
+          <div class="label">The app's own service worker work</div>
+        </div>
+      </div>
+
+      <h2>Setup</h2>
+      <ul>
+        <li>
+          <strong>Phone:</strong> Moto G7 (2019, Snapdragon 632, arm64), Android 10, Chrome 156.
+          Chrome had about 90 tabs open, which likely slows its cold start.
+        </li>
+        <li>
+          <strong>Web app:</strong> soccer.jnyman.com, installed from Chrome (a WebAPK), opening on
+          <code>/web/teams</code> with real data.
+        </li>
+        <li>
+          <strong>Native app:</strong> <code>com.jnyman.soccer</code>, a <code>-prod</code> build
+          from V 0.5.2.
+        </li>
+        <li><strong>Desktop:</strong> Linux x86_64.</li>
+      </ul>
+
+      <h2>Startup on the phone</h2>
+
+      <figure>
+        <figcaption>Where the time goes, from tap to loaded</figcaption>
+        <div class="sub">Median of each set of runs, in seconds.</div>
+        <div class="legend" aria-hidden="true">
+          <span
+            ><i style="background: var(--s1)"></i>Chrome starting (before the page is
+            requested)</span
+          >
+          <span><i style="background: var(--s2)"></i>Service worker answers</span>
+          <span><i style="background: var(--s3)"></i>Rest of the page load</span>
+          <span><i style="background: var(--s4)"></i>Native app, to first frame</span>
+        </div>
+        <div class="chart" id="startup-chart" style="--ticks: 4"></div>
+      </figure>
+
+      <h3>Every run</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Case</th>
+              <th>Set</th>
+              <th class="n">Tap → page requested</th>
+              <th class="n">Service worker</th>
+              <th class="n">Tap → loaded</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td rowspan="6">Web app, Chrome not running</td>
+              <td>1</td>
+              <td class="n">2.85 s</td>
+              <td class="n">92 ms</td>
+              <td class="n">3.14 s</td>
+            </tr>
+            <tr>
+              <td>1</td>
+              <td class="n">2.92 s</td>
+              <td class="n">89 ms</td>
+              <td class="n">3.20 s</td>
+            </tr>
+            <tr>
+              <td>1</td>
+              <td class="n">2.87 s</td>
+              <td class="n">90 ms</td>
+              <td class="n">3.14 s</td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td class="n">1.97 s</td>
+              <td class="n">103 ms</td>
+              <td class="n">2.19 s</td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td class="n">1.98 s</td>
+              <td class="n">76 ms</td>
+              <td class="n">2.22 s</td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td class="n">1.88 s</td>
+              <td class="n">91 ms</td>
+              <td class="n">2.07 s</td>
+            </tr>
+            <tr>
+              <td rowspan="5">Web app, Chrome already running</td>
+              <td>1</td>
+              <td class="n">1.12 s</td>
+              <td class="n">74 ms</td>
+              <td class="n">1.34 s</td>
+            </tr>
+            <tr>
+              <td>1</td>
+              <td class="n">0.99 s</td>
+              <td class="n">82 ms</td>
+              <td class="n">1.17 s</td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td class="n">0.96 s</td>
+              <td class="n">68 ms</td>
+              <td class="n">1.14 s</td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td class="n">0.92 s</td>
+              <td class="n">61 ms</td>
+              <td class="n">1.13 s</td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td class="n">0.90 s</td>
+              <td class="n">64 ms</td>
+              <td class="n">1.08 s</td>
+            </tr>
+            <tr>
+              <td rowspan="3">Native app, not running</td>
+              <td>before trim</td>
+              <td class="n">—</td>
+              <td class="n">—</td>
+              <td class="n">0.33, 0.23, 0.21 s</td>
+            </tr>
+            <tr>
+              <td>after trim</td>
+              <td class="n">—</td>
+              <td class="n">—</td>
+              <td class="n">0.23, 0.24, 0.21 s</td>
+            </tr>
+            <tr>
+              <td>after trim</td>
+              <td class="n">—</td>
+              <td class="n">—</td>
+              <td class="n">0.26, 0.23, 0.21 s</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">
+        Set 1 was measured by hand, set 2 with <code>tasks/measure-startup.sh</code> later the same
+        evening. For the native app, "loaded" is the time to its first frame. Left out: one run with
+        Chrome running that took 3.84 s, because Chrome was still reloading its tabs; and the native
+        app's first start after installing (1.05 s), while Android prepared it.
+      </p>
+
+      <h3>What it shows</h3>
+      <ul>
+        <li>
+          <strong>Chrome is the cost, not the app.</strong> Starting Chrome takes 1.9–2.9 s before
+          the page is even requested. The service worker then boots, opens IndexedDB and renders
+          <code>/web/teams</code> in under 0.11 s, so trimming the app's code would hardly show.
+        </li>
+        <li>
+          <strong>Cold starts vary between sessions.</strong> They took 3.1–3.2 s in one set and
+          2.1–2.2 s in the next, likely from what Chrome had loaded or the phone's state. The app's
+          own share stayed the same.
+        </li>
+        <li><strong>With Chrome already running,</strong> the web app opens in about 1.1–1.3 s.</li>
+        <li>
+          <strong>The native app</strong> draws its first frame in about 0.2–0.3 s: about 5× faster
+          than the web app with Chrome running, and 9–14× faster than from cold.
+        </li>
+        <li>
+          <strong>Capacitor</strong> (wrapping the web app for the app stores) starts its own
+          WebView and can't reuse a running Chrome, so expect it between the two web cases. On iOS
+          it also needs App-Bound Domains for the service worker, which this app is built around.
+          Not measured.
+        </li>
+      </ul>
+
+      <h3>How it is measured</h3>
+      <ul>
+        <li>
+          <strong>Web app:</strong> Chrome and the app are force-stopped, then the app is opened
+          from its launcher, with the phone's clock read just before.
+        </li>
+        <li>
+          <strong>Reading the timing:</strong> the page's navigation timing, read through Chrome's
+          remote debugging, gives when the page was requested (<code>performance.timeOrigin</code>),
+          how long the service worker took to answer (<code>responseStart</code> −
+          <code>workerStart</code>), and when the page finished loading (<code>loadEventEnd</code>).
+        </li>
+        <li>
+          <strong>No paint timings:</strong> Chrome loads the page behind its splash screen, so
+          "loaded" is the closest to when it appears.
+        </li>
+        <li>
+          <strong>"Chrome already running":</strong> Chrome is opened first and left 15 s to settle.
+        </li>
+        <li><strong>Native app:</strong> <code>am start -W</code>, the time to its first frame.</li>
+      </ul>
+
+      <h2>Speed in use</h2>
+      <p>
+        How quickly the web app responds once it is open: a tap during a match, and moving from one
+        page to another. Same phone, measured 2026-10-31 with <code>tasks/measure-speed.sh</code>
+        (<code>e2e/phone/speed.perf.ts</code>), two runs of 5 rounds each.
+      </p>
+
+      <h3>Taps during a match</h3>
+      <figure>
+        <figcaption>Where a tap's time goes</figcaption>
+        <div class="sub">
+          Second run, in ms. Each part is its own median, so a bar can differ by a few ms from the
+          table's total.
+        </div>
+        <div class="legend" aria-hidden="true">
+          <span
+            ><i style="background: var(--s1)"></i>Tap to request (the form posts to the htmz
+            iframe)</span
+          >
+          <span
+            ><i style="background: var(--s2)"></i>Service worker (state change, IndexedDB,
+            HTML)</span
+          >
+          <span><i style="background: var(--s3)"></i>Response loads in the iframe</span>
+          <span><i style="background: var(--s4)"></i>Merge into the page and draw</span>
+        </div>
+        <div class="chart" id="tap-chart" style="--ticks: 4"></div>
+      </figure>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Tap</th>
+              <th class="n">Run 1</th>
+              <th class="n">Run 2</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Queue a player for a position, or move one (10 taps)</td>
+              <td class="n">183 ms</td>
+              <td class="n">141 ms</td>
+            </tr>
+            <tr>
+              <td>Swap all queued players on (10 taps)</td>
+              <td class="n">183 ms</td>
+              <td class="n">141 ms</td>
+            </tr>
+            <tr>
+              <td>Opponent scores (5 taps)</td>
+              <td class="n">140 ms</td>
+              <td class="n">116 ms</td>
+            </tr>
+            <tr>
+              <td>Pause the clock (5 taps)</td>
+              <td class="n">178 ms</td>
+              <td class="n">145 ms</td>
+            </tr>
+            <tr>
+              <td>Start the clock (5–6 taps)</td>
+              <td class="n">192 ms</td>
+              <td class="n">161 ms</td>
+            </tr>
+            <tr class="strong">
+              <td>All taps: median (slowest)</td>
+              <td class="n">179 ms (213)</td>
+              <td class="n">141 ms (176)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">
+        Tap (pointer down) to the first frame after the change is merged in. The match runs on test
+        data (6 players, 4 on the field) on a localhost site served by the dev build, which isn't
+        minified, so the live app is likely a little faster.
+      </p>
+
+      <h3>Moving between pages</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Page</th>
+              <th class="n">Service worker answers</th>
+              <th class="n">Navigation → loaded</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Teams</td>
+              <td class="n">18–21 ms</td>
+              <td class="n">126–127 ms</td>
+            </tr>
+            <tr>
+              <td>Players</td>
+              <td class="n">13–17 ms</td>
+              <td class="n">150–155 ms</td>
+            </tr>
+            <tr>
+              <td>Games</td>
+              <td class="n">27–33 ms</td>
+              <td class="n">227–243 ms</td>
+            </tr>
+            <tr>
+              <td>Stats</td>
+              <td class="n">16–22 ms</td>
+              <td class="n">171–177 ms</td>
+            </tr>
+            <tr>
+              <td>Formation (positions)</td>
+              <td class="n">15–16 ms</td>
+              <td class="n">143–176 ms</td>
+            </tr>
+            <tr>
+              <td>Settings</td>
+              <td class="n">20–23 ms</td>
+              <td class="n">158–166 ms</td>
+            </tr>
+            <tr>
+              <td>Match (test data, dev build)</td>
+              <td class="n">18–23 ms</td>
+              <td class="n">216–235 ms</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">
+        Medians of the two runs. The live site with your data (U12 Toxic Waste), only read; the
+        match page from the test data only, to leave your real games alone. On the test data every
+        page loaded in 203–247 ms.
+      </p>
+
+      <h3>What a page-side framework would change</h3>
+      <ul>
+        <li>
+          <strong>Taps:</strong> about 140–180 ms now. Some 80–130 ms of that is the round trip
+          through the service worker: starting the form's request, the service worker's work, and
+          loading its response as a document. A framework that runs in the page (Svelte, Solid,
+          VanJS, plain JS) would update the page directly and write to IndexedDB afterwards, leaving
+          its own small update plus the ~35 ms draw: an estimated 50–60 ms. That is the difference
+          between a tap you notice and one that feels instant (under ~100 ms). Estimated, not
+          measured.
+        </li>
+        <li>
+          <strong>Pages:</strong> about 125–245 ms now, of which the service worker is only 13–33
+          ms. The rest is the browser loading a new document: parsing it, its CSS and scripts,
+          layout. Routing inside one page would skip most of that: an estimated 50–100 ms.
+        </li>
+        <li>
+          <strong>Without a rewrite:</strong> the match view could change the page as soon as a tap
+          lands and let the service worker's response confirm it; and links could load the next page
+          through htmz and merge in its content rather than load a new document, much as htmx's
+          boost does. Either keeps the service worker design.
+        </li>
+        <li><strong>Startup</strong> wouldn't change: Chrome's start dominates (above).</li>
+      </ul>
+
+      <h2>Size</h2>
+
+      <figure>
+        <figcaption>Web app and native builds</figcaption>
+        <div class="sub">In MB.</div>
+        <div class="chart" id="size-chart" style="--ticks: 7"></div>
+      </figure>
+
+      <h3>Web app</h3>
+      <p>The production build (<code>npm run build</code>, as the publish script ships it):</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Web app</th>
+              <th class="n">Size</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>App files (36 files, uncompressed)</td>
+              <td class="n">259 KB</td>
+            </tr>
+            <tr class="strong">
+              <td>Download (compressed, as served)</td>
+              <td class="n">101 KB</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <ul>
+        <li>
+          By type, uncompressed: JavaScript 180 KB (23 files), CSS 48 KB, HTML 8 KB, icons 23 KB.
+        </li>
+        <li>
+          <strong>Biggest files:</strong> the service worker's shared code
+          (<code>shared.global.js</code>, 33 KB), the match page (31 KB), the CSS
+          (<code>base.css</code>, 31 KB), and the page script (<code>app.bundle.js</code>, 15 KB).
+        </li>
+        <li>
+          It used to be 290 KB (107 KB to download): <code>base.css</code> shipped twice, hashed and
+          unhashed, for the pages outside the service worker. Each page now links it itself, before
+          <code>app.css</code>, instead of <code>app.css</code> importing it (see "Hashed asset
+          names" in <code>CLAUDE.md</code>).
+        </li>
+        <li>The build also ships pre-compressed <code>.gz</code> copies, which aren't counted.</li>
+        <li>
+          <strong>Why so small:</strong> it is about 20× smaller than the trimmed APK because it
+          relies on Chrome, which is already on the phone. The cost is Chrome's startup (above), not
+          the download.
+        </li>
+      </ul>
+
+      <h3>Web app on the phone</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Storage (soccer.jnyman.com, as Chrome reports it)</th>
+              <th class="n">Size</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Your data (IndexedDB)</td>
+              <td class="n">108 KB</td>
+            </tr>
+            <tr>
+              <td>Service worker</td>
+              <td class="n">45 KB</td>
+            </tr>
+            <tr>
+              <td>Cached app files (Cache Storage)</td>
+              <td class="n">3.4 MB</td>
+            </tr>
+            <tr class="strong">
+              <td>Total</td>
+              <td class="n">3.6 MB</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <ul>
+        <li>
+          <strong>The cache keeps every old version.</strong> It holds 141 files (1.55 MB of
+          responses; Chrome counts 3.4 MB with its overhead), against 36 in a build: 17 versions of
+          the file map, 13 of the match page, 12 of the service worker's shared code, 9 of
+          <code>app.css</code>. Nothing removes a file's old version after an update, so the cache
+          grows with every release. Not fixed yet.
+        </li>
+      </ul>
+
+      <h3>Native app</h3>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Build</th>
+              <th class="n">Size</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Linux binary (<code>make build</code>)</td>
+              <td class="n">4.9 MB</td>
+            </tr>
+            <tr>
+              <td>Same, without debug symbols</td>
+              <td class="n">4.7 MB</td>
+            </tr>
+            <tr>
+              <td>Same, compressed (about a download)</td>
+              <td class="n">2.3 MB</td>
+            </tr>
+            <tr>
+              <td>Android APK, before trimming (5 processor types, fonts twice)</td>
+              <td class="n">11.3 MB</td>
+            </tr>
+            <tr class="strong">
+              <td>Android APK, arm64 only, fonts once</td>
+              <td class="n">2.1 MB</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <ul>
+        <li>
+          About 1.4 MB of the app is the two embedded DejaVu fonts. The other ~3.2 MB is the app,
+          V's runtime, sokol, the font renderer, TLS and JSON. It uses system libraries (X11,
+          OpenGL) rather than including them.
+        </li>
+        <li>
+          <strong>The APK</strong> used to carry a ~4.5 MB copy of the app for each of arm64-v8a,
+          armeabi-v7a, armeabi, x86 and x86_64, plus the fonts again as assets. A phone needs only
+          its own: arm64-v8a for anything recent; x86 is for emulators.
+        </li>
+        <li>
+          <code>make android</code> now builds arm64-v8a only, and
+          <code>make install-apk</code> builds for the connected device. The fonts live in
+          <code>native/fonts/</code> so vab doesn't copy them in (see
+          <code>native/README.md</code>).
+        </li>
+      </ul>
+
+      <h2>Compared with other stacks</h2>
+      <p>
+        Only the V and web app rows are measured; the others are typical figures for a minimal app.
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Stack</th>
+              <th>Android download</th>
+              <th>Desktop app</th>
+              <th>Phone cold start</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="strong">
+              <td>V on sokol (measured)</td>
+              <td>2.1 MB</td>
+              <td>4.7 MB</td>
+              <td>0.2–0.3 s</td>
+            </tr>
+            <tr class="strong">
+              <td>Web app (measured)</td>
+              <td>101 KB (uses Chrome)</td>
+              <td>same, in any browser</td>
+              <td>2.1–3.2 s cold, ~1.1 s with Chrome running</td>
+            </tr>
+            <tr>
+              <td>Capacitor</td>
+              <td>a few MB (system WebView)</td>
+              <td>—</td>
+              <td>likely between the two web app figures</td>
+            </tr>
+            <tr>
+              <td>Tauri (desktop)</td>
+              <td>—</td>
+              <td>a few MB (system WebView)</td>
+              <td>—</td>
+            </tr>
+            <tr>
+              <td>Flutter</td>
+              <td>5–8 MB</td>
+              <td>20–40 MB (engine, text data)</td>
+              <td>well under 1 s</td>
+            </tr>
+            <tr>
+              <td>Kotlin, Compose Multiplatform</td>
+              <td>2–5 MB</td>
+              <td>50–100 MB (bundles a JVM)</td>
+              <td>under 1 s on Android; desktop has JVM warm-up</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        The small, fast native client comes with gaps; these took work in this project or are still
+        open:
+      </p>
+      <ul>
+        <li>
+          <strong>Desktop:</strong> sokol sets no window class or app id and ignores the keymap.
+          Both are fixed by reaching into sokol's private state.
+        </li>
+        <li>
+          <strong>Android:</strong> sokol drops key events, can't show the keyboard and quits on
+          Back, all fixed with our own Java activity. A hardware keyboard and copy and paste are
+          still missing.
+        </li>
+        <li><strong>iOS:</strong> blocked inside V's <code>net</code> module.</li>
+        <li>
+          <strong>Everywhere:</strong> no accessibility (screen readers get nothing) and no input
+          method for languages like Chinese or Japanese.
+        </li>
+      </ul>
+    </main>
+
+    <div class="tip" id="tip" role="status"></div>
+
+    <script>
+      // Medians per set of runs (ms); see the table for every run.
+      const startup = [
+        {
+          label: "Web app, cold (set 1)",
+          segs: [
+            ["s1", 2867, "Chrome starting"],
+            ["s2", 90, "Service worker answers"],
+            ["s3", 187, "Rest of the page load"],
+          ],
+        },
+        {
+          label: "Web app, cold (set 2)",
+          segs: [
+            ["s1", 1965, "Chrome starting"],
+            ["s2", 91, "Service worker answers"],
+            ["s3", 136, "Rest of the page load"],
+          ],
+        },
+        {
+          label: "Web app, Chrome running",
+          segs: [
+            ["s1", 920, "Chrome starting"],
+            ["s2", 64, "Service worker answers"],
+            ["s3", 143, "Rest of the page load"],
+          ],
+        },
+        { label: "Native app, cold", segs: [["s4", 227, "Native app, to first frame"]] },
+      ];
+      const sizes = [
+        ["APK, before trimming", 11.3],
+        ["APK, now", 2.1],
+        ["Linux binary", 4.9],
+        ["Linux, no debug symbols", 4.7],
+        ["Linux, compressed", 2.3],
+        ["Web app, uncompressed", 0.26],
+        ["Web app, download", 0.1],
+      ];
+      const tip = document.getElementById("tip");
+      const fmtS = (ms) => (ms / 1000).toFixed(2) + " s";
+      const fmtMs = (ms) => (ms >= 1000 ? fmtS(ms) : Math.round(ms) + " ms");
+
+      function showTip(el, x, y) {
+        tip.textContent = el.dataset.tip;
+        tip.classList.add("on");
+        const r = tip.getBoundingClientRect();
+        tip.style.left = Math.min(x + 12, innerWidth - r.width - 8) + "px";
+        tip.style.top = Math.max(8, y - r.height - 10) + "px";
+      }
+      function hideTip() {
+        tip.classList.remove("on");
+      }
+
+      function row(chart, label, segs, max, total, fmt) {
+        const name = document.createElement("div");
+        name.className = "row-label";
+        name.textContent = label;
+        const track = document.createElement("div");
+        track.className = "track";
+        const bar = document.createElement("div");
+        bar.className = "bar";
+        bar.style.width = (total / max) * 100 + "%";
+        for (const s of segs) {
+          const seg = document.createElement("div");
+          seg.className = "seg";
+          seg.style.flex = s.value + " 0 0";
+          seg.style.background = `var(--${s.color})`;
+          seg.tabIndex = 0;
+          seg.dataset.tip = s.tip;
+          seg.setAttribute("aria-label", s.tip);
+          seg.addEventListener("pointermove", (e) => showTip(seg, e.clientX, e.clientY));
+          seg.addEventListener("pointerleave", hideTip);
+          seg.addEventListener("focus", () => {
+            const r = seg.getBoundingClientRect();
+            showTip(seg, r.left + r.width / 2, r.top);
+          });
+          seg.addEventListener("blur", hideTip);
+          bar.appendChild(seg);
+        }
+        track.appendChild(bar);
+        const val = document.createElement("div");
+        val.className = "val";
+        val.style.left = (total / max) * 100 + "%";
+        val.textContent = fmt(total);
+        track.appendChild(val);
+        chart.append(name, track);
+      }
+
+      function axis(chart, max, ticks, fmt) {
+        const a = document.createElement("div");
+        a.className = "axis";
+        for (let i = 0; i <= ticks; i++) {
+          const t = document.createElement("span");
+          t.textContent = fmt((max / ticks) * i);
+          a.appendChild(t);
+        }
+        chart.append(document.createElement("div"), a);
+        if (matchMedia("(max-width: 520px)").matches) chart.lastChild.previousSibling.remove();
+      }
+
+      // Startup: axis 0–4 s.
+      {
+        const chart = document.getElementById("startup-chart");
+        const max = 4000;
+        for (const r of startup) {
+          const total = r.segs.reduce((n, s) => n + s[1], 0);
+          row(
+            chart,
+            r.label,
+            r.segs.map(([color, v, what]) => ({
+              color,
+              value: v,
+              tip: `${r.label}: ${what}, ${fmtMs(v)}`,
+            })),
+            max,
+            total,
+            fmtS,
+          );
+        }
+        axis(chart, max, 4, (v) => v / 1000 + " s");
+      }
+      // Taps: second run's medians (ms), axis 0–200 ms.
+      {
+        const taps = [
+          ["Start the clock", 15, 66, 37, 44],
+          ["Queue or move a player", 33, 46, 27, 41],
+          ["Swap all on", 20, 53, 28, 41],
+          ["Pause the clock", 14, 51, 31, 39],
+          ["Opponent scores", 22, 35, 27, 33],
+        ];
+        const parts = ["Tap to request", "Service worker", "Response loads", "Merge and draw"];
+        const chart = document.getElementById("tap-chart");
+        const max = 200;
+        for (const [label, ...ms] of taps) {
+          row(
+            chart,
+            label,
+            ms.map((v, i) => ({
+              color: "s" + (i + 1),
+              value: v,
+              tip: `${label}: ${parts[i]}, ${v} ms`,
+            })),
+            max,
+            ms.reduce((a, b) => a + b, 0),
+            (v) => v + " ms",
+          );
+        }
+        axis(chart, max, 4, (v) => v + " ms");
+      }
+      // Sizes: axis 0–14 MB.
+      {
+        const chart = document.getElementById("size-chart");
+        const max = 14;
+        for (const [label, mb] of sizes) {
+          row(
+            chart,
+            label,
+            [{ color: "s1", value: mb, tip: `${label}: ${mb} MB` }],
+            max,
+            mb,
+            (v) => v + " MB",
+          );
+        }
+        axis(chart, max, 7, (v) => v + " MB");
+      }
+    </script>
+  </body>
+</html>
