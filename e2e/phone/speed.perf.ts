@@ -73,9 +73,32 @@ function probe() {
   addEventListener("pointerdown", () => (tap = performance.now()), true);
   document.addEventListener(
     "hz:completed",
-    () => {
-      // htmz fires this after merging, while the iframe still holds the response.
+    (e) => {
+      // Fired after merging. A tap the page handled itself (match.bundle.ts)
+      // names its handler and when it started and finished rendering; for
+      // one the service worker answered, the htmz iframe still holds the
+      // response, and its navigation timing has the rest.
       let merged = performance.now();
+      let local = (e as CustomEvent).detail as
+        | { handler: string; started: number; rendered: number }
+        | undefined;
+      if (local?.handler) {
+        let record = {
+          handler: local.handler,
+          inPage: true,
+          tap,
+          request: local.started,
+          answered: local.rendered,
+          loaded: local.rendered,
+          merged,
+          frame: 0,
+        };
+        afterFrame(() => {
+          record.frame = performance.now();
+          w.__taps.push(record);
+        });
+        return;
+      }
       let frame = document.querySelector<HTMLIFrameElement>("iframe[name=htmz]")?.contentWindow;
       let nav = frame?.performance.getEntriesByType("navigation")[0] as
         | PerformanceNavigationTiming
@@ -84,6 +107,7 @@ function probe() {
       let at = (t: number) => frame.performance.timeOrigin - performance.timeOrigin + t;
       let record = {
         handler: new URL(frame.location.href).searchParams.get("handler") ?? "?",
+        inPage: false,
         tap,
         request: at(nav.workerStart || nav.fetchStart),
         answered: at(nav.responseStart),
@@ -102,6 +126,7 @@ function probe() {
 
 type Tap = {
   handler: string;
+  inPage: boolean;
   tap: number;
   request: number;
   answered: number;
@@ -114,19 +139,68 @@ const median = (xs: number[]) => [...xs].sort((a, b) => a - b)[Math.floor(xs.len
 const ms = (x: number) => `${Math.round(x)} ms`.padStart(7);
 
 function tapReport(taps: Tap[]) {
-  let byHandler = new Map<string, Tap[]>();
-  for (let t of taps) byHandler.set(t.handler, [...(byHandler.get(t.handler) ?? []), t]);
-  console.log(
-    "\nMatch taps (median ms): tap → request | service worker | response loads | merge | to next frame | total",
-  );
-  for (let [handler, ts] of byHandler) {
-    let m = (f: (t: Tap) => number) => ms(median(ts.map(f)));
+  for (let inPage of [true, false]) {
+    let some = taps.filter((t) => t.inPage === inPage);
+    if (!some.length) continue;
+    let byHandler = new Map<string, Tap[]>();
+    for (let t of some) byHandler.set(t.handler, [...(byHandler.get(t.handler) ?? []), t]);
     console.log(
-      `  ${handler.padEnd(22)} ${m((t) => t.request - t.tap)} ${m((t) => t.answered - t.request)} ${m((t) => t.loaded - t.answered)} ${m((t) => t.merged - t.loaded)} ${m((t) => t.frame - t.merged)} ${m((t) => t.frame - t.tap)}  (${ts.length} taps)`,
+      inPage
+        ? "\nMatch taps, handled in the page (median ms): tap → handler | handler + render | merge | to next frame | total"
+        : "\nMatch taps, through the service worker (median ms): tap → request | service worker | response loads | merge | to next frame | total",
     );
+    for (let [handler, ts] of byHandler) {
+      let m = (f: (t: Tap) => number) => ms(median(ts.map(f)));
+      let parts = inPage
+        ? [m((t) => t.request - t.tap), m((t) => t.answered - t.request)]
+        : [
+            m((t) => t.request - t.tap),
+            m((t) => t.answered - t.request),
+            m((t) => t.loaded - t.answered),
+          ];
+      console.log(
+        `  ${handler.padEnd(22)} ${parts.join(" ")} ${m((t) => t.merged - t.loaded)} ${m((t) => t.frame - t.merged)} ${m((t) => t.frame - t.tap)}  (${ts.length} taps)`,
+      );
+    }
+    let all = some.map((t) => t.frame - t.tap);
+    console.log(`  all taps: median ${ms(median(all))}, slowest ${ms(Math.max(...all))}`);
   }
-  let all = taps.map((t) => t.frame - t.tap);
-  console.log(`  all taps: median ${ms(median(all))}, slowest ${ms(Math.max(...all))}`);
+}
+
+// Moves to each path in turn the way a link in the app does (htmz-nav: the
+// page is fetched and morphed in, no new document), `ROUNDS` times, and
+// reports the time from the click to the first frame of the new page. Pages
+// that need a normal load (other scripts, like Settings) are left out.
+async function navReport(name: string, page: Page, paths: string[]) {
+  await page.goto(new URL(paths.at(-1)!, page.url()).href);
+  await page.waitForLoadState("load");
+  let rows = new Map<string, number[]>();
+  for (let i = 0; i < ROUNDS; i++) {
+    for (let path of paths) {
+      let ms = await page.evaluate(
+        (href) =>
+          new Promise<number>((resolve) => {
+            let a = document.createElement("a");
+            a.href = href;
+            a.target = "_self";
+            document.body.append(a);
+            let start = performance.now();
+            document.addEventListener("hz:completed", function done(e) {
+              if (!(e as CustomEvent).detail?.navigation) return;
+              document.removeEventListener("hz:completed", done);
+              (window as any).__afterFrame(() => resolve(performance.now() - start));
+            });
+            a.click();
+          }),
+        path,
+      );
+      rows.set(path, [...(rows.get(path) ?? []), ms]);
+    }
+  }
+  console.log(`\n${name} (median ms): click → new page drawn`);
+  for (let [path, ts] of rows) {
+    console.log(`  ${path.replace(/[?&](teamId|gameId)=[^&]+/g, "").padEnd(22)} ${ms(median(ts))}`);
+  }
 }
 
 // Opens each path in turn, `ROUNDS` times, and reports its navigation timing.
@@ -223,6 +297,14 @@ test("match taps and pages, test data", async () => {
       `/web/stats?teamId=${t}`,
       `/web/positions?teamId=${t}`,
       "/web/settings",
+    ]);
+    await navReport("Moving between pages in the app, test data", page, [
+      "/web/teams",
+      `/web/players?teamId=${t}`,
+      `/web/games?teamId=${t}`,
+      `/web/match?teamId=${t}&gameId=1`,
+      `/web/stats?teamId=${t}`,
+      `/web/positions?teamId=${t}`,
     ]);
   } finally {
     await wipe();

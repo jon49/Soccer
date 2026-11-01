@@ -571,6 +571,7 @@
               <th>Tap</th>
               <th class="n">Run 1</th>
               <th class="n">Run 2</th>
+              <th class="n">In the page</th>
             </tr>
           </thead>
           <tbody>
@@ -578,31 +579,37 @@
               <td>Queue a player for a position, or move one (10 taps)</td>
               <td class="n">183 ms</td>
               <td class="n">141 ms</td>
+              <td class="n">94 ms</td>
             </tr>
             <tr>
               <td>Swap all queued players on (10 taps)</td>
               <td class="n">183 ms</td>
               <td class="n">141 ms</td>
+              <td class="n">80 ms</td>
             </tr>
             <tr>
               <td>Opponent scores (5 taps)</td>
               <td class="n">140 ms</td>
               <td class="n">116 ms</td>
+              <td class="n">49 ms</td>
             </tr>
             <tr>
               <td>Pause the clock (5 taps)</td>
               <td class="n">178 ms</td>
               <td class="n">145 ms</td>
+              <td class="n">103 ms</td>
             </tr>
             <tr>
               <td>Start the clock (5–6 taps)</td>
               <td class="n">192 ms</td>
               <td class="n">161 ms</td>
+              <td class="n">85 ms</td>
             </tr>
             <tr class="strong">
               <td>All taps: median (slowest)</td>
               <td class="n">179 ms (213)</td>
               <td class="n">141 ms (176)</td>
+              <td class="n">85 ms (182)</td>
             </tr>
           </tbody>
         </table>
@@ -610,7 +617,10 @@
       <p class="note">
         Tap (pointer down) to the first frame after the change is merged in. The match runs on test
         data (6 players, 4 on the field) on a localhost site served by the dev build, which isn't
-        minified, so the live app is likely a little faster.
+        minified, so the live app is likely a little faster. "In the page": the same taps once the
+        play view ran its handlers in the page (<code>src/web/js/match.bundle.ts</code>),
+        2026-11-01: tap to handler 3–17 ms, the handler and rendering the view 19–63 ms, merging 2–8
+        ms, drawing 18–27 ms.
       </p>
 
       <h3>Moving between pages</h3>
@@ -668,27 +678,26 @@
         page loaded in 203–247 ms.
       </p>
 
-      <h3>What a page-side framework would change</h3>
+      <h3>What running in the page changes</h3>
       <ul>
         <li>
-          <strong>Taps:</strong> about 140–180 ms now. Some 80–130 ms of that is the round trip
-          through the service worker: starting the form's request, the service worker's work, and
-          loading its response as a document. A framework that runs in the page (Svelte, Solid,
-          VanJS, plain JS) would update the page directly and write to IndexedDB afterwards, leaving
-          its own small update plus the ~35 ms draw: an estimated 50–60 ms. That is the difference
-          between a tap you notice and one that feels instant (under ~100 ms). Estimated, not
-          measured.
+          <strong>Taps:</strong> about 140–180 ms through the service worker. Some 80–130 ms of that
+          is the round trip: starting the form's request, the service worker's work, and loading its
+          response as a document. Running the same handlers and templates in the page, in plain JS,
+          skips it: <strong>82–85 ms</strong> median in two runs (measured, above), under the ~100
+          ms where a tap feels instant. What is left is mostly the handler and re-rendering the
+          whole view; a framework updating only what changed could take that further, towards the
+          50–60 ms first estimated.
         </li>
         <li>
-          <strong>Pages:</strong> about 125–245 ms now, of which the service worker is only 13–33
-          ms. The rest is the browser loading a new document: parsing it, its CSS and scripts,
-          layout. Routing inside one page would skip most of that: an estimated 50–100 ms.
-        </li>
-        <li>
-          <strong>Without a rewrite:</strong> the match view could change the page as soon as a tap
-          lands and let the service worker's response confirm it; and links could load the next page
-          through htmz and merge in its content rather than load a new document, much as htmx's
-          boost does. Either keeps the service worker design.
+          <strong>Pages:</strong> about 125–245 ms as a new document, of which the service worker is
+          only 13–33 ms. The rest is the browser loading the document: parsing it, its CSS and
+          scripts, layout. Links in the app now fetch the next page (the service worker still
+          renders it) and morph it into the current one, with <code>history.pushState</code> so the
+          address, reload, back and forward behave as before (<code>@jon49/web/htmz-nav.js</code>):
+          <strong>47–80 ms</strong> from the click to the new page drawn, against 214–253 ms for the
+          same pages loaded as documents (test data, 2026-11-01). Pages that need other stylesheets
+          or scripts (Settings, Share, the match play view) still load as documents.
         </li>
         <li><strong>Startup</strong> wouldn't change: Chrome's start dominates (above).</li>
       </ul>
