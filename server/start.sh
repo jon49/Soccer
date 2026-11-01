@@ -15,27 +15,11 @@
 #
 # Stop with Ctrl-C; both background processes are terminated via trap.
 #
-# NGINX note (production)
-# -----------------------
-# src/web/css/app.css contains `@import url("/web/css/base.css");` — the
-# unhashed path. The build emits hashed files like `base.4e713321.css`,
-# never the unhashed name. Three places resolve the rewrite:
-#
-#   - Service worker (sw.ts dev middleware + production fetch handler) for
-#     pages within the /web/ scope.
-#   - The local-test proxy here / @jon49/sw's dev proxy via the file-map.
-#   - NGINX in production.
-#
-# Pages outside the SW scope (the auth pages: /login, /register, etc.) load
-# /web/css/app.css directly and the @import bypasses the SW. NGINX needs a
-# fallback for /web/* requests so unhashed names resolve to a hashed file:
-#
-#     location ~ ^/web/(.+)\.(css|js)$ {
-#         try_files $uri /web/$1.*.$2 =404;
-#     }
-#
-# Or precompute the rewrite at deploy time (e.g. a small `map` block
-# generated from the build's file-map.*.js).
+# Hashed asset names: the static HTML (/, and the auth pages outside the
+# service worker) gets hashed names written in by the build, and pages
+# inside the service worker have their unhashed names rewritten by it (see
+# CLAUDE.md, "Hashed asset names"). So the static server, like NGINX in
+# production, needs no rewrite of its own.
 
 set -euo pipefail
 

@@ -42,15 +42,14 @@ This is an **offline-first PWA** where almost the entire application runs **insi
 
 `src/web/pages/match/state-logic.ts` is the pure state-machine for in-game player status (`inPlay`/`onDeck`/`out`/`notPlaying`) and time tracking. **Player state transitions and time arithmetic must go through the calculator classes (`GameTimeCalculator`, `PlayerGameTimeCalculator`)** to keep `gameTime[]` invariants intact (open-ended intervals have `start` only, closed have both). The unit tests in `state-logic.test.ts` are the contract — extend them when adding transitions.
 
-### CSS hashed-asset rewrite
+### Hashed asset names
 
-The build emits hashed filenames (`base.4e713321.css`) but `src/web/css/app.css` imports `/web/css/base.css` (unhashed). Three places resolve the rewrite — keep them in sync if you touch any of them:
+The build emits hashed filenames (`base.4e713321.css`) while the source names them unhashed (`/web/css/base.css`). Two mechanisms map one to the other:
 
-1. `src/web/sw.ts` — dev middleware (refreshes from file-map) and production fetch handler (uses cached hashed name) for pages inside the SW scope.
-2. `./server/start.sh` Node proxy / `@jon49/sw` dev proxy — uses the build's file-map.
-3. NGINX in production (`try_files $uri /web/$1.*.$2 =404;` or a generated `map`).
+1. **Pages inside the SW scope** (rendered by `*.page.ts`, `_layout.html.ts`): `src/web/sw.ts` rewrites the unhashed URLs — dev middleware (refreshes from the file-map) and the production fetch handler (cached hashed name). The `@jon49/sw` dev proxy and the `./server/start.sh` Node proxy do the same from the build's file-map.
+2. **Static HTML in `src/`** (`/`, and the auth pages `/login`, `/register`, `/forgot-password`, `/reset-password`, which live **outside** the SW scope): the build's `updateHTML` step writes the hashed names into the HTML, so no server rewrite is needed.
 
-Auth pages (`/login`, `/register`, `/forgot-password`, `/reset-password`) live **outside** the SW scope and load `/web/css/app.css` directly, so the rewrite must work at the static-server / NGINX layer too.
+That covers `<link>` and `<script>` tags only. A URL inside a CSS or JS file (`@import`, `url()`) stays unhashed, since the build marks everything external, and outside the SW nothing would resolve it. So every page links `base.css` itself, before `app.css`, rather than `app.css` importing it.
 
 ### Native client
 
