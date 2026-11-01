@@ -180,6 +180,13 @@ field and the drop targets floating at the bottom.
   - `-d sokol_gles3`: vab builds sokol for GLES 3 but doesn't tell V, and
     gg would compile desktop GLSL. `-prod` for an optimized build (vab
     signs it with its debug key; pass `--keystore` for a release).
+  - Phones only need arm64-v8a, and each processor type adds a copy of the
+    app (about 4.5 MB), so `make android` builds for arm64-v8a only (`ARCHS=`
+    to change it) and `make install-apk` for the connected device (the test
+    emulator is x86_64). The APK is about 2 MB.
+  - The fonts are embedded in the app, so they live in `fonts/` rather than
+    `assets/`, which vab would copy into the APK as well; only their license
+    goes in as an asset.
   - stderr goes to logcat (`adb logcat -s soccer V`), for sokol's messages.
   - The emulator's default software GPU only has GLES 3.0; start it with
     `-gpu swangle_indirect` (or `host`).
