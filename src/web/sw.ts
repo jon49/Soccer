@@ -124,9 +124,23 @@ self.addEventListener("activate", (e: ExtendableEvent) => {
         return;
       }
       await Promise.all(keys.filter((x) => x !== version).map((x) => caches.delete(x)));
+      await pruneCache();
     })(),
   );
 });
+
+// Drops cached files the current file map doesn't list: earlier releases'
+// hashed files. The cache's name doesn't change between releases (`version`
+// isn't set on `self.sw` when this file runs), so without this every release
+// added its files to the ones before.
+async function pruneCache() {
+  let links: { file: string }[] = (self.sw as any).links;
+  let keep = new Set(links.map((x) => x.file));
+  let cache = await caches.open(version);
+  let stale = (await cache.keys()).filter((x) => !keep.has(new URL(x.url).pathname));
+  await Promise.all(stale.map((x) => cache.delete(x)));
+  if (stale.length) console.log(`Removed ${stale.length} old cached files.`);
+}
 
 // new-app-notifier posts { action: "skipWaiting" }; also accept the bare
 // string form.
