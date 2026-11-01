@@ -138,8 +138,13 @@ function initialSync() {
 }
 
 // hz:completed fires after every htmz iframe morph (i.e. every POST mutation
-// the user made). Debounce so a burst of edits coalesces into one sync.
-document.addEventListener("hz:completed", scheduleDebounced);
+// the user made). Debounce so a burst of edits coalesces into one sync. It
+// also fires after moving to another page (htmz-nav), which changes nothing
+// to sync.
+document.addEventListener("hz:completed", (e) => {
+  if ((e as CustomEvent).detail?.navigation) return;
+  scheduleDebounced();
+});
 
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", initialSync);

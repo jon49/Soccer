@@ -5,5 +5,6 @@ import "@jon49/web/_action.lifecycle.js";
 import "@jon49/web/toast.js";
 import "@jon49/web/anchor.js";
 import "@jon49/web/htmz-morph.js";
+import "@jon49/web/htmz-nav.js";
 import "./auto-sync.ts";
 import "./theme.ts";
