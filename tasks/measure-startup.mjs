@@ -1,14 +1,20 @@
 // Times how long the soccer apps take to start on the connected phone; see
 // docs/startup-and-size.html. Run it through tasks/measure-startup.sh.
 //
-// - web, cold: Chrome and the installed web app are force-stopped, then the
-//   app is opened from its launcher. The page's own timing (read through
+// Each copy of the web app is measured, one per browser it was installed
+// from (Chrome, Chrome Beta, ...), in that browser.
+//
+// - web, cold: the browsers and the installed web app are force-stopped, then
+//   the app is opened from its launcher. The page's own timing (read through
 //   Chrome's remote debugging) gives when its navigation started and when the
 //   service worker answered.
 // - web, Chrome running: as above, but Chrome is started (on a test tab)
 //   and left to settle first.
 // - native: the V app, force-stopped, until its first frame (am start -W).
 import { execFileSync } from "node:child_process";
+import { mkdtempSync, readdirSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 const HOST = process.env.SOCCER_HOST ?? "soccer.jnyman.com";
 const NATIVE = "com.jnyman.soccer";
@@ -18,17 +24,53 @@ const runs = Number(process.argv[2] ?? 3);
 
 // Each adb call and request gives up rather than hang (Chrome's remote
 // debugging sometimes stops answering).
-const adb = (...a) => execFileSync("adb", a, { encoding: "utf8", timeout: 60000 }).trim();
+const adb = (...a) =>
+  execFileSync("adb", a, { encoding: "utf8", timeout: 60000, stdio: "pipe" }).trim();
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const median = (a) => [...a].sort((x, y) => x - y)[Math.floor(a.length / 2)];
 
-// The installed web app (WebAPK) whose site is HOST.
-function webApk() {
+const BROWSERS = ["com.android.chrome", "com.chrome.beta", "com.chrome.dev", "com.chrome.canary"];
+
+// The browser a WebAPK runs in, from its manifest (the runtimeHost meta-data).
+function runtimeHost(pkg) {
+  let tools = `${process.env.ANDROID_HOME}/build-tools`;
+  let aapt = `${tools}/${readdirSync(tools).sort().pop()}/aapt`;
+  let dir = mkdtempSync(join(tmpdir(), "webapk-"));
+  try {
+    let apk = join(dir, "base.apk");
+    adb("pull", adb("shell", `pm path ${pkg}`).split("\n")[0].replace("package:", ""), apk);
+    let xml = execFileSync(aapt, ["dump", "xmltree", apk, "AndroidManifest.xml"], {
+      encoding: "utf8",
+    });
+    return /shell_apk\.runtimeHost"\)\s*\n\s*A: android:value\(0x01010024\)="([^"]+)"/.exec(
+      xml,
+    )?.[1];
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+// The installed web apps (WebAPKs) whose site is HOST, with their browsers.
+function webApks() {
+  let apks = [];
   for (let line of adb("shell", "pm list packages org.chromium.webapk").split("\n")) {
     let pkg = line.replace("package:", "").trim();
-    if (pkg && adb("shell", `dumpsys package ${pkg}`).includes(`Authority: "${HOST}"`)) return pkg;
+    if (pkg && adb("shell", `dumpsys package ${pkg}`).includes(`Authority: "${HOST}"`))
+      apks.push({ pkg, browser: runtimeHost(pkg) ?? "com.android.chrome" });
   }
-  return null;
+  return apks;
+}
+
+// Points PORT at the browser's remote debugging socket; a second Chromium
+// browser running at once names its socket with its pid.
+function forward(browser) {
+  let pid = adb("shell", `pidof ${browser} || true`).split(/\s+/)[0];
+  let sockets = adb("shell", "cat /proc/net/unix");
+  let name =
+    pid && sockets.includes(`@chrome_devtools_remote_${pid}`)
+      ? `chrome_devtools_remote_${pid}`
+      : "chrome_devtools_remote";
+  adb("forward", `tcp:${PORT}`, `localabstract:${name}`);
 }
 
 const launcher = (pkg) =>
@@ -71,13 +113,13 @@ const PROBE = `(() => {
     responseStart: n.responseStart, load: n.loadEventEnd };
 })()`;
 
-async function webRun(pkg, activity, chromeRunning) {
-  adb("shell", `am force-stop ${pkg}; am force-stop com.android.chrome`);
+async function webRun(pkg, browser, activity, chromeRunning) {
+  adb("shell", [pkg, ...BROWSERS].map((p) => `am force-stop ${p}`).join("; "));
   await sleep(3000);
   if (chromeRunning) {
     let opened = adb(
       "shell",
-      `am start -a android.intent.action.VIEW -d '${TEST_TAB}' com.android.chrome 2>&1`,
+      `am start -a android.intent.action.VIEW -d '${TEST_TAB}' ${browser} 2>&1`,
     );
     if (/Error/.test(opened)) throw new Error(opened);
     await sleep(15000); // Chrome reloads its tabs; let it settle
@@ -89,12 +131,14 @@ async function webRun(pkg, activity, chromeRunning) {
   let page;
   for (let i = 0; i < 40 && !page; i++) {
     await sleep(500);
+    forward(browser);
     page = (await pages()).find((p) => p.type === "page" && p.url.includes(HOST));
   }
   if (!page) throw new Error(`the ${HOST} page never appeared`);
   await sleep(4000); // let it finish loading
   let m = await evaluate(page, PROBE);
   if (!m) throw new Error("couldn't read the page's timing");
+  console.log(`  (${page.url})`);
   let toNav = m.origin - t0;
   return {
     "tap → navigation": toNav,
@@ -125,27 +169,26 @@ function report(name, rows) {
   );
 }
 
-let pkg = webApk();
-if (pkg) {
+let apks = webApks();
+for (let { pkg, browser } of apks) {
   let activity = launcher(pkg);
-  adb("forward", `tcp:${PORT}`, "localabstract:chrome_devtools_remote");
   try {
     for (let [name, warm] of [
-      ["web app, cold", false],
-      ["web app, Chrome running", true],
+      [`web app in ${browser}, cold`, false],
+      [`web app in ${browser}, browser running`, true],
     ]) {
       console.log(`${name} (${pkg}):`);
       let rows = [];
-      for (let i = 0; i < runs; i++) rows.push(await webRun(pkg, activity, warm));
+      for (let i = 0; i < runs; i++) rows.push(await webRun(pkg, browser, activity, warm));
       report(name, rows);
     }
     await closeTestTabs();
   } finally {
     adb("forward", "--remove", `tcp:${PORT}`);
   }
-} else {
-  console.log(`No installed web app for ${HOST}; install it from Chrome (Add to Home screen).\n`);
 }
+if (!apks.length)
+  console.log(`No installed web app for ${HOST}; install it from Chrome (Add to Home screen).\n`);
 
 if (adb("shell", `pm list packages ${NATIVE}`).includes(NATIVE)) {
   console.log(`native app (${NATIVE}):`);

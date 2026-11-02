@@ -323,7 +323,8 @@
         and the other ways to ship the app.
       </p>
       <p class="meta">
-        Measured 2026-10-31. Rerun the startup numbers with <code>tasks/measure-startup.sh</code>.
+        Measured 2026-10-31; Chrome against Chrome Beta on 2026-11-01. Rerun the startup numbers
+        with <code>tasks/measure-startup.sh</code>.
       </p>
 
       <div class="tiles">
@@ -349,7 +350,8 @@
       <ul>
         <li>
           <strong>Phone:</strong> Moto G7 (2019, Snapdragon 632, arm64), Android 10, Chrome 156.
-          Chrome had about 90 tabs open, which likely slows its cold start.
+          Chrome had about 90 tabs open; they don't slow the web app's start (see
+          <a href="#chrome-beta">Chrome against Chrome Beta</a>).
         </li>
         <li>
           <strong>Web app:</strong> soccer.jnyman.com, installed from Chrome (a WebAPK), opening on
@@ -503,6 +505,10 @@
         </li>
         <li><strong>With Chrome already running,</strong> the web app opens in about 1.1–1.3 s.</li>
         <li>
+          <strong>Chrome's open tabs don't matter.</strong> A copy installed from Chrome Beta, which
+          has no tabs, starts no faster (below).
+        </li>
+        <li>
           <strong>The native app</strong> draws its first frame in about 0.2–0.3 s: about 5× faster
           than the web app with Chrome running, and 9–14× faster than from cold.
         </li>
@@ -514,11 +520,76 @@
         </li>
       </ul>
 
+      <h3 id="chrome-beta">Chrome against Chrome Beta</h3>
+      <p>
+        Chrome had about 90 tabs open, so would a browser kept just for the app start faster? The
+        app was installed a second time from Chrome Beta 158, a separate browser with its own
+        profile and no tabs, and both copies were timed back to back (Chrome 156). Median of 5 runs
+        each, tap → loaded:
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Case</th>
+              <th class="n">Chrome (90 tabs)</th>
+              <th class="n">Chrome Beta (no tabs)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Browser not running</td>
+              <td class="n">2.20 s</td>
+              <td class="n">2.22 s</td>
+            </tr>
+            <tr>
+              <td>Browser already running</td>
+              <td class="n">1.14 s</td>
+              <td class="n">1.26 s</td>
+            </tr>
+            <tr>
+              <td>Tap → page requested, not running</td>
+              <td class="n">1.99 s</td>
+              <td class="n">1.98 s</td>
+            </tr>
+            <tr>
+              <td>Service worker, not running</td>
+              <td class="n">89 ms</td>
+              <td class="n">122 ms</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">
+        Every run, tap → loaded. Chrome, not running: 2.78, 2.16, 2.22, 2.18, 2.20 s; running: 1.10,
+        1.14, 1.13, 1.15, 1.14 s. Chrome Beta, not running: 3.00, 2.30, 2.20, 2.21, 2.22 s; running:
+        1.23, 1.26, 1.27, 1.24, 1.27 s. The first cold run was slower for both. The native app,
+        timed in the same session, took 0.21 s.
+      </p>
+      <ul>
+        <li>
+          <strong>From cold they tie.</strong> Nearly all of it is the browser starting (about 2.0 s
+          before the page is requested), and that is the cost of starting Chromium on this phone,
+          not of the tabs. Chrome doesn't reload its tabs when it starts only for an installed web
+          app.
+        </li>
+        <li>
+          <strong>With the browser running, Chrome is about 0.1 s faster.</strong> A fresh profile
+          gains nothing.
+        </li>
+        <li>
+          <strong>So keep the app in Chrome.</strong> A separate browser only for the app adds a
+          second copy of its data (each browser has its own IndexedDB and login) without starting
+          any faster.
+        </li>
+      </ul>
+
       <h3>How it is measured</h3>
       <ul>
         <li>
-          <strong>Web app:</strong> Chrome and the app are force-stopped, then the app is opened
-          from its launcher, with the phone's clock read just before.
+          <strong>Web app:</strong> the browsers and the app are force-stopped, then the app is
+          opened from its launcher, with the phone's clock read just before. Each installed copy is
+          timed in the browser it was installed from, read from its manifest.
         </li>
         <li>
           <strong>Reading the timing:</strong> the page's navigation timing, read through Chrome's
@@ -531,7 +602,8 @@
           "loaded" is the closest to when it appears.
         </li>
         <li>
-          <strong>"Chrome already running":</strong> Chrome is opened first and left 15 s to settle.
+          <strong>"Chrome already running":</strong> the browser is opened first and left 15 s to
+          settle.
         </li>
         <li><strong>Native app:</strong> <code>am start -W</code>, the time to its first frame.</li>
       </ul>
