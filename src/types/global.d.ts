@@ -6,6 +6,11 @@ declare global {
     htmz: (frame: HTMLIFrameElement) => void;
     // Swaps a response document into the page (@jon49/web/htmz-morph.js).
     htmzSwap: (doc: Document, detail?: unknown) => void;
+    // Renders a page for htmz-nav without the service worker, or null to
+    // leave it to fetch (js/routes.bundle.ts).
+    htmzFetch?: (url: string) => Promise<Response> | null;
+    // Set once js/routes.bundle.ts handles taps in the page.
+    routesInPage?: boolean;
     dataAction: (event: Event) => void;
     sw: App; // Add the sw property with proper typing
     // `app` is declared by @jon49/web/app-actions.js (Record<string, AppAction>).

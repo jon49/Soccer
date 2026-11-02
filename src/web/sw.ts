@@ -1,13 +1,23 @@
 import { useRoutes } from "@jon49/sw/routes.middleware.js";
 import { useResponse } from "@jon49/sw/response.middleware.js";
 import { swFramework } from "@jon49/sw/web-framework.js";
-import { loginView, syncCountView } from "./pages/_layout.html.js";
-import { updated as dbUpdated } from "./server/global-model.js";
-import html from "html-template-tag-stream";
+import { useHtmz } from "./server/htmz.middleware.js";
 
 // @ts-ignore
 let version: string = self.sw?.version ?? "unknown";
 const isDev = self.location.hostname === "localhost";
+
+// The file map, for the page to run these routes itself (js/routes.bundle.ts
+// via js/routes-loader.ts): where each page's code is, by its hashed name.
+// The page can't read the map's own file, as only the worker knows its name.
+swFramework.use(function useLinks(req, res): void | false {
+  if (new URL(req.url).pathname !== "/web/links.js") return;
+  let links = JSON.stringify((self.sw as any).links ?? []);
+  res.response = new Response(`(self.sw = self.sw || {}).links = ${links};`, {
+    headers: { "content-type": "text/javascript; charset=utf-8", "cache-control": "no-store" },
+  });
+  return false;
+});
 
 if (isDev) {
   let lastSwContent = "";
@@ -47,44 +57,8 @@ if (isDev) {
   });
 }
 
-// The framework toasts this after every successful POST.
-const savedMessage = "Saved!";
-
-// Pages the coach uses during a game (rendered by match/_play.ts). Their
-// toasts show failures only: a "Saved!" on every tap would get in the way.
-function isFromGamePlay(req: Request) {
-  if (!req.referrer) return false;
-  let referrer = new URL(req.referrer);
-  let handler = referrer.searchParams.get("handler");
-  return (
-    /\/web\/match\/?$/.test(referrer.pathname) &&
-    (handler === "play" || handler === "activityPlayerSelector")
-  );
-}
-
 swFramework.use(useRoutes);
-swFramework.use(async function useHtmz(req, res, ctx): Promise<void> {
-  if (req.method !== "POST") return;
-
-  let updated = await dbUpdated();
-
-  let messages = (ctx.messages || []) as string[];
-  if (isFromGamePlay(req)) {
-    messages = messages.filter((x) => x !== savedMessage);
-  }
-
-  if (res.error) {
-    messages.push(res.error);
-  }
-
-  res.body = html`${res.body}
-<div id=toasts>
-    ${messages.map((x) => html`<dialog class=toast _load=toast open><p class=message>${x}</p></dialog>`)}
-</div>
-${res.status === 401 ? html`${loginView()}` : null}
-${syncCountView(updated.length)}
-`;
-});
+swFramework.use(useHtmz);
 swFramework.use(useResponse);
 
 self.addEventListener("install", (e: Event) => {

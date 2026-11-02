@@ -75,6 +75,34 @@ export class Coach {
   async goto(path: string) {
     await this.page.goto(path);
     await this.page.waitForLoadState("networkidle");
+    if (path.startsWith("/web/")) await this.routesInPage();
+  }
+
+  // Waits for the page to run the service worker's routes itself
+  // (src/web/js/routes.bundle.ts), which it loads once idle.
+  async routesInPage() {
+    await this.page.waitForFunction(() => (window as any).routesInPage === true);
+  }
+
+  // Runs `tap`, then waits for the page to be re-rendered with the
+  // `handler`'s response. The page runs the handler itself
+  // (routes.bundle.ts), which names it on hz:completed; waiting for that name
+  // also checks the tap didn't fall back to the service worker.
+  async tap(handler: string, tap: () => Promise<void>) {
+    let rendered = this.page.evaluate(
+      (handler) =>
+        new Promise<void>((resolve) => {
+          let done = (e: Event) => {
+            if ((e as CustomEvent).detail?.handler !== handler) return;
+            document.removeEventListener("hz:completed", done);
+            resolve();
+          };
+          document.addEventListener("hz:completed", done);
+        }),
+      handler,
+    );
+    await tap();
+    await rendered;
   }
 
   async login() {

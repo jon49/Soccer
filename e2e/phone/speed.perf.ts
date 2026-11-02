@@ -24,6 +24,7 @@ class PhoneCoach extends Coach {
   override async goto(path: string) {
     await this.page.goto(new URL(path, BASE).href);
     await this.page.waitForLoadState("networkidle");
+    await routesInPage(this.page);
   }
 
   override async createTeam(name: string, year: string): Promise<number> {
@@ -74,7 +75,7 @@ function probe() {
   document.addEventListener(
     "hz:completed",
     (e) => {
-      // Fired after merging. A tap the page handled itself (match.bundle.ts)
+      // Fired after merging. A tap the page handled itself (routes.bundle.ts)
       // names its handler and when it started and finished rendering; for
       // one the service worker answered, the htmz iframe still holds the
       // response, and its navigation timing has the rest.
@@ -135,10 +136,19 @@ type Tap = {
   frame: number;
 };
 
+// Waits for the page to run the service worker's routes itself
+// (src/web/js/routes.bundle.ts), for at most 5 s: a build from before that
+// has no such thing.
+async function routesInPage(page: Page) {
+  await page
+    .waitForFunction(() => (window as any).routesInPage === true, null, { timeout: 5000 })
+    .catch(() => {});
+}
+
 const median = (xs: number[]) => [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)];
 const ms = (x: number) => `${Math.round(x)} ms`.padStart(7);
 
-function tapReport(taps: Tap[]) {
+function tapReport(name: string, taps: Tap[]) {
   for (let inPage of [true, false]) {
     let some = taps.filter((t) => t.inPage === inPage);
     if (!some.length) continue;
@@ -146,8 +156,8 @@ function tapReport(taps: Tap[]) {
     for (let t of some) byHandler.set(t.handler, [...(byHandler.get(t.handler) ?? []), t]);
     console.log(
       inPage
-        ? "\nMatch taps, handled in the page (median ms): tap → handler | handler + render | merge | to next frame | total"
-        : "\nMatch taps, through the service worker (median ms): tap → request | service worker | response loads | merge | to next frame | total",
+        ? `\n${name}, handled in the page (median ms): tap → handler | handler + render | merge | to next frame | total`
+        : `\n${name}, through the service worker (median ms): tap → request | service worker | response loads | merge | to next frame | total`,
     );
     for (let [handler, ts] of byHandler) {
       let m = (f: (t: Tap) => number) => ms(median(ts.map(f)));
@@ -174,6 +184,7 @@ function tapReport(taps: Tap[]) {
 async function navReport(name: string, page: Page, paths: string[]) {
   await page.goto(new URL(paths.at(-1)!, page.url()).href);
   await page.waitForLoadState("load");
+  await routesInPage(page);
   let rows = new Map<string, number[]>();
   for (let i = 0; i < ROUNDS; i++) {
     for (let path of paths) {
@@ -210,10 +221,12 @@ async function pageReport(name: string, page: Page, base: string, paths: string[
     for (let path of paths) {
       await page.goto(new URL(path, base).href);
       await page.waitForLoadState("load");
+      await routesInPage(page);
       let t = await page.evaluate(
         () =>
           new Promise<number[]>((resolve) =>
             (window as any).__afterFrame(() => {
+              let ready = performance.getEntriesByName("routes-in-page")[0]?.startTime ?? NaN;
               let n = performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming;
               let fcp = performance.getEntriesByName("first-contentful-paint")[0]?.startTime ?? NaN;
               resolve([
@@ -221,6 +234,7 @@ async function pageReport(name: string, page: Page, base: string, paths: string[
                 n.responseStart,
                 fcp,
                 n.loadEventEnd,
+                ready - n.loadEventEnd,
               ]);
             }),
           ),
@@ -229,12 +243,12 @@ async function pageReport(name: string, page: Page, base: string, paths: string[
     }
   }
   console.log(
-    `\n${name} (median ms): service worker | navigation → answered | → first paint | → loaded`,
+    `\n${name} (median ms): service worker | navigation → answered | → first paint | → loaded | loaded → routes in the page`,
   );
   for (let [path, ts] of rows) {
     let m = (i: number) => ms(median(ts.map((t) => t[i])));
     console.log(
-      `  ${path.replace(/[?&](teamId|gameId)=[^&]+/g, "").padEnd(22)} ${m(0)} ${m(1)} ${m(2)} ${m(3)}`,
+      `  ${path.replace(/[?&](teamId|gameId)=[^&]+/g, "").padEnd(22)} ${m(0)} ${m(1)} ${m(2)} ${m(3)} ${m(4)}`,
     );
   }
 }
@@ -286,7 +300,30 @@ test("match taps and pages, test data", async () => {
       await match.start();
     }
     await page.waitForTimeout(500);
-    tapReport(await page.evaluate(() => (window as any).__taps));
+    tapReport("Match taps", await page.evaluate(() => (window as any).__taps));
+
+    // A link that opens in the htmz iframe, outside a match: the stats tabs.
+    await coach.goto(`/web/stats?teamId=${match.teamId}`);
+    await page.evaluate(() => ((window as any).__taps = []));
+    for (let i = 0; i < ROUNDS; i++) {
+      for (let tab of ["percentagePlayed", "activitiesPerformed", "timePlayed"]) {
+        // Any swap: before routes.bundle.ts, the service worker answers.
+        let swapped = page.evaluate(
+          () =>
+            new Promise<void>((resolve) =>
+              document.addEventListener("hz:completed", function done(e) {
+                if ((e as CustomEvent).detail?.navigation) return;
+                document.removeEventListener("hz:completed", done);
+                resolve();
+              }),
+            ),
+        );
+        await page.click(`#${tab}`);
+        await swapped;
+      }
+    }
+    await page.waitForTimeout(500);
+    tapReport("Stats tabs", await page.evaluate(() => (window as any).__taps));
 
     let t = match.teamId;
     await pageReport("Pages, test data", page, BASE, [

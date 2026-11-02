@@ -43,25 +43,9 @@ export class MatchPage {
     await this.coach.goto(`/web/match?teamId=${this.teamId}&gameId=${this.gameId}&handler=play`);
   }
 
-  // Runs `tap`, then waits for the page to be re-rendered with the `handler`'s
-  // response. The play view runs its handlers in the page (match.bundle.ts),
-  // which names the handler on hz:completed; waiting for that name also
-  // checks the tap didn't fall back to the service worker.
-  async act(handler: string, tap: () => Promise<void>) {
-    let rendered = this.page.evaluate(
-      (handler) =>
-        new Promise<void>((resolve) => {
-          let done = (e: Event) => {
-            if ((e as CustomEvent).detail?.handler !== handler) return;
-            document.removeEventListener("hz:completed", done);
-            resolve();
-          };
-          document.addEventListener("hz:completed", done);
-        }),
-      handler,
-    );
-    await tap();
-    await rendered;
+  // Runs `tap` and waits for the `handler`'s response (Coach.tap).
+  act(handler: string, tap: () => Promise<void>) {
+    return this.coach.tap(handler, tap);
   }
 
   player(name: string) {
@@ -273,7 +257,5 @@ export async function setTeamStat(
   let input = form.locator("input[type=checkbox]");
   if ((await input.isChecked()) === on) return;
   let handler = setting === "basketballMode" ? "basketballMode" : "updateStat";
-  let saved = coach.page.waitForResponse((x) => x.url().includes(`handler=${handler}`));
-  await form.locator("label.toggle").click();
-  expect((await saved).ok()).toBe(true);
+  await coach.tap(handler, () => form.locator("label.toggle").click());
 }

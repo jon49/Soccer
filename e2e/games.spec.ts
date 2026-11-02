@@ -17,9 +17,7 @@ test.describe("the games list", () => {
     await bears.locator("summary").click();
     await bears.locator("input[name=date]").fill("2099-10-31T08:00");
     await bears.locator("input[name=opponent]").fill("Grizzlies");
-    let saved = page.waitForResponse((x) => x.url().includes("handler=edit"));
-    await bears.locator("form button").click();
-    expect((await saved).ok()).toBe(true);
+    await coach.tap("edit", () => bears.locator("form button").click());
 
     await expect(opponents).toHaveText(["vs Grizzlies", "vs Owls"]);
     let games = (await coach.idb<{ games: { opponent: string; date: string }[] }>([

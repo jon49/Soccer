@@ -690,9 +690,67 @@
         Tap (pointer down) to the first frame after the change is merged in. The match runs on test
         data (6 players, 4 on the field) on a localhost site served by the dev build, which isn't
         minified, so the live app is likely a little faster. "In the page": the same taps once the
-        play view ran its handlers in the page (<code>src/web/js/match.bundle.ts</code>),
-        2026-11-01: tap to handler 3–17 ms, the handler and rendering the view 19–63 ms, merging 2–8
-        ms, drawing 18–27 ms.
+        play view ran its handlers in the page (then <code>src/web/js/match.bundle.ts</code>, now
+        <code>routes.bundle.ts</code>, below), 2026-11-01: tap to handler 3–17 ms, the handler and
+        rendering the view 19–63 ms, merging 2–8 ms, drawing 18–27 ms.
+      </p>
+
+      <h3>Every page's routes in the page</h3>
+      <p>
+        Since 2026-11-02 every page runs the service worker's routes itself
+        (<code>src/web/js/routes.bundle.ts</code>, loaded once the page is idle): forms and links
+        that open in the htmz iframe, and the next page when moving between pages
+        (<code>htmz-nav</code>'s <code>window.htmzFetch</code>). It runs the worker's own router and
+        middleware on the same IndexedDB, so the answer is the same; what calls the server (sync,
+        the account, sharing, a published schedule) stays in the worker. Test data, dev build, the
+        same phone, medians in ms:
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Measure</th>
+              <th class="n">Before (2 runs)</th>
+              <th class="n">After (4 runs)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>A stats tab (a link into the htmz iframe; 15 taps a run)</td>
+              <td class="n">105–107 ms</td>
+              <td class="n">41–46 ms</td>
+            </tr>
+            <tr>
+              <td>Moving between pages (6 pages, click to drawn)</td>
+              <td class="n">49–73 ms</td>
+              <td class="n">37–65 ms</td>
+            </tr>
+            <tr>
+              <td>Match taps, all (already in the page before)</td>
+              <td class="n">78–84 ms</td>
+              <td class="n">86–90 ms</td>
+            </tr>
+            <tr>
+              <td>Page load, navigation to first paint</td>
+              <td class="n">244–344 ms</td>
+              <td class="n">216–308 ms</td>
+            </tr>
+            <tr>
+              <td>Load to the routes running in the page</td>
+              <td class="n">—</td>
+              <td class="n">149–201 ms</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">
+        Match taps aren't slower, though the table suggests 5–10 ms: run back to back, the two
+        measured 84 ms (before) and 86 ms (after), and a Chrome trace of 28 taps each found the same
+        work on the main thread (tap to merged 77.3 against 76.0 ms, merged to the next frame 27.3
+        against 27.1 ms). The earlier gap came from when each was run: the runs before were after a
+        rest, those after back to back. Moving between pages gains least on Games and Stats, the
+        same as before. The extra code (44 KB, plus the page's own the first time it's used) loads
+        after the load event, so it doesn't hold up the first paint.
       </p>
 
       <h3>Moving between pages</h3>
@@ -794,24 +852,24 @@
           </thead>
           <tbody>
             <tr>
-              <td>App files (36 files, uncompressed)</td>
-              <td class="n">259 KB</td>
+              <td>App files (38 files, uncompressed)</td>
+              <td class="n">270 KB</td>
             </tr>
             <tr class="strong">
               <td>Download (compressed, as served)</td>
-              <td class="n">101 KB</td>
+              <td class="n">106 KB</td>
             </tr>
           </tbody>
         </table>
       </div>
       <ul>
         <li>
-          By type, uncompressed: JavaScript 180 KB (23 files), CSS 48 KB, HTML 8 KB, icons 23 KB.
+          By type, uncompressed: JavaScript 190 KB (25 files), CSS 48 KB, HTML 8 KB, icons 23 KB.
         </li>
         <li>
           <strong>Biggest files:</strong> the service worker's shared code
           (<code>shared.global.js</code>, 33 KB), the match page (31 KB), the CSS
-          (<code>base.css</code>, 31 KB), and the page script (<code>app.bundle.js</code>, 15 KB).
+          (<code>base.css</code>, 31 KB), and the page script (<code>app.bundle.js</code>, 19 KB).
         </li>
         <li>
           It used to be 290 KB (107 KB to download): <code>base.css</code> shipped twice, hashed and
@@ -942,7 +1000,7 @@
             </tr>
             <tr class="strong">
               <td>Web app (measured)</td>
-              <td>101 KB (uses Chrome)</td>
+              <td>106 KB (uses Chrome)</td>
               <td>same, in any browser</td>
               <td>2.1–3.2 s cold, ~1.1 s with Chrome running</td>
             </tr>
@@ -1032,8 +1090,8 @@
         ["Linux binary", 4.9],
         ["Linux, no debug symbols", 4.7],
         ["Linux, compressed", 2.3],
-        ["Web app, uncompressed", 0.26],
-        ["Web app, download", 0.1],
+        ["Web app, uncompressed", 0.27],
+        ["Web app, download", 0.11],
       ];
       const tip = document.getElementById("tip");
       const fmtS = (ms) => (ms / 1000).toFixed(2) + " s";
