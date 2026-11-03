@@ -2,7 +2,6 @@ import type { RoutePage, RoutePostHandler } from "@jon49/sw/routes.middleware.js
 import type { Team } from "../server/db.js";
 import type { ApiResult, Invite, SpaceMember } from "../server/repo-share.js";
 import sync from "../server/sync.js";
-import { errorToPlain, logSyncError } from "../server/sync-log.js";
 
 const {
   globalDb,
@@ -166,7 +165,7 @@ async function syncQuietly() {
   try {
     return (await sync()).status;
   } catch (err) {
-    await logSyncError("sync after sharing change failed", errorToPlain(err));
+    console.error("sync after sharing change failed", err);
     return 0;
   }
 }
@@ -194,7 +193,7 @@ const postHandlers: RoutePostHandler = {
       try {
         await publishTeamSchedule(await teamGet(space));
       } catch (err) {
-        await logSyncError("schedule republish after sharing failed", errorToPlain(err));
+        console.error("schedule republish after sharing failed", err);
         url += "&scheduleError=1";
       }
     }

@@ -18,7 +18,7 @@ import {
   isOnDeckPlayer,
   isOutPlayer,
 } from "./state-logic.js";
-import { fairShareRatio, isRosterFull, staleAfterMs } from "./player-state-logic.js";
+import { fairShareRatio, staleAfterMs } from "./player-state-logic.js";
 
 export { GameTimeCalculator, isInPlayPlayer, isOnDeckPlayer, isOutPlayer };
 
@@ -136,9 +136,10 @@ export class PlayerStateView {
   }
 
   async gameState() {
-    return this.#cache.get("gameState", async () =>
-      gameStateGet(this.teamId, this.gameId, await this.game()),
-    );
+    return this.#cache.get("gameState", async () => {
+      await this.game(); // Could not find game ID!
+      return gameStateGet(this.teamId, this.gameId);
+    });
   }
 
   get queryTeamGame() {
@@ -185,10 +186,15 @@ export class PlayerStateView {
     return this.#cache.get("players", async () => (await this.team()).players);
   }
 
-  async inPlayPlayers() {
-    return this.#cache.get("inPlayPlayers", async () =>
+  // The game's players with status T, each with their team details and
+  // time calculator.
+  #playersView<T extends PlayerStatus>(
+    key: string,
+    filter: (playerGame: PlayerGame) => playerGame is PlayerGameStatus<T>,
+  ) {
+    return this.#cache.get(key, async () =>
       createPlayersView(
-        isInPlayPlayer,
+        filter,
         await this.players(),
         await this.gamePlayers(),
         await this.gameState(),
@@ -196,57 +202,24 @@ export class PlayerStateView {
     );
   }
 
-  async countInPlayPlayers() {
-    return this.#cache.get("playersInPlay", async () => (await this.inPlayPlayers()).length);
+  async inPlayPlayers() {
+    return this.#playersView("inPlayPlayers", isInPlayPlayer);
   }
 
   async onDeckPlayers() {
-    return this.#cache.get("onDeckPlayers", async () =>
-      createPlayersView(
-        isOnDeckPlayer,
-        await this.players(),
-        await this.gamePlayers(),
-        await this.gameState(),
-      ),
-    );
-  }
-
-  async countPlayersOnDeck() {
-    return this.#cache.get("playersOnDeck", async () => (await this.onDeckPlayers()).length);
+    return this.#playersView("onDeckPlayers", isOnDeckPlayer);
   }
 
   async outPlayers() {
-    return this.#cache.get("outPlayers", async () => {
-      let players = await createPlayersView(
-        filterOutPlayers,
-        (await this.team()).players,
-        await this.gamePlayers(),
-        await this.gameState(),
-      );
-      return players.sort((a, b) => a.calc.total() - b.calc.total());
-    });
-  }
-
-  async playersOut() {
-    return this.#cache.get("playersOut", async () => (await this.outPlayers()).length);
-  }
-
-  async notPlayingPlayers() {
-    return this.#cache.get("notPlayingPlayers", async () =>
-      createPlayersView(
-        filterNotPlayingPlayers,
-        (await this.team()).players,
-        await this.gamePlayers(),
-        await this.gameState(),
+    return this.#cache.get("outPlayers", async () =>
+      (await this.#playersView("outPlayersUnsorted", filterOutPlayers)).sort(
+        (a, b) => a.calc.total() - b.calc.total(),
       ),
     );
   }
 
-  async countNotPlayingPlayers() {
-    return this.#cache.get(
-      "playersNotPlaying",
-      async () => (await this.notPlayingPlayers()).length,
-    );
+  async notPlayingPlayers() {
+    return this.#playersView("notPlayingPlayers", filterNotPlayingPlayers);
   }
 
   /** Returns null when the highlight is disabled (team set it to 0 minutes). */
@@ -278,15 +251,6 @@ export class PlayerStateView {
     let [fairShare, staleAfter] = await Promise.all([this.fairShare(), this.staleAfterMs()]);
     let scale = staleAfter ?? DEFAULT_STALE_AFTER_MINUTES * 60 * 1000;
     return `data-fair-share="${fairShare}" data-shade-scale="${scale}"`;
-  }
-
-  isInPlayersFull() {
-    return this.#cache.get("isInPlayersFull", async () => {
-      let countPlayersOnDeck = await this.countPlayersOnDeck();
-      let countInPlayPlayers = await this.countInPlayPlayers();
-      let totalPositions = (await this.positions()).positions.flat().length;
-      return isRosterFull(countInPlayPlayers, countPlayersOnDeck, totalPositions);
-    });
   }
 
   static async create(query: any) {

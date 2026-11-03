@@ -6,7 +6,6 @@ import {
   adjustPoints,
   applyInPlayerOut,
   applyOnDeckPlayerOut,
-  applyStatOperation,
   endInPlayPlayers,
   formatClock,
   gameStatusText,
@@ -90,34 +89,6 @@ describe("adjustPoints / isValidPointsValue", () => {
   it("flags negative results as invalid", () => {
     assert.equal(isValidPointsValue(adjustPoints(0, 1)), true);
     assert.equal(isValidPointsValue(adjustPoints(0, -1)), false);
-  });
-});
-
-describe("applyStatOperation", () => {
-  it("increments the count by 1 point with no game-score side effect", () => {
-    let result = applyStatOperation(0, "inc", 1);
-    assert.deepEqual(result, { newCount: 1, gameScoreDelta: 0 });
-  });
-
-  it("decrements the count by 1 point with no game-score side effect", () => {
-    let result = applyStatOperation(2, "dec", 1);
-    assert.deepEqual(result, { newCount: 1, gameScoreDelta: 0 });
-  });
-
-  it("defaults points to 1 when not given", () => {
-    assert.deepEqual(applyStatOperation(0, "inc"), { newCount: 1, gameScoreDelta: 0 });
-  });
-
-  it("adds the points beyond the first directly to the game score on increment", () => {
-    // e.g. a 3-point activity: +3 to the stat count, +2 to the game score
-    // (the first point is assumed to be accounted for elsewhere).
-    let result = applyStatOperation(0, "inc", 3);
-    assert.deepEqual(result, { newCount: 3, gameScoreDelta: 2 });
-  });
-
-  it("subtracts the points beyond the first directly from the game score on decrement", () => {
-    let result = applyStatOperation(5, "dec", 3);
-    assert.deepEqual(result, { newCount: 2, gameScoreDelta: -2 });
   });
 });
 

@@ -1,5 +1,3 @@
-// import { getMany, setMany, set, update } from "./db.js"
-// import * as db from "./global-model.js"
 import { authFetch } from "./api-client.js";
 import { spacesForget, teamMoveLocal } from "./repo-share.js";
 import { isMovedTeam, isTeamKey, movesIn } from "./share-logic.js";
@@ -13,10 +11,9 @@ import {
   type SpaceCursors,
   type SyncItem,
 } from "./sync-logic.js";
-import { errorToPlain, logSyncError, logSyncInfo } from "./sync-log.js";
 
 const {
-  db: { getMany, setMany, update, get, transaction, promisifyRequest },
+  db: { getMany, setMany, update, transaction, promisifyRequest },
   globalDb,
   syncQueue: { afterSync },
 } = self.sw;
@@ -44,7 +41,6 @@ async function syncWithRetry(): Promise<SyncResult> {
   // A 403 means some item names a space we're no longer in. Learn the current
   // membership with a data-free sync (which drops the lost spaces and their
   // pending keys), then retry once. Never loop.
-  await logSyncInfo("sync refused (403); refreshing space membership");
   let probe = await syncOnce(false);
   if (probe.status !== 200 && probe.status !== 204) return probe;
   let retry = await syncOnce(true);
@@ -55,7 +51,6 @@ async function syncWithRetry(): Promise<SyncResult> {
 }
 
 async function syncOnce(withData: boolean): Promise<SyncResult> {
-  let rawUpdated = await get<Set<unknown>>("updated");
   let keys = withData ? await globalDb.updated() : [];
   const items = await getMany(keys);
   const settings = await globalDb.settings();
@@ -67,21 +62,7 @@ async function syncOnce(withData: boolean): Promise<SyncResult> {
     keys.map((key, i) => ({ key, data: items[i] })),
   );
 
-  await logSyncInfo("sync start", {
-    lastSyncedId,
-    spaces,
-    pendingRaw: Array.from(rawUpdated ?? []),
-    pendingParsed: keys,
-    outgoing: postData.data.map((d) => ({ key: d.key, id: d.id, space: d.space })),
-  });
-
-  let res;
-  try {
-    res = await postSync(postData);
-  } catch (err) {
-    await logSyncError("sync request failed", errorToPlain(err));
-    throw err;
-  }
+  let res = await postSync(postData);
 
   let newData: ResponseData;
   if (
@@ -91,10 +72,6 @@ async function syncOnce(withData: boolean): Promise<SyncResult> {
   ) {
     newData = await res.json();
   } else {
-    await logSyncError("sync response not ok", {
-      status: res.status,
-      contentType: res.headers.get("Content-Type"),
-    });
     return { status: res.status, messages: [] };
   }
 
@@ -124,13 +101,12 @@ async function syncOnce(withData: boolean): Promise<SyncResult> {
   await setMany(toSaveNewData);
 
   let sent = new Map(keys.map((key, i) => [canonicalKey(key), items[i]]));
-  let { missing, kept } = await applySaved(
+  let missing = await applySaved(
     newData.saved.map((x) => ({ key: parse(x.key), id: x.id })),
     sent,
   );
   for (let key of missing) {
     console.error("Could not find the key to update the revision!", key);
-    await logSyncError("could not find key to update revision", { key });
   }
 
   // The server saves every upload, so the latest write wins. `conflicted`
@@ -139,7 +115,6 @@ async function syncOnce(withData: boolean): Promise<SyncResult> {
   if (newData.conflicted?.length) {
     let message = "another device also changed these; this device's version was saved over theirs";
     console.warn(`soccer sync: ${message}:`, newData.conflicted);
-    await logSyncInfo(message, { conflicted: newData.conflicted });
   }
 
   let remoteSpaces = newData.spaces ?? {};
@@ -173,18 +148,6 @@ async function syncOnce(withData: boolean): Promise<SyncResult> {
     }
   }
 
-  let rawUpdatedAfter = await get<Set<unknown>>("updated");
-  await logSyncInfo("sync complete", {
-    saved: newData.saved,
-    lastSyncedId: newData.lastSyncedId,
-    spaces: remoteSpaces,
-    spacesAdded: added,
-    spacesRemoved: removed,
-    teamsMoved: moves,
-    editedInFlight: kept,
-    pendingRawAfter: Array.from(rawUpdatedAfter ?? []),
-  });
-
   if (toSaveNewData.length > 0 || added.length > 0 || removed.length > 0 || moves.length > 0) {
     return { status: 200, messages };
   }
@@ -205,10 +168,7 @@ async function applySaved(saved: { key: any; id: number }[], sent: Map<string, u
     let pending = pendingAfterSync(updated, confirmed);
     if (pending) store.put(pending, "updated");
     await promisifyRequest(store.transaction);
-    let kept = records
-      .map(([key]) => key)
-      .filter((key) => !confirmed.some((x) => x.key === canonicalKey(key)));
-    return { missing, kept };
+    return missing;
   });
 }
 

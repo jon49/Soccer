@@ -254,15 +254,6 @@ pub fn end_in_play(mut players []PlayerGame, now i64) []int {
 	return changed
 }
 
-// stat_operation: the first point of a stat is the goal itself (counted by
-// the score's own flow); points beyond it go straight onto the game score.
-pub fn stat_operation(count int, inc bool, points int) (int, int) {
-	sign := if inc { 1 } else { -1 }
-	new_count := count + sign * points
-	delta := if points > 1 { sign * (points - 1) } else { 0 }
-	return new_count, delta
-}
-
 // take_back_error explains why `points` can't be taken back from the
 // team's score, or from a scorer with `goals` points this game.
 pub fn take_back_error(points int, team_points int, scorer_name string, goals int, has_scorer bool) ?string {
@@ -379,10 +370,6 @@ pub const default_stale_after_minutes = 8
 pub fn stale_after_ms(minutes int) ?i64 {
 	m := if minutes < 0 { default_stale_after_minutes } else { minutes }
 	return if m > 0 { i64(m) * 60 * 1000 } else { none }
-}
-
-pub fn is_roster_full(in_play int, on_deck int, positions int) bool {
-	return in_play + on_deck >= positions
 }
 
 // fair_share_ratio is each available player's even share of the game:

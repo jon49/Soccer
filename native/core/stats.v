@@ -32,7 +32,7 @@ pub fn (s &Store) played_games(team Team) []PlayedGame {
 	ids := team.players.map(it.id)
 	mut res := []PlayedGame{}
 	for g in team.games {
-		state := s.game_state_get(team.id, g.id, g)
+		state := s.game_state_get(team.id, g.id)
 		if state.status == '' {
 			continue
 		}

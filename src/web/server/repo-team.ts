@@ -75,42 +75,23 @@ function getGameStateId(teamId: TeamId, gameId: number) {
   return ["game-state", teamId, gameId];
 }
 
-function gameStateFromLegacy(gameId: number, game?: Game): GameState {
-  return {
-    gameId,
-    status: game?.status,
-    points: game?.points ?? 0,
-    opponentPoints: game?.opponentPoints ?? 0,
-    gameTime: game?.gameTime ?? [],
-    _rev: 0,
-  };
+// A game with no state record yet hasn't started: no score, no clock.
+function newGameState(gameId: number): GameState {
+  return { gameId, points: 0, opponentPoints: 0, gameTime: [], _rev: 0 };
 }
 
-// Returns the separate game-state record if it exists, otherwise falls back to
-// the legacy fields still embedded in the team's game (non-destructive
-// migration). Pass `game` to avoid an extra team read when it's already loaded.
-export async function gameStateGet(
-  teamId: TeamId,
-  gameId: number,
-  game?: Game,
-): Promise<GameState> {
-  let existing = await get<GameState>(getGameStateId(teamId, gameId));
-  if (existing) return existing;
-  if (!game) {
-    game = (await teamGet(teamId)).games.find((x) => x.id === gameId);
-  }
-  return gameStateFromLegacy(gameId, game);
+export async function gameStateGet(teamId: TeamId, gameId: number): Promise<GameState> {
+  return (await get<GameState>(getGameStateId(teamId, gameId))) ?? newGameState(gameId);
 }
 
 export async function gameStateSave(teamId: TeamId, gameState: GameState) {
   await set(getGameStateId(teamId, gameState.gameId), gameState);
 }
 
-// Batch loader for list views (e.g. stats). Falls back to legacy game fields
-// for any game without its own record yet.
+// Batch loader for list views (e.g. stats).
 export async function gameStatesGet(teamId: TeamId, games: Game[]): Promise<GameState[]> {
   let records = await getMany<GameState>(games.map((x) => getGameStateId(teamId, x.id)));
-  return records.map((record, i) => record ?? gameStateFromLegacy(games[i].id, games[i]));
+  return records.map((record, i) => record ?? newGameState(games[i].id));
 }
 
 export async function teamSave(o: Team) {

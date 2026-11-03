@@ -1,4 +1,4 @@
-import html from "../server/html.js";
+import html from "html-template-tag-stream";
 import * as db from "../server/global-model.js";
 import { when } from "@jon49/sw/utils.js";
 import { Theme } from "../server/db.js";
@@ -60,14 +60,11 @@ const render = async ({
   nav,
   title,
   bodyAttr,
+  bare,
 }: LayoutTemplateArguments) => {
-  const [isLoggedIn, updated, settings] = await Promise.all([
-    db.isLoggedIn(),
-    db.updated(),
-    db.settings(),
-  ]);
-  const { theme, disableAutoSyncDuringGame } = settings;
-  const updatedCount = updated.length;
+  const { theme, disableAutoSyncDuringGame } = await db.settings();
+  const pageScripts = () =>
+    (scripts ?? []).map((x) => html`<script src="${x}" type="module"></script>`);
 
   return html`
 <!DOCTYPE html>
@@ -89,7 +86,34 @@ const render = async ({
 </head>
 <body $${bodyAttr}>
 <script>window.app = {}</script>
-<div id=head>$${head}</div>
+${
+  bare
+    ? html`${main}
+<div id=toasts></div>
+<div id=temp></div>
+
+<form id=post method=post hidden></form>
+<script src="/web/js/app.bundle.js" type="module"></script>
+${pageScripts()}`
+    : appView({ main, head, nav, theme, pageScripts })
+}
+</body>
+</html>`;
+};
+
+// The page around `main`: the header with its menus and the team's tabs.
+async function appView({
+  main,
+  head,
+  nav,
+  theme,
+  pageScripts,
+}: Pick<LayoutTemplateArguments, "main" | "head" | "nav"> & {
+  theme: Theme;
+  pageScripts: () => AsyncGenerator<any, void, unknown>[];
+}) {
+  const [isLoggedIn, updated] = await Promise.all([db.isLoggedIn(), db.updated()]);
+  return html`<div id=head>$${head}</div>
     <div>
     <div id=sw-message></div>
     <header>
@@ -105,7 +129,7 @@ const render = async ({
                 <li>
                     ${themeView(theme)}
 
-                    ${syncCountView(updatedCount)}
+                    ${syncCountView(updated.length)}
 
                     <a href="/web/settings" role="button" class="nc-button" target="_self" aria-label="Settings">&#9881;</a>
 
@@ -144,11 +168,9 @@ const render = async ({
     <form id=post method=post hidden></form>
     <script src="/web/js/app.bundle.js" type="module"></script>
 
-    <div id=scripts>${(scripts ?? []).map((x) => html`<script src="${x}" type="module"></script>`)}</div>
-    </div>
-</body>
-</html>`;
-};
+    <div id=scripts>${pageScripts()}</div>
+    </div>`;
+}
 
 export function loginView() {
   return html`
@@ -160,10 +182,11 @@ export default async function layout(o: LayoutTemplateArguments) {
   return render(o);
 }
 
-export type Layout = typeof layout;
-
 export interface LayoutTemplateArguments {
   title: string;
+  // Just `main` (which brings its own <main id=main>), without the header:
+  // the match play view, which fills the screen.
+  bare?: boolean;
   head?: string;
   bodyAttr?: string;
   main?: AsyncGenerator<any, void, unknown>;

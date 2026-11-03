@@ -1,14 +1,4 @@
-import {
-  Stats,
-  Stat,
-  get,
-  getMany,
-  PlayerGame,
-  Positions,
-  PositionsV0,
-  set,
-  type TeamId,
-} from "./db.js";
+import { Stats, Stat, get, getMany, PlayerGame, Positions, set, type TeamId } from "./db.js";
 import { teamGet } from "./repo-team.js";
 import { reject } from "@jon49/sw/validation.js";
 
@@ -47,39 +37,11 @@ function getPositionsId(teamId: TeamId) {
   return ["positions", teamId];
 }
 
-export async function positionGetAll(teamId: TeamId): Promise<PositionsV0> {
-  let positions = await get<Positions | PositionsV0>(getPositionsId(teamId));
-  if (!positions) {
-    positions = {
-      _rev: 0,
-      _v: 0,
-      positions: [],
-      grid: [],
-    };
-  }
-  return upgradePositions(positions);
+export async function positionGetAll(teamId: TeamId): Promise<Positions> {
+  return (await get<Positions>(getPositionsId(teamId))) ?? { _rev: 0, _v: 0, positions: [] };
 }
 
-function upgradePositions(positions: any) {
-  return [positionsToV0].reduce((x, f) => f(x), positions);
-}
-
-function positionsToV0(positionsOld: Positions | PositionsV0): PositionsV0 {
-  if ("_v" in positionsOld) {
-    return positionsOld;
-  }
-  let positions: string[][] = [];
-  for (let grid of positionsOld.grid) {
-    positions.push(positionsOld.positions.splice(0, grid));
-  }
-  return {
-    _rev: positionsOld._rev,
-    _v: 0,
-    positions,
-  };
-}
-
-export async function positionsSave(teamId: TeamId, positions: PositionsV0) {
+export async function positionsSave(teamId: TeamId, positions: Positions) {
   await areUnique(positions.positions.flat().filter((x) => x));
   await set(getPositionsId(teamId), positions);
 }
@@ -88,23 +50,6 @@ export async function positionsSave(teamId: TeamId, positions: PositionsV0) {
 
 export const statDescriptions = {
   Goal: "The number of times a player scores.",
-  // Assist: "The number of passes or plays that directly lead to a goal.",
-  // SOG: "Shots Off Target: The number of shots that miss the goal frame.",
-  // SOT: "Shots on Target: The number of shots that hit the goal frame.",
-  // Shooting: "Shooting Accuracy: The percentage of shots on target out of total shots attempted.",
-  // Possession: "The percentage of time a team spends in control of the ball during a match.",
-  // Passing: "Passing Accuracy: The percentage of successful passes out of total attempted passes.",
-  // Tackle: "The number of defensive challenges made by players to win back possession.",
-  // "Foul Committed": "The number of fouls a team or player commits.",
-  // "Foul Received": "Fouls Received: The number of fouls a team or player commits or suffers.",
-  // "Yellow Card": "The number of disciplinary actions a team or player receives during a match.",
-  // "Red Card": "The number of disciplinary actions a team or player receives during a match.",
-  // Corner: "The number of corner kicks awarded to a team.",
-  // Offside: "The number of times a player is caught in an offside position.",
-  // Interception: "The number of times a player interrupts an opponent's pass or play.",
-  // "Clean Sheets": "The number of matches or periods in which a team does not concede any goals.",
-  // Saves: "The number of shots on target that a goalkeeper stops.",
-  // "Dribbles Completed": "The number of successful attempts to move past an opponent with the ball."
 };
 
 export const statIds: Record<StatName, number> = <any>Object.keys(statDescriptions).reduce(

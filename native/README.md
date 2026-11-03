@@ -52,7 +52,7 @@ app.v               app state, routing and back history, header, toasts,
                     confirm dialog, sync rounds
 jobs.v              other network calls on worker threads, clipboard
 screen_*.v          the screens: teams (and joining), team (players), share,
-                    games (and one game, the goal picker), match, stats,
+                    games (and one game), match, stats,
                     formation (and templates), settings (and login, register,
                     forgot password)
 platform_*.c.v      per-platform bits: Android's data folder, screen density,
@@ -91,8 +91,8 @@ of its calculator classes, and extend `core/core_test.v` with them.
 - Sync runs at startup, 1.5 seconds after an edit (not during a match when
   Settings > Disable auto-sync during games is on), when the window regains
   focus (at most once a minute), and on demand (↻ or Ctrl+R).
-- Settings has the web app's data export, sync log and force-resync tools;
-  exports go to `~/Downloads`. While logged in, it can also delete the
+- Settings has the web app's data export, which goes to `~/Downloads`.
+  While logged in, it can also delete the
   account (`DELETE /api/auth/v1/delete`): the server deletes the synced
   data, and this device forgets everything but its theme, text size and
   server.

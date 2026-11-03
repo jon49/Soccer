@@ -6,16 +6,6 @@ export function staleAfterMs(minutes: number | undefined, defaultMinutes: number
   return m > 0 ? m * 60 * 1000 : null;
 }
 
-// The in-play grid is full once every position is filled by an in-play or
-// on-deck player.
-export function isRosterFull(
-  countInPlayPlayers: number,
-  countPlayersOnDeck: number,
-  totalPositions: number,
-): boolean {
-  return countInPlayPlayers + countPlayersOnDeck >= totalPositions;
-}
-
 // The share of the game each available player would get if field time were
 // split evenly: field spots over players available. 1 when everyone fits on
 // the field (or there are no spots), so no one is ever ahead.

@@ -446,19 +446,6 @@ input:indeterminate ~ .none {
   display: inline-block;
 }
 
-/** Flex **/
-
-.flex {
-  display: flex;
-  gap: 1rem;
-  justify-items: start;
-  flex-wrap: wrap;
-}
-
-.flex > * {
-  margin: auto;
-}
-
 /** List of items **/
 
 .list {

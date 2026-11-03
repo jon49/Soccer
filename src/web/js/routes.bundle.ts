@@ -43,8 +43,8 @@ swFramework.use(useResponse);
 //   (sync-queue.ts) and the login token refresh (api-client.ts) assume one
 //   caller at a time;
 // - settings, other than the theme button on every page;
-// - the match play view and the position picker, which load as documents
-//   with scripts of their own (htmz-nav would load them anyway).
+// - the match play view, which loads as a document with scripts of its own
+//   (htmz-nav would load it anyway).
 function inPage(url: URL, method: "get" | "post") {
   if (url.origin !== location.origin) return false;
   let { pathname } = url;
@@ -62,7 +62,7 @@ function inPage(url: URL, method: "get" | "post") {
     case "/web/games/":
       return handler !== "publishSchedule";
     case "/web/match/":
-      return method === "post" || (handler !== "play" && handler !== "activityPlayerSelector");
+      return method === "post" || handler !== "play";
   }
   return true;
 }

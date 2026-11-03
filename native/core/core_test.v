@@ -61,17 +61,14 @@ fn test_records_round_trip_and_keep_unknown_fields() {
 	p := as_map(any_arr(m['players'] or { json2.null })[0])
 	assert any_str(p['nick'] or { json2.null }) == 'A'
 	assert 'staleAfterMinutes' !in m
-	// Legacy score fields embedded in the game are still readable.
-	gs := game_state_from_legacy(2, t.games[0])
-	assert gs.points == 3
 
 	st := player_game_from_any(decode_json('{"playerId":1,"gameId":2,"stats":[],"gameTime":[{"position":"GK"}],"status":{"_":"onDeck","targetPosition":null},"_rev":0}'))
 	assert st.status.kind == .on_deck && st.status.target == -1
 	assert st.to_any().json_str().contains('"targetPosition":null')
 }
 
-fn test_positions_upgrade_from_the_original_shape() {
-	p := positions_from_any(decode_json('{"positions":["A","B","C","D"],"grid":[1,2,1],"_rev":2}'))
+fn test_positions_round_trip() {
+	p := positions_from_any(decode_json('{"positions":[["A"],["B","C"],["D"]],"_v":0,"_rev":2}'))
 	assert p.positions == [['A'], ['B', 'C'], ['D']]
 	assert p.rev == 2
 	assert p.to_any().json_str().contains('"_v":0')
@@ -280,13 +277,7 @@ fn test_pause_and_end_in_play_players() {
 	assert players[0].status.kind == .out
 }
 
-fn test_stat_operation_and_take_back() {
-	a, b := stat_operation(0, true, 1)
-	assert a == 1 && b == 0
-	c, d := stat_operation(2, true, 3)
-	assert c == 5 && d == 2
-	e, f := stat_operation(5, false, 3)
-	assert e == 2 && f == -2
+fn test_take_back() {
 	assert take_back_error(1, 0, '', 0, false)? == 'Points cannot be negative!'
 	assert take_back_error(1, 3, 'Ann', 0, true)? == "Ann doesn't have a goal to take back."
 	assert take_back_error(2, 3, 'Ann', 1, true)? == "Ann doesn't have 2 points to take back."
@@ -297,8 +288,6 @@ fn test_fairness() {
 	assert stale_after_ms(5)? == 5 * 60 * 1000
 	assert stale_after_ms(-1)? == 8 * 60 * 1000
 	assert stale_after_ms(0) == none
-	assert !is_roster_full(5, 1, 7)
-	assert is_roster_full(5, 2, 7)
 	assert fair_share_ratio(4, 8) == 0.5
 	assert fair_share_ratio(4, 3) == 1.0
 	assert fair_share_ratio(0, 6) == 1.0
@@ -347,7 +336,7 @@ fn test_a_match_from_kickoff_to_final_whistle() {
 		assert false
 	}
 	s.remove_point(team.id, 1, 1, 1)!
-	assert s.game_state_get(team.id, 1, none).points == 0
+	assert s.game_state_get(team.id, 1).points == 0
 
 	// Stats see the game.
 	pct := s.percentage_table(s.team_get(team.id)!, 10_000)
@@ -358,7 +347,7 @@ fn test_a_match_from_kickoff_to_final_whistle() {
 
 	s.game_delete(team.id, 1)!
 	assert s.team_get(team.id)!.games.len == 0
-	assert s.game_state_get(team.id, 1, none).status == ''
+	assert s.game_state_get(team.id, 1).status == ''
 }
 
 fn test_team_names_must_be_unique() {
@@ -564,7 +553,6 @@ fn test_wipe_forgets_everything_but_device_preferences() {
 	s.settings.server_url = 'http://localhost:4000'
 	s.settings.last_synced_id = 42
 	s.settings.spaces[test_space] = 3
-	s.log_sync('info', 'synced', '{}')
 	s.auth = AuthTokens{
 		email:         'coach@example.com'
 		auth_token:    'a'
@@ -576,7 +564,6 @@ fn test_wipe_forgets_everything_but_device_preferences() {
 	r := open_store(dir)!
 	assert r.records.len == 0
 	assert r.pending.len == 0
-	assert r.sync_log.len == 0
 	assert r.settings.last_synced_id == 0
 	assert r.settings.spaces.len == 0
 	assert r.settings.theme == 'dark'

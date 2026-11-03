@@ -13,16 +13,13 @@ const {
 // The framework toasts this after every successful POST.
 const savedMessage = "Saved!";
 
-// Pages the coach uses during a game (rendered by match/_play.ts). Their
+// The page the coach uses during a game (rendered by match/_play.ts). Its
 // toasts show failures only: a "Saved!" on every tap would get in the way.
 function isFromGamePlay(req: Request) {
   if (!req.referrer || req.referrer === "about:client") return false;
   let referrer = new URL(req.referrer);
   let handler = referrer.searchParams.get("handler");
-  return (
-    /\/web\/match\/?$/.test(referrer.pathname) &&
-    (handler === "play" || handler === "activityPlayerSelector")
-  );
+  return /\/web\/match\/?$/.test(referrer.pathname) && handler === "play";
 }
 
 export async function useHtmz(req: Request, res: SwResponse, ctx: any): Promise<void> {

@@ -10,31 +10,20 @@
   <body>
     <h1>Reset Password</h1>
     <main>
-      <p>A token is required to reset the password. Invalid URL.</p>
+      <p id="no-token">A token is required to reset the password. Invalid URL.</p>
+      <form method="post" action="/api/auth/v1/reset_password/update" hidden>
+        <input type="hidden" name="password_reset_code" />
+        <div>
+          <label for="password">New Password</label>
+          <input type="password" name="password" id="password" required />
+        </div>
+        <div>
+          <label for="password_repeat">Confirm New Password</label>
+          <input type="password" name="password_repeat" id="password_repeat" required />
+        </div>
+        <button type="submit">Reset Password</button>
+      </form>
     </main>
-
-    <script>
-      (() => {
-        let url = new URL(location.href);
-        // TrailBase emails use `password_reset_code`; accept legacy `?token=`
-        // for backward compat with old reset emails still in inboxes.
-        let token = url.searchParams.get("password_reset_code") || url.searchParams.get("token");
-        if (!token) return;
-        document.querySelector("main").innerHTML = `
-<form method="post" action="/api/auth/v1/reset_password/update">
-    <input type=hidden name=password_reset_code value="${token}">
-    <div>
-        <label for="password">New Password</label>
-        <input type="password" name="password" id="password" required>
-    </div>
-    <div>
-        <label for="password_repeat">Confirm New Password</label>
-        <input type="password" name="password_repeat" id="password_repeat" required>
-    </div>
-    <button type="submit">Reset Password</button>
-</form>`;
-      })();
-    </script>
 
     <script src="/js/app.js"></script>
   </body>

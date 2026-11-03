@@ -18,11 +18,11 @@ export default async function targetPosition(query: any, targetPosition: number)
     teamGet(teamId),
     playerGameAllGet(teamId, gameId, [playerId]),
   ]);
-  let game = await required(
+  await required(
     team.games.find((x) => x.id === gameId),
     "Could not find game ID!",
   );
-  let gameState = await gameStateGet(teamId, gameId, game);
+  let gameState = await gameStateGet(teamId, gameId);
   let player = await required(
     players.find((x) => x.playerId === playerId),
     "Could not find player ID!",

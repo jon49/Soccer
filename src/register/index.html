@@ -9,43 +9,24 @@
   </head>
   <body>
     <h1>Register</h1>
-    <main></main>
-
-    <script>
-      document.querySelector("main").innerHTML = `
-    <form id=register-form action="/api/auth/v1/register" method=post>
+    <main>
+      <form action="/api/auth/v1/register" method="post">
         <div>
-            <label for="email">Email</label>
-            <input type="email" name="email" id="email" required>
+          <label for="email">Email</label>
+          <input type="email" name="email" id="email" required />
         </div>
         <div>
-            <label for="password">Password</label>
-            <input type="password" name="password" id="password" required>
+          <label for="password">Password</label>
+          <input type="password" name="password" id="password" required />
         </div>
         <div>
-            <label for="password_repeat">Confirm Password</label>
-            <input type="password" name="password_repeat" id="password_repeat" required>
+          <label for="password_repeat">Confirm Password</label>
+          <input type="password" name="password_repeat" id="password_repeat" required />
         </div>
         <button>Register</button>
-    </form>
-    <p>Already registered? <a href="/login">Login here.</a></p>`;
-    </script>
-
-    <script>
-      document.getElementById("register-form").addEventListener("change", (e) => {
-        if (!e.target.name.includes("assword")) {
-          return;
-        }
-        let form = e.target.form;
-        let password = form.password;
-        let confirm = form.password_repeat;
-        if (password.value === confirm.value) {
-          confirm.setCustomValidity("");
-        } else {
-          confirm.setCustomValidity("Passwords do not match.");
-        }
-      });
-    </script>
+      </form>
+      <p>Already registered? <a href="/login">Login here.</a></p>
+    </main>
 
     <script src="/js/app.js"></script>
   </body>

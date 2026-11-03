@@ -27,7 +27,7 @@ pub fn (s &Store) match_get(team_id string, game_id int) !Match {
 		game_id:   game_id
 		team:      team
 		game:      game
-		state:     s.game_state_get(team_id, game_id, game)
+		state:     s.game_state_get(team_id, game_id)
 		players:   s.player_games_get(team_id, game_id, team.players.map(it.id))
 		positions: s.positions_get(team_id)
 		stats:     s.stats_get(team_id)
@@ -114,7 +114,7 @@ fn (mut s Store) save_players(team_id string, players []PlayerGame, idx []int) !
 }
 
 pub fn (mut s Store) game_points_change(team_id string, game_id int, opponent bool, delta int) ! {
-	mut gs := s.game_state_get(team_id, game_id, none)
+	mut gs := s.game_state_get(team_id, game_id)
 	next := if opponent { gs.opponent_points + delta } else { gs.points + delta }
 	if next < 0 {
 		return error('Points cannot be negative!')
@@ -137,8 +137,8 @@ pub enum ClockChange {
 // player's clock with it.
 pub fn (mut s Store) game_clock(team_id string, game_id int, change ClockChange, now i64) ! {
 	team := s.team_get(team_id)!
-	game := team.game(game_id) or { return error('Could not find game! ${game_id}') }
-	mut gs := s.game_state_get(team_id, game_id, game)
+	_ = team.game(game_id) or { return error('Could not find game! ${game_id}') }
+	mut gs := s.game_state_get(team_id, game_id)
 	match change {
 		.start {
 			gs.status = 'play'
@@ -169,7 +169,7 @@ pub fn (mut s Store) game_clock(team_id string, game_id int, change ClockChange,
 }
 
 pub fn (mut s Store) game_restart(team_id string, game_id int) ! {
-	mut gs := s.game_state_get(team_id, game_id, none)
+	mut gs := s.game_state_get(team_id, game_id)
 	gs.status = 'paused'
 	s.game_state_save(team_id, gs)!
 }
@@ -177,8 +177,8 @@ pub fn (mut s Store) game_restart(team_id string, game_id int) ! {
 // swap moves queued players onto the field: all of them, or just player_id.
 pub fn (mut s Store) swap(team_id string, game_id int, player_id int, now i64) ! {
 	team := s.team_get(team_id)!
-	game := team.game(game_id) or { return error('Could not find game ID!') }
-	gs := s.game_state_get(team_id, game_id, game)
+	_ = team.game(game_id) or { return error('Could not find game ID!') }
+	gs := s.game_state_get(team_id, game_id)
 	mut players := s.all_players(team, game_id)
 	ids := if player_id > 0 { [player_id] } else { []int{} }
 	changed := swap_in(mut players, ids, gs.is_game_on(), now)!
@@ -191,8 +191,8 @@ pub fn (mut s Store) swap(team_id string, game_id int, player_id int, now i64) !
 
 pub fn (mut s Store) move_to_position(team_id string, game_id int, player_id int, position int, now i64) ! {
 	team := s.team_get(team_id)!
-	game := team.game(game_id) or { return error('Could not find game ID!') }
-	gs := s.game_state_get(team_id, game_id, game)
+	_ = team.game(game_id) or { return error('Could not find game ID!') }
+	gs := s.game_state_get(team_id, game_id)
 	mut players := s.all_players(team, game_id)
 	if index_of_player(players, player_id) < 0 {
 		return error('Could not find player ID!')
@@ -242,38 +242,28 @@ pub fn (mut s Store) all_out(team_id string, game_id int, now i64) ! {
 	}
 }
 
-// player_stat adds to (or takes from) a player's stat. Goals beyond the
-// first point go onto the score here; the Goal stat's own point changes the
-// team's score too.
-pub fn (mut s Store) player_stat(team_id string, game_id int, player_id int, stat_id int, inc bool, points int) ! {
+// add_goal credits `player_id` with `points` scored (negative takes them
+// back), on their Goal stat and on the team's score.
+fn (mut s Store) add_goal(team_id string, game_id int, player_id int, points int) ! {
 	mut p := s.player_game_get(team_id, game_id, player_id)
 	mut found := false
-	mut new_count := 0
-	mut delta := 0
 	for mut st in p.stats {
-		if st.stat_id == stat_id {
-			new_count, delta = stat_operation(st.count, inc, points)
-			st.count = new_count
+		if st.stat_id == goal_stat_id {
+			st.count += points
 			found = true
 		}
 	}
 	if !found {
-		new_count, delta = stat_operation(0, inc, points)
-		p.stats << StatCount{stat_id, new_count}
+		p.stats << StatCount{goal_stat_id, points}
 	}
+	mut gs := s.game_state_get(team_id, game_id)
+	gs.points += points
 	s.begin_batch()
 	defer {
 		s.end_batch() or {}
 	}
-	if delta != 0 {
-		mut gs := s.game_state_get(team_id, game_id, none)
-		gs.points += delta
-		s.game_state_save(team_id, gs)!
-	}
+	s.game_state_save(team_id, gs)!
 	s.player_game_save(team_id, p)!
-	if stat_id == goal_stat_id {
-		s.game_points_change(team_id, game_id, false, if inc { 1 } else { -1 }) or {}
-	}
 }
 
 // score_point credits a goal to a player, or with no player (0) just adds
@@ -281,10 +271,10 @@ pub fn (mut s Store) player_stat(team_id string, game_id int, player_id int, sta
 pub fn (mut s Store) score_point(team_id string, game_id int, player_id int, points int) ! {
 	pts := if points > 0 { points } else { 1 }
 	if player_id > 0 {
-		s.player_stat(team_id, game_id, player_id, goal_stat_id, true, pts)!
+		s.add_goal(team_id, game_id, player_id, pts)!
 		return
 	}
-	mut gs := s.game_state_get(team_id, game_id, none)
+	mut gs := s.game_state_get(team_id, game_id)
 	gs.points += pts
 	s.game_state_save(team_id, gs)!
 }
@@ -293,7 +283,7 @@ pub fn (mut s Store) score_point(team_id string, game_id int, player_id int, poi
 // otherwise just from the team's score.
 pub fn (mut s Store) remove_point(team_id string, game_id int, player_id int, points int) ! {
 	pts := if points > 0 { points } else { 1 }
-	mut gs := s.game_state_get(team_id, game_id, none)
+	mut gs := s.game_state_get(team_id, game_id)
 	if player_id > 0 {
 		team := s.team_get(team_id)!
 		p := s.player_game_get(team_id, game_id, player_id)
@@ -302,7 +292,7 @@ pub fn (mut s Store) remove_point(team_id string, game_id int, player_id int, po
 		{
 			return error(msg)
 		}
-		s.player_stat(team_id, game_id, player_id, goal_stat_id, false, pts)!
+		s.add_goal(team_id, game_id, player_id, -pts)!
 		return
 	}
 	if msg := take_back_error(pts, gs.points, '', 0, false) {
@@ -327,7 +317,7 @@ pub fn (mut s Store) game_delete(team_id string, game_id int) ! {
 		p.status = PlayerStatus{}
 		s.player_game_save(team_id, p)!
 	}
-	mut gs := s.game_state_get(team_id, game_id, team.game(game_id))
+	mut gs := s.game_state_get(team_id, game_id)
 	gs.status = ''
 	gs.points = 0
 	gs.opponent_points = 0
@@ -335,27 +325,4 @@ pub fn (mut s Store) game_delete(team_id string, game_id int) ! {
 	s.game_state_save(team_id, gs)!
 	team.games = team.games.filter(it.id != game_id)
 	s.team_save(team)!
-}
-
-// game_requeue re-marks a game's records as needing sync without changing
-// them (Settings > Force resync a game). Returns how many were queued.
-pub fn (mut s Store) game_requeue(team_id string, game_id int) !int {
-	team := s.team_get(team_id)!
-	s.begin_batch()
-	defer {
-		s.end_batch() or {}
-	}
-	gs := s.game_state_get(team_id, game_id, team.game(game_id))
-	s.game_state_save(team_id, gs)!
-	mut n := 1
-	for p in team.players {
-		key := player_game_key(team_id, p.id, game_id)
-		if data := s.get(key) {
-			if rev_of(data) > 0 {
-				s.requeue(key)!
-				n++
-			}
-		}
-	}
-	return n
 }

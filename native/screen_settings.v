@@ -10,10 +10,7 @@ import gui
 
 struct SettingsForm {
 mut:
-	server      gui.Input
-	resync_all  bool
-	resync_team string
-	resync_game int
+	server gui.Input
 }
 
 fn (mut app App) load_settings() {
@@ -131,19 +128,8 @@ fn (mut app App) draw_settings(x f32, y0 f32, w f32) f32 {
 	y += bh + 6
 	y = app.paragraph(x, y, w, 'Saves all synced app data to a JSON file in your Downloads folder.',
 		true)
-	y += 6
-	y = app.subheading(x, y, 'Diagnostics')
-	lw := ui.button_width('Save sync log')
-	if ui.button(gui.Rect{x, y, lw, bh}, 'Save sync log', .outline) {
-		app.save_export('soccer-sync-log', app.store.sync_log_json())
-	}
-	y += bh + 6
-	y = app.paragraph(x, y, w, "Records what happens on each sync (kept on this device only, never sent to the server, and cleared after a week). Useful for troubleshooting a sync count that doesn't clear.",
-		true)
 	y = app.paragraph(x, y, w, 'Data folder: ${app.store.dir}', true)
 
-	y += 10
-	y = app.draw_force_resync(x, y, w)
 	if app.store.auth.logged_in() {
 		y = app.draw_delete_account(x, y + 30, w)
 	}
@@ -172,103 +158,6 @@ fn (mut app App) draw_delete_account(x f32, y f32, w f32) f32 {
 	zy += bh + 16
 	ui.rounded_border(gui.Rect{x, y, w, zy - y}, 8, ui.theme.danger)
 	return zy
-}
-
-fn (mut app App) draw_force_resync(x f32, y0 f32, w f32) f32 {
-	mut ui := app.ui
-	t := ui.theme
-	bh := ui.button_height()
-	mut y := app.subheading(x, y0, 'Force Resync a Game')
-	y = app.paragraph(x, y, w, "If a game's data doesn't seem to have reached the server (e.g. it still shows as in-progress on another device after you ended it here), use this to re-queue that game's records for sync without changing their content. Then sync.",
-		true)
-	clicked, ch := ui.checkbox(x, y, 'Include inactive teams', app.settings.resync_all)
-	if clicked {
-		app.settings.resync_all = !app.settings.resync_all
-	}
-	y += ch + 10
-	teams, _ := app.store.teams_all(if app.settings.resync_all {
-		core.TeamFilter.all
-	} else {
-		core.TeamFilter.active
-	})
-	if teams.len == 0 {
-		return app.paragraph(x, y, w, 'No teams.', true)
-	}
-	ui.text(x, y, 'Team', gui.TextStyle{
-		size:  14
-		color: t.muted
-	})
-	y += 22
-	y, app.settings.resync_team = app.choice_buttons(x, y, w, teams.map(it.title()), teams.map(it.id),
-		app.settings.resync_team)
-	team := app.store.team_get(app.settings.resync_team) or { return y }
-	if !teams.any(it.id == team.id) {
-		return y
-	}
-	today := core.today_str()
-	mut played := team.games.filter(it.date <= today)
-	played.sort(a.date > b.date)
-	mut upcoming := team.games.filter(it.date > today)
-	upcoming.sort(a.date < b.date)
-	if team.games.len == 0 {
-		return app.paragraph(x, y, w, 'No games for this team.', true)
-	}
-	for group in [played, upcoming] {
-		if group.len == 0 {
-			continue
-		}
-		label := if group == played { 'Played' } else { 'Upcoming' }
-		ui.text(x, y, label, gui.TextStyle{
-			size:  14
-			color: t.muted
-		})
-		y += 22
-		sel_ := if app.settings.resync_game > 0 { app.settings.resync_game.str() } else { '' }
-		y2, sel := app.choice_buttons(x, y, w, group.map('${it.date}${if it.opponent != '' {
-			' vs ' + it.opponent
-		} else {
-			''
-		}}'), group.map(it.id.str()), sel_)
-		y = y2
-		app.settings.resync_game = sel.int()
-	}
-	game := team.game(app.settings.resync_game) or { return y }
-	qw := ui.button_width('Queue for resync')
-	if ui.button(gui.Rect{x, y, qw, bh}, 'Queue for resync', .primary) {
-		n := app.store.game_requeue(team.id, game.id) or {
-			app.show_error(err.msg())
-			return y
-		}
-		app.show_toast('Queued ${n} record(s) for game ${game.id} to resync.')
-	}
-	return y + bh
-}
-
-// choice_buttons lays out a wrapping row of buttons; the one whose value is
-// `selected` is highlighted, and clicking one selects it.
-fn (mut app App) choice_buttons(x f32, y0 f32, w f32, labels []string, values []string, selected_ string) (f32, string) {
-	mut selected := selected_
-	mut ui := app.ui
-	bh := ui.button_height()
-	mut cx := x
-	mut y := y0
-	for i, label in labels {
-		bw := ui.button_width(label)
-		if cx > x && cx + bw > x + w {
-			cx = x
-			y += bh + 6
-		}
-		style := if values[i] == selected {
-			gui.ButtonStyle.primary
-		} else {
-			gui.ButtonStyle.outline
-		}
-		if ui.button(gui.Rect{cx, y, if bw > w { w } else { bw }, bh}, label, style) {
-			selected = values[i]
-		}
-		cx += bw + 6
-	}
-	return y + bh + 12, selected
 }
 
 fn (mut app App) set_server(url string) {

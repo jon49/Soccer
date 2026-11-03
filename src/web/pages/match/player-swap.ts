@@ -25,11 +25,11 @@ export async function swapAll(query: any) {
     .filter(isOnDeckPlayer)
     .filter((x) => (playerId ? x.playerId === playerId : true))
     .filter((x) => x.status.targetPosition != null);
-  let game = await required(
+  await required(
     team.games.find((x) => x.id === gameId),
     "Could not find game ID!",
   );
-  let gameState = await gameStateGet(teamId, gameId, game);
+  let gameState = await gameStateGet(teamId, gameId);
 
   let { playersToSave } = computeSwapAll(onDeckPlayers, inPlayers, gameState);
   for (let player of playersToSave) {

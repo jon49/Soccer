@@ -13,7 +13,6 @@ enum Screen {
 	games
 	game
 	match
-	goal_picker
 	stats
 	stats_edit
 	formation
@@ -31,8 +30,6 @@ struct Route {
 	screen  Screen
 	team_id string
 	game_id int
-	// The goal picker: add a goal (true) or take one back.
-	inc bool
 }
 
 const pad = f32(16)
@@ -614,7 +611,6 @@ fn (mut app App) draw_screen(x f32, y f32, w f32) f32 {
 		.team { app.draw_team(x, y, w) }
 		.games { app.draw_games(x, y, w) }
 		.game { app.draw_game(x, y, w) }
-		.goal_picker { app.draw_goal_picker(x, y, w) }
 		.stats { app.draw_stats(x, y, w) }
 		.stats_edit { app.draw_stats_edit(x, y, w) }
 		.formation { app.draw_formation(x, y, w) }
@@ -879,7 +875,7 @@ fn (app &App) nav_active(item NavItem) bool {
 	return item.route.screen == app.route.screen
 		|| (item.route.screen == .stats && app.route.screen == .stats_edit)
 		|| (item.route.screen == .formation && app.route.screen == .templates)
-		|| (item.route.screen == .games && app.route.screen in [.game, .goal_picker])
+		|| (item.route.screen == .games && app.route.screen == .game)
 		|| (item.route.screen == .team && app.route.screen == .share)
 }
 

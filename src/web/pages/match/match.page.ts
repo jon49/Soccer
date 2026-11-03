@@ -1,4 +1,4 @@
-import type { GameState, PlayerGame, TeamId } from "../../server/db.js";
+import type { GameState, PlayerGame } from "../../server/db.js";
 import type { RoutePostHandler, RoutePage, RouteGetHandler } from "@jon49/sw/routes.middleware.js";
 import {
   GameTimeCalculator,
@@ -7,17 +7,15 @@ import {
   isInPlayPlayer,
   isOnDeckPlayer,
 } from "./shared.js";
-import render, { getPointsView } from "./_game-play-view.js";
+import render from "./_game-play-view.js";
 import { swapAll } from "./player-swap.js";
 import targetPosition from "./player-target-position.js";
-import { activityPlayerSelectorView } from "./_activity-position-view.js";
 import playMatchView, { opponentPointsView } from "./_play-match-view.js";
 import { play } from "./_play.js";
 import {
   adjustPoints,
   applyInPlayerOut,
   applyOnDeckPlayerOut,
-  applyStatOperation,
   endInPlayPlayers,
   isValidPointsValue,
   pauseInPlayPlayers,
@@ -48,7 +46,6 @@ const {
     reject,
     createIdNumber,
     createPositiveWholeNumber,
-    createString25,
     createStringInfinity,
     maybe,
     required,
@@ -60,27 +57,16 @@ const queryTeamGamePlayerValidator = {
   playerId: createIdNumber("Query Player Id"),
 };
 
-function setPoints(target: string, field: "points" | "opponentPoints", delta: 1 | -1) {
-  return async ({ query }: { query: any }) => {
-    let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator);
-    let gameState = await gameStateGet(teamId, gameId);
-    let points = adjustPoints(gameState[field], delta);
-    if (isValidPointsValue(points)) {
-      gameState[field] = points;
-      await gameStateSave(teamId, gameState);
-    } else {
-      return reject("Points cannot be negative!");
-    }
-    return html`<span id="${target}">${getPointsView(points)}</span>`;
-  };
-}
-
 // The play view's opponent score, after changing it by `delta`.
 function opponentPointsPlay(delta: 1 | -1) {
-  return async (o: { query: any }) => {
-    let { teamId, gameId } = await validateObject(o.query, queryTeamIdGameIdValidator);
-    await setPoints("o-points", "opponentPoints", delta)(o);
+  return async ({ query }: { query: any }) => {
+    let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator);
     let state = new PlayerStateView(teamId, gameId);
+    let gameState = await state.gameState();
+    let points = adjustPoints(gameState.opponentPoints, delta);
+    if (!isValidPointsValue(points)) return reject("Points cannot be negative!");
+    gameState.opponentPoints = points;
+    await gameStateSave(teamId, gameState);
     return html`${opponentPointsView(state.queryTeamGame, await state.gameCalc())}`;
   };
 }
@@ -95,11 +81,11 @@ async function changeGameClock(
 ) {
   let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator);
   let team = await teamGet(teamId);
-  let game = await required(
+  await required(
     team.games.find((x) => x.id === gameId),
     `Could not find game! ${gameId}`,
   );
-  let gameState = await gameStateGet(teamId, gameId, game);
+  let gameState = await gameStateGet(teamId, gameId);
   let calc = new GameTimeCalculator(gameState);
   update(gameState, calc);
   await gameStateSave(teamId, gameState);
@@ -140,91 +126,25 @@ const queryPositionUpdateValidator = {
   position: createPositiveWholeNumber("Position"),
 };
 
-const dataSetPlayerActivity = {
-  activityId: createIdNumber("Activity ID"),
-  playerId: createIdNumber("Player ID"),
-  operation: createString25("Action"),
-  returnUrl: maybe(createStringInfinity("Return URL")),
-  points: maybe(createPositiveWholeNumber("Points")),
-};
-
 const queryScorePointValidator = {
   ...queryTeamIdGameIdValidator,
   playerId: maybe(createIdNumber("Player ID")),
   points: maybe(createPositiveWholeNumber("Points")),
 };
 
-interface PlayerStatUpdatedArgs {
-  activityId: number;
-  action: string;
-  playerId: number;
-  teamId: TeamId;
-  gameId: number;
-}
-
-async function handlePlayerStatUpdated(data: PlayerStatUpdatedArgs) {
-  if (data.activityId === 1) {
-    let action = setPoints("points", "points", data.action === "inc" ? 1 : -1);
-    await action({ query: data });
-  }
-}
-
-async function addPlayerStat(
-  state: PlayerStateView,
-  {
-    activityId,
-    playerId,
-    operation,
-    points,
-  }: { activityId: number; playerId: number; operation: "inc" | "dec"; points?: number },
-) {
-  let { teamId, gameId } = state;
-  let player = await state.playerGame(playerId);
-
-  let activity = player.stats.find((x) => x.statId === activityId);
-  if (!activity) {
-    activity = {
-      statId: activityId,
-      count: 0,
-    };
-    player.stats.push(activity);
-  }
-
-  let { newCount, gameScoreDelta } = applyStatOperation(activity.count, operation, points);
-  activity.count = newCount;
-  if (gameScoreDelta !== 0) {
-    let gameState = await state.gameState();
-    gameState.points += gameScoreDelta;
-    await gameStateSave(teamId, gameState);
-  }
-
-  await playerGameSave(teamId, player);
-
-  await handlePlayerStatUpdated({
-    activityId,
-    action: operation,
-    playerId,
-    teamId,
-    gameId,
-  });
+// Credits `playerId` with `points` scored (negative takes them back), on
+// their Goal stat and on the team's score.
+async function addGoal(state: PlayerStateView, playerId: number, points: number) {
+  let [player, gameState] = await Promise.all([state.playerGame(playerId), state.gameState()]);
+  let goal = player.stats.find((x) => x.statId === statIds.Goal);
+  if (!goal) player.stats.push((goal = { statId: statIds.Goal, count: 0 }));
+  goal.count += points;
+  gameState.points += points;
+  await gameStateSave(state.teamId, gameState);
+  await playerGameSave(state.teamId, player);
 }
 
 const getHandlers: RouteGetHandler = {
-  async activityPlayerSelector(o) {
-    let { query } = o;
-    return play({
-      ...o,
-      app: activityPlayerSelectorView(query),
-    });
-  },
-
-  async points({ query }) {
-    let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator);
-    let gameState = await gameStateGet(teamId, gameId);
-
-    return getPointsView(gameState.points);
-  },
-
   async play(o) {
     return play(o);
   },
@@ -255,37 +175,10 @@ function getApp(state: PlayerStateView) {
   return playMatchView(state);
 }
 
-const queryActionValidatory = {
-  ...queryTeamIdGameIdValidator,
-  action: createString25("Action"),
-};
-
 const postHandlers: RoutePostHandler = {
-  oPointsDec: setPoints("o-points", "opponentPoints", -1),
-  oPointsInc: setPoints("o-points", "opponentPoints", 1),
-  pointsDec: setPoints("points", "points", -1),
-  pointsInc: setPoints("points", "points", 1),
-
   oPointsIncPlay: opponentPointsPlay(1),
   // Holding the opponent's score on the play view.
   oPointsDecPlay: opponentPointsPlay(-1),
-
-  async points(o) {
-    let { query, req } = o;
-    let { action, teamId, gameId } = await validateObject(query, queryActionValidatory);
-    let state = new PlayerStateView(teamId, gameId);
-    let { stats } = await state.stats();
-
-    if (stats.find((x) => x.id === statIds.Goal)?.active) {
-      return html`<i _load=redirect id=temp data-url="/web/match?teamId=${teamId}&action=${action}&activityId=1&gameId=${gameId}&handler=activityPlayerSelector&returnUrl=${encodeURIComponent(req.referrer)}"></i>`;
-    }
-
-    if (action === "inc") {
-      return postHandlers.pointsInc(o);
-    } else {
-      return postHandlers.pointsDec(o);
-    }
-  },
 
   async updateNote({ query, data }) {
     let { gameId, teamId } = await validateObject(query, queryTeamIdGameIdValidator);
@@ -444,22 +337,6 @@ const postHandlers: RoutePostHandler = {
     return getApp(new PlayerStateView(teamId, gameId));
   },
 
-  async setPlayerStat({ query, data }) {
-    let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator);
-    let { activityId, playerId, operation, returnUrl, points } = await validateObject(
-      data,
-      dataSetPlayerActivity,
-    );
-    await addPlayerStat(new PlayerStateView(teamId, gameId), {
-      activityId,
-      playerId,
-      operation: operation as "inc" | "dec",
-      points,
-    });
-
-    return html`<i _load=redirect id=temp data-url="$${returnUrl}"></i>`;
-  },
-
   // The play view's score: credit the goal to a player, or with no player
   // just add to the team's score.
   async scorePoint({ query }) {
@@ -469,7 +346,7 @@ const postHandlers: RoutePostHandler = {
     );
     let state = new PlayerStateView(teamId, gameId);
     if (playerId) {
-      await addPlayerStat(state, { activityId: statIds.Goal, playerId, operation: "inc", points });
+      await addGoal(state, playerId, points ?? 1);
     } else {
       let gameState = await state.gameState();
       gameState.points += points ?? 1;
@@ -498,7 +375,7 @@ const postHandlers: RoutePostHandler = {
       let goals = player.stats.find((x) => x.statId === statIds.Goal)?.count ?? 0;
       let error = takeBackPointsError(points, gameState.points, { name, goals });
       if (error) return reject(error);
-      await addPlayerStat(state, { activityId: statIds.Goal, playerId, operation: "dec", points });
+      await addGoal(state, playerId, -points);
     } else {
       let error = takeBackPointsError(points, gameState.points);
       if (error) return reject(error);

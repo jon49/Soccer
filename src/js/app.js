@@ -1,22 +1,70 @@
 (() => {
   const doc = document;
+  const params = new URLSearchParams(location.search);
 
   // idb-keyval-compatible store: same dbName/storeName so the service worker
   // can read tokens written here.
-  function idbSet(key, value) {
+  function idb(mode, f) {
     return new Promise((resolve, reject) => {
       let req = indexedDB.open("keyval-store", 1);
       req.onupgradeneeded = () => req.result.createObjectStore("keyval");
       req.onerror = () => reject(req.error);
       req.onsuccess = () => {
         let db = req.result;
-        let tx = db.transaction("keyval", "readwrite");
-        tx.objectStore("keyval").put(value, key);
-        tx.oncomplete = () => (db.close(), resolve());
+        let tx = db.transaction("keyval", mode);
+        let result = f(tx.objectStore("keyval"));
+        tx.oncomplete = () => (db.close(), resolve(result.result));
         tx.onerror = tx.onabort = () => reject(tx.error);
       };
     });
   }
+  const idbGet = (key) => idb("readonly", (store) => store.get(key));
+  const idbSet = (key, value) => idb("readwrite", (store) => store.put(value, key));
+
+  // /login?logout: end the session on the server and forget it here.
+  async function logout() {
+    try {
+      let refresh_token = await idbGet("refresh_token");
+      if (refresh_token) {
+        await fetch("/api/auth/v1/logout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ refresh_token }),
+        });
+      }
+    } catch (err) {
+      console.error(err);
+    }
+    await Promise.all([
+      idbSet("auth_token", null),
+      idbSet("refresh_token", null),
+      idbSet("csrf_token", null),
+      idbSet("loggedIn", false),
+    ]).catch(() => {});
+    location.href = "/web/?loggedOut=true";
+  }
+  if (location.pathname.startsWith("/login") && params.has("logout")) {
+    logout();
+  }
+
+  // The reset link's code. TrailBase emails use `password_reset_code`; accept
+  // legacy `?token=` for old reset emails still in inboxes.
+  let resetForm = doc.querySelector("form[action$='/reset_password/update']");
+  let resetCode = params.get("password_reset_code") || params.get("token");
+  if (resetForm && resetCode) {
+    resetForm.password_reset_code.value = resetCode;
+    resetForm.hidden = false;
+    doc.getElementById("no-token")?.remove();
+  }
+
+  // Register and reset: the two passwords must match.
+  doc.addEventListener("change", (e) => {
+    let form = e.target.form;
+    if (!form?.password_repeat || !e.target.name.includes("assword")) return;
+    form.password_repeat.setCustomValidity(
+      form.password.value === form.password_repeat.value ? "" : "Passwords do not match.",
+    );
+  });
 
   async function saveTokens({ auth_token, refresh_token, csrf_token }) {
     await Promise.all(
@@ -69,7 +117,7 @@
       if (data?.auth_token) await saveTokens(data);
       // e.g. /login?return=/web/join/?code=... from an invite link. Only
       // in-app paths, so the param can't send anyone off-site.
-      let back = new URLSearchParams(location.search).get("return");
+      let back = params.get("return");
       location.href = back?.startsWith("/web/") ? back : "/web/?login=success";
       return;
     }

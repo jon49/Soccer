@@ -6,10 +6,6 @@ let {
   utils: { formatGameDate, formatGameTime, when },
 } = self.sw;
 
-export function getPointsView(points: number) {
-  return html`${points || "0"}`;
-}
-
 export default async function render(query: any) {
   let state = await PlayerStateView.create(query),
     [notes, game, gameState, team, gameCalc] = await Promise.all([
@@ -20,9 +16,6 @@ export default async function render(query: any) {
       state.gameCalc(),
     ]),
     queryTeamGame = state.queryTeamGame;
-
-  let pointAction = `?${queryTeamGame}&activityId=1&handler=points`;
-  let opponentPointAction = `?${queryTeamGame}&handler=oPoints`;
 
   return html`
 <h2 class=game-title>${team.name} vs ${game.opponent}</h2>
@@ -39,23 +32,8 @@ export default async function render(query: any) {
 </p>
 
 <ul class=list>
-    <li>
-        <span>Points</span>
-        <form method="post">
-            <button class=condense-padding formaction="$${pointAction}&action=dec">-</button>
-            <span id=points>${getPointsView(gameState.points)}</span>
-            <button class=condense-padding formaction="$${pointAction}&action=inc">+</button>
-        </form>
-    </li>
-
-    <li>
-        <span>Opponent</span>
-        <form method="post">
-            <button class=condense-padding formaction="${opponentPointAction}Dec">-</button>
-            <span id=o-points>${getPointsView(gameState.opponentPoints)}</span>
-            <button class=condense-padding formaction="${opponentPointAction}Inc">+</button>
-        </form>
-    </li>
+    <li><span>Points</span><span>${gameState.points}</span></li>
+    <li><span>Opponent</span><span>${gameState.opponentPoints}</span></li>
 </ul>
 
 <h3>Notes</h3>

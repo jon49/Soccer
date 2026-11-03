@@ -214,17 +214,15 @@ pub fn (mut s Store) game_notes_save(team_id string, game_id int, notes string) 
 	s.put(game_notes_key(team_id, game_id), n.to_any(), true)!
 }
 
-// game_state_get returns the game's own state record, or reads the legacy
-// fields still embedded in the team's game.
-pub fn (s &Store) game_state_get(team_id string, game_id int, game ?Game) GameState {
+// game_state_get returns the game's state record; a game without one hasn't
+// started: no score, no clock.
+pub fn (s &Store) game_state_get(team_id string, game_id int) GameState {
 	if data := s.get(game_state_key(team_id, game_id)) {
 		return game_state_from_any(data)
 	}
-	if g := game {
-		return game_state_from_legacy(game_id, g)
+	return GameState{
+		game_id: game_id
 	}
-	team := s.team_get(team_id) or { return game_state_from_legacy(game_id, none) }
-	return game_state_from_legacy(game_id, team.game(game_id))
 }
 
 pub fn (mut s Store) game_state_save(team_id string, state GameState) ! {
@@ -232,7 +230,7 @@ pub fn (mut s Store) game_state_save(team_id string, state GameState) ! {
 }
 
 pub fn (s &Store) game_states_get(team_id string, games []Game) []GameState {
-	return games.map(s.game_state_get(team_id, it.id, it))
+	return games.map(s.game_state_get(team_id, it.id))
 }
 
 // ---- players in a game ----
@@ -310,12 +308,6 @@ pub fn (mut s Store) stat_save(team_id string, stat Stat) ! {
 	}
 	check_unique(stats.stats.map(it.name))!
 	s.put(stats_key(team_id), stats.to_any(), true)!
-}
-
-// requeue marks a record as needing sync without changing it.
-pub fn (mut s Store) requeue(key string) ! {
-	data := s.get(key) or { return }
-	s.put(key, data, true)!
 }
 
 pub fn (s &Store) pending_count() int {

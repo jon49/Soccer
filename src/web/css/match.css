@@ -420,9 +420,3 @@ span {
   padding: 0.25em;
   border-radius: 5px;
 }
-
-/* The goal scorer picker (activityPlayerSelector). */
-.points {
-  margin-top: 1em;
-  margin-bottom: 1em;
-}

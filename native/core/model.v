@@ -291,23 +291,6 @@ pub fn (g GameState) to_any() json2.Any {
 	return m
 }
 
-// game_state_from_legacy reads the score and clock still embedded in games
-// created before GameState was split out.
-pub fn game_state_from_legacy(game_id int, game ?Game) GameState {
-	g := game or {
-		return GameState{
-			game_id: game_id
-		}
-	}
-	return GameState{
-		game_id:         game_id
-		status:          any_str(field(g.raw, 'status'))
-		points:          any_int(field(g.raw, 'points'))
-		opponent_points: any_int(field(g.raw, 'opponentPoints'))
-		game_time:       any_arr(field(g.raw, 'gameTime')).map(game_time_from_any(it))
-	}
-}
-
 pub struct GameNotes {
 pub mut:
 	notes string
@@ -510,23 +493,14 @@ pub fn positions_from_any(a json2.Any) Positions {
 	mut res := Positions{
 		rev: rev_of(a)
 	}
-	if '_v' in m {
-		for row in rows {
-			res.positions << any_arr(row).map(any_str(it))
-		}
-		return res
-	}
-	// The original shape: a flat list of names and the row sizes.
-	flat := rows.map(any_str(it))
-	mut i := 0
-	for n in any_arr(field(m, 'grid')).map(any_int(it)) {
-		end := if i + n > flat.len { flat.len } else { i + n }
-		res.positions << flat[i..end].clone()
-		i = end
+	for row in rows {
+		res.positions << any_arr(row).map(any_str(it))
 	}
 	return res
 }
 
+// `_v` marks the rows-of-names shape. Older clients turn a record without it
+// into rows, so it's still written.
 pub fn (p Positions) to_any() json2.Any {
 	return json2.Any({
 		'_rev':      json2.Any(p.rev)

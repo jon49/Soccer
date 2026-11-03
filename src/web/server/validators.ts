@@ -1,10 +1,4 @@
-import {
-  reject,
-  createCheckbox,
-  createIdNumber,
-  createString25,
-  maybe,
-} from "@jon49/sw/validation.js";
+import { createCheckbox, createIdNumber, createString25, maybe } from "@jon49/sw/validation.js";
 import type { TeamId } from "./db.js";
 
 export const dataTeamNameYearValidator = {
@@ -25,13 +19,6 @@ export const dataPlayerNameActiveValidator = {
   ...dataPlayerNameValidator,
   active: createCheckbox,
   number: maybe(createIdNumber("Player Number")),
-};
-
-export const queryAllValidator = {
-  all: async (val: any): Promise<null | ""> => {
-    if (val === null || val === "") return val;
-    return reject(`The value "${val}" must be 'null' or and empty string.`);
-  },
 };
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -55,13 +42,4 @@ export const queryTeamIdPlayerIdValidator = {
 export const queryTeamIdGameIdValidator = {
   ...queryTeamIdValidator,
   gameId: createIdNumber("Query Game ID"),
-};
-
-export const dataPositionValidator = {
-  position: createString25("Position"),
-};
-
-export const queryTeamIdPositionIdValidator = {
-  ...queryTeamIdValidator,
-  positionId: createIdNumber("Position ID"),
 };

@@ -22,7 +22,6 @@ pub mut:
 	edit_seq int
 	settings Settings
 	auth     AuthTokens
-	sync_log []SyncLogEntry
 	// version is bumped on every change so views can cache derived data.
 	version int
 	// While above 0, changes are not written to disk; see begin_batch.
@@ -53,14 +52,6 @@ pub mut:
 
 pub fn (a AuthTokens) logged_in() bool {
 	return a.auth_token != ''
-}
-
-pub struct SyncLogEntry {
-pub:
-	ts      i64
-	level   string
-	message string
-	data    string // JSON
 }
 
 pub fn now_ms() i64 {
@@ -132,15 +123,6 @@ fn (mut s Store) load() ! {
 			s.settings.server_url = url
 		}
 		s.settings.bench_hidden = any_bool(field(st, 'benchHidden'))
-		for e in any_arr(field(root, 'syncLog')) {
-			m := as_map(e)
-			s.sync_log << SyncLogEntry{
-				ts:      any_i64(field(m, 'ts'))
-				level:   any_str(field(m, 'level'))
-				message: any_str(field(m, 'message'))
-				data:    any_str(field(m, 'data'))
-			}
-		}
 	}
 	apath := os.join_path(s.dir, auth_file)
 	if os.exists(apath) {
@@ -187,12 +169,6 @@ pub fn (mut s Store) save() ! {
 			'serverUrl':                 st.server_url
 			'benchHidden':               st.bench_hidden
 		})
-		'syncLog':  s.sync_log.map(json2.Any({
-			'ts':      json2.Any(it.ts)
-			'level':   it.level
-			'message': it.message
-			'data':    it.data
-		}))
 	})
 	write_atomic(s.data_path(), root.json_str())!
 }
@@ -227,13 +203,12 @@ fn write_atomic(path string, text string) ! {
 }
 
 // wipe forgets everything on this device once the account is deleted: the
-// records, what was waiting to sync, the sync log and the login. Only the
+// records, what was waiting to sync and the login. Only the
 // device's own preferences stay: theme, text size, bench and server.
 pub fn (mut s Store) wipe() ! {
 	old := s.settings
 	s.records.clear()
 	s.pending.clear()
-	s.sync_log.clear()
 	s.settings = Settings{
 		theme:        old.theme
 		zoom:         old.zoom
@@ -292,33 +267,6 @@ pub fn (mut s Store) set_settings(st Settings) ! {
 	s.settings = st
 	s.version++
 	s.save()!
-}
-
-// ---- sync log (local only, pruned to a week) ----
-
-const sync_log_max_age_ms = i64(7 * 24 * 60 * 60 * 1000)
-const sync_log_max = 200
-
-pub fn (mut s Store) log_sync(level string, message string, data string) {
-	cutoff := now_ms() - sync_log_max_age_ms
-	mut log := s.sync_log.filter(it.ts >= cutoff)
-	log << SyncLogEntry{now_ms(), level, message, data}
-	if log.len > sync_log_max {
-		log = log[log.len - sync_log_max..].clone()
-	}
-	s.sync_log = log
-}
-
-pub fn (s &Store) sync_log_json() string {
-	cutoff := now_ms() - sync_log_max_age_ms
-	entries := s.sync_log.filter(it.ts >= cutoff).map(json2.Any({
-		'ts':      json2.Any(it.ts)
-		'time':    time.unix_milli(it.ts).format_rfc3339()
-		'level':   it.level
-		'message': it.message
-		'data':    decode_json(it.data)
-	}))
-	return json2.encode(json2.Any(entries), prettify: true)
 }
 
 // export_json is every synced record keyed by its key, like the web app's

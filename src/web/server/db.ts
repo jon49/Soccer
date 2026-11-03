@@ -100,12 +100,9 @@ export interface Version {
   _v: number;
 }
 
-export interface Positions extends Revision {
-  positions: string[];
-  grid: number[];
-}
-
-export interface PositionsV0 extends Revision, Version {
+// `_v` marks the rows-of-names shape. Older clients turn a record without it
+// into rows, so it's still written.
+export interface Positions extends Revision, Version {
   positions: string[][];
 }
 
@@ -133,13 +130,6 @@ export interface Game {
   home: boolean;
   opponent?: string;
   location?: string;
-  // Legacy fields — the live values now live in a separate `GameState` record
-  // (see `gameStateGet`). These remain only so games created before the split
-  // can be migrated/read; new writes never touch them.
-  status?: GameStatus;
-  points?: number;
-  opponentPoints?: number;
-  gameTime?: GameTime[];
 }
 
 // The frequently-changing slice of a game, synced independently from the team
@@ -205,7 +195,7 @@ export interface TeamPlayer {
 // space uuid, so its keys can never collide with another coach's teams.
 export type TeamId = number | string;
 
-export interface Team extends Revision, PositionsV0 {
+export interface Team extends Revision, Positions {
   id: TeamId;
   name: string;
   active: boolean;
@@ -246,5 +236,3 @@ interface DBGet {
   (key: "teams"): Promise<Teams | undefined>;
   <T>(key: string | any[]): Promise<T | undefined>;
 }
-
-export type FormReturn<T> = { [key in keyof T]: string | undefined };

@@ -129,7 +129,7 @@ fn (mut app App) draw_game_card(team core.Team, g core.Game, is_next bool, x f32
 	t := ui.theme
 	lh := ui.line_height(0)
 	bh := ui.button_height()
-	state := app.store.game_state_get(team.id, g.id, g)
+	state := app.store.game_state_get(team.id, g.id)
 	past := !is_upcoming(g)
 	editing := app.games.editing == g.id
 	mut h := 14 + lh + 4 + lh + 14
@@ -406,27 +406,19 @@ fn (mut app App) draw_game(x f32, y0 f32, w f32) f32 {
 	}
 	y += bh + 28
 
-	// The score.
+	// The score; it's changed in the match itself.
 	for opponent in [false, true] {
 		label := if opponent { 'Opponent' } else { 'Points' }
 		value := if opponent { m.state.opponent_points } else { m.state.points }
 		row := gui.Rect{x, y, w, bh + 12}
 		ui.hline(x, row.bottom(), w, t.border)
 		ui.text(x, y + row.h / 2, label, gui.TextStyle{ valign: .middle })
-		pw := f32(44)
-		bx := x + w - pw * 2 - 60
-		if ui.button(gui.Rect{bx, y + 6, pw, bh}, '−', .outline) {
-			app.game_points(m, opponent, false)
-		}
-		ui.text(bx + pw + 30, y + row.h / 2, value.str(), gui.TextStyle{
+		ui.text(x + w, y + row.h / 2, value.str(), gui.TextStyle{
 			bold:   true
 			size:   18
-			align:  .center
+			align:  .right
 			valign: .middle
 		})
-		if ui.button(gui.Rect{bx + pw + 60, y + 6, pw, bh}, '+', .outline) {
-			app.game_points(m, opponent, true)
-		}
 		y += row.h + 1
 	}
 	y += 24
@@ -460,25 +452,6 @@ fn (mut app App) draw_game(x f32, y0 f32, w f32) f32 {
 	return zy
 }
 
-// game_points: with the Goal stat on, a goal goes to a player (the picker);
-// otherwise it just changes the score.
-fn (mut app App) game_points(m core.Match, opponent bool, inc bool) {
-	if !opponent && m.credit_scorer() {
-		app.go(Route{
-			screen:  .goal_picker
-			team_id: m.team_id
-			game_id: m.game_id
-			inc:     inc
-		})
-		return
-	}
-	app.store.game_points_change(m.team_id, m.game_id, opponent, if inc { 1 } else { -1 }) or {
-		app.show_error(err.msg())
-		return
-	}
-	app.changed()
-}
-
 fn (mut app App) delete_game(team_id string, game_id int) {
 	app.store.game_delete(team_id, game_id) or {
 		app.show_error(err.msg())
@@ -492,72 +465,4 @@ fn (mut app App) delete_game(team_id string, game_id int) {
 		screen:  .games
 		team_id: team_id
 	})
-}
-
-// ---- the goal scorer picker ----
-
-fn (mut app App) draw_goal_picker(x f32, y0 f32, w f32) f32 {
-	mut ui := app.ui
-	m := app.store.match_get(app.route.team_id, app.route.game_id) or { return y0 }
-	bh := ui.button_height()
-	mut y := app.heading(x, y0, if app.route.inc { 'Player Goal' } else { 'Take Back a Goal' })
-	cw := ui.button_width('Cancel')
-	if ui.button(gui.Rect{x, y - 8, cw, bh}, 'Cancel', .outline) {
-		app.back()
-		return y
-	}
-	y += bh + 8
-	if m.team.basketball_mode {
-		ui.text(x, y, 'Points', gui.TextStyle{ bold: true })
-		y += 26
-		choice := ui.segmented(gui.Rect{x, y, 300, bh}, ['1 Point', '2 Points', '3 Points'],
-			app.match.points - 1)
-		if choice >= 0 {
-			app.match.points = choice + 1
-		}
-		y += bh + 16
-	}
-	cell_w := f32(110)
-	gap := f32(8)
-	mut index := 0
-	for row in m.positions.positions {
-		total := f32(row.len) * cell_w + f32(row.len - 1) * gap
-		mut cx := x + (w - total) / 2
-		for _ in row {
-			if p := m.at_position(index) {
-				if ui.button(gui.Rect{cx, y, cell_w, bh}, m.name(p.player_id), .secondary) {
-					app.pick_scorer(m, p.player_id)
-					return y
-				}
-			}
-			cx += cell_w + gap
-			index++
-		}
-		y += bh + gap
-	}
-	y += 8
-	mut others := m.on_deck()
-	others << m.benched()
-	per_row := int((w + gap) / (cell_w + gap))
-	for i, p in others {
-		col := i % (if per_row > 0 { per_row } else { 1 })
-		if i > 0 && col == 0 {
-			y += bh + gap
-		}
-		if ui.button(gui.Rect{x + col * (cell_w + gap), y, cell_w, bh}, m.name(p.player_id),
-			.secondary)
-		{
-			app.pick_scorer(m, p.player_id)
-			return y
-		}
-	}
-	return y + bh
-}
-
-fn (mut app App) pick_scorer(m core.Match, player_id int) {
-	points := if m.team.basketball_mode { app.match.points } else { 1 }
-	app.store.player_stat(m.team_id, m.game_id, player_id, core.goal_stat_id, app.route.inc,
-		points) or { app.show_error(err.msg()) }
-	app.changed()
-	app.back()
 }

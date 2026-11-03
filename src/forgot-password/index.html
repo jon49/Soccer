@@ -9,24 +9,23 @@
   </head>
   <body>
     <h1>Request Password Reset</h1>
-    <main></main>
+    <main>
+      <form method="post" action="/api/auth/v1/reset_password/request">
+        <div>
+          <label for="email">Email</label>
+          <input type="email" name="email" id="email" required />
+        </div>
+        <button type="submit">OK</button>
+      </form>
 
-    <script>
-      document.querySelector("main").innerHTML = `
-<form method="post" action="/api/auth/v1/reset_password/request">
-    <div>
-        <label for="email">Email</label>
-        <input type="email" name="email" id="email" required>
-    </div>
-    <button type="submit">OK</button>
-</form>
+      <p>
+        If an account exists for that email, a password reset link is on its way. Check your inbox
+        (and your spam folder).
+      </p>
 
-<p>If an account exists for that email, a password reset link is on its way.
-    Check your inbox (and your spam folder).</p>
-
-<p>Already have an account? <a href="/login">Login here.</a></p>
-<p>First time user? <a href="/register">Register here.</a></p>`;
-    </script>
+      <p>Already have an account? <a href="/login">Login here.</a></p>
+      <p>First time user? <a href="/register">Register here.</a></p>
+    </main>
 
     <script src="/js/app.js"></script>
   </body>

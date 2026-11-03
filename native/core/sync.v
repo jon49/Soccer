@@ -112,8 +112,6 @@ pub fn (mut s Store) finish_sync(req SyncRequest, res SyncResponse) !SyncOutcome
 		s.save_auth()!
 	}
 	if res.error != '' {
-		s.log_sync('error', 'sync request failed', json2.Any(res.error).json_str())
-		s.save()!
 		return error('Could not reach the server. ${res.error}')
 	}
 	match res.status {
@@ -126,8 +124,6 @@ pub fn (mut s Store) finish_sync(req SyncRequest, res SyncResponse) !SyncOutcome
 			return error('You are not logged in!')
 		}
 		403 {
-			s.log_sync('info', 'sync refused (403); refreshing space membership', '')
-			s.save()!
 			return SyncOutcome{
 				status: 403
 			}
@@ -139,8 +135,6 @@ pub fn (mut s Store) finish_sync(req SyncRequest, res SyncResponse) !SyncOutcome
 			return error('Hold your horses! You are syncing too fast!')
 		}
 		else {
-			s.log_sync('error', 'sync response not ok', '{"status":${res.status}}')
-			s.save()!
 			return error('Sync failed (HTTP ${res.status}).')
 		}
 	}
@@ -205,7 +199,7 @@ pub fn (mut s Store) finish_sync(req SyncRequest, res SyncResponse) !SyncOutcome
 		if data := s.records[key] {
 			s.records[key] = with_rev(data, any_i64(field(m, 'id')))
 		} else {
-			s.log_sync('error', 'could not find key to update revision', json2.Any(key).json_str())
+			eprintln('Could not find the key to update the revision! ${key}')
 			continue
 		}
 		if seq := s.pending[key] {
@@ -214,9 +208,8 @@ pub fn (mut s Store) finish_sync(req SyncRequest, res SyncResponse) !SyncOutcome
 			}
 		}
 	}
-	if any_arr(field(root, 'conflicted')).len > 0 {
-		s.log_sync('info', "another device also changed these; this device's version was saved over theirs",
-			json2.Any(conflicted.map(json2.Any(it.key))).json_str())
+	if conflicted.len > 0 {
+		eprintln("soccer sync: another device also changed these; this device's version was saved over theirs: ${conflicted.map(it.key)}")
 	}
 
 	// Spaces: the server's list is the truth. Anything we tracked that it
@@ -267,14 +260,6 @@ pub fn (mut s Store) finish_sync(req SyncRequest, res SyncResponse) !SyncOutcome
 	}
 
 	s.version++
-	s.log_sync('info', 'sync complete', json2.Any({
-		'received':      json2.Any(received)
-		'saved':         any_arr(field(root, 'saved')).len
-		'lastSyncedId':  last
-		'spacesAdded':   json2.Any(added.map(json2.Any(it)))
-		'spacesRemoved': json2.Any(removed.map(json2.Any(it)))
-		'pendingAfter':  s.pending.len
-	}).json_str())
 	changed := received > 0 || added.len > 0 || removed.len > 0 || moves.len > 0
 	return SyncOutcome{
 		status:   if changed { 200 } else { 204 }

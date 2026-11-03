@@ -107,7 +107,7 @@ fn test_sync_between_devices_and_coaches() {
 	a2.game_points_change(team.id, 1, true, 2)!
 	sync_now(mut a2)!
 	sync_now(mut a)!
-	assert a.game_state_get(team.id, 1, none).opponent_points == 2
+	assert a.game_state_get(team.id, 1).opponent_points == 2
 
 	// Coach A shares the team.
 	created := space_create(server, a.auth)

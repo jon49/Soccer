@@ -1,6 +1,5 @@
 import type { RoutePage, RoutePostHandler } from "@jon49/sw/routes.middleware.js";
 import sync from "../server/sync.js";
-import { errorToPlain, logSyncError } from "../server/sync-log.js";
 
 const {
   db: { get },
@@ -77,7 +76,7 @@ const postHandlers: RoutePostHandler = {
     try {
       await sync();
     } catch (err) {
-      await logSyncError("sync after joining failed", errorToPlain(err));
+      console.error("sync after joining failed", err);
     }
     let team = await get<{ name?: string; year?: string }>(["team", accepted.json.space]);
     let message = team?.name

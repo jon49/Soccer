@@ -52,27 +52,6 @@ export function takeBackPointsError(
   return null;
 }
 
-// --- player stat counts -------------------------------------------------
-
-export interface StatOperationResult {
-  newCount: number;
-  // Only the portion of `points` beyond the first is added directly to the
-  // game score — the first point is assumed to already be accounted for
-  // elsewhere (e.g. a goal's own point-scoring flow).
-  gameScoreDelta: number;
-}
-
-export function applyStatOperation(
-  currentCount: number,
-  operation: "inc" | "dec",
-  points: number = 1,
-): StatOperationResult {
-  let sign = operation === "inc" ? 1 : -1;
-  let newCount = currentCount + sign * points;
-  let gameScoreDelta = points > 1 ? sign * (points - 1) : 0;
-  return { newCount, gameScoreDelta };
-}
-
 // --- player-out transitions -------------------------------------------------
 
 export function applyInPlayerOut(player: PlayerGame, gameCalc: GameTimeCalculator): void {
