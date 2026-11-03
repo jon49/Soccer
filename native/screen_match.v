@@ -817,27 +817,13 @@ fn (mut app App) draw_bench(m core.Match, area gui.Rect, cols int, now i64) f32 
 			ui.rounded_border(r, 4, t.border)
 		}
 		time_style := gui.TextStyle{
-			size:  13
-			color: fg
-			align: .right
+			size:   13
+			color:  fg
+			align:  .right
+			valign: .middle
 		}
-		ui.text(r.right() - 10, r.y + 6, core.format_timer(total), time_style)
-		mut tw := ui.text_width(core.format_timer(total), time_style)
-		if game_total >= 1000 {
-			behind := ahead < 0
-			delta := '${if behind { '−' } else { '+' }}${core.format_timer(i64(math.abs(ahead)))} vs fair'
-			ds := gui.TextStyle{
-				size:  11
-				bold:  behind
-				color: fg
-				align: .right
-			}
-			ui.text(r.right() - 10, r.y + 8 + lh * 0.8, delta, ds)
-			dw := ui.text_width(delta, ds)
-			if dw > tw {
-				tw = dw
-			}
-		}
+		ui.text(r.right() - 10, r.y + item_h / 2, core.format_timer(total), time_style)
+		tw := ui.text_width(core.format_timer(total), time_style)
 		label := player_label(m, p.player_id)
 		ui.text(r.x + 10, r.y + item_h / 2, ui.fit(label, r.w - tw - 30, gui.TextStyle{
 			bold: true
