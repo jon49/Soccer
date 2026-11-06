@@ -65,7 +65,7 @@ fn (mut app App) draw_team(x f32, y0 f32, w f32) f32 {
 	y += bh + 30
 
 	active := team.players.filter(it.active).len
-	y = app.subheading(x, y, 'Players Settings (${active})')
+	y = app.subheading(x, y, 'Players (${active})')
 	if team.players.len == 0 {
 		y = app.paragraph(x, y, w, 'No players have been added.', true)
 	}

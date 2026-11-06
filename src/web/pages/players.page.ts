@@ -69,7 +69,7 @@ function render(o: PlayersEditView) {
     </div>
 </form>
 
-<h3 id=players>Players Settings (${team.players.filter((x) => x.active).length})</h3>
+${playersHeading(team)}
 ${when(
   !team.players.length,
   () =>
@@ -102,6 +102,12 @@ ${when(
     </fieldset>
 </form>
 `;
+}
+
+// The count is of active players only; editPlayer and addPlayer send it back
+// so it stays right as players are toggled or added.
+function playersHeading(team: Team) {
+  return html`<h3 id=players>Players (${team.players.filter((x) => x.active).length})</h3>`;
 }
 
 function playerView(player: TeamPlayer, teamId: TeamId) {
@@ -166,7 +172,7 @@ const postHandlers: RoutePostHandler = {
     // Player name will also need to be updated for the individual player when implemented!
     await teamSave(team);
 
-    return { status: 200 };
+    return { status: 200, body: playersHeading(team) };
   },
 
   async addPlayer({ data, query }) {
@@ -184,10 +190,11 @@ const postHandlers: RoutePostHandler = {
     );
 
     let player = await playerCreate(teamId, newPlayerName);
+    team.players.push(player);
 
     return {
       status: 200,
-      body: html`${playerView(player, teamId)}<template id=noPlayers></template>`,
+      body: html`${playerView(player, teamId)}<template id=noPlayers></template>${playersHeading(team)}`,
     };
   },
 
