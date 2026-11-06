@@ -18,6 +18,7 @@ shared; only packaging and a few platform details differ.
 make run          # build and start
 make build        # optimized ./soccer
 make install      # ./soccer to ~/.local/bin, plus a launcher and icon
+make uninstall    # remove them again (your data in ~/.local/share/soccer stays)
 make test         # unit tests for core/ (the server test skips without a server)
 make check        # type-check and generate C for Linux, Windows and macOS
 make android      # ./soccer.apk (needs the Android SDK, NDK and vab)
@@ -27,7 +28,7 @@ make install-apk  # install it on the connected phone or emulator
 Set `V=/path/to/v` if `v` is not on your `PATH`. From the repo root,
 `npm run build:native` and `npm run install:native` do the same, and
 `tasks/` has a script for each job, including the one-time setup:
-`desktop-setup.sh`, `desktop-run.sh`, `desktop-install.sh`,
+`desktop-setup.sh`, `desktop-run.sh`, `desktop-install.sh`, `desktop-uninstall.sh`,
 `android-setup.sh`, `make-apk.sh`, `install-apk.sh`, `android-devices.sh`,
 `android-logs.sh`, `android-emulator.sh`, `test-native.sh` and
 `test-native-server.sh`.
