@@ -10,6 +10,7 @@
    * button contrast color is dark in dark mode; each pair is at least 5.7:1. */
   --app-on: light-dark(oklch(0.48 0.09 175), oklch(0.72 0.1 175));
   --app-off: light-dark(oklch(0.52 0.13 55), oklch(0.78 0.12 70));
+  --app-sub: light-dark(oklch(0.5 0.12 265), oklch(0.76 0.1 265));
   --app-on-off-text: light-dark(#fff, oklch(0.2 0.02 250));
 }
 
@@ -446,6 +447,35 @@ input:indeterminate ~ .none {
   display: inline-block;
 }
 
+/* A player's Active / Inactive / Sub button: only the checked status's label
+ * shows (see statusToggle in players.page.ts). */
+.status-toggle {
+  display: inline-block;
+}
+.status-toggle > input,
+.status-toggle > label {
+  display: none;
+}
+.status-toggle > label {
+  border: none;
+  margin: 0;
+  color: var(--app-on-off-text);
+}
+.status-toggle > [value="active"]:checked ~ .is-active,
+.status-toggle > [value="inactive"]:checked ~ .is-inactive,
+.status-toggle > [value="sub"]:checked ~ .is-sub {
+  display: inline-flex;
+}
+.status-toggle > .is-active {
+  background-color: var(--app-on);
+}
+.status-toggle > .is-inactive {
+  background-color: var(--app-off);
+}
+.status-toggle > .is-sub {
+  background-color: var(--app-sub);
+}
+
 /** List of items **/
 
 .list {
@@ -738,7 +768,7 @@ th.game-column small {
   gap: 0.5rem;
 }
 
-.player-row :is(input, .toggle) {
+.player-row :is(input, .toggle, .status-toggle) {
   margin: 0;
 }
 
@@ -746,8 +776,8 @@ th.game-column small {
   text-align: center;
 }
 
-/* Same width for Active and Inactive, so the name fields line up. */
-.player-row .toggle .nc-button {
+/* Same width for Active, Inactive and Sub, so the name fields line up. */
+.player-row :is(.toggle, .status-toggle) .nc-button {
   min-width: 5.5rem;
 }
 

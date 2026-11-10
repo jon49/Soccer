@@ -1,5 +1,5 @@
 import { createCheckbox, createIdNumber, createString25, maybe } from "@jon49/sw/validation.js";
-import type { TeamId } from "./db.js";
+import type { TeamId, TeamPlayerStatus } from "./db.js";
 
 export const dataTeamNameYearValidator = {
   name: createString25("Team Name"),
@@ -15,9 +15,17 @@ export const dataPlayerNameValidator = {
   name: createString25("Player Name"),
 };
 
-export const dataPlayerNameActiveValidator = {
+const playerStatuses: TeamPlayerStatus[] = ["active", "inactive", "sub"];
+
+async function createPlayerStatus(val: string | undefined): Promise<TeamPlayerStatus> {
+  let status = playerStatuses.find((x) => x === val);
+  if (!status) return Promise.reject(`"Player Status" must be Active, Inactive or Sub.`);
+  return status;
+}
+
+export const dataPlayerNameStatusValidator = {
   ...dataPlayerNameValidator,
-  active: createCheckbox,
+  status: createPlayerStatus,
   number: maybe(createIdNumber("Player Number")),
 };
 

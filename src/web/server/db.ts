@@ -186,10 +186,16 @@ export interface PlayerGameStatus<T extends PlayerStatus> extends Revision {
 
 export interface TeamPlayer {
   id: number;
+  // A sub is active too, so a client that doesn't know about subs still puts
+  // them in a match.
   active: boolean;
+  // Fills in for the team: in a match, marked, but not in the player count.
+  sub?: boolean;
   name: string;
   number?: number;
 }
+
+export type TeamPlayerStatus = "active" | "inactive" | "sub";
 
 // A personal team's id is a per-user integer. A shared team's id is its
 // space uuid, so its keys can never collide with another coach's teams.

@@ -22,9 +22,11 @@ pub:
 	danger        gg.Color
 	input_bg      gg.Color
 	focus_ring    gg.Color
-	// The toggles' on and off colors, and the text on them.
+	// The toggles' on and off colors, and the text on them. `sub` is a
+	// player's third state, after Active and Inactive.
 	on      gg.Color
 	off     gg.Color
+	sub     gg.Color
 	on_text gg.Color
 	// The pitch behind the field positions.
 	pitch      gg.Color
@@ -70,6 +72,7 @@ pub const light_theme = Theme{
 	focus_ring:    hexa(0x506f8d, 110)
 	on:            hex(0x026e5b)
 	off:           hex(0xa05000)
+	sub:           hex(0x4c5fa8)
 	on_text:       hex(0xffffff)
 	pitch:         hex(0xdcf2df)
 	pitch_line:    hex(0xa9d0b0)
@@ -99,6 +102,7 @@ pub const dark_theme = Theme{
 	focus_ring:    hexa(0x90b2d3, 120)
 	on:            hex(0x57b9a1)
 	off:           hex(0xe8a95c)
+	sub:           hex(0x9caee6)
 	on_text:       hex(0x0f171f)
 	pitch:         hex(0x152619)
 	pitch_line:    hex(0x2c4732)

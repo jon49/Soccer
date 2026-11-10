@@ -64,13 +64,15 @@ fn (mut app App) draw_team(x f32, y0 f32, w f32) f32 {
 	}
 	y += bh + 30
 
-	active := team.players.filter(it.active).len
+	// Subs play in matches but aren't counted.
+	active := team.players.filter(it.counted()).len
 	y = app.subheading(x, y, 'Players (${active})')
 	if team.players.len == 0 {
 		y = app.paragraph(x, y, w, 'No players have been added.', true)
 	}
 	num_w := f32(64)
-	pw := ui.toggle_width('Inactive', 'Active')
+	pw := ui.cycle_width(status_labels)
+	status_colors := [t.on, t.off, t.sub]
 	for p in team.players {
 		mut num := app.team.numbers[p.id] or { gui.input('') }
 		mut name := app.team.names[p.id] or { gui.input(p.name) }
@@ -81,12 +83,15 @@ fn (mut app App) draw_team(x f32, y0 f32, w f32) f32 {
 		app.team.numbers[p.id] = num
 		app.team.names[p.id] = name
 		if ev_num in [.committed, .submitted] || ev_name in [.committed, .submitted] {
-			app.save_player(p.id, p.active)
+			app.save_player(p.id, p.active, p.sub)
 		}
-		if ui.toggle(gui.Rect{x + w - pw, y + (fh - bh) / 2, pw, bh}, 'Inactive', 'Active',
-			p.active)
+		status := player_status(p)
+		if ui.cycle(gui.Rect{x + w - pw, y + (fh - bh) / 2, pw, bh}, status_labels, status_colors,
+			status)
 		{
-			app.save_player(p.id, !p.active)
+			// Active, then Inactive, then Sub, then back to Active.
+			next := (status + 1) % status_labels.len
+			app.save_player(p.id, next != 1, next == 2)
 		}
 		y += fh + 8
 	}
@@ -132,7 +137,20 @@ fn (mut app App) save_team_settings(active bool) {
 	app.changed()
 }
 
-fn (mut app App) save_player(id int, active bool) {
+// A player's status, as an index into status_labels.
+const status_labels = ['Active', 'Inactive', 'Sub']
+
+fn player_status(p core.TeamPlayer) int {
+	return if !p.active {
+		1
+	} else if p.sub {
+		2
+	} else {
+		0
+	}
+}
+
+fn (mut app App) save_player(id int, active bool, sub bool) {
 	mut team := app.store.team_get(app.route.team_id) or { return }
 	name_in := (app.team.names[id] or { gui.input('') }).text
 	num_in := (app.team.numbers[id] or { gui.input('') }).text.trim_space()
@@ -157,12 +175,13 @@ fn (mut app App) save_player(id int, active bool) {
 			return
 		}
 		if p.id == id {
-			if p.name == name && p.number == number && p.active == active {
+			if p.name == name && p.number == number && p.active == active && p.sub == sub {
 				return
 			}
 			team.players[i].name = name
 			team.players[i].number = number
 			team.players[i].active = active
+			team.players[i].sub = sub
 		}
 	}
 	app.store.team_save(team) or {

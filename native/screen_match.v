@@ -495,8 +495,8 @@ fn (mut app App) draw_position(m core.Match, pos int, name string, r gui.Rect, s
 			color: fg
 			align: .center
 		}
-		ui.text(r.x + r.w / 2, r.y + 6, ui.fit(m.name(p.player_id), r.w - 10, name_style),
-			name_style)
+		ui.text(r.x + r.w / 2, r.y + 6, ui.fit(m.name(p.player_id) + sub_mark(m, p.player_id),
+			r.w - 10, name_style), name_style)
 		ui.text(r.x + r.w / 2, r.y + 6 + lh, core.format_timer(total), gui.TextStyle{
 			size:  13
 			color: fg
@@ -885,7 +885,13 @@ fn (mut app App) draw_bench(m core.Match, area gui.Rect, cols int, now i64) f32 
 
 fn player_label(m core.Match, player_id int) string {
 	n := m.number(player_id)
-	return if n > 0 { '${m.name(player_id)} ${n}' } else { m.name(player_id) }
+	name := if n > 0 { '${m.name(player_id)} ${n}' } else { m.name(player_id) }
+	return name + sub_mark(m, player_id)
+}
+
+// Follows a sub's name wherever a match shows it.
+fn sub_mark(m core.Match, player_id int) string {
+	return if m.is_sub(player_id) { ' (sub)' } else { '' }
 }
 
 // ---- taps ----

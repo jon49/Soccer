@@ -1,4 +1,4 @@
-import type { PlayerStateView } from "./shared.js";
+import { type PlayerStateView, subMark } from "./shared.js";
 
 let {
   html,
@@ -19,7 +19,7 @@ export async function outPlayersView(o: PlayerStateView) {
       return html`
 <li id="${outPlayerId}">
     <button type=button class="bench-item game-shader" data-player-id="${x.playerId}" data-status=out>
-        <span class=player-name>${x.name} ${x.number}</span>
+        <span class=player-name>${x.name} ${x.number}${subMark(x)}</span>
         <span
             id="${outPlayerId}-timer"
             class=player-time

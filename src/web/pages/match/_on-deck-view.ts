@@ -1,4 +1,4 @@
-import type { PlayerStateView } from "./shared.js";
+import { type PlayerStateView, subMark } from "./shared.js";
 
 let {
   html,
@@ -14,7 +14,7 @@ export async function onDeckView(state: PlayerStateView) {
     return html`
 <li id="${id}">
     <button type=button class=bench-item data-player-id="${x.playerId}" data-status=onDeck>
-        <span class=player-name>${x.name}${when(x.number, (x) => ` ${x}`)}</span>
+        <span class=player-name>${x.name}${when(x.number, (x) => ` ${x}`)}${subMark(x)}</span>
         <span class=tag>on deck</span>
     </button>
 </li>`;

@@ -134,6 +134,40 @@ pub fn (mut ui Ui) toggle(r Rect, off_label string, on_label string, value bool)
 	return ui.tap(r, '${off_label}|${on_label}')
 }
 
+// cycle is a toggle with more than two states: it shows `labels[index]` on
+// `colors[index]` and returns true when clicked, and the caller moves on to
+// the next state.
+pub fn (mut ui Ui) cycle(r Rect, labels []string, colors []gg.Color, index int) bool {
+	t := ui.theme
+	ui.rounded(r, 6, colors[index])
+	if ui.pressing(r) {
+		ui.rounded(r, 6, hexa(0x000000, 50))
+	} else if ui.hovered(r) {
+		ui.rounded(r, 6, hexa(0xffffff, 40))
+	}
+	style := TextStyle{
+		color:  t.on_text
+		bold:   true
+		align:  .center
+		valign: .middle
+	}
+	ui.text(r.x + r.w / 2, r.y + r.h / 2, ui.fit(labels[index], r.w - 8, style), style)
+	ui.pointer_cursor(r)
+	return ui.tap(r, labels.join('|'))
+}
+
+// cycle_width fits the longest label, so the button keeps its size.
+pub fn (ui &Ui) cycle_width(labels []string) f32 {
+	mut w := f32(0)
+	for label in labels {
+		lw := ui.text_width(label, TextStyle{ bold: true })
+		if lw > w {
+			w = lw
+		}
+	}
+	return w + f32(ui.font_size) * 2
+}
+
 // toggle_width fits the longer label, so the button keeps its size when it
 // flips.
 pub fn (ui &Ui) toggle_width(off_label string, on_label string) f32 {

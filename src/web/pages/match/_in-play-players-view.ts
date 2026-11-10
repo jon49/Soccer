@@ -1,4 +1,4 @@
-import { GamePlayerStatusView, PlayerStateView, positionPlayersView } from "./shared.js";
+import { GamePlayerStatusView, PlayerStateView, positionPlayersView, subMark } from "./shared.js";
 import type { InPlayPlayer, OnDeckPlayer } from "../../server/db.js";
 
 let {
@@ -51,7 +51,7 @@ function playerCard(
   return html`
 <div id="${id}" class=player-card data-position="${positionIndex}">
     <button type=button class="player-main game-shader" data-player-id="${player.playerId}" data-status=inPlay>
-        <span class=player-name>${player.name}</span>
+        <span class=player-name>${player.name}${subMark(player)}</span>
         <span
             id="${id}-timer"
             class=player-time

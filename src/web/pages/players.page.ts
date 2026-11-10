@@ -1,4 +1,4 @@
-import type { Team, TeamId, TeamPlayer } from "../server/db.js";
+import type { Team, TeamId, TeamPlayer, TeamPlayerStatus } from "../server/db.js";
 import type { RoutePostHandler, RoutePage, RouteGetHandler } from "@jon49/sw/routes.middleware.js";
 
 const {
@@ -11,7 +11,7 @@ const {
     validate,
     validateObject,
     createString25,
-    dataPlayerNameActiveValidator,
+    dataPlayerNameStatusValidator,
     dataTeamNameYearActiveValidator,
     queryTeamIdPlayerIdValidator,
     queryTeamIdValidator,
@@ -104,10 +104,41 @@ ${when(
 `;
 }
 
-// The count is of active players only; editPlayer and addPlayer send it back
-// so it stays right as players are toggled or added.
+// The count is of active players only, not subs; editPlayer and addPlayer
+// send it back so it stays right as players are toggled or added.
 function playersHeading(team: Team) {
-  return html`<h3 id=players>Players (${team.players.filter((x) => x.active).length})</h3>`;
+  let count = team.players.filter((x) => playerStatus(x) === "active").length;
+  return html`<h3 id=players>Players (${count})</h3>`;
+}
+
+function playerStatus(player: TeamPlayer): TeamPlayerStatus {
+  return !player.active ? "inactive" : player.sub ? "sub" : "active";
+}
+
+// Tapping the button moves the player on to the next status.
+const statusCycle: [TeamPlayerStatus, string][] = [
+  ["active", "Active"],
+  ["inactive", "Inactive"],
+  ["sub", "Sub"],
+];
+
+// One radio per status, with only the checked one's label showing (app.css).
+// Each label is for the next status's radio, so a tap checks that one and the
+// form submits on change.
+function statusToggle(player: TeamPlayer) {
+  let current = playerStatus(player);
+  let id = (status: TeamPlayerStatus) => `player-status-${player.id}-${status}`;
+  return html`
+<span class=status-toggle>
+    ${statusCycle.map(
+      ([status]) =>
+        html`<input id="${id(status)}" name=status type=radio value="${status}" $${when(status === current, "checked")}>`,
+    )}
+    ${statusCycle.map(([status, label], i) => {
+      let next = statusCycle[(i + 1) % statusCycle.length][0];
+      return html`<label for="${id(next)}" class="is-${status} condense-padding nc-button" role="button">${label}</label>`;
+    })}
+</span>`;
 }
 
 function playerView(player: TeamPlayer, teamId: TeamId) {
@@ -135,23 +166,16 @@ function playerView(player: TeamPlayer, teamId: TeamId) {
             value="${player.name}"
             placeholder="Player name"
             aria-label="Name">
-        <label class=toggle>
-            <input
-                name=active
-                type=checkbox
-                $${when(player.active, "checked")}>
-            <span class="off condense-padding nc-button" role="button">Inactive</span>
-            <span class="on condense-padding nc-button" role="button">Active</span>
-        </label>
+        ${statusToggle(player)}
     </form>
 </li>`;
 }
 
 const postHandlers: RoutePostHandler = {
   async editPlayer({ data: d, query: q }) {
-    let [{ teamId, playerId }, { name: playerName, active, number }] = await validate([
+    let [{ teamId, playerId }, { name: playerName, status, number }] = await validate([
       validateObject(q, queryTeamIdPlayerIdValidator),
-      validateObject(d, dataPlayerNameActiveValidator),
+      validateObject(d, dataPlayerNameStatusValidator),
     ]);
     let team = await teamGet(teamId);
 
@@ -167,7 +191,9 @@ const postHandlers: RoutePostHandler = {
     );
 
     player.name = playerName;
-    player.active = active;
+    player.active = status !== "inactive";
+    if (status === "sub") player.sub = true;
+    else delete player.sub;
     player.number = number;
     // Player name will also need to be updated for the individual player when implemented!
     await teamSave(team);

@@ -38,6 +38,11 @@ pub fn (m &Match) name(player_id int) string {
 	return m.team.player_name(player_id)
 }
 
+pub fn (m &Match) is_sub(player_id int) bool {
+	p := m.team.player(player_id) or { return false }
+	return p.sub
+}
+
 pub fn (m &Match) number(player_id int) int {
 	p := m.team.player(player_id) or { return 0 }
 	return p.number

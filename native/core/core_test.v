@@ -61,6 +61,14 @@ fn test_records_round_trip_and_keep_unknown_fields() {
 	p := as_map(any_arr(m['players'] or { json2.null })[0])
 	assert any_str(p['nick'] or { json2.null }) == 'A'
 	assert 'staleAfterMinutes' !in m
+	assert 'sub' !in p
+
+	mut sub := player_from_any(decode_json('{"id":2,"name":"Bo","active":true,"sub":true}'))
+	assert sub.sub && !sub.counted()
+	assert sub.to_any().json_str().contains('"sub":true')
+	sub.sub = false
+	assert sub.counted()
+	assert !sub.to_any().json_str().contains('sub')
 
 	st := player_game_from_any(decode_json('{"playerId":1,"gameId":2,"stats":[],"gameTime":[{"position":"GK"}],"status":{"_":"onDeck","targetPosition":null},"_rev":0}'))
 	assert st.status.kind == .on_deck && st.status.target == -1

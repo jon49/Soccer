@@ -23,11 +23,20 @@ fn set_or_delete(mut m map[string]json2.Any, name string, keep bool, value json2
 
 pub struct TeamPlayer {
 pub mut:
-	id     int
+	id int
+	// A sub is active too, so a client that doesn't know about subs still
+	// puts them in a match.
 	active bool
+	// Fills in for the team: in a match, marked, but not in the player count.
+	sub    bool
 	name   string
 	number int // 0: no number
 	raw    map[string]json2.Any
+}
+
+// counted is an active player who isn't a sub: the team's own players.
+pub fn (p TeamPlayer) counted() bool {
+	return p.active && !p.sub
 }
 
 fn player_from_any(a json2.Any) TeamPlayer {
@@ -35,6 +44,7 @@ fn player_from_any(a json2.Any) TeamPlayer {
 	return TeamPlayer{
 		id:     any_int(field(m, 'id'))
 		active: any_bool(field(m, 'active'))
+		sub:    any_bool(field(m, 'sub'))
 		name:   any_str(field(m, 'name'))
 		number: any_int(field(m, 'number'))
 		raw:    m
@@ -45,6 +55,7 @@ fn (p TeamPlayer) to_any() json2.Any {
 	mut m := base(p.raw)
 	m['id'] = p.id
 	m['active'] = p.active
+	set_or_delete(mut m, 'sub', p.sub, true)
 	m['name'] = p.name
 	set_or_delete(mut m, 'number', p.number > 0, p.number)
 	return m

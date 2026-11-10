@@ -1,4 +1,4 @@
-import type { PlayerStateView } from "./shared.js";
+import { type PlayerStateView, subMark } from "./shared.js";
 
 let {
   html,
@@ -22,7 +22,7 @@ export async function notPlayingPlayersView(state: PlayerStateView) {
         formaction="?${state.queryTeamGame}&playerId=${x.playerId}&handler=backIn"
         aria-label="Place ${x.name} back on the bench."
         >
-        <span class=player-name>${x.name} ${x.number}</span>
+        <span class=player-name>${x.name} ${x.number}${subMark(x)}</span>
         <span
             id="${id}-timer"
             class=player-time

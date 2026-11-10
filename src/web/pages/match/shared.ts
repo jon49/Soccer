@@ -37,6 +37,17 @@ let {
   validation: { required, queryTeamIdGameIdValidator, validateObject },
 } = self.sw;
 
+// Follows a sub's name wherever a match shows it.
+export function subMark(player: TeamPlayer) {
+  return when(
+    player.sub,
+    () =>
+      html`
+        <small class="sub-mark">sub</small>
+      `,
+  );
+}
+
 export class PlayerGameTimeCalculator extends PlayerGameTimeCalculatorBase {
   async save(teamId: TeamId) {
     await playerGameSave(teamId, {

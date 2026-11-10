@@ -257,6 +257,15 @@ body[data-bench="hidden"]:not([data-selecting]) .match-bench {
 .player-card[data-stint="stale"] .stint-bar {
   background: oklch(0.52 0.13 55);
 }
+/* A sub's name is followed by a small "sub", in the name's own color so it
+   reads on shaded cards. */
+.sub-mark {
+  font-size: 0.7em;
+  font-weight: 600;
+  opacity: 0.8;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
 .bench-item .tag {
   padding: 0.15rem 0.4rem;
   border-radius: 0.5rem;
