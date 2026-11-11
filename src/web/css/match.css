@@ -41,10 +41,6 @@
 .match-clock small {
   font-size: 0.65rem;
   font-weight: 400;
-  opacity: 0.8;
-}
-.match-clock .flash {
-  color: oklch(0.2 0.02 250);
 }
 .score {
   min-width: 2.75rem;
@@ -69,7 +65,6 @@
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  opacity: 0.85;
 }
 .score-them,
 .match-end {
@@ -149,6 +144,7 @@ body[data-bench="hidden"]:not([data-selecting]) .match-bench {
 }
 .bench-toggle[aria-expanded="true"] {
   background: color-mix(in oklch, var(--nc-primary) 15%, transparent);
+  border-color: var(--nc-primary);
 }
 @media (orientation: portrait) {
   .match-body {
@@ -248,21 +244,22 @@ body[data-bench="hidden"]:not([data-selecting]) .match-bench {
   border-radius: 0;
   background: var(--nc-border);
 }
+/* Teal, then amber, then red-orange, and each further from the card's
+   color than the last, so the bar reads in grayscale too. */
 .player-card[data-stint="fresh"] .stint-bar {
-  background: oklch(0.72 0.1 175);
+  background: light-dark(oklch(0.82 0.08 175), oklch(0.45 0.07 175));
 }
 .player-card[data-stint="warm"] .stint-bar {
-  background: oklch(0.78 0.12 70);
+  background: oklch(0.66 0.12 70);
 }
 .player-card[data-stint="stale"] .stint-bar {
-  background: oklch(0.52 0.13 55);
+  background: light-dark(oklch(0.45 0.14 40), oklch(0.85 0.12 60));
 }
 /* A sub's name is followed by a small "sub", in the name's own color so it
    reads on shaded cards. */
 .sub-mark {
   font-size: 0.7em;
   font-weight: 600;
-  opacity: 0.8;
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -279,7 +276,7 @@ body[data-bench="hidden"]:not([data-selecting]) .match-bench {
   display: block;
   padding: 0.5rem 0.4rem;
   font-size: 0.8rem;
-  color: color-mix(in oklch, var(--nc-text), var(--nc-surface-1) 25%);
+  color: var(--app-muted);
 }
 .player-card.is-queued .player-next {
   padding-block: 0.6rem;
@@ -288,7 +285,7 @@ body[data-bench="hidden"]:not([data-selecting]) .match-bench {
 .player-card.is-empty {
   padding: 0.5rem 0.4rem;
   border-style: dashed;
-  color: color-mix(in oklch, var(--nc-text), var(--nc-surface-1) 25%);
+  color: var(--app-muted);
 }
 .is-selected {
   outline: 3px solid var(--nc-primary);
@@ -396,14 +393,19 @@ body[data-selecting="unscore"] .score.is-selected {
   color: var(--game-shader-color);
 }
 
-/* The match clock flashes while the game is paused (game-timer.js). */
+/* The match clock flashes while the game is paused (game-timer.js): a
+   yellow fill and an amber ring, which grayscale still shows. */
 .flash {
-  background-color: yellow;
+  background-color: light-dark(oklch(0.93 0.12 95), oklch(0.9 0.15 95));
+  color: light-dark(var(--nc-text), oklch(0.2 0.02 250));
+  box-shadow: inset 0 0 0 2px var(--app-off);
   animation: 2s flash infinite;
 }
 @keyframes flash {
   50% {
     background-color: transparent;
+    color: var(--nc-text);
+    box-shadow: inset 0 0 0 2px transparent;
   }
 }
 span {

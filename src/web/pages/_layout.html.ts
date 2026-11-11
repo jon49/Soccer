@@ -113,9 +113,11 @@ async function appView({
   pageScripts: () => AsyncGenerator<any, void, unknown>[];
 }) {
   const [isLoggedIn, updated] = await Promise.all([db.isLoggedIn(), db.updated()]);
+  // #sw-message is where new-app-notifier (@jon49/sw) puts its "update your
+  // app" link; data-hz-keep keeps the link as htmz-nav moves between pages.
   return html`<div id=head>$${head}</div>
     <div>
-    <div id=sw-message></div>
+    <div id=sw-message data-hz-keep></div>
     <header>
         <nav role=navigation>
             <ul>

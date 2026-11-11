@@ -143,17 +143,16 @@ export function renderScheduleHtml(
   :root {
     --bg: #fafafa;
     --fg: #1a1a1a;
-    --muted-fg: #666;
+    --muted-fg: #4d4d4d;
     --card-bg: #fff;
     --card-border: #ddd;
     --card-alt-bg: #f2f2f2;
     --current-bg: #fff3b0;
-    --current-border: #e6c200;
+    --current-border: #8a6d00;
     --meta-fg: #444;
-    --location-fg: #555;
+    --location-fg: #4d4d4d;
     --badge-home-bg: #d6f0d6;
-    --badge-home-fg: #1e5e1e;
-    --badge-away-bg: #e0e0f0;
+    --badge-home-fg: #144d14;
     --badge-away-fg: #29296e;
     --toggle-bg: #fff;
     --toggle-border: #ccc;
@@ -162,17 +161,16 @@ export function renderScheduleHtml(
     :root:not([data-theme="light"]) {
       --bg: #121212;
       --fg: #eee;
-      --muted-fg: #999;
+      --muted-fg: #c8c8c8;
       --card-bg: #1e1e1e;
       --card-border: #333;
       --card-alt-bg: #262626;
-      --current-bg: #4a3b00;
+      --current-bg: #3a2e00;
       --current-border: #a98600;
-      --meta-fg: #bbb;
-      --location-fg: #aaa;
+      --meta-fg: #d6d6d6;
+      --location-fg: #d0d0d0;
       --badge-home-bg: #1e3d1e;
       --badge-home-fg: #a8e6a8;
-      --badge-away-bg: #26264d;
       --badge-away-fg: #b8b8f0;
       --toggle-bg: #1e1e1e;
       --toggle-border: #444;
@@ -181,17 +179,16 @@ export function renderScheduleHtml(
   :root[data-theme="dark"] {
     --bg: #121212;
     --fg: #eee;
-    --muted-fg: #999;
+    --muted-fg: #c8c8c8;
     --card-bg: #1e1e1e;
     --card-border: #333;
     --card-alt-bg: #262626;
-    --current-bg: #4a3b00;
+    --current-bg: #3a2e00;
     --current-border: #a98600;
-    --meta-fg: #bbb;
-    --location-fg: #aaa;
+    --meta-fg: #d6d6d6;
+    --location-fg: #d0d0d0;
     --badge-home-bg: #1e3d1e;
     --badge-home-fg: #a8e6a8;
-    --badge-away-bg: #26264d;
     --badge-away-fg: #b8b8f0;
     --toggle-bg: #1e1e1e;
     --toggle-border: #444;
@@ -213,7 +210,13 @@ export function renderScheduleHtml(
     background: var(--card-bg);
   }
   li.game.row-alt { background: var(--card-alt-bg); }
-  li.game.current-game { background: var(--current-bg); border-color: var(--current-border); }
+  /* A 2px edge, so the next game stands out in grayscale too. Text on every
+     card is at least 7:1 (WCAG AAA) in both schemes. */
+  li.game.current-game {
+    background: var(--current-bg);
+    border: 2px solid var(--current-border);
+    padding: calc(0.75rem - 1px) calc(1rem - 1px);
+  }
   li.game.empty { text-align: center; color: var(--muted-fg); }
   /* Two columns — date/opponent/score on the left, time/location on the
      right — so the location sits under the time without pushing the
@@ -259,13 +262,15 @@ export function renderScheduleHtml(
     display: inline-block;
     margin-left: 0.5rem;
     padding: 0.1rem 0.5rem;
+    border: 1px solid transparent;
     border-radius: 1rem;
     font-size: 0.75rem;
     font-weight: 600;
     vertical-align: middle;
   }
   .badge-home { background: var(--badge-home-bg); color: var(--badge-home-fg); }
-  .badge-away { background: var(--badge-away-bg); color: var(--badge-away-fg); }
+  /* Outlined rather than filled, so it reads apart from Home in grayscale. */
+  .badge-away { color: var(--badge-away-fg); border-color: currentColor; }
   #theme-toggle {
     position: fixed;
     top: 1rem;

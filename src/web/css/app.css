@@ -3,22 +3,44 @@
 /* Theme color — muted slate-blue, kept from the old Pico build
    (oklch 0.53 0.06 248). nimble derives hover/focus from it. The manifest's
    theme color uses the sRGB equivalent (#506f8d). */
+/* Contrast is WCAG AAA: text at least 7:1 against what's behind it (4.5:1
+ * for large text), and field edges and state markers at least 3:1. The app
+ * must also read with a phone's grayscale filter on, so states that differ
+ * by hue alone also differ in lightness, fill or border style. Contrast is a
+ * ratio of luminance, which grayscale keeps. e2e/contrast.spec.ts checks
+ * every page in both schemes. */
 :root {
-  --nc-primary: light-dark(oklch(0.53 0.06 248), oklch(0.63 0.06 248));
+  /* Theme color: muted slate-blue, kept from the old Pico build, darkened
+   * (lightened in dark mode) to clear 7:1 for links and button text. The
+   * manifest's theme color is the old, lighter shade (#506f8d). */
+  --nc-primary: light-dark(oklch(0.42 0.06 248), oklch(0.75 0.06 248));
+  --nc-primary-hover: light-dark(oklch(0.32 0.06 248), oklch(0.85 0.06 248));
+  --nc-primary-focus: light-dark(oklch(0.42 0.06 248 / 0.4), oklch(0.75 0.06 248 / 0.4));
+  --nc-secondary: light-dark(oklch(0.4 0.05 250), oklch(0.76 0.04 250));
+  --nc-secondary-hover: light-dark(oklch(0.3 0.05 250), oklch(0.86 0.04 250));
+  --nc-secondary-focus: light-dark(oklch(0.4 0.05 250 / 0.3), oklch(0.76 0.04 250 / 0.3));
+  --nc-valid: light-dark(oklch(0.42 0.12 145), oklch(0.8 0.15 145));
+  --nc-invalid: light-dark(oklch(0.45 0.17 27), oklch(0.75 0.14 25));
   --nc-content-width: 1200px;
-  /* On is teal, off is amber. Text colors are set explicitly because nimble's
-   * button contrast color is dark in dark mode; each pair is at least 5.7:1. */
-  --app-on: light-dark(oklch(0.48 0.09 175), oklch(0.72 0.1 175));
-  --app-off: light-dark(oklch(0.52 0.13 55), oklch(0.78 0.12 70));
-  --app-sub: light-dark(oklch(0.5 0.12 265), oklch(0.76 0.1 265));
+  /* Secondary text: dimmer than --nc-text, still 7:1 on the cards. */
+  --app-muted: light-dark(oklch(0.42 0.005 250), oklch(0.76 0.005 250));
+  /* Form fields' edges, at 3:1 on the page. */
+  --app-field-border: light-dark(oklch(0.58 0.005 250), oklch(0.52 0.005 260));
+  /* On is teal and filled: dark in light mode, bright in dark mode. Off is
+   * amber, a pale fill with a border; in dark mode a dim one. Sub is blue
+   * and hollow, with a dashed border. So the three read apart in grayscale
+   * too. */
+  --app-on: light-dark(oklch(0.42 0.08 175), oklch(0.8 0.1 175));
   --app-on-off-text: light-dark(#fff, oklch(0.2 0.02 250));
+  --app-off: light-dark(oklch(0.55 0.1 65), oklch(0.65 0.1 70));
+  --app-off-fill: light-dark(oklch(0.92 0.05 80), oklch(0.3 0.05 65));
+  --app-off-text: light-dark(oklch(0.4 0.08 60), oklch(0.88 0.06 80));
+  --app-sub: light-dark(oklch(0.42 0.1 265), oklch(0.8 0.08 265));
 }
 
-/* White text on buttons and the toast in both schemes (WCAG AA, >= 4.5:1).
- * nimble's dark scheme uses a lighter primary with dark text, so pin the
- * filled backgrounds to the darker shade here and darken on hover instead of
- * lightening. Scoped to these elements so dark-mode links keep the lighter,
- * readable-on-dark primary from :root. */
+/* White text on filled buttons and the toast in both schemes, so pin their
+ * backgrounds to the darker shade and darken on hover. Scoped to these
+ * elements so dark-mode links keep the lighter primary from :root. */
 :where(
   button,
   [type="submit"],
@@ -28,14 +50,34 @@
   .nc-button,
   .toast
 ):not(.outline) {
-  --nc-primary: oklch(0.53 0.06 248);
-  --nc-primary-hover: oklch(from var(--nc-primary) calc(l - 0.1) c h);
-  --nc-primary-focus: oklch(from var(--nc-primary) l c h / 0.4);
+  --nc-primary: oklch(0.42 0.06 248);
+  --nc-primary-hover: oklch(0.32 0.06 248);
+  --nc-primary-focus: oklch(0.42 0.06 248 / 0.4);
   --nc-primary-contrast: #fff;
-  --nc-secondary: light-dark(oklch(0.45 0.05 250), oklch(0.5 0.05 250));
-  --nc-secondary-hover: oklch(from var(--nc-secondary) calc(l - 0.1) c h);
-  --nc-secondary-focus: oklch(from var(--nc-secondary) l c h / 0.3);
+  --nc-secondary: oklch(0.42 0.05 250);
+  --nc-secondary-hover: oklch(0.32 0.05 250);
+  --nc-secondary-focus: oklch(0.42 0.05 250 / 0.3);
   --nc-secondary-contrast: #fff;
+}
+
+/* nimble dims small print, figure captions and placeholders by fading the
+ * text color, below 7:1. */
+:where(input, select, textarea) + small,
+figcaption,
+blockquote :is(footer, cite) {
+  color: var(--app-muted);
+}
+
+/* At 7:1 a placeholder is nearly as dark as a typed value, so set it apart
+ * by shape: italic. */
+::placeholder {
+  color: var(--app-muted);
+  opacity: 1;
+  font-style: italic;
+}
+
+:where(input:not([type="checkbox"], [type="radio"], [type="range"]), select, textarea) {
+  --nc-border: var(--app-field-border);
 }
 
 /* With no saved theme, #theme holds a button for each system scheme; show
@@ -251,18 +293,6 @@ textarea {
   font-weight: 600;
 }
 
-/** Formation picker (positions page) **/
-
-/* The diagram draws in currentColor, the outline button's primary. Use a
- * darker/lighter shade than the theme's so the text clears 7:1 on the page
- * and stays above AA on the tinted hover background. nimble resolves the
- * hover/focus colors at :root, so restate them here too. */
-.formation {
-  --nc-primary: light-dark(oklch(0.43 0.06 248), oklch(0.75 0.06 248));
-  --nc-primary-hover: light-dark(oklch(0.33 0.06 248), oklch(0.85 0.06 248));
-  --nc-primary-focus: light-dark(oklch(0.43 0.06 248 / 0.4), oklch(0.75 0.06 248 / 0.4));
-}
-
 /** A pitch drawn in CSS: touchlines, halfway line, centre circle and a goal
  * box at each end, the attacking end at the top as formation rows run.
  * Used behind the match play view's positions and the formation preview. **/
@@ -429,12 +459,13 @@ input:indeterminate ~ .off,
   border: none;
 }
 
-/* inline-flex, not inline-block, so nimble's .nc-button centering applies. */
+/* inline-flex, not inline-block, so nimble's .nc-button centering applies.
+ * The off side is a pale fill with a border, the on side a solid fill. */
 .off {
   display: inline-flex;
-  background-color: var(--app-off);
-  color: var(--app-on-off-text);
-  border: none;
+  background-color: var(--app-off-fill);
+  color: var(--app-off-text);
+  border: 1px solid var(--app-off);
 }
 
 input:checked ~ .on {
@@ -457,23 +488,28 @@ input:indeterminate ~ .none {
   display: none;
 }
 .status-toggle > label {
-  border: none;
   margin: 0;
-  color: var(--app-on-off-text);
 }
 .status-toggle > [value="active"]:checked ~ .is-active,
 .status-toggle > [value="inactive"]:checked ~ .is-inactive,
 .status-toggle > [value="sub"]:checked ~ .is-sub {
   display: inline-flex;
 }
+/* Same looks as the on and off toggles; Sub is hollow and dashed. */
 .status-toggle > .is-active {
   background-color: var(--app-on);
+  border: 1px solid var(--app-on);
+  color: var(--app-on-off-text);
 }
 .status-toggle > .is-inactive {
-  background-color: var(--app-off);
+  background-color: var(--app-off-fill);
+  border: 1px solid var(--app-off);
+  color: var(--app-off-text);
 }
 .status-toggle > .is-sub {
-  background-color: var(--app-sub);
+  background-color: transparent;
+  border: 2px dashed var(--app-sub);
+  color: var(--app-sub);
 }
 
 /** List of items **/
@@ -533,13 +569,16 @@ input:indeterminate ~ .none {
   border: 2px solid var(--app-on);
 }
 
+/* Past games: no fill and a dashed edge, the opponent in the plain text
+ * color. (Fading them would drop below 7:1.) */
 .game-card.is-past {
   background: transparent;
+  border-style: dashed;
 }
 
-.game-card.is-past .game-card-main,
-.game-card.is-past .game-side {
-  opacity: 0.75;
+.game-card.is-past .game-opponent {
+  color: var(--nc-text);
+  font-weight: 600;
 }
 
 .game-card-main {
@@ -567,7 +606,7 @@ a.game-card-main:visited {
 }
 
 .game-where {
-  color: color-mix(in oklch, var(--nc-text), var(--nc-surface-1) 30%);
+  color: var(--app-muted);
   overflow-wrap: anywhere;
 }
 
@@ -761,6 +800,29 @@ th.game-column small {
   margin: 0;
 }
 
+/* "#" over the number box of each column of the list. It lays out on the
+ * list's own columns, so it lines up however many there are; the copies past
+ * the last column wrap onto rows of no height. Shown once there's a player. The
+ * fields have their own aria-labels, so it's hidden from screen readers. */
+.player-list-head {
+  display: none;
+  grid-template-rows: auto;
+  grid-auto-rows: 0;
+  row-gap: 0;
+  overflow: hidden;
+  margin-bottom: 0.25rem;
+}
+
+.player-list-head:has(+ .player-list > li) {
+  display: grid;
+}
+
+.player-list-head > span {
+  width: 4rem;
+  font-weight: 700;
+  text-align: center;
+}
+
 .player-row form {
   display: grid;
   grid-template-columns: 4rem minmax(0, 1fr) auto;
@@ -818,7 +880,7 @@ th.game-column small {
 }
 
 .team-next-none {
-  color: color-mix(in oklch, var(--nc-text), var(--nc-surface-1) 35%);
+  color: var(--app-muted);
 }
 
 /** Game page: date, time, home/away, location and status under the title **/
@@ -873,11 +935,11 @@ th.game-column small {
   height: 100vh;
 }
 
-/* Destructive actions. White text is 6.6:1 on this red in both schemes. */
+/* Destructive actions. White text is 8:1 on this red in both schemes. */
 .danger {
-  --nc-primary: oklch(0.5 0.19 27);
-  --nc-primary-hover: oklch(0.42 0.17 27);
-  --nc-primary-focus: oklch(0.5 0.19 27 / 0.4);
+  --nc-primary: oklch(0.45 0.17 27);
+  --nc-primary-hover: oklch(0.37 0.15 27);
+  --nc-primary-focus: oklch(0.45 0.17 27 / 0.4);
 }
 
 /* Set apart at the bottom of a page, below everything else. */
@@ -892,7 +954,7 @@ th.game-column small {
 }
 
 .fieldset-outline {
-  border: 2px solid gray;
+  border: 2px solid var(--app-field-border);
   border-radius: 0.5em;
   padding: 1em;
 }

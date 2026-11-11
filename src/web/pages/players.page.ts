@@ -78,6 +78,9 @@ ${when(
     `,
 )}
 
+<div class="player-list player-list-head" aria-hidden=true>
+    <span>#</span><span>#</span><span>#</span><span>#</span>
+</div>
 <ul id=playerCards class=player-list>
     ${team.players.map((x) => playerView(x, team.id))}
 </ul>

@@ -85,7 +85,12 @@ function formatTime(grandTotal) {
 // refreshing on the next full page morph.
 
 // The background blends smoothly, but the text is only ever dark or light:
-// whichever reads better on the blended color.
+// whichever reads better on the blended color. Mid blends, where neither
+// reaches 7:1 (WCAG AAA), are skipped: the shade jumps from the last one dark
+// text reads on to the first one light text does, or the other way round.
+
+// A little over 7:1, for rounding to whole sRGB values on screen.
+const MIN_CONTRAST = 7.2;
 
 const DARK_TEXT = [0, 0, 0];
 const LIGHT_TEXT = [255, 255, 255];
@@ -102,7 +107,7 @@ function shadeColors() {
   return theme === "dark"
     ? [
         [255, 255, 255],
-        [15, 17, 20],
+        [14, 15, 18],
       ]
     : [
         [19, 23, 31],
@@ -151,11 +156,40 @@ function aheadOfFairShare(el, playerTotal, gameTotal) {
 function applyShade(el, ahead, scale) {
   let alpha = Math.min(1, Math.max(0, +(ahead / scale).toFixed(3)));
   let [shade, surface] = shadeColors();
-  let background = shade.map((c, i) => surface[i] * (1 - alpha) + c * alpha);
-  let text =
-    contrast(background, DARK_TEXT) >= contrast(background, LIGHT_TEXT) ? DARK_TEXT : LIGHT_TEXT;
+  let blend = (/** @type {number} */ a) => shade.map((c, i) => surface[i] * (1 - a) + c * a);
+  let textOn = (/** @type {number[]} */ bg) =>
+    contrast(bg, DARK_TEXT) >= contrast(bg, LIGHT_TEXT) ? DARK_TEXT : LIGHT_TEXT;
+  let readable = (/** @type {number} */ a) => {
+    let bg = blend(a);
+    return contrast(bg, textOn(bg)) >= MIN_CONTRAST;
+  };
+  if (!readable(alpha)) {
+    let [low, high] = readableEdges(readable, alpha);
+    alpha = alpha - low < high - alpha ? low : high;
+  }
   el.style.setProperty("--game-shader-background", `rgba(${shade.join(",")},${alpha})`);
-  el.style.setProperty("--game-shader-color", `rgb(${text.join(",")})`);
+  el.style.setProperty("--game-shader-color", `rgb(${textOn(blend(alpha)).join(",")})`);
+}
+
+/**
+ * The readable alphas nearest either side of the unreadable `alpha`. The
+ * surface (0) and the shade (1) are readable, and contrast only falls toward
+ * the middle, so the unreadable alphas make one band.
+ * @param {(alpha: number) => boolean} readable
+ * @param {number} alpha
+ * @returns {[number, number]}
+ */
+function readableEdges(readable, alpha) {
+  let edge = (/** @type {number} */ from, /** @type {number} */ to) => {
+    // `from` is readable, `to` isn't; narrow in on the boundary.
+    for (let i = 0; i < 20; i++) {
+      let mid = (from + to) / 2;
+      if (readable(mid)) from = mid;
+      else to = mid;
+    }
+    return from;
+  };
+  return [Math.floor(edge(0, alpha) * 1e3) / 1e3, Math.ceil(edge(1, alpha) * 1e3) / 1e3];
 }
 
 class GameTimer {
