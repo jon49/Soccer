@@ -59,3 +59,38 @@ test("a sub plays in a match and is marked as one", async ({ newCoach }) => {
   await match.lineup("Fay", "Bo", "Cy", "Dee");
   expect(await match.field()).toContain("Fay SUB");
 });
+
+test("players are listed active, then subs, then inactive, each by name", async ({ newCoach }) => {
+  let a = await newCoach("a");
+  let teamId = await a.createTeam("Hawks", "2026");
+  for (let name of ["Eve", "Dee", "Cy", "Bo", "Ann"]) await a.addPlayer(teamId, name);
+
+  await a.goto(`/web/players?teamId=${teamId}`);
+  let status = (name: string) =>
+    a.page
+      .locator(".player-row", { has: a.page.locator(`input[value=${name}]`) })
+      .locator(".status-toggle label:visible");
+  let tap = (name: string) => a.tap("editPlayer", () => status(name).click());
+  let names = () =>
+    a.page
+      .locator("#playerCards input[name=name]")
+      .evaluateAll((xs) => xs.map((x) => (x as HTMLInputElement).value));
+  await tap("Dee"); // Inactive
+  await tap("Bo"); // Inactive
+  await tap("Bo"); // Sub
+  await tap("Ann"); // Inactive
+  await tap("Ann"); // Sub
+  // A row stays put while its status is tapped.
+  expect(await names()).toEqual(["Ann", "Bo", "Cy", "Dee", "Eve"]);
+
+  let order = ["Cy", "Eve", "Ann", "Bo", "Dee"];
+  await a.page.reload();
+  await expect(status("Ann")).toHaveText("Sub");
+  expect(await names()).toEqual(order);
+
+  await a.goto(`/web/stats?teamId=${teamId}`);
+  for (let tab of ["#timePlayed", "#percentagePlayed", "#activitiesPerformed"]) {
+    await a.page.click(tab);
+    await expect(a.page.locator("#statTables tbody th"), tab).toHaveText(order);
+  }
+});

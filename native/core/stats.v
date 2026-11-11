@@ -52,10 +52,15 @@ pub fn (s &Store) played_games(team Team) []PlayedGame {
 	return res
 }
 
-// players_by_name: every team player, sorted by name.
-fn players_by_name(team Team) []TeamPlayer {
-	mut ps := team.players.clone()
+// players_in_order: active players, then subs, then inactive, each by name,
+// as on the Players screen and in the stats tables (playersInOrder in
+// server/utils.ts).
+pub fn players_in_order(players []TeamPlayer) []TeamPlayer {
+	mut ps := players.clone()
 	ps.sort_with_compare(fn (a &TeamPlayer, b &TeamPlayer) int {
+		if a.list_rank() != b.list_rank() {
+			return a.list_rank() - b.list_rank()
+		}
 		an := a.name.to_lower()
 		bn := b.name.to_lower()
 		return if an < bn {
@@ -67,6 +72,16 @@ fn players_by_name(team Team) []TeamPlayer {
 		}
 	})
 	return ps
+}
+
+fn (p TeamPlayer) list_rank() int {
+	return if !p.active {
+		2
+	} else if p.sub {
+		1
+	} else {
+		0
+	}
 }
 
 // hms: "1:05:07".
@@ -106,7 +121,7 @@ pub fn (s &Store) time_played_table(team Team) StatsTable {
 	table.headers = positions.clone()
 	table.headers << 'Total'
 	table.sub_headers = []string{len: table.headers.len}
-	for p in players_by_name(team) {
+	for p in players_in_order(team.players) {
 		mut row := StatsRow{
 			name: p.name
 		}
@@ -138,7 +153,7 @@ pub fn (s &Store) percentage_table(team Team, now i64) StatsTable {
 		table.headers << format_short_date(g.game.date)
 		table.sub_headers << g.game.opponent
 	}
-	for p in players_by_name(team) {
+	for p in players_in_order(team.players) {
 		mut rates := []f64{}
 		mut played := 0
 		for g in games {
@@ -186,7 +201,7 @@ pub fn (s &Store) points_table(team Team) StatsTable {
 		table.headers << format_short_date(g.game.date)
 		table.sub_headers << g.game.opponent
 	}
-	for p in players_by_name(team) {
+	for p in players_in_order(team.players) {
 		mut per_game := []int{}
 		for g in games {
 			mut n := 0

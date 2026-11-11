@@ -358,6 +358,43 @@ fn test_a_match_from_kickoff_to_final_whistle() {
 	assert s.game_state_get(team.id, 1).status == ''
 }
 
+fn test_players_are_listed_active_then_subs_then_inactive_by_name() {
+	ps := [
+		TeamPlayer{
+			id:   1
+			name: 'Zed'
+		},
+		TeamPlayer{
+			id:     2
+			name:   'Bea'
+			active: true
+			sub:    true
+		},
+		TeamPlayer{
+			id:     3
+			name:   'Cal'
+			active: true
+		},
+		TeamPlayer{
+			id:   4
+			name: 'Amy'
+		},
+		TeamPlayer{
+			id:     5
+			name:   'Abe'
+			active: true
+			sub:    true
+		},
+		TeamPlayer{
+			id:     6
+			name:   'Ann'
+			active: true
+		},
+	]
+	assert players_in_order(ps).map(it.name) == ['Ann', 'Cal', 'Abe', 'Bea', 'Amy', 'Zed']
+	assert ps.map(it.id) == [1, 2, 3, 4, 5, 6]
+}
+
 fn test_team_names_must_be_unique() {
 	mut s := memory_store()
 	s.team_create('Hawks', '2026')!

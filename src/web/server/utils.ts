@@ -1,4 +1,4 @@
-import type { Teams } from "./db.js";
+import type { TeamPlayer, TeamPlayerStatus, Teams } from "./db.js";
 
 export const reject = (s: string | string[]): Promise<any> =>
   typeof s === "string" ? Promise.reject([s]) : Promise.reject(s);
@@ -53,4 +53,20 @@ export function formatShortDate(date: string): string {
   let d = new Date(`${date}T00:00:00`);
   if (isNaN(d.getTime())) return date;
   return d.toLocaleDateString([], { month: "short", day: "numeric" });
+}
+
+export function playerStatus(player: TeamPlayer): TeamPlayerStatus {
+  return !player.active ? "inactive" : player.sub ? "sub" : "active";
+}
+
+const statusOrder: Record<TeamPlayerStatus, number> = { active: 0, sub: 1, inactive: 2 };
+
+// How players are listed on the Players page and in the stats tables: active,
+// then subs, then inactive, each by name.
+export function playersInOrder<T extends TeamPlayer>(players: T[]): T[] {
+  return [...players].sort(
+    (a, b) =>
+      statusOrder[playerStatus(a)] - statusOrder[playerStatus(b)] ||
+      (a.name ?? "").localeCompare(b.name ?? ""),
+  );
 }

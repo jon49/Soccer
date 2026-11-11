@@ -5,7 +5,7 @@ import { playedInOrder } from "./stats-logic.js";
 const {
   html,
   repo: { teamGet, playerGameAllGet, gameStatesGet },
-  utils: { DbCache, formatShortDate },
+  utils: { DbCache, formatShortDate, playersInOrder },
   validation: { validateObject, queryTeamIdValidator },
 } = self.sw;
 
@@ -91,9 +91,7 @@ export class StatsView {
 
   async playerIdList() {
     return this.#cache.get("playerIdList", async () =>
-      Array.from(await this.playerMap())
-        .sort((a, b) => (a[1] ?? "").localeCompare(b[1] ?? ""))
-        .map((x) => x[0]),
+      playersInOrder((await this.team()).players).map((x) => x.id),
     );
   }
 

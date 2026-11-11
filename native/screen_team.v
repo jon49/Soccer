@@ -13,6 +13,7 @@ mut:
 	numbers    map[int]gui.Input
 	names      map[int]gui.Input
 	new_player gui.Input
+	order      []int // player ids, in the order they're listed
 }
 
 fn (mut app App) load_team() {
@@ -22,6 +23,7 @@ fn (mut app App) load_team() {
 	app.team.year = gui.input(team.year)
 	app.team.numbers.clear()
 	app.team.names.clear()
+	app.team.order = core.players_in_order(team.players).map(it.id)
 	for p in team.players {
 		app.team.numbers[p.id] = gui.input(if p.number > 0 { p.number.str() } else { '' })
 		app.team.names[p.id] = gui.input(p.name)
@@ -73,7 +75,7 @@ fn (mut app App) draw_team(x f32, y0 f32, w f32) f32 {
 	num_w := f32(64)
 	pw := ui.cycle_width(status_labels)
 	status_colors := [t.on, t.off, t.sub]
-	for p in team.players {
+	for p in app.listed_players(team) {
 		mut num := app.team.numbers[p.id] or { gui.input('') }
 		mut name := app.team.names[p.id] or { gui.input(p.name) }
 		nw := w - num_w - pw - 2 * 8
@@ -135,6 +137,23 @@ fn (mut app App) save_team_settings(active bool) {
 		return
 	}
 	app.changed()
+}
+
+// The players in the order they had when the screen opened, so a row stays
+// put while its status is tapped; players added since go at the end.
+fn (app &App) listed_players(team core.Team) []core.TeamPlayer {
+	mut res := []core.TeamPlayer{}
+	for id in app.team.order {
+		if p := team.player(id) {
+			res << p
+		}
+	}
+	for p in team.players {
+		if p.id !in app.team.order {
+			res << p
+		}
+	}
+	return res
 }
 
 // A player's status, as an index into status_labels.

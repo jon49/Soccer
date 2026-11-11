@@ -5,7 +5,7 @@ const {
   html,
   layout,
   repo: { isSharedTeamId, teamGet, playerCreate, teamSave },
-  utils: { equals, when },
+  utils: { equals, playerStatus, playersInOrder, when },
   validation: {
     assert,
     validate,
@@ -82,7 +82,7 @@ ${when(
     <span>#</span><span>#</span><span>#</span><span>#</span>
 </div>
 <ul id=playerCards class=player-list>
-    ${team.players.map((x) => playerView(x, team.id))}
+    ${playersInOrder(team.players).map((x) => playerView(x, team.id))}
 </ul>
 
 <form
@@ -112,10 +112,6 @@ ${when(
 function playersHeading(team: Team) {
   let count = team.players.filter((x) => playerStatus(x) === "active").length;
   return html`<h3 id=players>Players (${count})</h3>`;
-}
-
-function playerStatus(player: TeamPlayer): TeamPlayerStatus {
-  return !player.active ? "inactive" : player.sub ? "sub" : "active";
 }
 
 // Tapping the button moves the player on to the next status.
