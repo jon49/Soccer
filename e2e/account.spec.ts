@@ -152,3 +152,39 @@ test.describe("deleting your account", () => {
     await expect(a.page.locator("#account button")).toHaveCount(0);
   });
 });
+
+test.describe("deleting the data on this device", () => {
+  test("clears this device and logs it out, and a login brings it back", async ({ newCoach }) => {
+    let a = await newCoach("a");
+    let teamId = await a.createTeam("Hawks", "2026");
+    await a.addPlayer(teamId, "Ann");
+    await a.goto("/web/settings");
+    await expect(a.page.locator("#localData")).toContainText("haven't synced yet");
+    await a.sync();
+    await a.goto("/web/settings");
+    await expect(a.page.locator("#localData")).toContainText("Everything here has synced");
+
+    await a.page.click("#localData button");
+    await a.page.waitForURL(/\/web\/teams/);
+    await expect(a.page.locator("#noTeams.welcome")).toBeVisible();
+    await expect(a.page.locator("#auth-link")).toHaveText("Login");
+    expect(await a.idb(["team", teamId])).toBeUndefined();
+    expect(await a.idb("auth_token")).toBeFalsy();
+
+    // The account and its data are still on the server.
+    await a.login();
+    await a.sync();
+    expect(await a.teamNames()).toEqual(["Hawks - 2026"]);
+  });
+
+  test("warns that nothing is backed up when logged out", async ({ newCoach }) => {
+    let a = await newCoach("a");
+    await a.logout();
+    await a.createTeam("Hawks", "2026");
+    await a.goto("/web/settings");
+    await expect(a.page.locator("#localData")).toContainText("gone for good");
+    await a.page.click("#localData button");
+    await a.page.waitForURL(/\/web\/teams/);
+    expect(await a.teamNames()).toEqual([]);
+  });
+});

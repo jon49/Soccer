@@ -12,6 +12,20 @@ const {
 
 const DELETE_URL = "/api/auth/v1/delete";
 
+// clearDevice deletes everything this device holds, keeping only the theme.
+async function clearDevice() {
+  let { theme } = await globalDb.settings();
+  await clear();
+  if (theme) await globalDb.setTheme(theme);
+}
+
+// deleteLocalData deletes everything on this device, logging it out, but
+// leaves the account and what it synced on the server. Like deleteAccount,
+// it waits for a sync in flight so that sync can't write data back.
+export function deleteLocalData(): Promise<void> {
+  return afterSync(clearDevice);
+}
+
 // deleteAccount deletes the account on the server and then everything this
 // device holds, keeping only the theme. It waits for a sync in flight, from
 // any page, so that sync can't write data back afterwards. Returns the
@@ -20,9 +34,7 @@ export function deleteAccount(): Promise<number> {
   return afterSync(async () => {
     let res = await authFetch(DELETE_URL, { method: "DELETE" });
     if (!res.ok) return res.status;
-    let { theme } = await globalDb.settings();
-    await clear();
-    if (theme) await globalDb.setTheme(theme);
+    await clearDevice();
     return res.status;
   });
 }

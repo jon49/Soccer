@@ -1,6 +1,6 @@
 import type { RoutePage, RoutePostHandler } from "@jon49/sw/routes.middleware.js";
 import { entries } from "idb-keyval";
-import { deleteAccount } from "../server/account.js";
+import { deleteAccount, deleteLocalData } from "../server/account.js";
 
 const {
   globalDb,
@@ -11,9 +11,10 @@ const {
 } = self.sw;
 
 const render = async () => {
-  let [{ disableAutoSyncDuringGame, hideHelp }, loggedIn] = await Promise.all([
+  let [{ disableAutoSyncDuringGame, hideHelp }, loggedIn, updated] = await Promise.all([
     globalDb.settings(),
     globalDb.isLoggedIn(),
+    globalDb.updated(),
   ]);
 
   return html`
@@ -55,9 +56,43 @@ const render = async () => {
 <p><a href="/web/settings?handler=export" role="button" class="nc-button" target="_self">Download data as JSON</a></p>
 <p>Saves all synced app data to a JSON file on your device.</p>
 
+${localDataView(loggedIn, updated.length)}
+
 ${accountView(loggedIn)}
 `;
 };
+
+// localDataView: deleting everything on this device, for a shared phone or a
+// fresh start. What it costs depends on whether the data is backed up.
+function localDataView(loggedIn: boolean, unsynced: number) {
+  let changes = `${unsynced} ${unsynced === 1 ? "change" : "changes"}`;
+  let warning = !loggedIn
+    ? "You aren't logged in, so nothing here is backed up: it will be gone for good."
+    : unsynced
+      ? `${changes} on this device haven't synced yet and will be lost. Tap the sync button at the top first to keep them.`
+      : "Everything here has synced, so logging in again brings it back.";
+  let confirm =
+    loggedIn && !unsynced ? "You can get it back by logging in." : "This can't be undone.";
+  return html`
+    <section id="localData" class="danger-zone">
+      <h3>Delete data on this device</h3>
+      <p>
+        Removes every team, player, game and stat from this device${loggedIn ? " and logs it out" : ""}.
+        ${loggedIn ? "Your account and what it has synced stay on the server." : ""}
+      </p>
+      <p><strong>${warning}</strong></p>
+      <button
+        class="danger"
+        form="post"
+        formaction="/web/settings?handler=deleteLocalData"
+        data-confirm="Delete all the data on this device? ${confirm}"
+        _click="confirm"
+      >
+        Delete data on this device
+      </button>
+    </section>
+  `;
+}
 
 // accountView: deleting the account, while logged in.
 function accountView(loggedIn: boolean) {
@@ -74,7 +109,8 @@ function accountView(loggedIn: boolean) {
       </p>
       <p>
         Other devices you use this app on keep their own copy of your data. They are logged out the next
-        time they sync, but you'll need to remove the data on each of them yourself.
+        time they sync, but the data stays on each of them until you tap
+        <em>Delete data on this device</em> there.
       </p>
       <button
         class="danger"
@@ -125,6 +161,14 @@ const postHandlers: RoutePostHandler = {
       body: html`${accountView(false)}${loginView()}`,
       message: "Your account and its data were deleted.",
     };
+  },
+
+  // Then off to the Teams page, which starts over with the welcome.
+  async deleteLocalData() {
+    await deleteLocalData();
+    return html`
+      <i _load="redirect" id="temp" data-url="/web/teams"></i>
+    `;
   },
 
   async theme({ data }) {
