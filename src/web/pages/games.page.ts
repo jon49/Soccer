@@ -18,7 +18,7 @@ const {
     validate,
     validateObject,
   },
-  views: { teamNav },
+  views: { helpView, setupGuideView, teamNav },
 } = self.sw;
 
 interface GameView {
@@ -50,6 +50,27 @@ function orderedGames(games: Game[]): Game[] {
 function render({ team, gameStates }: GameView) {
   return html`
 <h2>${team.name}</h2>
+
+${setupGuideView(team, "game")}
+
+${helpView(
+  html`
+    <p>
+      Add each game on your schedule with the form at the bottom. Tap a game to open it, then
+      <strong>Open match</strong> to run it from the sideline. <em>Edit</em> on a card changes its date,
+      opponent or place.
+    </p>
+    <p>
+      The soonest game is marked <strong>Next</strong>. A game moves to the bottom of the list the day
+      after it's played, and its card shows the final score.
+    </p>
+    <p>
+      <strong>Publish Schedule</strong> makes a web page of your games and scores that families can open
+      without the app. You need to be logged in. The link stays the same, and the page is updated each
+      time a game ends; tap <em>Republish</em> after other changes.
+    </p>
+  `,
+)}
 
 <div id=schedule-share>
     ${getScheduleShareView(team)}
@@ -224,7 +245,7 @@ const postHandlers: RoutePostHandler = {
     await teamSave(team);
 
     // The whole list, so the new game lands in date order.
-    return gamesViewFor(team);
+    return html`${gamesViewFor(team)}${setupGuideView(team, "game")}`;
   },
 
   async edit({ data, query }) {

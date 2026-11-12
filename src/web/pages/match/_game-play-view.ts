@@ -4,6 +4,7 @@ import { gameStatusText } from "./match-page-logic.js";
 let {
   html,
   utils: { formatGameDate, formatGameTime, when },
+  views: { helpView, setupGuideView },
 } = self.sw;
 
 export default async function render(query: any) {
@@ -30,6 +31,21 @@ export default async function render(query: any) {
 <p>
     <a href="?${queryTeamGame}&handler=play" role=button class="nc-button button-large" target="_self">Open match</a>
 </p>
+
+${setupGuideView(team, "play")}
+
+${helpView(
+  html`
+    <p>
+      <strong>Open match</strong> is the screen you use during the game: it shows the field and the
+      bench, runs the clock, and keeps the score. It also has its own help: the ? after End.
+    </p>
+    <p>
+      The score below comes from the match. <strong>Notes</strong> save as you type, for anything you
+      want to remember about the game.
+    </p>
+  `,
+)}
 
 <ul class=list>
     <li><span>Points</span><span>${gameState.points}</span></li>

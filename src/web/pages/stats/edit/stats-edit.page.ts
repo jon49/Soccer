@@ -17,7 +17,7 @@ const {
     required,
     queryTeamIdValidator,
   },
-  views: { teamNav },
+  views: { helpView, teamNav },
 } = self.sw;
 
 async function render(o: StatsView) {
@@ -26,6 +26,18 @@ async function render(o: StatsView) {
 
   return html`
 <h2>${team.name}</h2>
+
+${helpView(html`
+  <p>
+    Each stat can be renamed, and turned <em>Active</em> to count it during matches. With
+    <strong>Goal</strong> active, tapping our score in a match asks who scored.
+  </p>
+  <p><strong>Basketball Mode</strong> lets each score be worth 1, 2 or 3 points.</p>
+  <p>
+    The <strong>highlight</strong> marks a player who has stayed on the field this long without coming
+    off, so nobody plays too long without a rest.
+  </p>
+`)}
 
 <div class=row>
     ${stats.map((x) => {

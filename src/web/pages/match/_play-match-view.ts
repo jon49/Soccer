@@ -8,6 +8,7 @@ let {
   html,
   repo: { statIds },
   utils: { when },
+  views: { helpView },
 } = self.sw;
 
 export default async function playMatchView(state: PlayerStateView) {
@@ -109,7 +110,15 @@ export default async function playMatchView(state: PlayerStateView) {
         data-confirm="Are you sure you would like to ${isGameEnded ? "restart" : "end"} the game?" >
         ${isGameEnded ? "Restart" : "End"}
     </button>
+    <button
+        type=button
+        class="match-end help-button"
+        popovertarget=pageHelp
+        title="How to run the match"
+        aria-label="How to run the match">?</button>
 </header>
+
+${matchHelp(creditScorer)}
 
 <div class=match-body>
 <section class="match-field pitch" aria-label="On field">${inPlayersView(state)}</section>
@@ -162,6 +171,44 @@ export default async function playMatchView(state: PlayerStateView) {
 </aside>
 </div>
 </main>`;
+}
+
+// How to run the match, opened by the ? after End.
+function matchHelp(creditScorer: boolean | undefined) {
+  return helpView(
+    html`
+    <ul>
+        <li><strong>Put a player on:</strong> tap them on the bench, then tap a
+        position on the field. They wait there as <em>next</em> until you tap
+        <strong>Swap</strong> at the top, which puts everyone waiting on at once.
+        To bring on just one, tap their <em>next</em> name, then their
+        spot.</li>
+        <li><strong>Start or pause:</strong> tap the clock. Each player's time
+        on the field runs with it.</li>
+        <li><strong>Move a player:</strong> tap them, then another position. If
+        someone is there, the two trade places.</li>
+        <li><strong>Take a player off:</strong> tap them, then
+        <strong>Bench</strong>. <strong>Not playing</strong> is for anyone
+        sitting out the whole game.</li>
+        <li><strong>Score:</strong> ${
+          creditScorer
+            ? html`
+                tap <strong>Us</strong>, then the player who scored, or <strong>No scorer</strong>.
+              `
+            : html`
+                tap <strong>Us</strong> or <strong>Them</strong>.
+              `
+        } Press and hold a score to take a point back.</li>
+        <li><strong>Playing time:</strong> each player shows their time in this
+        game. A player's button changes shade as they play more than an even
+        share, so you can see who's due a rest. The bar under a player on the
+        field changes as they stay on without a break: at half the limit and
+        again at the limit (8 minutes, unless changed under Stats, Edit).</li>
+        <li><strong>End</strong> stops the game and everyone's clock. Tap
+        <strong>&lsaquo;</strong> to go back to the game's page.</li>
+    </ul>`,
+    { title: "How to run the match" },
+  );
 }
 
 export function opponentPointsView(queryTeamGame: string, gameCalc: GameTimeCalculator) {

@@ -135,6 +135,14 @@ async function appView({
 
                     <a href="/web/settings" role="button" class="nc-button" target="_self" aria-label="Settings">&#9881;</a>
 
+                    <button
+                        type=button
+                        class=help-button
+                        popovertarget=pageHelp
+                        title="How this page works"
+                        aria-label="How this page works">?</button>
+
+
                     ${
                       isLoggedIn
                         ? html`

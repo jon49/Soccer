@@ -11,7 +11,7 @@ const {
   repo: { teamGet },
   utils: { when },
   validation: { validateObject, queryTeamIdValidator },
-  views: { teamNav },
+  views: { helpView, teamNav },
 } = self.sw;
 
 type StatTab = "timePlayed" | "percentagePlayed" | "activitiesPerformed";
@@ -53,6 +53,26 @@ async function render(query: any) {
   return html`
   <h2 class=inline>${team.name}</h2>
   <a href="/web/stats/edit?teamId=${teamId}" target="_self">Edit</a>
+
+  ${helpView(html`
+    <p>
+      Stats add up every game the team has played, from the times and scores kept during each match.
+    </p>
+    <ul>
+      <li>
+        <strong>Time played</strong>: how long each player was on the field, in total and at each
+        position.
+      </li>
+      <li>
+        <strong>% played</strong>: how much of each game a player was on the field, and their average.
+      </li>
+      <li><strong>Points</strong>: goals and the other stats you count during a match.</li>
+    </ul>
+    <p>
+      <strong>Edit</strong> chooses which stats are counted, switches to basketball scoring, and sets
+      when a player who has been on a long time is highlighted.
+    </p>
+  `)}
 
   ${tabView(query, "timePlayed")}`;
 }

@@ -11,7 +11,7 @@ const {
 } = self.sw;
 
 const render = async () => {
-  let [{ disableAutoSyncDuringGame }, loggedIn] = await Promise.all([
+  let [{ disableAutoSyncDuringGame, hideHelp }, loggedIn] = await Promise.all([
     globalDb.settings(),
     globalDb.isLoggedIn(),
   ]);
@@ -31,6 +31,22 @@ const render = async () => {
     <p class=muted>
       When on, the app will not auto-sync while you are on a match page. You
       can still tap the sync button to sync manually.
+    </p>
+  </div>
+</form>
+
+<form class=form method=post action="/web/settings?handler=help" onchange="this.submit()">
+  <div>
+    <label>
+      <input
+          type=checkbox
+          name=showHelp
+          $${when(!hideHelp, "checked")}>
+      Show the Getting started steps
+    </label>
+    <p class=muted>
+      Shows the Getting started steps on a team until its first game. The ? at
+      the top of a page always explains that page.
     </p>
   </div>
 </form>
@@ -130,6 +146,16 @@ const postHandlers: RoutePostHandler = {
 
     let current = await globalDb.settings();
     await globalDb.setSettings({ ...current, disableAutoSyncDuringGame: disable });
+
+    return { status: 204 };
+  },
+
+  async help({ data }) {
+    let submitted = (data as { showHelp?: string } | undefined)?.showHelp;
+    let show = submitted === "on" || submitted === "true";
+
+    let current = await globalDb.settings();
+    await globalDb.setSettings({ ...current, hideHelp: !show });
 
     return { status: 204 };
   },

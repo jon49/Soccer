@@ -90,6 +90,8 @@ export interface Settings {
   lastSynced?: number;
   theme: Theme;
   disableAutoSyncDuringGame?: boolean;
+  // Hides each page's help and the Getting started guide.
+  hideHelp?: boolean;
 }
 
 export interface Revision {

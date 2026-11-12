@@ -15,7 +15,7 @@ const {
     queryTeamIdValidator,
     validateObject,
   },
-  views: { teamNav },
+  views: { helpView, setupGuideView, teamNav },
   utils: { when },
 } = self.sw;
 
@@ -33,6 +33,27 @@ async function start(query: any): Promise<PositionView> {
 function render({ team, positions }: PositionView) {
   return html`
 <h2>${team.name}</h2>
+
+${setupGuideView(team, "formation")}
+
+${helpView(
+  html`
+    <p>
+      The formation is the positions your players fill on the field. In a match, the field is laid out
+      the same way, and you tap a position to put a player there.
+    </p>
+    <p>
+      The quickest start is a template: tap <em>Use a template</em>, choose how many players are on the
+      field at once (4, 7, 9 or 11), and pick a shape.
+    </p>
+    <p>
+      Each row of the grid is a line on the field, from the forwards at the top down to the goalkeeper.
+      <em>+</em> and <em>&minus;</em> add or remove a position in a row, and <em>+ Row</em> adds a row
+      above or below. Type in a box to rename a position; each name must be different.
+    </p>
+    <p>The formation belongs to the team, so every game uses it.</p>
+  `,
+)}
 
 <p>
   <a href="?handler=showTemplates&teamId=${team.id}" role="button" class="nc-button">Use a template.</a>
@@ -196,6 +217,8 @@ async function getPositionTemplates(teamId: TeamId) {
   <main id=main>
     <a href="/web/positions?teamId=${teamId}&hz" >Cancel</a>
     <h2>Formation Templates</h2>
+    <p>Choose how many players are on the field at once, then tap a shape.
+    It replaces the team's formation, with each position named for you.</p>
 
     <form _change=submit>
       <fieldset class=fieldset-outline>
@@ -303,7 +326,7 @@ const postHandlers: RoutePostHandler = {
       positions,
     });
 
-    return html`${positionsNameView(positions, teamId)}${formationPreview(positions)}`;
+    return html`${positionsNameView(positions, teamId)}${formationPreview(positions)}${setupGuideView(await teamGet(teamId), "formation")}`;
   },
 
   async editPositions({ query, data }) {

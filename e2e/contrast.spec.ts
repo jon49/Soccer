@@ -52,6 +52,10 @@ for (let scheme of ["light", "dark"] as const) {
     await coach.tap("editPlayer", () => status("Fay").click());
     await expect(status("Fay")).toHaveText("Sub");
     await check("players");
+    await page.click(".help-button");
+    await expect(page.locator("#pageHelp")).toBeVisible();
+    await check("players-help");
+    await page.keyboard.press("Escape");
 
     await coach.goto(`/web/games?teamId=${teamId}`);
     await page.locator(".game-edit summary").first().click();
@@ -72,6 +76,10 @@ for (let scheme of ["light", "dark"] as const) {
 
     await match.open();
     await check("match-new");
+    await page.click(".match-bar .help-button");
+    await expect(page.locator("#pageHelp")).toBeVisible();
+    await check("match-help");
+    await page.keyboard.press("Escape");
     await match.lineup("Ann", "Bo", "Cy", "Dee");
     await match.start();
     await match.queue("Fay", 0);

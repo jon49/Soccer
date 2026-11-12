@@ -16,7 +16,7 @@ const {
     queryTeamIdPlayerIdValidator,
     queryTeamIdValidator,
   },
-  views: { teamNav },
+  views: { helpView, setupGuideView, teamNav },
 } = self.sw;
 
 interface PlayersEditView {
@@ -36,6 +36,34 @@ function render(o: PlayersEditView) {
 
   return html`
 <h2 id=subheading>${o?.team.name ?? "Unknown"} (${o?.team.year})</h2>
+
+${setupGuideView(team, "players")}
+
+${helpView(
+  html`
+    <p>
+      <strong>Team Settings</strong> change as you type. Set a team you no longer coach to
+      <em>Inactive</em> to hide it from the Teams list.
+    </p>
+    <p>
+      <strong>Players:</strong> type a name and tap <em>Add</em>. A jersey number is optional; edit a
+      name or number any time and it saves on its own.
+    </p>
+    <p>The button beside a player changes what they are. Tap it to move on to the next one:</p>
+    <ul>
+      <li><strong>Active</strong>: on the roster, in every game, and counted in the total.</li>
+      <li>
+        <strong>Inactive</strong>: left out of games, like a player who has left the team. Their stats
+        are kept.
+      </li>
+      <li>
+        <strong>Sub</strong>: a fill-in who plays in games, marked <em>sub</em>, but isn't counted in
+        the total.
+      </li>
+    </ul>
+    <p><strong>Share</strong> lets another coach or parent help run the team from their own phone.</p>
+  `,
+)}
 
 <nav>
     <ul>
@@ -219,7 +247,7 @@ const postHandlers: RoutePostHandler = {
 
     return {
       status: 200,
-      body: html`${playerView(player, teamId)}<template id=noPlayers></template>${playersHeading(team)}`,
+      body: html`${playerView(player, teamId)}<template id=noPlayers></template>${playersHeading(team)}${setupGuideView(team, "players")}`,
     };
   },
 

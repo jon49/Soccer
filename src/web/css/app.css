@@ -958,3 +958,142 @@ th.game-column small {
   border-radius: 0.5em;
   padding: 1em;
 }
+
+/** Help: each page's "How this page works" (the ? in the header, or after
+ * End on the match screen), the first visit's welcome, and the Getting
+ * started steps on a team's pages **/
+
+/* The ? is only there on pages that have help to show. */
+body:not(:has(#pageHelp)) .help-button {
+  display: none;
+}
+
+.help-button {
+  font-weight: 700;
+}
+
+.help-popover {
+  width: min(36rem, calc(100vw - 2rem));
+  max-height: calc(100dvh - 2rem);
+  overflow-y: auto;
+  padding: 1rem 1.25rem;
+  color: var(--nc-text);
+  background: var(--nc-surface-1);
+  border: 1px solid var(--app-field-border);
+  border-radius: var(--nc-radius);
+  box-shadow: 0 0.5rem 2rem oklch(0 0 0 / 0.35);
+}
+
+.help-popover::backdrop {
+  background: oklch(0 0 0 / 0.4);
+}
+
+.help-popover-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.help-popover-head h2 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.help-body > :first-child {
+  margin-top: 0;
+}
+
+.help-body ul {
+  padding-left: 1.25rem;
+}
+
+.help-body li {
+  margin-bottom: 0.4rem;
+}
+
+.welcome {
+  max-width: 65ch;
+  margin-block: 0 1.5rem;
+  padding: 0.75rem 1rem;
+  background: var(--nc-surface-2);
+  border: 1px solid var(--nc-border);
+  border-radius: var(--nc-radius);
+}
+
+.welcome ol {
+  margin-block: 0.25rem 0.75rem;
+}
+
+.team-setup {
+  margin: 0;
+}
+
+.setup-guide {
+  max-width: 65ch;
+  margin-block: 0.5rem 1rem;
+  padding: 0.75rem 1rem;
+  background: var(--nc-surface-2);
+  border: 2px solid var(--app-on);
+  border-radius: var(--nc-radius);
+}
+
+.setup-guide h3 {
+  margin: 0 0 0.6rem;
+  font-size: 1.1rem;
+}
+
+.setup-guide h3 small {
+  margin-left: 0.5em;
+  font-weight: normal;
+  color: var(--app-muted);
+}
+
+.setup-guide ol {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.setup-guide li {
+  display: grid;
+  grid-template-columns: 1.75rem minmax(0, 1fr);
+  gap: 0.5rem;
+  align-items: start;
+  margin: 0;
+}
+
+/* A step's number in a ring: filled with a check once done, a heavy teal
+ * ring for the step to do next, a plain ring for the rest. */
+.step-mark {
+  display: inline-grid;
+  place-items: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  border: 1px solid var(--app-field-border);
+  border-radius: 50%;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.setup-guide .is-done .step-mark {
+  background: var(--app-on);
+  border-color: var(--app-on);
+  color: var(--app-on-off-text);
+}
+
+.setup-guide .is-done {
+  color: var(--app-muted);
+}
+
+.setup-guide .is-next .step-mark {
+  border: 3px solid var(--app-on);
+}
+
+.step-todo {
+  display: block;
+  font-size: 0.9rem;
+}
