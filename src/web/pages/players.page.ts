@@ -82,10 +82,10 @@ ${helpView(
     method=post
     action="?handler=editTeam&teamId=${team.id}"
     >
-    <div class=inline>
+    <div>
         <label for=team-input>Team Name:</label><input id=team-input name=name type=text value="${team.name}">
     </div>
-    <div class=inline>
+    <div>
         <label for=year-input>Year:</label> <input id=year-input name=year type=text value="${team.year}">
     </div>
     <div id=team-active>
