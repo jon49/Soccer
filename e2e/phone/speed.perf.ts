@@ -15,12 +15,33 @@ import { matchSetup } from "../match-page.js";
 const BASE = `http://localhost:${PHONE_APP_PORT}`;
 const SITE = process.env.SOCCER_SITE ?? "https://soccer.jnyman.com";
 const ROUNDS = Number(process.env.ROUNDS ?? 5);
+// IN_PAGE=0: the page doesn't run the routes itself, so every tap and move
+// goes through the service worker, as before routes.bundle.ts.
+const IN_PAGE = process.env.IN_PAGE !== "0";
 
 // A Coach whose paths are on the phone's localhost origin. Filling a field
 // opens the on-screen keyboard, which shrinks the page so that a click on
 // the form's button lands on something else and Playwright retries forever;
 // so forms are submitted with Enter, as adding a player already is.
 class PhoneCoach extends Coach {
+  // Without the routes in the page, a tap is answered by the service worker,
+  // whose hz:completed names no handler: wait for the next swap instead.
+  override async tap(handler: string, tap: () => Promise<void>) {
+    if (IN_PAGE) return super.tap(handler, tap);
+    let swapped = this.page.evaluate(
+      () =>
+        new Promise<void>((resolve) =>
+          document.addEventListener("hz:completed", function done(e) {
+            if ((e as CustomEvent).detail?.navigation) return;
+            document.removeEventListener("hz:completed", done);
+            resolve();
+          }),
+        ),
+    );
+    await tap();
+    await swapped;
+  }
+
   override async goto(path: string) {
     await this.page.goto(new URL(path, BASE).href);
     await this.page.waitForLoadState("networkidle");
@@ -125,6 +146,21 @@ function probe() {
   );
 }
 
+// IN_PAGE=0: routes-loader.ts's script for routes.bundle.ts fails to load, so
+// the worker goes on answering everything.
+function noRoutesInPage() {
+  let append = Element.prototype.append;
+  Element.prototype.append = function (...nodes: (Node | string)[]) {
+    for (let n of nodes) {
+      if (n instanceof HTMLScriptElement && n.src.includes("/web/js/routes.bundle")) {
+        setTimeout(() => n.onerror?.(new Event("error")));
+        return;
+      }
+    }
+    return append.apply(this, nodes);
+  };
+}
+
 type Tap = {
   handler: string;
   inPage: boolean;
@@ -140,6 +176,7 @@ type Tap = {
 // (src/web/js/routes.bundle.ts), for at most 5 s: a build from before that
 // has no such thing.
 async function routesInPage(page: Page) {
+  if (!IN_PAGE) return;
   await page
     .waitForFunction(() => (window as any).routesInPage === true, null, { timeout: 5000 })
     .catch(() => {});
@@ -188,29 +225,42 @@ async function navReport(name: string, page: Page, paths: string[]) {
   let rows = new Map<string, number[]>();
   for (let i = 0; i < ROUNDS; i++) {
     for (let path of paths) {
-      let ms = await page.evaluate(
-        (href) =>
-          new Promise<number>((resolve) => {
-            let a = document.createElement("a");
-            a.href = href;
-            a.target = "_self";
-            document.body.append(a);
-            let start = performance.now();
-            document.addEventListener("hz:completed", function done(e) {
-              if (!(e as CustomEvent).detail?.navigation) return;
-              document.removeEventListener("hz:completed", done);
-              (window as any).__afterFrame(() => resolve(performance.now() - start));
-            });
-            a.click();
-          }),
-        path,
-      );
+      // htmz-nav loads the page as a new document when its stylesheets or
+      // scripts differ from this one's, which ends the evaluate: NaN.
+      let ms = await page
+        .evaluate(
+          (href) =>
+            new Promise<number>((resolve) => {
+              let a = document.createElement("a");
+              a.href = href;
+              a.target = "_self";
+              document.body.append(a);
+              let start = performance.now();
+              document.addEventListener("hz:completed", function done(e) {
+                if (!(e as CustomEvent).detail?.navigation) return;
+                document.removeEventListener("hz:completed", done);
+                (window as any).__afterFrame(() => resolve(performance.now() - start));
+              });
+              a.click();
+            }),
+          path,
+        )
+        .catch(async (e) => {
+          if (!String(e).includes("Execution context was destroyed")) throw e;
+          await page.waitForLoadState("load");
+          await routesInPage(page);
+          return NaN;
+        });
       rows.set(path, [...(rows.get(path) ?? []), ms]);
     }
   }
   console.log(`\n${name} (median ms): click → new page drawn`);
   for (let [path, ts] of rows) {
-    console.log(`  ${path.replace(/[?&](teamId|gameId)=[^&]+/g, "").padEnd(22)} ${ms(median(ts))}`);
+    let loads = ts.filter((t) => Number.isNaN(t)).length;
+    let morphed = ts.filter((t) => !Number.isNaN(t));
+    console.log(
+      `  ${path.replace(/[?&](teamId|gameId)=[^&]+/g, "").padEnd(22)} ${morphed.length ? ms(median(morphed)) : "      -"}${loads ? `  (${loads} of ${ts.length} loaded as a new document)` : ""}`,
+    );
   }
 }
 
@@ -274,6 +324,7 @@ test("match taps and pages, test data", async () => {
   await page.bringToFront();
   page.on("dialog", (x) => x.accept());
   await page.addInitScript(probe);
+  if (!IN_PAGE) await page.addInitScript(noRoutesInPage);
   // Only the localhost origin's data: its service worker, caches and
   // IndexedDB. Before, in case a run stopped before wiping it, and after.
   let cdp = await context.newCDPSession(page);
@@ -354,6 +405,7 @@ test("pages, real data (read only)", async () => {
   let page = await context.newPage();
   await page.bringToFront();
   await page.addInitScript(probe);
+  if (!IN_PAGE) await page.addInitScript(noRoutesInPage);
   try {
     await page.goto(new URL("/web/teams", SITE).href);
     let href = await page.locator("#teams > li > a:first-child").first().getAttribute("href");

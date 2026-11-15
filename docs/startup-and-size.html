@@ -611,8 +611,10 @@
       <h2>Speed in use</h2>
       <p>
         How quickly the web app responds once it is open: a tap during a match, and moving from one
-        page to another. Same phone, measured 2026-10-31 with <code>tasks/measure-speed.sh</code>
-        (<code>e2e/phone/speed.perf.ts</code>), two runs of 5 rounds each.
+        page to another. Same phone, measured 2026-10-31 with
+        <code>tasks/measure-speed.sh</code> (<code>e2e/phone/speed.perf.ts</code>), two runs of 5
+        rounds each. The faster HTML templates of 2026-11-14 are measured
+        <a href="#templates">below</a>.
       </p>
 
       <h3>Taps during a match</h3>
@@ -831,6 +833,67 @@
         </li>
         <li><strong>Startup</strong> wouldn't change: Chrome's start dominates (above).</li>
       </ul>
+
+      <h3 id="templates">Faster HTML templates</h3>
+      <p>
+        On 2026-11-14 <code>html-template-tag-stream</code> (now linked from
+        <code>../html-template-tag-async</code>, version 5.0.0) stopped running every nested
+        template, function and array as an async generator of its own. It writes the template into
+        one string and hands it on only before a wait (a promise or an async generator), so a page
+        streams in a few pieces instead of hundreds. On this machine a page of 30 player rows
+        renders in 23 µs instead of 830 µs (40 µs instead of 1250 µs through a
+        <code>Response</code>). On the phone that is a few ms of a tap, because the handler's work
+        and drawing are most of it. Test data, dev build, the same phone, two runs of each in the
+        order old, new, new, old, 5 rounds each; medians in ms:
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Measure</th>
+              <th class="n">Old templates</th>
+              <th class="n">New templates</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Match taps, all, in the page</td>
+              <td class="n">84–85 ms</td>
+              <td class="n">76–78 ms</td>
+            </tr>
+            <tr>
+              <td>Match taps, all, through the service worker</td>
+              <td class="n">145–147 ms</td>
+              <td class="n">143–144 ms</td>
+            </tr>
+            <tr>
+              <td>A stats tab, in the page</td>
+              <td class="n">50–52 ms</td>
+              <td class="n">48–52 ms</td>
+            </tr>
+            <tr>
+              <td>A stats tab, through the service worker</td>
+              <td class="n">97–106 ms</td>
+              <td class="n">100–101 ms</td>
+            </tr>
+            <tr>
+              <td>Moving between pages, in the page (6 pages, click to drawn)</td>
+              <td class="n">39–59 ms</td>
+              <td class="n">37–61 ms</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">
+        Through the service worker means with <code>IN_PAGE=0</code>, which keeps the page from
+        loading <code>routes.bundle.ts</code>. The faster templates don't make the worker's answer
+        fast enough to drop the routes in the page: a match tap still takes some 65 ms more through
+        the worker, about 10 ms more before the request starts, 28 ms loading the response as a
+        document in the htmz iframe, and 15 ms more to the next frame. The templates were never a
+        large part of it. With <code>IN_PAGE=0</code>, moving between pages sometimes loaded the
+        page as a new document instead of morphing it in, with either version and on no page in
+        particular, so those times are left out.
+      </p>
 
       <h2>Size</h2>
 

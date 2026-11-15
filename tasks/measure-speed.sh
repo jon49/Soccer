@@ -5,7 +5,9 @@
 # closes at the end. The match runs on test data in a localhost site of its
 # own (wiped afterwards); the real site's pages are only read
 # (SOCCER_SITE=https://... for another, SOCCER_SITE= to skip). ROUNDS=5 by
-# default. Unlock the phone first; it takes a few minutes.
+# default. IN_PAGE=0 sends every tap and move through the service worker,
+# as before the page ran the routes itself. Unlock the phone first; it
+# takes a few minutes.
 set -euo pipefail
 source "$(dirname "$0")/android-env.sh"
 cd "$(dirname "$0")/.."
