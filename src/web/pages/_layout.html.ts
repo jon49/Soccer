@@ -77,7 +77,7 @@ const render = async ({
     <base target=htmz>
     <title>${title} - Soccer</title>
     <link rel="icon" type="image/x-icon" href="/web/images/soccer.ico">
-    <link rel="apple-touch-icon" href="/web/images/soccer.png">
+    <link rel="apple-touch-icon" href="/web/images/apple-touch-icon.png">
     <meta name="theme-color" content="#506f8d">
     <link href="/web/css/base.css" rel=stylesheet>
     <link href="/web/css/app.css" rel=stylesheet>

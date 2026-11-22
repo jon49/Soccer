@@ -8,4 +8,5 @@ import "@jon49/web/htmz-morph.js";
 import "@jon49/web/htmz-nav.js";
 import "./auto-sync.ts";
 import "./theme.ts";
+import "./install.ts";
 import "./routes-loader.ts";

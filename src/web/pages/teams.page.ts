@@ -8,7 +8,7 @@ const {
   repo: { isSharedTeamId, teamGetAll, teamsCreate },
   utils: { formatGameDate, formatGameTime, todayDateString, when },
   validation: { dataTeamNameYearValidator, validateObject },
-  views: { helpView, nextSetupStepFor },
+  views: { helpView, nextSetupStepFor, teamsNav },
 } = self.sw;
 
 const render = async () => {
@@ -155,6 +155,7 @@ const route: RoutePage = {
     async get() {
       return layout({
         main: await render(),
+        nav: teamsNav(),
         title: "Teams",
       });
     },

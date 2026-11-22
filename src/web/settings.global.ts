@@ -15,6 +15,7 @@ const routes: Route[] = [
   { route: /\/settings\/$/, file: "/web/pages/settings.page.js" },
   { route: /\/share\/$/, file: "/web/pages/share.page.js" },
   { route: /\/join\/$/, file: "/web/pages/join.page.js" },
+  { route: /\/install\/$/, file: "/web/pages/install.page.js" },
 ];
 
 let app = {

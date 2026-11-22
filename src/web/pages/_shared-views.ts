@@ -7,3 +7,8 @@ export function teamNav(teamId: TeamId) {
     { name: "Formation", url: `/web/positions?teamId=${teamId}` },
   ];
 }
+
+// The tabs on the Teams page (and the Install page): how to install the app.
+export function teamsNav() {
+  return [{ name: "Install", url: "/web/install" }];
+}

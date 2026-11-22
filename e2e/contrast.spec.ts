@@ -73,6 +73,8 @@ for (let scheme of ["light", "dark"] as const) {
     await check("share");
     await coach.goto("/web/settings");
     await check("settings");
+    await coach.goto("/web/install");
+    await check("install");
 
     await match.open();
     await check("match-new");
