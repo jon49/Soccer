@@ -1,19 +1,22 @@
 import type { TeamId } from "../../server/db.js";
 import type { DbCache as DbCacheType } from "@jon49/sw/utils.js";
+import type { PlayersShown } from "../../server/utils.js";
 import { playedInOrder } from "./stats-logic.js";
 
 const {
   html,
   repo: { teamGet, playerGameAllGet, gameStatesGet },
-  utils: { DbCache, formatShortDate, playersInOrder },
+  utils: { DbCache, formatShortDate, playersShown },
   validation: { validateObject, queryTeamIdValidator },
 } = self.sw;
 
 export class StatsView {
   #cache: DbCacheType;
   teamId: TeamId;
-  constructor(teamId: TeamId) {
+  show: PlayersShown;
+  constructor(teamId: TeamId, show: PlayersShown) {
     this.teamId = teamId;
+    this.show = show;
     this.#cache = new DbCache();
   }
 
@@ -91,7 +94,7 @@ export class StatsView {
 
   async playerIdList() {
     return this.#cache.get("playerIdList", async () =>
-      playersInOrder((await this.team()).players).map((x) => x.id),
+      playersShown((await this.team()).players, this.show).map((x) => x.id),
     );
   }
 
@@ -104,11 +107,17 @@ export class StatsView {
 
   static async create(query: any) {
     let { teamId } = await validateObject(query, queryTeamIdValidator);
-    return new StatsView(teamId);
+    return new StatsView(teamId, playersShownQuery(query));
   }
 }
 
 // A per-game column's header: the date over the opponent.
 export function gameColumnHeader({ game }: { game: { date: string; opponent?: string } }) {
   return html`<th class=game-column><span>${formatShortDate(game.date)}</span> <small>${game.opponent}</small></th>`;
+}
+
+// Subs and inactive players are left out of the tables unless the query asks
+// for them with subs=1 or inactive=1.
+export function playersShownQuery(query: any): PlayersShown {
+  return { subs: query?.subs === "1", inactive: query?.inactive === "1" };
 }

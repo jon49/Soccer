@@ -70,3 +70,17 @@ export function playersInOrder<T extends TeamPlayer>(players: T[]): T[] {
       (a.name ?? "").localeCompare(b.name ?? ""),
   );
 }
+
+// Which players the stats tables list: active players always, subs and
+// inactive players only when asked for, in the order of playersInOrder.
+export interface PlayersShown {
+  subs?: boolean;
+  inactive?: boolean;
+}
+
+export function playersShown<T extends TeamPlayer>(players: T[], show: PlayersShown): T[] {
+  return playersInOrder(players).filter((x) => {
+    let status = playerStatus(x);
+    return status === "active" || (status === "sub" ? !!show.subs : !!show.inactive);
+  });
+}

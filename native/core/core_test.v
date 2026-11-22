@@ -347,9 +347,9 @@ fn test_a_match_from_kickoff_to_final_whistle() {
 	assert s.game_state_get(team.id, 1).points == 0
 
 	// Stats see the game.
-	pct := s.percentage_table(s.team_get(team.id)!, 10_000)
+	pct := s.percentage_table(s.team_get(team.id)!, PlayersShown{}, 10_000)
 	assert pct.rows[0].cells[1] == '43%' // Ann: 3 of 7 seconds
-	tp := s.time_played_table(s.team_get(team.id)!)
+	tp := s.time_played_table(s.team_get(team.id)!, PlayersShown{})
 	assert tp.headers == ['GK', 'Total']
 	assert tp.rows[1].cells == ['0:00:04', '0:00:04']
 
@@ -393,6 +393,16 @@ fn test_players_are_listed_active_then_subs_then_inactive_by_name() {
 	]
 	assert players_in_order(ps).map(it.name) == ['Ann', 'Cal', 'Abe', 'Bea', 'Amy', 'Zed']
 	assert ps.map(it.id) == [1, 2, 3, 4, 5, 6]
+
+	// The stats tables list active players only, unless asked for more.
+	names := fn [ps] (show PlayersShown) []string {
+		return players_shown(ps, show).map(it.name)
+	}
+	assert names(PlayersShown{}) == ['Ann', 'Cal']
+	assert names(PlayersShown{ subs: true }) == ['Ann', 'Cal', 'Abe', 'Bea']
+	assert names(PlayersShown{ inactive: true }) == ['Ann', 'Cal', 'Amy', 'Zed']
+	assert names(PlayersShown{ subs: true, inactive: true }) == ['Ann', 'Cal', 'Abe', 'Bea', 'Amy',
+		'Zed']
 }
 
 fn test_team_names_must_be_unique() {

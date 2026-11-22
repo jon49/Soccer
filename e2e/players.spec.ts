@@ -88,9 +88,21 @@ test("players are listed active, then subs, then inactive, each by name", async 
   await expect(status("Ann")).toHaveText("Sub");
   expect(await names()).toEqual(order);
 
+  // The stats tables list active players only, until subs and inactive
+  // players are asked for; a tab keeps that choice.
   await a.goto(`/web/stats?teamId=${teamId}`);
+  let rows = a.page.locator("#statTables tbody th");
+  await expect(rows).toHaveText(["Cy", "Eve"]);
+  await a.page.click("#statSubs");
+  await expect(rows).toHaveText(["Cy", "Eve", "Ann", "Bo"]);
+  await a.page.click("#statInactive");
+  await expect(rows).toHaveText(order);
   for (let tab of ["#timePlayed", "#percentagePlayed", "#activitiesPerformed"]) {
     await a.page.click(tab);
-    await expect(a.page.locator("#statTables tbody th"), tab).toHaveText(order);
+    await expect(rows, tab).toHaveText(order);
   }
+  await a.page.click("#statSubs");
+  await expect(a.page.locator("#statSubs")).toHaveText("Show subs");
+  await expect(rows).toHaveText(["Cy", "Eve", "Dee"]);
+  await expect(a.page.locator("#activitiesPerformed")).toHaveAttribute("aria-current", "page");
 });

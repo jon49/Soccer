@@ -710,6 +710,14 @@ nav.tabs {
   font-weight: 700;
 }
 
+/* Show / Hide subs and inactive players, under the stats tabs. */
+.stat-players {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0 0 1rem;
+}
+
 /** Stats tables: sticky header row and player column **/
 
 .overflow-auto:has(> table.sticky) {

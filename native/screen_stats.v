@@ -9,6 +9,8 @@ import gui
 struct StatsForm {
 mut:
 	tab int // 0: time played, 1: % played, 2: points
+	// Besides the active players, which the tables list.
+	show core.PlayersShown
 	// The table drawn last, rebuilt when the data (or, for a game in
 	// progress, the second) changes, not on every frame.
 	key   string
@@ -35,15 +37,37 @@ fn (mut app App) draw_stats(x f32, y0 f32, w f32) f32 {
 	if choice >= 0 {
 		app.stats.tab = choice
 	}
+	y += bh + 12
+	// Show / Hide subs and inactive players (playersShownView in
+	// stats.page.ts).
+	show := app.stats.show
+	subs_label := if show.subs { 'Hide subs' } else { 'Show subs' }
+	inactive_label := if show.inactive { 'Hide inactive' } else { 'Show inactive' }
+	sw := ui.button_width(subs_label)
+	if ui.button(gui.Rect{x, y, sw, bh}, subs_label, .outline) {
+		app.stats.show = core.PlayersShown{
+			...show
+			subs: !show.subs
+		}
+	}
+	if ui.button(gui.Rect{x + sw + 8, y, ui.button_width(inactive_label), bh}, inactive_label,
+		.outline)
+	{
+		app.stats.show = core.PlayersShown{
+			...show
+			inactive: !show.inactive
+		}
+	}
 	y += bh + 20
 	now := now_ms()
-	key := '${team.id}/${app.stats.tab}/${app.store.version}/${now / 1000}'
+	show_key := '${int(app.stats.show.subs)}${int(app.stats.show.inactive)}'
+	key := '${team.id}/${app.stats.tab}/${show_key}/${app.store.version}/${now / 1000}'
 	if key != app.stats.key {
 		app.stats.key = key
 		app.stats.table = match app.stats.tab {
-			0 { app.store.time_played_table(team) }
-			1 { app.store.percentage_table(team, now) }
-			else { app.store.points_table(team) }
+			0 { app.store.time_played_table(team, app.stats.show) }
+			1 { app.store.percentage_table(team, app.stats.show, now) }
+			else { app.store.points_table(team, app.stats.show) }
 		}
 	}
 	table := app.stats.table
