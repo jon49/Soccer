@@ -210,17 +210,25 @@ async function pageReport(name: string, page: Page, base: string, paths: string[
 
 // Closes the tab through Chrome's /json/close endpoint: page.close() on the
 // phone can hang and leave the tab open.
+// If the tab is already gone, that's fine: don't hide the test's own error.
 async function closeTab(page: Page) {
-  let cdp = await page.context().newCDPSession(page);
-  let { targetInfo } = await cdp.send("Target.getTargetInfo");
-  await fetch(`http://127.0.0.1:${PHONE_DEVTOOLS_PORT}/json/close/${targetInfo.targetId}`);
+  try {
+    let cdp = await page.context().newCDPSession(page);
+    let { targetInfo } = await cdp.send("Target.getTargetInfo");
+    await fetch(`http://127.0.0.1:${PHONE_DEVTOOLS_PORT}/json/close/${targetInfo.targetId}`);
+  } catch (e) {
+    console.warn("Couldn't close the tab:", e);
+  }
 }
 
 let browser: Browser;
 let context: BrowserContext;
 
 test.beforeAll(async () => {
-  browser = await chromium.connectOverCDP(`http://127.0.0.1:${PHONE_DEVTOOLS_PORT}`);
+  // Attaching to every open tab: with dozens open, it takes a while.
+  browser = await chromium.connectOverCDP(`http://127.0.0.1:${PHONE_DEVTOOLS_PORT}`, {
+    timeout: 180_000,
+  });
   context = browser.contexts()[0];
 });
 

@@ -21,7 +21,12 @@ trap 'pkill -f -- "preview --outDir ../temp/phone" || true; adb forward --remove
 adb shell settings put global stay_on_while_plugged_in 7
 adb shell input keyevent KEYCODE_WAKEUP
 adb shell am start -n com.android.chrome/com.google.android.apps.chrome.Main >/dev/null
-sleep 3
+# Until Chrome's remote debugging answers (a cold start takes a while).
+for _ in $(seq 30); do
+  curl -sf -m 2 http://127.0.0.1:9223/json/version >/dev/null && break
+  sleep 1
+done
+sleep 2
 # In the background and in a process group of its own (with the dev server
 # it starts), so that stopping this script stops all of it and still
 # restores the phone (above).

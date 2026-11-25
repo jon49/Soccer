@@ -327,12 +327,40 @@
         with <code>tasks/measure-startup.sh</code>.
       </p>
       <p class="note">
-        These numbers are from before 2026-11-24, when the web app's pages were rendered by its
-        service worker (and, once loaded, by the same routes run in the page). Since then the pages
-        render in the browser from modules loaded on demand, and the worker only keeps the files,
-        answers with the app shell and syncs; the web numbers here need measuring again
-        (<code>tasks/measure-startup.sh</code>, <code>tasks/measure-speed.sh</code>).
+        The numbers below are from before 2026-11-24, when the web app's pages were rendered by
+        its service worker (and, once loaded, by the same routes run in the page). Since then the
+        pages render in the browser from modules loaded on demand, and the worker only keeps the
+        files, answers with the app shell and syncs. Startup (<code>tasks/measure-startup.sh</code>)
+        times the installed app from the live site, so it can only be measured again once that is
+        deployed. Speed in use, measured right after the change:
       </p>
+      <section>
+        <h3>After the change: speed in use (2026-11-24)</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Measure (median)</th>
+              <th class="n">Before: routes in the worker and the page</th>
+              <th class="n">After: pages in the browser (2 runs)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Match taps, all</td><td class="n">74 ms</td><td class="n">77, 69 ms</td></tr>
+            <tr><td>A stats tab</td><td class="n">57 ms</td><td class="n">49, 51 ms</td></tr>
+            <tr><td>Moving between pages (6 pages)</td><td class="n">39–59 ms</td><td class="n">44–59 ms</td></tr>
+            <tr><td>Page load, navigation to first paint (7 pages)</td><td class="n">216–276 ms</td><td class="n">244–324 ms</td></tr>
+          </tbody>
+        </table>
+        <p class="note">
+          The Moto G7, test data, <code>tasks/measure-speed.sh</code>, run new, master, new back to
+          back. Before is master's dev build (bundled, not minified), after a production build.
+          Taps, tabs and moves are the same or a little faster. A fresh page load paints some 30–50
+          ms later: the shell has nothing to show until its script has loaded the page's module and
+          read IndexedDB, where the worker used to answer with the page already rendered. Its load
+          event comes earlier (123–170 against 201–248 ms), and the page is drawn 169–234 ms after
+          the navigation starts.
+        </p>
+      </section>
 
       <div class="tiles">
         <div class="tile">
