@@ -1,4 +1,4 @@
-import type { TeamId } from "../server/db.js";
+import type { TeamId } from "../data/db.js";
 
 // What a team has so far, for the Getting started guide.
 export interface SetupProgress {

@@ -1,11 +1,7 @@
-import type { RoutePage } from "@jon49/sw/routes.middleware.js";
+import type { Page } from "../app/page.js";
 import type { InstallDevice } from "../js/install-device.js";
-
-const {
-  html,
-  layout,
-  views: { teamsNav },
-} = self.sw;
+import html from "html-template-tag-stream";
+import { teamsNav } from "./_shared-views.js";
 
 type Html = AsyncGenerator<any, void, unknown>;
 
@@ -159,16 +155,9 @@ const render = () => html`
   </div>
 </div>`;
 
-const route: RoutePage = {
-  get: {
-    async get() {
-      return layout({
-        main: render(),
-        title: "Install",
-        nav: teamsNav(),
-      });
-    },
+// js/install.ts fills in the parts that depend on this device.
+export default {
+  async render() {
+    return { main: render(), title: "Install", nav: teamsNav() };
   },
-};
-
-export default route;
+} satisfies Page;

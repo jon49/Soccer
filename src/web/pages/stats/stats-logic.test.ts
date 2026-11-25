@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import type { Game, GameState, GameStatus } from "../../server/db.js";
+import type { Game, GameState, GameStatus } from "../../data/db.js";
 import { playedInOrder } from "./stats-logic.js";
 
 function row(id: number, date: string, status?: GameStatus, time?: string) {

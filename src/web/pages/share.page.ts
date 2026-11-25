@@ -1,28 +1,25 @@
-import type { RoutePage, RoutePostHandler } from "@jon49/sw/routes.middleware.js";
-import type { Team } from "../server/db.js";
-import type { ApiResult, Invite, SpaceMember } from "../server/repo-share.js";
-import sync from "../server/sync.js";
-
-const {
-  globalDb,
-  html,
-  layout,
-  repo: {
-    inviteUrl,
-    isSharedTeamId,
-    publishTeamSchedule,
-    spaceCreate,
-    spaceInviteCreate,
-    spaceMemberRemove,
-    spaceMembers,
-    spacesForget,
-    teamGet,
-    teamMoveLocal,
-  },
-  utils: { reject, when },
-  validation: { queryTeamIdValidator, validateObject },
-  views: { teamNav },
-} = self.sw;
+import type { ApiResult, Invite, SpaceMember } from "../data/share-api.js";
+import type { Actions, Page } from "../app/page.js";
+import { replace } from "../app/dom.js";
+import { loginView } from "../app/layout.js";
+import { navigate } from "../app/router.js";
+import { call } from "../app/worker.js";
+import * as globalDb from "../data/global-model.js";
+import html from "html-template-tag-stream";
+import {
+  inviteUrl,
+  spaceCreate,
+  spaceInviteCreate,
+  spaceMemberRemove,
+  spaceMembers,
+} from "../data/share-api.js";
+import { isSharedTeamId, teamGet } from "../data/repo-team.js";
+import { publishTeamSchedule } from "../data/repo-schedule.js";
+import { spacesForget, teamMoveLocal } from "../data/repo-share.js";
+import { reject, when } from "../data/utils.js";
+import { queryTeamIdValidator } from "../data/validators.js";
+import { validateObject } from "promise-validation";
+import { teamNav } from "./_shared-views.js";
 
 const sharedTeamIdValidator = {
   teamId: async (val: string) => {
@@ -36,32 +33,21 @@ const memberValidator = {
     val && /^[\w-]+$/.test(val) ? val : reject("Unknown coach."),
 };
 
-// Registers the Copy / Share buttons' actions. Runs once with the page;
-// morphed-in invite links reuse it.
-const inviteScript = `(() => {
-  async function copy(button) {
-    try {
-      await navigator.clipboard.writeText(button.dataset.url);
-      button.textContent = "Copied!";
-    } catch {
-      document.getElementById("invite-link")?.select();
-    }
+// The invite link's Copy button.
+async function copy(button: HTMLElement) {
+  try {
+    await navigator.clipboard.writeText(button.dataset.url ?? "");
+    button.textContent = "Copied!";
+  } catch {
+    (document.getElementById("invite-link") as HTMLInputElement | null)?.select();
   }
-  Object.assign(window.app, {
-    copyInvite: ({ target }) => copy(target.closest("[data-url]")),
-    shareInvite: ({ target }) => {
-      let button = target.closest("[data-url]");
-      if (!navigator.share) return copy(button);
-      navigator.share({ title: "Join my team", url: button.dataset.url }).catch(() => {});
-    },
-  });
-})();`;
+}
 
-function inviteView(team: Team, invite?: Invite) {
+function inviteView(invite?: Invite) {
   let url = invite && inviteUrl(invite.code);
   return html`
 <div id=invite>
-  <form method=post action="?handler=invite&teamId=${team.id}">
+  <form _submit=invite>
     <button>${invite ? "Create another invite link" : "Invite another coach"}</button>
   </form>
   ${when(
@@ -75,7 +61,7 @@ function inviteView(team: Team, invite?: Invite) {
 </div>`;
 }
 
-function membersView(team: Team, result: ApiResult<{ members: SpaceMember[] }>) {
+function membersView(result: ApiResult<{ members: SpaceMember[] }>) {
   if (!result.ok) {
     return html`
 <div id=members>
@@ -94,7 +80,7 @@ function membersView(team: Team, result: ApiResult<{ members: SpaceMember[] }>) 
       ${
         x.me
           ? html`
-      <form method=post action="?handler=leave&teamId=${team.id}">
+      <form _submit=leave>
         <button
           _click=confirm
           data-confirm="${
@@ -104,7 +90,7 @@ function membersView(team: Team, result: ApiResult<{ members: SpaceMember[] }>) 
           }">Leave team</button>
       </form>`
           : html`
-      <form method=post action="?handler=remove&teamId=${team.id}">
+      <form _submit=removeCoach>
         <input type=hidden name=user value="${x.user}">
         <button
           _click=confirm
@@ -133,7 +119,7 @@ ${heading}
   others, and remove anyone. Only one coach should run a given match.
 </p>
 <p>You need to be online and logged in to share.</p>
-<form method=post action="?handler=share&teamId=${team.id}">
+<form _submit=share>
   <button>Share this team</button>
 </form>`,
     };
@@ -154,28 +140,35 @@ ${when(
     </p>
   `,
 )}
-${inviteView(team, invite)}
+${inviteView(invite)}
 <h3>Coaches on this team</h3>
-${membersView(team, await spaceMembers(team.id))}
-<script>$${inviteScript}</script>`,
+${membersView(await spaceMembers(team.id))}`,
   };
 }
 
 async function syncQuietly() {
   try {
-    return (await sync()).status;
+    return (await call("sync")).status;
   } catch (err) {
     console.error("sync after sharing change failed", err);
     return 0;
   }
 }
 
-const postHandlers: RoutePostHandler = {
+const actions: Actions = {
+  copyInvite: ({ el }) => copy(el),
+
+  async shareInvite({ el }) {
+    if (!navigator.share) return copy(el);
+    await navigator.share({ title: "Join my team", url: el.dataset.url }).catch(() => {});
+  },
+
   async share({ query }) {
     let { teamId } = await validateObject(query, queryTeamIdValidator);
     if (isSharedTeamId(teamId)) return reject("This team is already shared.");
     if (!(await globalDb.isLoggedIn())) {
-      return { status: 401, message: "Log in to share a team." };
+      await replace(loginView());
+      return "Log in to share a team.";
     }
     let team = await teamGet(teamId);
 
@@ -203,31 +196,27 @@ const postHandlers: RoutePostHandler = {
       url += `&invite=${encodeURIComponent(invite.json.code)}&expires=${invite.json.expires}`;
     }
 
-    return {
-      body: html`<i _load=redirect id=temp data-url="${url}"></i>`,
-      message: "",
-    };
+    await navigate(url, { replace: true });
   },
 
   async invite({ query }) {
     let { teamId } = await validateObject(query, sharedTeamIdValidator);
-    let team = await teamGet(teamId);
     let invite = await spaceInviteCreate(teamId);
     if (!invite.ok) return reject(`Could not create an invite link. ${invite.message}`);
-    return { body: inviteView(team, invite.json), message: "" };
+    await replace(inviteView(invite.json));
   },
 
-  async remove({ query, data }) {
+  async removeCoach({ query, data }) {
     let [{ teamId }, { user }] = await Promise.all([
       validateObject(query, sharedTeamIdValidator),
       validateObject(data, memberValidator),
     ]);
-    let team = await teamGet(teamId);
     let removed = await spaceMemberRemove(teamId, user);
     if (!removed.ok && removed.status !== 404) {
       return reject(`Could not remove the coach. ${removed.message}`);
     }
-    return { body: membersView(team, await spaceMembers(teamId)), message: "Coach removed." };
+    await replace(membersView(await spaceMembers(teamId)));
+    return "Coach removed.";
   },
 
   async leave({ query }) {
@@ -238,25 +227,14 @@ const postHandlers: RoutePostHandler = {
       return reject(`Could not leave the team. ${left.message}`);
     }
     await spacesForget([teamId]);
-    return {
-      body: html`
-        <i _load="redirect" id="temp" data-url="/web/teams"></i>
-      `,
-      message: "",
-    };
+    await navigate("/web/teams", { replace: true });
   },
 };
 
-const route: RoutePage = {
-  async get({ query }) {
+export default {
+  async render({ query }) {
     let { team, main } = await render(query);
-    return layout({
-      main,
-      nav: teamNav(team.id),
-      title: `Share - ${team.name} (${team.year})`,
-    });
+    return { main, nav: teamNav(team.id), title: `Share - ${team.name} (${team.year})` };
   },
-  post: postHandlers,
-};
-
-export default route;
+  actions,
+} satisfies Page;

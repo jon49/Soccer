@@ -8,7 +8,7 @@ import type {
   NotPlayingPlayer,
   GameTime,
   GameState,
-} from "../../server/db.js";
+} from "../../data/db.js";
 
 export function tail<T>(xs: T[]): T {
   return xs.slice(-1)[0];

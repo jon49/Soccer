@@ -29,7 +29,8 @@ export default defineConfig({
       reuseExistingServer: false,
     },
     {
-      command: `npx tsx ./node_modules/@jon49/sw/bin/start.ts --env=dev -p ${APP_PORT} --proxy=/api=http://localhost:${API_PORT}`,
+      command: `npx vite --port ${APP_PORT}`,
+      env: { SOCCER_API: `http://localhost:${API_PORT}` },
       url: `http://localhost:${APP_PORT}/login/`,
       timeout: 120_000,
       reuseExistingServer: false,

@@ -5,10 +5,7 @@
 import { clear } from "idb-keyval";
 import { authFetch } from "./api-client.js";
 import * as globalDb from "./global-model.js";
-
-const {
-  syncQueue: { afterSync },
-} = self.sw;
+import { afterSync } from "./sync-queue.js";
 
 const DELETE_URL = "/api/auth/v1/delete";
 

@@ -1,4 +1,4 @@
-import { createCheckbox, createIdNumber, createString25, maybe } from "@jon49/sw/validation.js";
+import { createCheckbox, createIdNumber, createString25, maybe } from "./validation.js";
 import type { TeamId, TeamPlayerStatus } from "./db.js";
 
 export const dataTeamNameYearValidator = {

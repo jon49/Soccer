@@ -1,10 +1,7 @@
 import { GamePlayerStatusView, PlayerStateView, positionPlayersView, subMark } from "./shared.js";
-import type { InPlayPlayer, OnDeckPlayer } from "../../server/db.js";
-
-let {
-  html,
-  utils: { when },
-} = self.sw;
+import type { InPlayPlayer, OnDeckPlayer } from "../../data/db.js";
+import html from "html-template-tag-stream";
+import { when } from "../../data/utils.js";
 
 // Each cell is a tap target for the selected player (see match-select.js);
 // the player buttons inside it select that player.

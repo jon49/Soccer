@@ -1,4 +1,7 @@
 import { authFetch } from "./api-client.js";
+import { getMany, setMany, update, transaction, promisifyRequest } from "./db.js";
+import * as globalDb from "./global-model.js";
+import { afterSync } from "./sync-queue.js";
 import { spacesForget, teamMoveLocal } from "./repo-share.js";
 import { isMovedTeam, isTeamKey, movesIn } from "./share-logic.js";
 import {
@@ -12,12 +15,6 @@ import {
   type SyncItem,
 } from "./sync-logic.js";
 
-const {
-  db: { getMany, setMany, update, transaction, promisifyRequest },
-  globalDb,
-  syncQueue: { afterSync },
-} = self.sw;
-
 const SYNC_URL = "/api/data/soccer";
 
 export interface SyncResult {
@@ -27,9 +24,7 @@ export interface SyncResult {
 
 // One sync at a time: a manual sync, auto-sync and other tabs all share this
 // service worker, and two rounds in flight at once would each confirm keys
-// against stale reads. A sync asked for while one runs waits its turn. The
-// queue is on self.sw (sync-queue.ts), as each page has its own copy of
-// this module.
+// against stale reads. A sync asked for while one runs waits its turn.
 export default function sync(): Promise<SyncResult> {
   return afterSync(syncWithRetry);
 }

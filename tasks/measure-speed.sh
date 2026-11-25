@@ -5,9 +5,8 @@
 # closes at the end. The match runs on test data in a localhost site of its
 # own (wiped afterwards); the real site's pages are only read
 # (SOCCER_SITE=https://... for another, SOCCER_SITE= to skip). ROUNDS=5 by
-# default. IN_PAGE=0 sends every tap and move through the service worker,
-# as before the page ran the routes itself. Unlock the phone first; it
-# takes a few minutes.
+# default. The app is a production build, served by `vite preview`. Unlock
+# the phone first; it takes a few minutes.
 set -euo pipefail
 source "$(dirname "$0")/android-env.sh"
 cd "$(dirname "$0")/.."
@@ -16,9 +15,9 @@ adb reverse tcp:8012 tcp:8012 >/dev/null
 # Chrome must be in front with the screen on: a background tab draws no
 # frames, and Playwright waits for frames before each click.
 stay_on=$(adb shell settings get global stay_on_while_plugged_in | tr -d '\r')
-# Playwright starts the dev server in a process group of its own, so it is
+# Playwright starts the server in a process group of its own, so it is
 # stopped by name.
-trap 'pkill -f -- "--env=dev -p 8012" || true; adb forward --remove tcp:9223; adb reverse --remove tcp:8012; adb shell settings put global stay_on_while_plugged_in "$stay_on"' EXIT
+trap 'pkill -f -- "preview --outDir ../temp/phone" || true; adb forward --remove tcp:9223; adb reverse --remove tcp:8012; adb shell settings put global stay_on_while_plugged_in "$stay_on"' EXIT
 adb shell settings put global stay_on_while_plugged_in 7
 adb shell input keyevent KEYCODE_WAKEUP
 adb shell am start -n com.android.chrome/com.google.android.apps.chrome.Main >/dev/null

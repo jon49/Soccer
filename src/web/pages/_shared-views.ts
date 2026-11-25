@@ -1,4 +1,4 @@
-import type { TeamId } from "../server/db.js";
+import type { TeamId } from "../data/db.js";
 export function teamNav(teamId: TeamId) {
   return [
     { name: "Players", url: `/web/players?teamId=${teamId}` },

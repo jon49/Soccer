@@ -1,6 +1,5 @@
 import { gameColumnHeader, type StatsView } from "./shared.js";
-
-const { html } = self.sw;
+import html from "html-template-tag-stream";
 
 export async function playerPointsView(o: StatsView) {
   let [playerIdList, playerMap, games] = await Promise.all([

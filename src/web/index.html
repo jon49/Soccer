@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Soccer</title>
+    <link rel="icon" type="image/x-icon" href="/web/images/soccer.ico" />
+    <link rel="apple-touch-icon" href="/web/images/apple-touch-icon.png" />
+    <meta name="theme-color" content="#506f8d" />
+    <link rel="manifest" href="/web/manifest.json" />
+    <!-- The theme, before the first draw (data/global-model.ts keeps the copy). -->
+    <script>
+      try {
+        let theme = localStorage.getItem("theme");
+        if (theme) document.documentElement.dataset.theme = theme;
+      } catch {}
+    </script>
+    <link href="/web/css/base.css" rel="stylesheet" />
+    <link href="/web/css/app.css" rel="stylesheet" />
+    <script type="module" src="/web/app/main.ts"></script>
+  </head>
+  <body>
+    <div>
+      <!-- update.ts puts its "update your app" link here. -->
+      <div id="sw-message"></div>
+      <header id="header" hidden></header>
+      <main id="main" data-root></main>
+      <div id="toasts"></div>
+    </div>
+  </body>
+</html>

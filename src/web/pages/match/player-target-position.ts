@@ -1,10 +1,10 @@
-import type { GameState, PlayerGame, Team } from "../../server/db.js";
+import type { GameState, PlayerGame, Team } from "../../data/db.js";
 import { applySwapToOnDeck, applySwapWhenInGame } from "./player-target-position-logic.js";
-
-let {
-  repo: { playerGameAllGet, teamGet, playerGameSave, positionGetAll, gameStateGet },
-  validation: { required, queryTeamIdGameIdValidator, createIdNumber, validateObject },
-} = self.sw;
+import { playerGameAllGet, playerGameSave, positionGetAll } from "../../data/repo-player-game.js";
+import { teamGet, gameStateGet } from "../../data/repo-team.js";
+import { required, createIdNumber } from "../../data/validation.js";
+import { queryTeamIdGameIdValidator } from "../../data/validators.js";
+import { validateObject } from "promise-validation";
 
 const queryTeamGamePlayerValidator = {
   ...queryTeamIdGameIdValidator,

@@ -46,6 +46,11 @@ export interface SyncResult {
   messages: string[];
 }
 
+export interface ActionResult {
+  failed: boolean;
+  messages: string[];
+}
+
 // One coach on one device: a logged-in browser context of its own.
 export class Coach {
   constructor(
@@ -56,53 +61,70 @@ export class Coach {
 
   static async create(browser: Browser, email: string) {
     let context = await browser.newContext();
-    // Background auto-sync reloads the page whenever the server has new data,
-    // which races with clicks. Tests sync explicitly with `sync()` instead,
-    // unless they turn it back on with `autoSync()`.
+    // Background auto-sync draws the page again whenever the server has new
+    // data, which races with clicks. Tests sync explicitly with `sync()`
+    // instead, unless they turn it back on with `autoSync()`
+    // (src/web/app/sync.ts).
     await context.addInitScript(() => {
-      let fetch_ = window.fetch;
-      window.fetch = (input, init) =>
-        !(window as any).e2eAutoSync &&
-        String(input instanceof Request ? input.url : input).includes("handler=auto")
-          ? Promise.resolve(new Response(null, { status: 204 }))
-          : fetch_(input, init);
+      (window as any).e2eAutoSyncOff = true;
     });
     let page = await context.newPage();
     page.on("dialog", (x) => x.accept());
     return new Coach(email, context, page);
   }
 
+  offline = false;
+
   async goto(path: string) {
+    if (
+      this.offline &&
+      path.startsWith("/web/") &&
+      new URL(this.page.url()).pathname.startsWith("/web/")
+    ) {
+      // Offline, the coach moves within the app that's open, by a link (in
+      // development nothing is cached to load a page from).
+      await this.page.evaluate(
+        (href) =>
+          new Promise<void>((resolve) => {
+            document.addEventListener("app:page", () => resolve(), { once: true });
+            let a = document.createElement("a");
+            a.href = href;
+            document.body.append(a);
+            a.click();
+            a.remove();
+          }),
+        path,
+      );
+      return;
+    }
     await this.page.goto(path);
     await this.page.waitForLoadState("networkidle");
-    if (path.startsWith("/web/")) await this.routesInPage();
+    // The app shell draws the page (src/web/app/router.ts).
+    if (path.startsWith("/web/")) await this.page.locator("#main > *").first().waitFor();
   }
 
-  // Waits for the page to run the service worker's routes itself
-  // (src/web/js/routes.bundle.ts), which it loads once idle.
-  async routesInPage() {
-    await this.page.waitForFunction(() => (window as any).routesInPage === true);
-  }
-
-  // Runs `tap`, then waits for the page to be re-rendered with the
-  // `handler`'s response. The page runs the handler itself
-  // (routes.bundle.ts), which names it on hz:completed; waiting for that name
-  // also checks the tap didn't fall back to the service worker.
-  async tap(handler: string, tap: () => Promise<void>) {
-    let rendered = this.page.evaluate(
-      (handler) =>
-        new Promise<void>((resolve) => {
+  // Runs `tap`, then waits for the page's `action` (src/web/app/action.ts)
+  // to finish. Returns the toasts it showed, and whether it failed.
+  async tap(action: string, tap: () => Promise<void>): Promise<ActionResult> {
+    let done = this.page.evaluate(
+      (action) =>
+        new Promise<ActionResult>((resolve) => {
           let done = (e: Event) => {
-            if ((e as CustomEvent).detail?.handler !== handler) return;
-            document.removeEventListener("hz:completed", done);
-            resolve();
+            let detail = (e as CustomEvent).detail;
+            if (detail?.action !== action) return;
+            document.removeEventListener("app:done", done);
+            let messages = Array.from(
+              document.querySelectorAll("#toasts .message"),
+              (x) => x.textContent ?? "",
+            );
+            resolve({ failed: !!detail.failed, messages });
           };
-          document.addEventListener("hz:completed", done);
+          document.addEventListener("app:done", done);
         }),
-      handler,
+      action,
     );
     await tap();
-    await rendered;
+    return done;
   }
 
   async login() {
@@ -151,34 +173,27 @@ export class Coach {
   // toasts the app showed.
   async deleteAccount(): Promise<string[]> {
     await this.goto("/web/settings");
-    let done = this.page.waitForResponse((x) => x.url().includes("handler=deleteAccount"));
-    await this.page.click("#account button:has-text('Delete account')");
-    let doc = await (await done).text();
-    await this.page.waitForLoadState("networkidle");
-    return Array.from(doc.matchAll(/<p class=message>([^<]*)<\/p>/g), (x) => x[1]);
+    let { messages } = await this.tap("deleteAccount", () =>
+      this.page.click("#account button:has-text('Delete account')"),
+    );
+    return messages;
   }
 
-  // Lets this page's background auto-sync run, until it navigates.
+  // Lets this page's background auto-sync run, until it's reloaded.
   async autoSync() {
-    await this.page.evaluate(() => ((window as any).e2eAutoSync = true));
+    await this.page.evaluate(() => ((window as any).e2eAutoSyncOff = false));
   }
 
+  // Syncs as the sync button does: the page is drawn again when the server
+  // sent new data. 200 when the sync went through, with or without new data
+  // (the worker says 204 for none), else the server's status.
   async sync(): Promise<SyncResult> {
-    return this.page.evaluate(async () => {
-      let res = await fetch("/web/api/sync?handler=force", {
-        method: "POST",
-        headers: { "HF-Request": "true" },
-      });
-      let doc = new DOMParser().parseFromString(await res.text(), "text/html");
-      let messages = Array.from(
-        doc.querySelectorAll("#toasts .message"),
-        (x) => x.textContent ?? "",
-      );
-      return { status: res.status, messages };
-    });
+    let result: SyncResult = await this.page.evaluate(() => (window as any).appSync());
+    return { ...result, status: result.status === 204 ? 200 : result.status };
   }
 
   async goOffline(offline = true) {
+    this.offline = offline;
     await this.context.setOffline(offline);
   }
 
@@ -188,7 +203,7 @@ export class Coach {
     await this.goto("/web/teams");
     await this.page.fill("#name", name);
     await this.page.fill("#year", year);
-    await this.page.click("form[action='/web/teams'] button");
+    await this.page.click("form:has(#name) button");
     let link = this.page.locator("#teams > li > a:first-child", { hasText: `${name} - ${year}` });
     await expect(link).toHaveCount(1);
     return +new URL((await link.getAttribute("href"))!, this.page.url()).searchParams.get(
@@ -226,9 +241,10 @@ export class Coach {
   // Publishes (or republishes) the team's schedule; returns its page id.
   async publishSchedule(teamId: number | string): Promise<string> {
     await this.goto(`/web/games?teamId=${teamId}`);
-    let published = this.page.waitForResponse((x) => x.url().includes("handler=publishSchedule"));
-    await this.page.locator("#schedule-share button").click();
-    expect((await published).ok()).toBe(true);
+    let published = await this.tap("publishSchedule", () =>
+      this.page.locator("#schedule-share button").click(),
+    );
+    expect(published.failed).toBe(false);
     await expect(this.page.locator("#schedule-share")).toContainText("Shared schedule:");
     return (await this.idb<{ scheduleFileId: string }>(["team", teamId]))!.scheduleFileId;
   }

@@ -1,5 +1,5 @@
-import type { Game, GameState, Team } from "../server/db.js";
-import { formatGameDate as formatDate, formatGameTime as formatTime } from "../server/utils.js";
+import type { Game, GameState, Team } from "../data/db.js";
+import { formatGameDate as formatDate, formatGameTime as formatTime } from "../data/utils.js";
 
 function escapeHtml(value: string): string {
   return value

@@ -35,13 +35,7 @@ test.describe("deleting your account", () => {
   test("keeps the theme this device was set to", async ({ newCoach }) => {
     let a = await newCoach("a");
     await a.goto("/web/settings");
-    await a.page.evaluate(() =>
-      fetch("/web/settings?handler=theme", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: "theme=dark",
-      }),
-    );
+    await a.tap("theme", () => a.page.click("button[aria-label='Switch to dark theme']"));
     await a.deleteAccount();
     expect(await a.idb("settings")).toMatchObject({ theme: "dark" });
   });
@@ -132,7 +126,7 @@ test.describe("deleting your account", () => {
       await route.continue();
     });
 
-    // The sync runs in the sync page's code, the delete in Settings'.
+    // Both run in the service worker, which runs one at a time.
     a.sync().catch(() => {}); // the page navigates away before it answers
     await expect.poll(() => syncHeld).toBe(true);
     expect(await a.deleteAccount()).toEqual(["Your account and its data were deleted."]);

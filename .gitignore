@@ -8,3 +8,4 @@ config.json
 e2e/.depot
 test-results
 playwright-report
+temp

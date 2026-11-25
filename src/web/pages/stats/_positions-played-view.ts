@@ -1,6 +1,5 @@
 import type { StatsView } from "./shared.js";
-
-const { html } = self.sw;
+import html from "html-template-tag-stream";
 
 export async function timePlayedView(o: StatsView) {
   let [positionPlayerStats, playerIdList, positionList, playerMap] = await Promise.all([

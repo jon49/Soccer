@@ -37,7 +37,6 @@ document.addEventListener("click", async (e) => {
 });
 
 function update() {
-  // htmz-nav copies <html>'s attributes from each new page, so set it again.
   if (installed) document.documentElement.dataset.installed = "";
   let box = document.getElementById("installNowBox");
   if (box) box.hidden = !prompt;
@@ -56,4 +55,5 @@ function update() {
 }
 
 update();
-document.addEventListener("hz:completed", update);
+// After each page is drawn (app/router.ts).
+document.addEventListener("app:page", update);

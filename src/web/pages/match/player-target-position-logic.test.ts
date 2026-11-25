@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import type { GameState, PlayerGame } from "../../server/db.js";
+import type { GameState, PlayerGame } from "../../data/db.js";
 import { applySwapToOnDeck, applySwapWhenInGame } from "./player-target-position-logic.js";
 
 const POSITIONS = ["GK", "DEF", "MID", "FWD"];

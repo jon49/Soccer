@@ -64,6 +64,11 @@ export async function settings(): Promise<Settings> {
 }
 
 export async function setTheme(theme: Theme): Promise<void> {
+  // A copy the app shell (web/index.html) reads before the first draw.
+  try {
+    if (theme) localStorage.setItem("theme", theme);
+    else localStorage.removeItem("theme");
+  } catch {}
   await update("settings", (v) => ({ ...(v ?? settingDefaults), theme }), {
     sync: false,
   });

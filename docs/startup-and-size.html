@@ -326,6 +326,13 @@
         Measured 2026-10-31; Chrome against Chrome Beta on 2026-11-01. Rerun the startup numbers
         with <code>tasks/measure-startup.sh</code>.
       </p>
+      <p class="note">
+        These numbers are from before 2026-11-24, when the web app's pages were rendered by its
+        service worker (and, once loaded, by the same routes run in the page). Since then the pages
+        render in the browser from modules loaded on demand, and the worker only keeps the files,
+        answers with the app shell and syncs; the web numbers here need measuring again
+        (<code>tasks/measure-startup.sh</code>, <code>tasks/measure-speed.sh</code>).
+      </p>
 
       <div class="tiles">
         <div class="tile">

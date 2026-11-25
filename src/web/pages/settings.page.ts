@@ -1,14 +1,12 @@
-import type { RoutePage, RoutePostHandler } from "@jon49/sw/routes.middleware.js";
 import { entries } from "idb-keyval";
-import { deleteAccount, deleteLocalData } from "../server/account.js";
-
-const {
-  globalDb,
-  html,
-  layout,
-  utils: { reject, when },
-  views: { themeView, loginView },
-} = self.sw;
+import * as globalDb from "../data/global-model.js";
+import html from "html-template-tag-stream";
+import { reject, when } from "../data/utils.js";
+import { loginView } from "../app/layout.js";
+import type { Actions, Page } from "../app/page.js";
+import { replace } from "../app/dom.js";
+import { navigate } from "../app/router.js";
+import { call } from "../app/worker.js";
 
 const render = async () => {
   let [{ disableAutoSyncDuringGame, hideHelp }, loggedIn, updated] = await Promise.all([
@@ -20,7 +18,7 @@ const render = async () => {
   return html`
 <h2>Settings</h2>
 
-<form class=form method=post action="/web/settings?handler=autoSync" onchange="this.submit()">
+<form class=form _change=autoSync>
   <div>
     <label>
       <input
@@ -36,7 +34,7 @@ const render = async () => {
   </div>
 </form>
 
-<form class=form method=post action="/web/settings?handler=help" onchange="this.submit()">
+<form class=form _change=help>
   <div>
     <label>
       <input
@@ -53,7 +51,7 @@ const render = async () => {
 </form>
 
 <h3>Data</h3>
-<p><a href="/web/settings?handler=export" role="button" class="nc-button" target="_self">Download data as JSON</a></p>
+<p><button type=button class="nc-button" _click=exportData>Download data as JSON</button></p>
 <p>Saves all synced app data to a JSON file on your device.</p>
 
 ${localDataView(loggedIn, updated.length)}
@@ -83,10 +81,9 @@ function localDataView(loggedIn: boolean, unsynced: number) {
       <p><strong>${warning}</strong></p>
       <button
         class="danger"
-        form="post"
-        formaction="/web/settings?handler=deleteLocalData"
+        type="button"
         data-confirm="Delete all the data on this device? ${confirm}"
-        _click="confirm"
+        _click="confirm deleteLocalData"
       >
         Delete data on this device
       </button>
@@ -114,10 +111,9 @@ function accountView(loggedIn: boolean) {
       </p>
       <button
         class="danger"
-        form="post"
-        formaction="/web/settings?handler=deleteAccount"
+        type="button"
         data-confirm="Delete your account and all of its data? This can't be undone. Other devices keep their copy until you remove it there."
-        _click="confirm"
+        _click="confirm deleteAccount"
       >
         Delete account
       </button>
@@ -135,20 +131,22 @@ async function exportData() {
   }
   let json = JSON.stringify(data, (_, v) => (v instanceof Set ? Array.from(v) : v), 2);
   let filename = `soccer-data-${new Date().toISOString().slice(0, 10)}.json`;
-  return {
-    body: json,
-    headers: {
-      "Content-Type": "application/json",
-      "Content-Disposition": `attachment; filename="${filename}"`,
-    },
-  };
+  let url = URL.createObjectURL(new Blob([json], { type: "application/json" }));
+  let a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1e3);
 }
 
-const postHandlers: RoutePostHandler = {
+const actions: Actions = {
+  exportData,
+
   async deleteAccount() {
-    let status = await deleteAccount();
+    let status = await call("deleteAccount");
     if (status === 401) {
-      return { status: 401, message: "Log in again, then delete your account." };
+      await replace(loginView());
+      return "Log in again, then delete your account.";
     }
     if (status === 0) {
       return reject("You appear to be offline. Connect to the internet and try again.");
@@ -156,31 +154,15 @@ const postHandlers: RoutePostHandler = {
     if (status < 200 || status >= 300) {
       return reject(`Could not delete your account (status ${status}).`);
     }
-    return {
-      status: 200,
-      body: html`${accountView(false)}${loginView()}`,
-      message: "Your account and its data were deleted.",
-    };
+    await replace(accountView(false), loginView());
+    return "Your account and its data were deleted.";
   },
 
   // Then off to the Teams page, which starts over with the welcome.
   async deleteLocalData() {
-    await deleteLocalData();
-    return html`
-      <i _load="redirect" id="temp" data-url="/web/teams"></i>
-    `;
-  },
-
-  async theme({ data }) {
-    const submitted = (data as { theme?: string } | undefined)?.theme;
-    const theme = submitted === "dark" ? "dark" : "light";
-
-    await globalDb.setTheme(theme);
-
-    return {
-      status: 200,
-      body: html`${themeView(theme)}`,
-    };
+    await call("deleteLocalData");
+    await navigate("/web/teams", { replace: true });
+    return "Saved!";
   },
 
   async autoSync({ data }) {
@@ -190,8 +172,7 @@ const postHandlers: RoutePostHandler = {
 
     let current = await globalDb.settings();
     await globalDb.setSettings({ ...current, disableAutoSyncDuringGame: disable });
-
-    return { status: 204 };
+    return "Saved!";
   },
 
   async help({ data }) {
@@ -200,22 +181,13 @@ const postHandlers: RoutePostHandler = {
 
     let current = await globalDb.settings();
     await globalDb.setSettings({ ...current, hideHelp: !show });
-
-    return { status: 204 };
+    return "Saved!";
   },
 };
 
-const route: RoutePage = {
-  get: {
-    async get() {
-      return layout({
-        main: await render(),
-        title: "Settings",
-      });
-    },
-    export: exportData,
+export default {
+  async render() {
+    return { main: render(), title: "Settings" };
   },
-  post: postHandlers,
-};
-
-export default route;
+  actions,
+} satisfies Page;

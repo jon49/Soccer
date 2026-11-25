@@ -4,7 +4,7 @@
 # Production runs the static files behind NGINX with TrailBase upstream — this
 # script reproduces that topology locally:
 #
-#   1. Build the static bundle into ./server/public via the @jon49/sw tooling.
+#   1. Build the static bundle into ./server/public with Vite.
 #   2. Start TrailBase from ../ImageBase on :4000 (background).
 #   3. Run a tiny Node reverse proxy on :8009 that serves ./server/public for
 #      normal paths and forwards /api/* to TrailBase.
@@ -15,11 +15,9 @@
 #
 # Stop with Ctrl-C; both background processes are terminated via trap.
 #
-# Hashed asset names: the static HTML (/, and the auth pages outside the
-# service worker) gets hashed names written in by the build, and pages
-# inside the service worker have their unhashed names rewritten by it (see
-# CLAUDE.md, "Hashed asset names"). So the static server, like NGINX in
-# production, needs no rewrite of its own.
+# Every page of the app (/web/teams, /web/match?...) is the app shell,
+# /web/index.html, which draws the page itself; the static server answers
+# them with it, as the service worker and NGINX do.
 
 set -euo pipefail
 
@@ -33,8 +31,7 @@ trail_port=4000
 
 if [[ "${1:-}" == "--rebuild" || ! -d "$public_dir" ]]; then
     echo "Building static bundle into $public_dir ..."
-    (cd "$repo_root" && npx tsx ./node_modules/@jon49/sw/bin/start.ts \
-        --env=prod --target="$public_dir")
+    (cd "$repo_root" && npx vite build --outDir ../server/public)
 fi
 
 cleanup() {
@@ -83,6 +80,8 @@ function proxy(req, res) {
 function serveStatic(req, res) {
   let urlPath = decodeURIComponent((req.url || "/").split("?")[0]);
   if (urlPath.includes("..")) { res.writeHead(400); return res.end("bad path"); }
+  // A page of the app: the app shell.
+  if (urlPath.startsWith("/web/") && path.extname(urlPath) === "") urlPath = "/web/index.html";
   let filePath = path.join(root, urlPath);
   fs.stat(filePath, (err, stat) => {
     if (!err && stat.isDirectory()) filePath = path.join(filePath, "index.html");

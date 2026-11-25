@@ -1,4 +1,5 @@
 // @ts-check
+import { dispatch } from "../../app/action.js";
 
 // Match page: tap a player to select them, then tap where they go. A field
 // position queues a bench player for it (or moves a field player there); a
@@ -7,9 +8,14 @@
 // player tapped gets the goal. Tapping anywhere else clears the selection.
 // Holding a score takes a point back (with the Goal stat on, from the next
 // player tapped).
+//
+// `_load=matchSelect` on the play view: listens while it's on the page.
 
 /** @type {HTMLElement | null} */
 let selected = null;
+// The play view, whose actions (match.page.ts) the taps run.
+/** @type {HTMLElement | null} */
+let root = null;
 
 function clear() {
   selected?.classList.remove("is-selected");
@@ -32,18 +38,8 @@ function select(el) {
  * @param {Record<string, string>} params
  */
 function post(handler, params) {
-  let page = new URLSearchParams(location.search);
-  let query = new URLSearchParams({
-    teamId: page.get("teamId") ?? "",
-    gameId: page.get("gameId") ?? "",
-    ...params,
-    handler,
-  });
-  let form = document.getElementById("post");
   clear();
-  if (!(form instanceof HTMLFormElement)) return;
-  form.action = `?${query}`;
-  form.requestSubmit();
+  if (root) dispatch(handler, root, params);
 }
 
 /**
@@ -128,7 +124,8 @@ function takeBack(score) {
   }
 }
 
-document.addEventListener("pointerdown", (e) => {
+/** @param {PointerEvent} e */
+function onPointerDown(e) {
   held = false;
   cancelHold();
   let score = scoreAt(e.target);
@@ -140,38 +137,38 @@ document.addEventListener("pointerdown", (e) => {
     y: e.clientY,
     timer: window.setTimeout(() => takeBack(score), HOLD_MS),
   };
-});
+}
 
-document.addEventListener("pointermove", (e) => {
+/** @param {PointerEvent} e */
+function onPointerMove(e) {
   if (hold && Math.hypot(e.clientX - hold.x, e.clientY - hold.y) > HOLD_SLOP_PX) cancelHold();
-});
-document.addEventListener("pointerup", cancelHold);
-document.addEventListener("pointercancel", cancelHold);
-// A keyboard click has no pointerdown to reset `held`.
-document.addEventListener("keydown", () => {
+}
+
+/** @param {KeyboardEvent} e */
+function onKeyDown(e) {
+  // A keyboard click has no pointerdown to reset `held`.
   held = false;
-});
+  if (e.key === "Escape") clear();
+}
 
 // Swallow the click that ends a hold, before it submits or selects anything.
-document.addEventListener(
-  "click",
-  (e) => {
-    if (!held) return;
-    held = false;
-    e.preventDefault();
-    e.stopImmediatePropagation();
-  },
-  true,
-);
+/** @param {MouseEvent} e */
+function onClickCapture(e) {
+  if (!held) return;
+  held = false;
+  e.preventDefault();
+  e.stopImmediatePropagation();
+}
 
 // No menu on a held score. A right-click or the menu key takes a point back
 // too, for mouse and keyboard users.
-document.addEventListener("contextmenu", (e) => {
+/** @param {MouseEvent} e */
+function onContextMenu(e) {
   let score = scoreAt(e.target);
   if (!score) return;
   e.preventDefault();
   if (!held) takeBack(score);
-});
+}
 
 // The Bench button hides the bench so the field gets the whole screen. The
 // choice is remembered on this device.
@@ -197,16 +194,13 @@ function toggleBench() {
   } catch {}
 }
 
-try {
-  showBench(localStorage.getItem(BENCH_HIDDEN_KEY) === "1");
-} catch {}
-// The page is re-rendered after each action, or when a sync brings new data;
-// keep the button's state in sync, and keep a selection made before it.
-document.addEventListener("hz:completed", () => {
+// The play view is drawn again after each action, and after a sync brings
+// new data: keep the bench button's state, and a selection made before it.
+function afterAction() {
   showBench(document.body.dataset.bench === "hidden");
   if (!selected) return;
   if (!selected.isConnected) {
-    // Replaced by the morph: pick up the same player (or score) again.
+    // Drawn again: pick up the same player (or score) again.
     let { playerId, status } = selected.dataset;
     let same = document.querySelector(
       playerId
@@ -220,9 +214,10 @@ document.addEventListener("hz:completed", () => {
     selected = same;
   }
   selected.classList.add("is-selected");
-});
+}
 
-document.addEventListener("click", (e) => {
+/** @param {MouseEvent} e */
+function onClick(e) {
   let t = e.target;
   if (!(t instanceof Element)) return;
   if (t.closest("[data-bench-toggle]")) {
@@ -263,8 +258,35 @@ document.addEventListener("click", (e) => {
   } else {
     clear();
   }
-});
+}
 
-document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape") clear();
-});
+/** @type {[string, (e: any) => void, boolean?][]} */
+const listeners = [
+  ["pointerdown", onPointerDown],
+  ["pointermove", onPointerMove],
+  ["pointerup", cancelHold],
+  ["pointercancel", cancelHold],
+  ["keydown", onKeyDown],
+  ["click", onClickCapture, true],
+  ["contextmenu", onContextMenu],
+  ["click", onClick],
+  ["app:done", afterAction],
+  ["app:refresh", afterAction],
+];
+
+/** @param {{ el: HTMLElement }} ctx */
+export function matchSelect({ el }) {
+  root = el;
+  try {
+    showBench(localStorage.getItem(BENCH_HIDDEN_KEY) === "1");
+  } catch {}
+  for (let [type, f, capture] of listeners) document.addEventListener(type, f, capture);
+  return {
+    disconnectedCallback() {
+      for (let [type, f, capture] of listeners) document.removeEventListener(type, f, capture);
+      cancelHold();
+      if (root === el) root = null;
+      selected = null;
+    },
+  };
+}

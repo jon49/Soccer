@@ -1,9 +1,6 @@
 import { type PlayerStateView, subMark } from "./shared.js";
-
-let {
-  html,
-  utils: { when },
-} = self.sw;
+import html from "html-template-tag-stream";
+import { when } from "../../data/utils.js";
 
 // Styled like bench players; tapping one puts them back on the bench.
 export async function notPlayingPlayersView(state: PlayerStateView) {
@@ -17,9 +14,10 @@ export async function notPlayingPlayersView(state: PlayerStateView) {
     return html`
 <li id="${id}">
     <button
+        type=button
         class="bench-item game-shader"
-        form=post
-        formaction="?${state.queryTeamGame}&playerId=${x.playerId}&handler=backIn"
+        _click=backIn
+        data-back-in="${x.playerId}"
         aria-label="Place ${x.name} back on the bench."
         >
         <span class=player-name>${x.name} ${x.number}${subMark(x)}</span>

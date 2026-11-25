@@ -1,9 +1,9 @@
 import html from "html-template-tag-stream";
-import type { Team } from "../server/db.js";
-import { settings } from "../server/global-model.js";
-import { positionGetAll } from "../server/repo-player-game.js";
-import { gameStatesGet } from "../server/repo-team.js";
-import { todayDateString } from "../server/utils.js";
+import type { Team } from "../data/db.js";
+import { settings } from "../data/global-model.js";
+import { positionGetAll } from "../data/repo-player-game.js";
+import { gameStatesGet } from "../data/repo-team.js";
+import { todayDateString } from "../data/utils.js";
 import {
   nextSetupStep,
   setupSteps,

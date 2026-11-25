@@ -1,6 +1,6 @@
 import { describe, it, beforeEach } from "node:test";
 import assert from "node:assert/strict";
-import type { GameState, PlayerGame } from "../../server/db.js";
+import type { GameState, PlayerGame } from "../../data/db.js";
 import {
   tail,
   getTotal,

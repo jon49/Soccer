@@ -1,11 +1,8 @@
 import { PlayerStateView } from "./shared.js";
 import { gameStatusText } from "./match-page-logic.js";
-
-let {
-  html,
-  utils: { formatGameDate, formatGameTime, when },
-  views: { helpView, setupGuideView },
-} = self.sw;
+import html from "html-template-tag-stream";
+import { formatGameDate, formatGameTime, when } from "../../data/utils.js";
+import { helpView, setupGuideView } from "../_help-views.js";
 
 export default async function render(query: any) {
   let state = await PlayerStateView.create(query),
@@ -29,7 +26,7 @@ export default async function render(query: any) {
 </p>
 
 <p>
-    <a href="?${queryTeamGame}&handler=play" role=button class="nc-button button-large" target="_self">Open match</a>
+    <a href="?${queryTeamGame}&handler=play" role=button class="nc-button button-large">Open match</a>
 </p>
 
 ${setupGuideView(team, "play")}
@@ -54,10 +51,7 @@ ${helpView(
 
 <h3>Notes</h3>
 
-<form
-    method=post
-    action="?${queryTeamGame}&handler=updateNote"
-    _change=submit>
+<form _change=updateNote>
     <textarea name=notes>${notes}</textarea>
 </form>
 
@@ -65,11 +59,10 @@ ${helpView(
     <h3>Delete game</h3>
     <p>Removes the game from the schedule, along with its score and every player's time and stats for it.</p>
     <button
+        type=button
         class=danger
-        form=post
-        formaction="?${queryTeamGame}&handler=deleteGame"
         data-confirm="Are you sure you would like to delete this game?"
-        _click="confirm"
+        _click="confirm deleteGame"
         >Delete game</button>
 </section>
 `;

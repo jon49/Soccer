@@ -1,4 +1,4 @@
-import type { GameState, GameStatus, GameTime, PlayerGame } from "../../server/db.js";
+import type { GameState, GameStatus, GameTime, PlayerGame } from "../../data/db.js";
 import { GameTimeCalculator, PlayerGameTimeCalculatorBase, isInPlayPlayer } from "./state-logic.js";
 
 // --- game status ---------------------------------------------------------

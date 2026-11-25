@@ -57,12 +57,15 @@ test.describe("running a match", () => {
     await match.lineup("Ann", "Bo", "Cy", "Dee");
     await match.start();
 
-    // A double tap sends startGame twice before the button turns to pause.
+    // A double tap sends startGame twice before the button turns to pause:
+    // a start button that's still on the page.
     await match.act("startGame", () =>
       match.page.evaluate(() => {
-        let form = document.getElementById("post") as HTMLFormElement;
-        form.action = location.search.replace("handler=play", "handler=startGame");
-        form.requestSubmit();
+        let button = document.createElement("button");
+        button.type = "button";
+        button.setAttribute("_click", "startGame");
+        document.getElementById("matchPlay")!.append(button);
+        button.click();
       }),
     );
 

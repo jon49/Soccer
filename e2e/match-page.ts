@@ -43,7 +43,7 @@ export class MatchPage {
     await this.coach.goto(`/web/match?teamId=${this.teamId}&gameId=${this.gameId}&handler=play`);
   }
 
-  // Runs `tap` and waits for the `handler`'s response (Coach.tap).
+  // Runs `tap` and waits for the page's `handler` action (Coach.tap).
   act(handler: string, tap: () => Promise<void>) {
     return this.coach.tap(handler, tap);
   }

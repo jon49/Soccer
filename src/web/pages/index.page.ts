@@ -1,17 +1,15 @@
-import type { RoutePage } from "@jon49/sw/routes.middleware.js";
+import html from "html-template-tag-stream";
+import type { Page } from "../app/page.js";
 
-const { html, layout } = self.sw;
-
-let index: RoutePage = {
-  get: async () => {
-    return layout({
+// /web/ goes on to the Teams page.
+export default {
+  async render() {
+    return {
+      title: "Home",
       main: html`
         <p>Welcome to soccer tracking!</p>
         <i _load="redirect" data-url="/web/teams"></i>
       `,
-      title: "Home",
-    });
+    };
   },
-};
-
-export default index;
+} satisfies Page;

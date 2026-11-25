@@ -1,9 +1,6 @@
 import { type PlayerStateView, subMark } from "./shared.js";
-
-let {
-  html,
-  utils: { when },
-} = self.sw;
+import html from "html-template-tag-stream";
+import { when } from "../../data/utils.js";
 
 export async function onDeckView(state: PlayerStateView) {
   let playersOnDeck = await state.onDeckPlayers();

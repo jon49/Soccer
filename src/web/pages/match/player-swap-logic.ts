@@ -1,4 +1,4 @@
-import type { GameState, PlayerGame } from "../../server/db.js";
+import type { GameState, PlayerGame } from "../../data/db.js";
 import {
   GameTimeCalculator,
   PlayerGameTimeCalculatorBase,

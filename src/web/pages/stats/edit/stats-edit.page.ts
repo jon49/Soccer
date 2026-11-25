@@ -1,28 +1,24 @@
-import type { TeamId } from "../../../server/db.js";
-import type { RoutePostHandler, RoutePage } from "@jon49/sw/routes.middleware.js";
-import type { DbCache as DbCacheType } from "@jon49/sw/utils.js";
+import type { TeamId } from "../../../data/db.js";
+import type { Actions, Page } from "../../../app/page.js";
 import { DEFAULT_STALE_AFTER_MINUTES } from "../../match/shared.js";
-
-const {
-  html,
-  layout,
-  repo: { teamGet, teamSave, statSave, getStatDescription, statsGetAll },
-  utils: { when, DbCache },
-  validation: {
-    validateObject,
-    createCheckbox,
-    createIdNumber,
-    createString25,
-    createPositiveWholeNumber,
-    required,
-    queryTeamIdValidator,
-  },
-  views: { helpView, teamNav },
-} = self.sw;
+import html from "html-template-tag-stream";
+import { teamGet, teamSave } from "../../../data/repo-team.js";
+import { statSave, getStatDescription, statsGetAll } from "../../../data/repo-player-game.js";
+import { when, DbCache } from "../../../data/utils.js";
+import { validateObject } from "promise-validation";
+import {
+  createCheckbox,
+  createIdNumber,
+  createString25,
+  createPositiveWholeNumber,
+  required,
+} from "../../../data/validation.js";
+import { queryTeamIdValidator } from "../../../data/validators.js";
+import { helpView } from "../../_help-views.js";
+import { teamNav } from "../../_shared-views.js";
 
 async function render(o: StatsView) {
   let [{ stats }, team] = await Promise.all([o.stats(), o.team()]);
-  let teamId = o.teamId;
 
   return html`
 <h2>${team.name}</h2>
@@ -43,10 +39,7 @@ ${helpView(html`
     ${stats.map((x) => {
       let description = getStatDescription(x.id);
       return html`
-        <form
-            _change=submit
-            method=post
-            action="?teamId=${teamId}&handler=updateStat">
+        <form _change=updateStat>
             <input type=hidden name=id value="${x.id}">
             <input type=text maxlength=25 name=name value="${x.name}">
             <br>
@@ -68,10 +61,7 @@ ${helpView(html`
         </form>`;
     })}
 
-<form
-    _change=submit
-    method=post
-    action="?teamId=${teamId}&handler=basketballMode">
+<form _change=basketballMode>
     <input type=hidden name=value value="${team.basketballMode ? 1 : 0}">
     <label class=toggle>
         <input type=checkbox name=basketballMode $${when(team.basketballMode, "checked")}>
@@ -80,10 +70,7 @@ ${helpView(html`
     </label>
 </form>
 
-<form
-    _change=submit
-    method=post
-    action="?teamId=${teamId}&handler=staleAfterMinutes">
+<form _change=staleAfterMinutes>
     <label for=staleAfterMinutes>
         Highlight players in a position for this many minutes without a
         substitution
@@ -109,7 +96,7 @@ const statValidator = {
   active: createCheckbox,
 };
 
-const postHandlers: RoutePostHandler = {
+const actions: Actions = {
   async updateStat({ query, data }) {
     let { teamId } = await validateObject(query, queryTeamIdValidator);
     let { name, active, id } = await validateObject(data, statValidator);
@@ -124,7 +111,7 @@ const postHandlers: RoutePostHandler = {
 
     await statSave(teamId, o);
 
-    return { status: 200 };
+    return "Saved!";
   },
 
   async basketballMode({ query, data }) {
@@ -133,7 +120,7 @@ const postHandlers: RoutePostHandler = {
     let team = await teamGet(teamId);
     team.basketballMode = basketballMode;
     await teamSave(team);
-    return { status: 200 };
+    return "Saved!";
   },
 
   async staleAfterMinutes({ query, data }) {
@@ -144,12 +131,12 @@ const postHandlers: RoutePostHandler = {
     let team = await teamGet(teamId);
     team.staleAfterMinutes = staleAfterMinutes;
     await teamSave(team);
-    return { status: 200 };
+    return "Saved!";
   },
 };
 
 class StatsView {
-  cache: DbCacheType;
+  cache: DbCache;
   teamId: TeamId;
   query: any;
   constructor(teamId: TeamId, query: any) {
@@ -167,18 +154,12 @@ class StatsView {
   }
 }
 
-const route: RoutePage = {
-  async get({ query }) {
+export default {
+  async render({ query }) {
     let { teamId } = await validateObject(query, queryTeamIdValidator);
     let data = new StatsView(teamId, query);
     let team = await data.team();
-    return layout({
-      main: await render(data),
-      nav: teamNav(teamId),
-      title: `Stats — ${team.name}`,
-    });
+    return { main: render(data), nav: teamNav(teamId), title: `Stats — ${team.name}` };
   },
-  post: postHandlers,
-};
-
-export default route;
+  actions,
+} satisfies Page;

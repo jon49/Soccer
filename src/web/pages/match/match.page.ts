@@ -1,5 +1,10 @@
-import type { GameState, PlayerGame } from "../../server/db.js";
-import type { RoutePostHandler, RoutePage, RouteGetHandler } from "@jon49/sw/routes.middleware.js";
+import type { GameState, PlayerGame, TeamId } from "../../data/db.js";
+import type { Actions, Page, Query } from "../../app/page.js";
+import { fill, replace } from "../../app/dom.js";
+import { navigate } from "../../app/router.js";
+import { gameTimer } from "./game-timer.js";
+import { matchSelect } from "./match-select.js";
+import "../../css/match.css";
 import {
   GameTimeCalculator,
   PlayerGameTimeCalculator,
@@ -11,7 +16,6 @@ import render from "./_game-play-view.js";
 import { swapAll } from "./player-swap.js";
 import targetPosition from "./player-target-position.js";
 import playMatchView, { opponentPointsView } from "./_play-match-view.js";
-import { play } from "./_play.js";
 import {
   adjustPoints,
   applyInPlayerOut,
@@ -24,33 +28,27 @@ import {
   startInPlayPlayers,
   takeBackPointsError,
 } from "./match-page-logic.js";
-
-const {
-  html,
-  layout,
-  repo: {
-    gameStateGet,
-    gameStateSave,
-    playerGameAllGet,
-    playerGameSave,
-    publishTeamSchedule,
-    saveGameNotes,
-    statIds,
-    teamGet,
-    teamSave,
-  },
-  views: { teamNav },
-  validation: {
-    queryTeamIdGameIdValidator,
-    validateObject,
-    reject,
-    createIdNumber,
-    createPositiveWholeNumber,
-    createStringInfinity,
-    maybe,
-    required,
-  },
-} = self.sw;
+import html from "html-template-tag-stream";
+import {
+  gameStateGet,
+  gameStateSave,
+  saveGameNotes,
+  teamGet,
+  teamSave,
+} from "../../data/repo-team.js";
+import { playerGameAllGet, playerGameSave, statIds } from "../../data/repo-player-game.js";
+import { publishTeamSchedule } from "../../data/repo-schedule.js";
+import { teamNav } from "../_shared-views.js";
+import { queryTeamIdGameIdValidator } from "../../data/validators.js";
+import { validateObject } from "promise-validation";
+import {
+  reject,
+  createIdNumber,
+  createPositiveWholeNumber,
+  createStringInfinity,
+  maybe,
+  required,
+} from "../../data/validation.js";
 
 const queryTeamGamePlayerValidator = {
   ...queryTeamIdGameIdValidator,
@@ -59,7 +57,7 @@ const queryTeamGamePlayerValidator = {
 
 // The play view's opponent score, after changing it by `delta`.
 function opponentPointsPlay(delta: 1 | -1) {
-  return async ({ query }: { query: any }) => {
+  return async ({ query }: { query: Query }) => {
     let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator);
     let state = new PlayerStateView(teamId, gameId);
     let gameState = await state.gameState();
@@ -67,7 +65,7 @@ function opponentPointsPlay(delta: 1 | -1) {
     if (!isValidPointsValue(points)) return reject("Points cannot be negative!");
     gameState.opponentPoints = points;
     await gameStateSave(teamId, gameState);
-    return html`${opponentPointsView(state.queryTeamGame, await state.gameCalc())}`;
+    await replace(opponentPointsView(await state.gameCalc()));
   };
 }
 
@@ -144,38 +142,16 @@ async function addGoal(state: PlayerStateView, playerId: number, points: number)
   await playerGameSave(state.teamId, player);
 }
 
-const getHandlers: RouteGetHandler = {
-  async play(o) {
-    return play(o);
-  },
-
-  // Just the play view's <main>, which auto-sync morphs in when a sync
-  // brings new data, so the page isn't reloaded mid-game.
-  async playMain({ query }) {
-    let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator);
-    return playMatchView(new PlayerStateView(teamId, gameId));
-  },
-
-  async get({ query }) {
-    let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator);
-    let team = await teamGet(teamId);
-    let game = await required(
-      team.games.find((x) => x.id === gameId),
-      `Could not find game! ${query.gameId}`,
-    );
-    return layout({
-      main: await render(query),
-      nav: teamNav(teamId),
-      title: `Match — ${team.name} VS ${game.opponent}`,
-    });
-  },
-};
-
-function getApp(state: PlayerStateView) {
-  return playMatchView(state);
+// The play view, drawn again after a change. Its actions show no "Saved!":
+// one on every tap would get in the way.
+async function redraw(teamId: TeamId, gameId: number) {
+  await fill("matchPlay", playMatchView(new PlayerStateView(teamId, gameId)));
 }
 
-const postHandlers: RoutePostHandler = {
+const actions: Actions = {
+  gameTimer,
+  matchSelect,
+
   oPointsIncPlay: opponentPointsPlay(1),
   // Holding the opponent's score on the play view.
   oPointsDecPlay: opponentPointsPlay(-1),
@@ -184,22 +160,20 @@ const postHandlers: RoutePostHandler = {
     let { gameId, teamId } = await validateObject(query, queryTeamIdGameIdValidator);
     let { notes } = await validateObject(data, dataNotesValidator);
     await saveGameNotes(teamId, gameId, notes);
-
-    return { status: 200 };
+    return "Saved!";
   },
 
   async swap({ query }) {
     let o = await validateObject(query, queryTeamGamePlayerValidator);
     // The query contains the player ID and so will only swap one player.
     await swapAll(query);
-
-    return getApp(new PlayerStateView(o.teamId, o.gameId));
+    await redraw(o.teamId, o.gameId);
   },
 
   async swapAll({ query }) {
     let o = await validateObject(query, queryTeamIdGameIdValidator);
     await swapAll(query);
-    return getApp(new PlayerStateView(o.teamId, o.gameId));
+    await redraw(o.teamId, o.gameId);
   },
 
   async allOut({ query }) {
@@ -217,13 +191,13 @@ const postHandlers: RoutePostHandler = {
         .map((player) => onDeckPlayerOut(state, player.playerId)),
     ]);
 
-    return getApp(new PlayerStateView(o.teamId, o.gameId));
+    await redraw(o.teamId, o.gameId);
   },
 
   async updateUserPosition({ query }) {
     let o = await validateObject(query, queryPositionUpdateValidator);
     await targetPosition(query, o.position);
-    return playMatchView(new PlayerStateView(o.teamId, o.gameId));
+    await redraw(o.teamId, o.gameId);
   },
 
   async playerNowOut({ query }) {
@@ -232,7 +206,7 @@ const postHandlers: RoutePostHandler = {
 
     await inPlayerOut(state, playerId);
 
-    return getApp(new PlayerStateView(teamId, gameId));
+    await redraw(teamId, gameId);
   },
 
   // From anywhere straight to not playing: take them out first, the same as
@@ -250,7 +224,7 @@ const postHandlers: RoutePostHandler = {
     player.status = { _: "notPlaying" };
     await playerGameSave(teamId, player);
 
-    return getApp(new PlayerStateView(teamId, gameId));
+    await redraw(teamId, gameId);
   },
 
   async cancelOnDeck({ query }) {
@@ -258,7 +232,7 @@ const postHandlers: RoutePostHandler = {
     let state = new PlayerStateView(teamId, gameId);
     await onDeckPlayerOut(state, playerId);
 
-    return getApp(new PlayerStateView(teamId, gameId));
+    await redraw(teamId, gameId);
   },
 
   async notPlaying({ query }) {
@@ -267,16 +241,19 @@ const postHandlers: RoutePostHandler = {
     player.status = { _: "notPlaying" };
     await playerGameSave(teamId, player);
 
-    return getApp(new PlayerStateView(teamId, gameId));
+    await redraw(teamId, gameId);
   },
 
   async backIn({ query }) {
-    let { teamId, playerId, gameId } = await validateObject(query, queryTeamGamePlayerValidator);
+    let { teamId, playerId, gameId } = await validateObject(
+      { ...query, playerId: query.backIn },
+      queryTeamGamePlayerValidator,
+    );
     let [player] = await playerGameAllGet(teamId, gameId, [playerId]);
     player.status = { _: "out" };
     await playerGameSave(teamId, player);
 
-    return getApp(new PlayerStateView(teamId, gameId));
+    await redraw(teamId, gameId);
   },
 
   async startGame({ query }) {
@@ -288,7 +265,7 @@ const postHandlers: RoutePostHandler = {
       },
       startInPlayPlayers,
     );
-    return getApp(new PlayerStateView(teamId, gameId));
+    await redraw(teamId, gameId);
   },
 
   async pauseGame({ query }) {
@@ -300,7 +277,7 @@ const postHandlers: RoutePostHandler = {
       },
       pauseInPlayPlayers,
     );
-    return getApp(new PlayerStateView(teamId, gameId));
+    await redraw(teamId, gameId);
   },
 
   async endGame({ query }) {
@@ -325,7 +302,8 @@ const postHandlers: RoutePostHandler = {
       }
     }
 
-    return { body: await getApp(new PlayerStateView(teamId, gameId)), message };
+    await redraw(teamId, gameId);
+    return message;
   },
 
   async restartGame({ query }) {
@@ -334,7 +312,7 @@ const postHandlers: RoutePostHandler = {
     gameState.status = "paused";
     await gameStateSave(teamId, gameState);
 
-    return getApp(new PlayerStateView(teamId, gameId));
+    await redraw(teamId, gameId);
   },
 
   // The play view's score: credit the goal to a player, or with no player
@@ -353,7 +331,7 @@ const postHandlers: RoutePostHandler = {
       await gameStateSave(teamId, gameState);
     }
 
-    return getApp(new PlayerStateView(teamId, gameId));
+    await redraw(teamId, gameId);
   },
 
   // Holding the play view's score takes points back: from the scorer when
@@ -383,7 +361,7 @@ const postHandlers: RoutePostHandler = {
       await gameStateSave(teamId, gameState);
     }
 
-    return getApp(new PlayerStateView(teamId, gameId));
+    await redraw(teamId, gameId);
   },
 
   async deleteGame({ query }) {
@@ -404,13 +382,42 @@ const postHandlers: RoutePostHandler = {
     await gameStateSave(teamId, gameState);
     await teamSave(team);
 
-    return html`<i _load=redirect id=temp data-url="/web/games?teamId=${teamId}"></i>`;
+    await navigate(`/web/games?teamId=${teamId}`, { replace: true });
+    return "Saved!";
   },
 };
 
-const route: RoutePage = {
-  get: getHandlers,
-  post: postHandlers,
-};
+export default {
+  async render({ query }) {
+    let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator);
+    let state = new PlayerStateView(teamId, gameId);
+    if (query.handler === "play") {
+      // The match play view, full screen.
+      return {
+        bare: true,
+        title: "Match",
+        main: html`<div id=matchPlay _load=matchSelect>${playMatchView(state)}</div>`,
+      };
+    }
+    let team = await teamGet(teamId);
+    let game = await required(
+      team.games.find((x) => x.id === gameId),
+      `Could not find game! ${query.gameId}`,
+    );
+    return {
+      main: render(query),
+      nav: teamNav(teamId),
+      title: `Match — ${team.name} VS ${game.opponent}`,
+    };
+  },
 
-export default route;
+  // The play view keeps its selection: only the field and bench are drawn.
+  async refresh({ query }) {
+    if (query.handler !== "play") return false;
+    let { teamId, gameId } = await validateObject(query, queryTeamIdGameIdValidator);
+    await redraw(teamId, gameId);
+    return true;
+  },
+
+  actions,
+} satisfies Page;

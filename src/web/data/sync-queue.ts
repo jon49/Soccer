@@ -1,5 +1,5 @@
-// The sync queue, shared through self.sw: each page is bundled on its own,
-// so a module-level queue would be one per page and hold nothing back.
+// The service worker's queue: sync and every call to the server run one at a
+// time (sw.ts).
 
 let running: Promise<unknown> = Promise.resolve();
 

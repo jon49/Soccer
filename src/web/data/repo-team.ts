@@ -15,7 +15,7 @@ import {
 import { settings } from "./global-model.js";
 import { isMovedTeam, type MovedTeam } from "./share-logic.js";
 import { equals, getNewId, getNewTeamId } from "./utils.js";
-import { required, reject } from "@jon49/sw/validation.js";
+import { required, reject } from "./validation.js";
 
 // Shared teams use their space uuid as the team id; personal teams use a
 // number.

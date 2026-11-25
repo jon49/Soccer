@@ -1,25 +1,30 @@
-import type { Game, GameState, Team, TeamId } from "../server/db.js";
-import type { RoutePostHandler, RoutePage } from "@jon49/sw/routes.middleware.js";
-
-const {
-  html,
-  layout,
-  repo: { teamGet, teamSave, publishTeamSchedule, getScheduleUrl, gameStatesGet },
-  utils: { when, equals, getNewId, formatGameDate, formatGameTime, todayDateString },
-  validation: {
-    assert,
-    createCheckbox,
-    createDateTimeString,
-    createIdNumber,
-    createString50,
-    maybe,
-    required,
-    queryTeamIdValidator,
-    validate,
-    validateObject,
-  },
-  views: { helpView, setupGuideView, teamNav },
-} = self.sw;
+import type { Game, GameState, Team, TeamId } from "../data/db.js";
+import type { Actions, Page } from "../app/page.js";
+import { replace } from "../app/dom.js";
+import html from "html-template-tag-stream";
+import { teamGet, teamSave, gameStatesGet } from "../data/repo-team.js";
+import { publishTeamSchedule, getScheduleUrl } from "../data/repo-schedule.js";
+import {
+  when,
+  equals,
+  getNewId,
+  formatGameDate,
+  formatGameTime,
+  todayDateString,
+} from "../data/utils.js";
+import {
+  assert,
+  createCheckbox,
+  createDateTimeString,
+  createIdNumber,
+  createString50,
+  maybe,
+  required,
+} from "../data/validation.js";
+import { queryTeamIdValidator } from "../data/validators.js";
+import { validate, validateObject } from "promise-validation";
+import { helpView, setupGuideView } from "./_help-views.js";
+import { teamNav } from "./_shared-views.js";
 
 interface GameView {
   team: Team;
@@ -80,7 +85,7 @@ ${gamesView({ team, gameStates })}
 
 <h3>Add a game</h3>
 
-<form class="form" method=post action="?teamId=${team.id}"  _submit="clearAutoFocus reset">
+<form class="form" _submit="addGame reset">
     <label for=gameDate>Date/Time</label>
     <input id=gameDate type=datetime-local name=date required ${when(team.games.length === 0, "autofocus")}>
 
@@ -121,18 +126,17 @@ async function gamesViewFor(team: Team) {
 }
 
 function getScheduleShareView(team: Team) {
-  let teamQuery = `teamId=${team.id}`;
   if (!team.scheduleFileId) {
     return html`
-<form method=post action="?${teamQuery}&handler=publishSchedule">
-    <button>Publish Schedule</button>
-</form>
-`;
+      <form _submit="publishSchedule">
+        <button>Publish Schedule</button>
+      </form>
+    `;
   }
 
   let url = getScheduleUrl(team.scheduleFileId);
   return html`
-<form method=post action="?${teamQuery}&handler=publishSchedule">
+<form _submit=publishSchedule>
     <button>Republish Schedule</button>
 </form>
 <p>Shared schedule: <a href="${url}" target=_blank>${url}</a></p>
@@ -163,7 +167,7 @@ function getGameView(
   let score = formatScore(gameState);
   let past = !isUpcoming(game);
   return html`<li id=game-${id} class="game-card$${isNext ? " is-next" : ""}$${past ? " is-past" : ""}">
-    <a class=game-card-main href="/web/match?$${teamQuery}&gameId=${id}" target="_self">
+    <a class=game-card-main href="/web/match?$${teamQuery}&gameId=${id}">
         <span class=game-when>${when(
           isNext,
           () =>
@@ -180,7 +184,7 @@ function getGameView(
     </span>
     <details class=game-edit>
         <summary aria-label="Edit the game vs ${game.opponent}">&#9998; Edit</summary>
-        <form class=game-edit-form method=post action="?${teamQuery}&handler=edit">
+        <form class=game-edit-form _submit=editGame>
             <input type=hidden name=gameId value="${id}">
             <label for="edit-date-${id}">Date/Time</label>
             <input id="edit-date-${id}" type=datetime-local name=date required value="$${datetime}">
@@ -211,8 +215,8 @@ let editGameValidator = {
   gameId: createIdNumber("Game ID"),
 };
 
-const postHandlers: RoutePostHandler = {
-  async post({ data, query }) {
+const actions: Actions = {
+  async addGame({ data, query }) {
     let [{ date: datetime, opponent, location, home }, { teamId }] = await validate([
       validateObject(data, addGameValidator),
       validateObject(query, queryTeamIdValidator),
@@ -245,10 +249,11 @@ const postHandlers: RoutePostHandler = {
     await teamSave(team);
 
     // The whole list, so the new game lands in date order.
-    return html`${gamesViewFor(team)}${setupGuideView(team, "game")}`;
+    await replace(gamesViewFor(team), setupGuideView(team, "game"));
+    return "Saved!";
   },
 
-  async edit({ data, query }) {
+  async editGame({ data, query }) {
     let [{ date: datetime, opponent, location, gameId, home }, { teamId }] = await validate([
       validateObject(data, editGameValidator),
       validateObject(query, queryTeamIdValidator),
@@ -277,7 +282,8 @@ const postHandlers: RoutePostHandler = {
     await teamSave(team);
 
     // The whole list, so a game whose date changed moves into place.
-    return gamesViewFor(team);
+    await replace(gamesViewFor(team));
+    return "Saved!";
   },
 
   async publishSchedule({ query }) {
@@ -285,22 +291,18 @@ const postHandlers: RoutePostHandler = {
     let team = await teamGet(teamId);
     await publishTeamSchedule(team);
 
-    return {
-      status: 200,
-      body: html`<div id=schedule-share>${getScheduleShareView(team)}</div>`,
-    };
+    await replace(html`<div id=schedule-share>${getScheduleShareView(team)}</div>`);
+    return "Saved!";
   },
 };
 
-const router: RoutePage = {
-  async get({ query }) {
-    return layout({
-      main: await renderMain(query),
+export default {
+  async render({ query }) {
+    return {
+      main: renderMain(query),
       nav: teamNav((await validateObject(query, queryTeamIdValidator)).teamId),
       title: "Games",
-    });
+    };
   },
-  post: postHandlers,
-};
-
-export default router;
+  actions,
+} satisfies Page;

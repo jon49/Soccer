@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import type { Game, GameState, Team, TeamPlayer } from "../server/db.js";
+import type { Game, GameState, Team, TeamPlayer } from "../data/db.js";
 import { renderScheduleHtml } from "./schedule-html.js";
 
 function makeGame(overrides: Partial<Game> = {}): Game {

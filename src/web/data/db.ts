@@ -10,7 +10,7 @@ import {
   update as update1,
   type UseStore,
 } from "idb-keyval";
-import { reject } from "@jon49/sw/validation.js";
+import { reject } from "./validation.js";
 
 const get: DBGet = get1;
 
@@ -27,6 +27,8 @@ const _updated = async (key: IDBValidKey) => {
 
     return (val || new Set()).add(key);
   });
+  // In a page, something new to sync (app/sync.ts).
+  if (typeof document !== "undefined") document.dispatchEvent(new Event("db:changed"));
 };
 
 function set<K extends keyof DBAccessors>(

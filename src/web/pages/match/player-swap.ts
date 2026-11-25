@@ -1,10 +1,10 @@
 import { isInPlayPlayer, isOnDeckPlayer } from "./shared.js";
 import { computeSwapAll } from "./player-swap-logic.js";
-
-let {
-  repo: { playerGameAllGet, teamGet, gameStateGet, playerGameSave },
-  validation: { maybe, required, queryTeamIdGameIdValidator, createIdNumber, validateObject },
-} = self.sw;
+import { playerGameAllGet, playerGameSave } from "../../data/repo-player-game.js";
+import { teamGet, gameStateGet } from "../../data/repo-team.js";
+import { maybe, required, createIdNumber } from "../../data/validation.js";
+import { queryTeamIdGameIdValidator } from "../../data/validators.js";
+import { validateObject } from "promise-validation";
 
 const queryTeamGamePlayerValidator = {
   ...queryTeamIdGameIdValidator,

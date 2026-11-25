@@ -1,23 +1,19 @@
-import type { Team, TeamId, TeamPlayer, TeamPlayerStatus } from "../server/db.js";
-import type { RoutePostHandler, RoutePage, RouteGetHandler } from "@jon49/sw/routes.middleware.js";
-
-const {
-  html,
-  layout,
-  repo: { isSharedTeamId, teamGet, playerCreate, teamSave },
-  utils: { equals, playerStatus, playersInOrder, when },
-  validation: {
-    assert,
-    validate,
-    validateObject,
-    createString25,
-    dataPlayerNameStatusValidator,
-    dataTeamNameYearActiveValidator,
-    queryTeamIdPlayerIdValidator,
-    queryTeamIdValidator,
-  },
-  views: { helpView, setupGuideView, teamNav },
-} = self.sw;
+import type { Team, TeamPlayer, TeamPlayerStatus } from "../data/db.js";
+import type { Actions, Page } from "../app/page.js";
+import { append, replace, remove } from "../app/dom.js";
+import html from "html-template-tag-stream";
+import { isSharedTeamId, teamGet, playerCreate, teamSave } from "../data/repo-team.js";
+import { equals, playerStatus, playersInOrder, when } from "../data/utils.js";
+import { assert, createString25 } from "../data/validation.js";
+import { validate, validateObject } from "promise-validation";
+import {
+  dataPlayerNameStatusValidator,
+  dataTeamNameYearActiveValidator,
+  queryTeamIdPlayerIdValidator,
+  queryTeamIdValidator,
+} from "../data/validators.js";
+import { helpView, setupGuideView } from "./_help-views.js";
+import { teamNav } from "./_shared-views.js";
 
 interface PlayersEditView {
   team: Team;
@@ -67,9 +63,9 @@ ${helpView(
 
 <nav>
     <ul>
-        <li><a href="#team" target="_self">Team</a></li>
-        <li><a href="#players" target="_self">Players</a></li>
-        <li><a href="/web/share?teamId=${team.id}" target="_self">${
+        <li><a href="#team">Team</a></li>
+        <li><a href="#players">Players</a></li>
+        <li><a href="/web/share?teamId=${team.id}">${
           isSharedTeamId(team.id) ? "Sharing" : "Share"
         }</a></li>
     </ul>
@@ -77,10 +73,8 @@ ${helpView(
 
 <h3 id=team>Team Settings</h3>
 <form
-    _change=submit
+    _change=editTeam
     class=form
-    method=post
-    action="?handler=editTeam&teamId=${team.id}"
     >
     <div>
         <label for=team-input>Team Name:</label><input id=team-input name=name type=text value="${team.name}">
@@ -110,14 +104,12 @@ ${when(
     <span>#</span><span>#</span><span>#</span><span>#</span>
 </div>
 <ul id=playerCards class=player-list>
-    ${playersInOrder(team.players).map((x) => playerView(x, team.id))}
+    ${playersInOrder(team.players).map((x) => playerView(x))}
 </ul>
 
 <form
     class="form add-player"
-    method=post
-    action="?handler=addPlayer&teamId=${team.id}"
-    _submit=reset
+    _submit="addPlayer reset"
     >
     <label for=newPlayer>Add a player</label>
     <fieldset class=nc-join>
@@ -127,8 +119,7 @@ ${when(
             type=text
             placeholder="Player name"
             required
-            ${when(!team.players.length, "autofocus")}
-            _submit=clearAutoFocus>
+            ${when(!team.players.length, "autofocus")}>
         <button>Add</button>
     </fieldset>
 </form>
@@ -168,17 +159,12 @@ function statusToggle(player: TeamPlayer) {
 </span>`;
 }
 
-function playerView(player: TeamPlayer, teamId: TeamId) {
-  let teamPlayerQuery = `teamId=${teamId}&playerId=${player.id}`;
+function playerView(player: TeamPlayer) {
   let playerId_: string = `edit-player${player.id}`;
 
   return html`
-<li id="active-${playerId_}" class="player-row" hz-target="#playerCards" hz-swap="append">
-    <form
-        _change=submit
-        method=post
-        action="?handler=editPlayer&$${teamPlayerQuery}"
-        >
+<li id="active-${playerId_}" class="player-row">
+    <form _change=editPlayer data-player-id="${player.id}">
         <input
             class=player-number
             name=number
@@ -198,7 +184,7 @@ function playerView(player: TeamPlayer, teamId: TeamId) {
 </li>`;
 }
 
-const postHandlers: RoutePostHandler = {
+const actions: Actions = {
   async editPlayer({ data: d, query: q }) {
     let [{ teamId, playerId }, { name: playerName, status, number }] = await validate([
       validateObject(q, queryTeamIdPlayerIdValidator),
@@ -225,7 +211,8 @@ const postHandlers: RoutePostHandler = {
     // Player name will also need to be updated for the individual player when implemented!
     await teamSave(team);
 
-    return { status: 200, body: playersHeading(team) };
+    await replace(playersHeading(team));
+    return "Saved!";
   },
 
   async addPlayer({ data, query }) {
@@ -245,10 +232,10 @@ const postHandlers: RoutePostHandler = {
     let player = await playerCreate(teamId, newPlayerName);
     team.players.push(player);
 
-    return {
-      status: 200,
-      body: html`${playerView(player, teamId)}<template id=noPlayers></template>${playersHeading(team)}${setupGuideView(team, "players")}`,
-    };
+    await append("playerCards", playerView(player));
+    remove("noPlayers");
+    await replace(playersHeading(team), setupGuideView(team, "players"));
+    return "Saved!";
   },
 
   async editTeam({ data, query }) {
@@ -262,24 +249,18 @@ const postHandlers: RoutePostHandler = {
     team.year = year;
     team.name = newTeamName;
     await teamSave(team);
-    return { status: 200 };
+    return "Saved!";
   },
 };
 
-const getHandlers: RouteGetHandler = {
-  async get({ query }) {
+export default {
+  async render({ query }) {
     let result = await start(query);
-    return layout({
+    return {
       main: render(result),
       nav: teamNav(result.team.id),
       title: `Players - ${result.team.name} (${result.team.year})`,
-    });
+    };
   },
-};
-
-const route: RoutePage = {
-  get: getHandlers,
-  post: postHandlers,
-};
-
-export default route;
+  actions,
+} satisfies Page;

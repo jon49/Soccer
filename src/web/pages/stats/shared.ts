@@ -1,17 +1,15 @@
-import type { TeamId } from "../../server/db.js";
-import type { DbCache as DbCacheType } from "@jon49/sw/utils.js";
-import type { PlayersShown } from "../../server/utils.js";
+import type { TeamId } from "../../data/db.js";
+import type { PlayersShown } from "../../data/utils.js";
 import { playedInOrder } from "./stats-logic.js";
-
-const {
-  html,
-  repo: { teamGet, playerGameAllGet, gameStatesGet },
-  utils: { DbCache, formatShortDate, playersShown },
-  validation: { validateObject, queryTeamIdValidator },
-} = self.sw;
+import html from "html-template-tag-stream";
+import { teamGet, gameStatesGet } from "../../data/repo-team.js";
+import { playerGameAllGet } from "../../data/repo-player-game.js";
+import { DbCache, formatShortDate, playersShown } from "../../data/utils.js";
+import { validateObject } from "promise-validation";
+import { queryTeamIdValidator } from "../../data/validators.js";
 
 export class StatsView {
-  #cache: DbCacheType;
+  #cache: DbCache;
   teamId: TeamId;
   show: PlayersShown;
   constructor(teamId: TeamId, show: PlayersShown) {

@@ -1,4 +1,4 @@
-import type { Game, GameState } from "../../server/db.js";
+import type { Game, GameState } from "../../data/db.js";
 
 // The games that have been played (started at least once), soonest first,
 // for the per-game columns of the stats tables.

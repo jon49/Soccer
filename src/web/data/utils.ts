@@ -84,3 +84,29 @@ export function playersShown<T extends TeamPlayer>(players: T[], show: PlayersSh
     return status === "active" || (status === "sub" ? !!show.subs : !!show.inactive);
   });
 }
+
+// `s` when `b` is truthy (called with `b` if it's a function of one
+// argument); otherwise "" for a string, or undefined.
+export function when<S, T>(b: S | undefined, s: (a: S) => T): T | undefined;
+export function when<T>(b: any, s: T): T | undefined;
+export function when(b: any, s: any) {
+  return b
+    ? s instanceof Function && s.length
+      ? s(b)
+      : s
+    : typeof s === "string"
+      ? ""
+      : undefined;
+}
+
+// Memoizes reads by key for one render.
+export class DbCache {
+  #cache = new Map<string, any>();
+
+  async get<T>(key: string, fn: () => Promise<T>): Promise<T> {
+    if (this.#cache.has(key)) return this.#cache.get(key);
+    let value = await fn();
+    this.#cache.set(key, value);
+    return value;
+  }
+}

@@ -1,127 +1,104 @@
-import { useRoutes } from "@jon49/sw/routes.middleware.js";
-import { useResponse } from "@jon49/sw/response.middleware.js";
-import { swFramework } from "@jon49/sw/web-framework.js";
-import { useHtmz } from "./server/htmz.middleware.js";
+/// <reference lib="webworker" />
+// The service worker does three things:
+//
+// 1. Keeps the app's files, so it opens offline. The build (vite.config.ts)
+//    fills in __FILES__, every file it emits, and __VERSION__, a hash of them.
+// 2. Answers a move to any page of the app (/web/teams, /web/match?...) with
+//    the app shell, /web/index.html, which renders the page itself.
+// 3. Syncs, and makes every other call to the server that needs the login
+//    token, when a page asks (app/worker.ts). It runs these one at a time, for
+//    every tab, so two can't refresh the token at once or sync over each
+//    other.
+//
+// In development (npm start) the build fills in nothing: Vite serves every
+// file and page, and the worker only does (3).
+import sync from "./data/sync.js";
+import { authFetch } from "./data/api-client.js";
+import { deleteAccount, deleteLocalData } from "./data/account.js";
+import { afterSync } from "./data/sync-queue.js";
 
-// @ts-ignore
-let version: string = self.sw?.version ?? "unknown";
-const isDev = self.location.hostname === "localhost";
+declare const self: ServiceWorkerGlobalScope;
+declare const __FILES__: string[];
+declare const __VERSION__: string;
 
-// The file map, for the page to run these routes itself (js/routes.bundle.ts
-// via js/routes-loader.ts): where each page's code is, by its hashed name.
-// The page can't read the map's own file, as only the worker knows its name.
-swFramework.use(function useLinks(req, res): void | false {
-  if (new URL(req.url).pathname !== "/web/links.js") return;
-  let links = JSON.stringify((self.sw as any).links ?? []);
-  res.response = new Response(`(self.sw = self.sw || {}).links = ${links};`, {
-    headers: { "content-type": "text/javascript; charset=utf-8", "cache-control": "no-store" },
-  });
-  return false;
-});
+const files = typeof __FILES__ === "undefined" ? null : __FILES__;
+const cacheName = typeof __VERSION__ === "undefined" ? "dev" : `soccer-${__VERSION__}`;
+const shell = "/web/index.html";
 
-if (isDev) {
-  let lastSwContent = "";
-  swFramework.use(async function devMode(req, res): Promise<void | false> {
-    // Refresh file-map links from network
-    try {
-      let swRes = await fetch("/web/sw.js");
-      let swContent = await swRes.text();
-      if (swContent !== lastSwContent) {
-        lastSwContent = swContent;
-        let match = swContent.match(/importScripts\("([^"]+)"/);
-        if (match) {
-          let mapRes = await fetch(match[1]);
-          let mapContent = await mapRes.text();
-          let linksMatch = mapContent.match(/links: (\[.*\])/);
-          if (linksMatch) {
-            let newLinks = JSON.parse(linksMatch[1]);
-            // Mutate in-place so the reference in routes.middleware stays current
-            let links = (self.sw as any).links;
-            links.length = 0;
-            links.push(...newLinks);
-          }
-        }
-      }
-    } catch {}
+const ops: Record<string, (...args: any[]) => Promise<unknown>> = {
+  sync: () => sync(),
+  async fetch(url: string, init: RequestInit) {
+    return afterSync(async () => {
+      let res = await authFetch(url, init);
+      return {
+        status: res.status,
+        type: res.headers.get("content-type") ?? "",
+        body: res.status ? await res.text() : "",
+      };
+    });
+  },
+  deleteAccount: () => deleteAccount(),
+  deleteLocalData: () => deleteLocalData(),
+};
 
-    // Serve static files directly from network using resolved hashed URL
-    // (bypasses cacheResponse which incorrectly fetches the unhashed URL)
-    let url = new URL(req.url);
-    let p = url.pathname;
-    if (p.startsWith("/web/") && p.lastIndexOf("/") < p.lastIndexOf(".")) {
-      let links = (self.sw as any).links;
-      let hashed = links?.find((x: any) => x.url === p)?.file || p;
-      res.response = await fetch(hashed);
-      return false;
-    }
-  });
-}
-
-swFramework.use(useRoutes);
-swFramework.use(useHtmz);
-swFramework.use(useResponse);
-
-self.addEventListener("install", (e: Event) => {
-  console.log("Service worker installed.");
-
-  // @ts-ignore
+self.addEventListener("message", (e) => {
+  let data = e.data;
+  // The page's "update your app" link (app/update.ts), and the one an older
+  // version of the app shows: { action: "skipWaiting" }.
+  if (data === "skipWaiting" || data?.action === "skipWaiting") {
+    self.skipWaiting();
+    return;
+  }
+  let port = e.ports[0];
+  let op = ops[data?.op];
+  if (!port || !op) return;
   e.waitUntil(
-    isDev
-      ? // @ts-ignore
-        self.skipWaiting()
-      : caches.open(version).then(async (cache) => {
-          console.log("Caching files.");
-          // @ts-ignore
-          return cache.addAll(self.sw.links.map((x) => x.file));
-        }),
+    op(...(data.args ?? [])).then(
+      (result) => port.postMessage({ result }),
+      (error) => {
+        console.error(`Worker "${data.op}" failed:`, error);
+        port.postMessage({ error: String(error?.message ?? error) });
+      },
+    ),
   );
 });
 
-// @ts-ignore
-self.addEventListener("fetch", (e: FetchEvent) => {
-  e.respondWith(swFramework.start(e));
+self.addEventListener("install", (e) => {
+  if (!files) {
+    self.skipWaiting();
+    return;
+  }
+  e.waitUntil(caches.open(cacheName).then((cache) => cache.addAll(files)));
 });
 
-// waitUntil must be called before the handler first awaits, or it throws.
-// @ts-ignore
-self.addEventListener("activate", (e: ExtendableEvent) => {
-  console.log("Service worker activated.");
+self.addEventListener("activate", (e) => {
   e.waitUntil(
     (async () => {
       let keys = await caches.keys();
-      if (isDev) {
-        await Promise.all([
-          ...keys.map((key) => caches.delete(key)),
-          // @ts-ignore
-          self.clients.claim(),
-        ]);
-        return;
-      }
-      await Promise.all(keys.filter((x) => x !== version).map((x) => caches.delete(x)));
-      await pruneCache();
+      await Promise.all(keys.filter((x) => x !== cacheName).map((x) => caches.delete(x)));
+      if (!files) await self.clients.claim();
     })(),
   );
 });
 
-// Drops cached files the current file map doesn't list: earlier releases'
-// hashed files. The cache's name doesn't change between releases (`version`
-// isn't set on `self.sw` when this file runs), so without this every release
-// added its files to the ones before.
-async function pruneCache() {
-  let links: { file: string }[] = (self.sw as any).links;
-  let keep = new Set(links.map((x) => x.file));
-  let cache = await caches.open(version);
-  let stale = (await cache.keys()).filter((x) => !keep.has(new URL(x.url).pathname));
-  await Promise.all(stale.map((x) => cache.delete(x)));
-  if (stale.length) console.log(`Removed ${stale.length} old cached files.`);
+function isFile(path: string) {
+  return path.lastIndexOf("/") < path.lastIndexOf(".");
 }
 
-// new-app-notifier posts { action: "skipWaiting" }; also accept the bare
-// string form.
-self.addEventListener("message", (event) => {
-  if (event.data === "skipWaiting" || event.data?.action === "skipWaiting") {
-    console.log("Skip waiting!");
-    // @ts-ignore
-    self.skipWaiting();
+async function fromCache(req: Request | string) {
+  let cache = await caches.open(cacheName);
+  return (await cache.match(req)) ?? fetch(req);
+}
+
+self.addEventListener("fetch", (e) => {
+  if (!files) return;
+  let req = e.request;
+  let url = new URL(req.url);
+  if (req.method !== "GET" || url.origin !== location.origin || url.pathname.startsWith("/api/"))
+    return;
+  if (url.pathname.startsWith("/web/") && !isFile(url.pathname)) {
+    e.respondWith(fromCache(shell));
+  } else if (files.includes(url.pathname)) {
+    e.respondWith(fromCache(url.pathname));
   }
 });

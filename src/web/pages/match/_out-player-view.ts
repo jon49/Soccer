@@ -1,9 +1,6 @@
 import { type PlayerStateView, subMark } from "./shared.js";
-
-let {
-  html,
-  utils: { when },
-} = self.sw;
+import html from "html-template-tag-stream";
+import { when } from "../../data/utils.js";
 
 export async function outPlayersView(o: PlayerStateView) {
   let [outPlayers, isGameInPlay, fairShareAttrs] = await Promise.all([

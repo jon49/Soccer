@@ -1,15 +1,14 @@
-import type { Game, Team } from "../server/db.js";
-import type { RoutePage, RoutePostHandler } from "@jon49/sw/routes.middleware.js";
-
-const {
-  globalDb,
-  html,
-  layout,
-  repo: { isSharedTeamId, teamGetAll, teamsCreate },
-  utils: { formatGameDate, formatGameTime, todayDateString, when },
-  validation: { dataTeamNameYearValidator, validateObject },
-  views: { helpView, nextSetupStepFor, teamsNav },
-} = self.sw;
+import type { Game, Team } from "../data/db.js";
+import type { Page } from "../app/page.js";
+import { append, remove } from "../app/dom.js";
+import * as globalDb from "../data/global-model.js";
+import html from "html-template-tag-stream";
+import { isSharedTeamId, teamGetAll, teamsCreate } from "../data/repo-team.js";
+import { formatGameDate, formatGameTime, todayDateString, when } from "../data/utils.js";
+import { dataTeamNameYearValidator } from "../data/validators.js";
+import { validateObject } from "promise-validation";
+import { helpView, nextSetupStepFor } from "./_help-views.js";
+import { teamsNav } from "./_shared-views.js";
 
 const render = async () => {
   let [{ teams, total }, loggedIn] = await Promise.all([
@@ -48,14 +47,14 @@ ${when(!teams.length, () =>
 ${
   wasFiltered
     ? html`
-        <p><a id="allTeams" href="?handler=all">Show all teams.</a></p>
+        <p><a id="allTeams" href="?all" _click="all">Show all teams.</a></p>
       `
     : null
 }
 
 <h3>Add a team</h3>
 
-<form class=form action="/web/teams" method=post  _submit=reset>
+<form class=form _submit="addTeam reset">
   <div>
     <label for=name>Team Name</label>
     <input
@@ -99,8 +98,8 @@ function welcomeView(loggedIn: boolean) {
 function loginTip() {
   return html`
     <p>
-      <a href="/login" target="_self">Log in</a> to back your teams up, use them on your other devices,
-      or share a team with another coach. Got an invite link from a coach? Open it to join their team.
+      <a href="/login">Log in</a> to back your teams up, use them on your other devices, or share a team
+      with another coach. Got an invite link from a coach? Open it to join their team.
     </p>
   `;
 }
@@ -113,13 +112,13 @@ function nextGame(team: Team): Game | undefined {
     .sort((a, b) => a.date.localeCompare(b.date) || (a.time ?? "").localeCompare(b.time ?? ""))[0];
 }
 
-async function getTeamView(team: Team, includeSwap = false) {
+async function getTeamView(team: Team) {
   let teamId = team.id;
   let next = nextGame(team);
   let step = await nextSetupStepFor(team);
   return html`
-    <li class=team-card $${when(includeSwap, `hz-target="#teams" hz-swap="append"`)}>
-        <a class=team-name target="_self" href="/web/players?teamId=${teamId}">${team.name} - ${team.year}${when(
+    <li class=team-card>
+        <a class=team-name href="/web/players?teamId=${teamId}">${team.name} - ${team.year}${when(
           isSharedTeamId(teamId),
           html`
             <span class="badge">Shared</span>
@@ -128,7 +127,7 @@ async function getTeamView(team: Team, includeSwap = false) {
         ${
           next
             ? html`<p class=team-next>Next:
-                <a href="/web/match?teamId=${teamId}&gameId=${next.id}" target="_self">${formatGameDate(next.date)}${when(next.time, (time) => ` · ${formatGameTime(time)}`)} vs ${next.opponent}</a></p>`
+                <a href="/web/match?teamId=${teamId}&gameId=${next.id}">${formatGameDate(next.date)}${when(next.time, (time) => ` · ${formatGameTime(time)}`)} vs ${next.opponent}</a></p>`
             : html`
                 <p class="team-next team-next-none">No upcoming games</p>
               `
@@ -136,41 +135,32 @@ async function getTeamView(team: Team, includeSwap = false) {
         ${when(
           step,
           (step) =>
-            html`<p class=team-setup>Next step: <a href="${step.url}" target="_self">${step.title}</a></p>`,
+            html`<p class=team-setup>Next step: <a href="${step.url}">${step.title}</a></p>`,
         )}
-        <a class=team-games target="_self" href="/web/games?teamId=${teamId}">Games</a>
+        <a class=team-games href="/web/games?teamId=${teamId}">Games</a>
     </li>`;
 }
 
-const postHandlers: RoutePostHandler = {
-  post: async function post({ data }) {
-    let d = await validateObject(data, dataTeamNameYearValidator);
-    let team = await teamsCreate(d);
-    return html`${getTeamView(team, true)}<template id=noTeams></template>`;
+export default {
+  async render() {
+    return { main: render(), nav: teamsNav(), title: "Teams" };
   },
-};
 
-const route: RoutePage = {
-  get: {
-    async get() {
-      return layout({
-        main: await render(),
-        nav: teamsNav(),
-        title: "Teams",
-      });
+  actions: {
+    async addTeam({ data }) {
+      let d = await validateObject(data, dataTeamNameYearValidator);
+      let team = await teamsCreate(d);
+      await append("teams", getTeamView(team));
+      remove("noTeams");
+      return "Saved!";
     },
-    async all() {
+
+    // "Show all teams": adds the inactive ones.
+    async all({ ev }) {
+      ev.preventDefault();
       let { teams } = await teamGetAll("inactive");
-      return html`
-<template id="teams" hz-swap="append">
-    ${teams.map((x) => getTeamView(x))}
-</template>
-<template id="allTeams"></template>
-<template id="noTeams"></template>`;
+      await append("teams", ...teams.map((x) => getTeamView(x)));
+      remove("allTeams", "noTeams");
     },
   },
-
-  post: postHandlers,
-};
-
-export default route;
+} satisfies Page;

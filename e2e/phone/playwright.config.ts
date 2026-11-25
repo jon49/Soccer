@@ -12,7 +12,8 @@ export default defineConfig({
   reporter: "list",
   timeout: 900_000,
   webServer: {
-    command: `npx tsx ./node_modules/@jon49/sw/bin/start.ts --env=dev -p ${PHONE_APP_PORT}`,
+    // A production build, as the phone gets from the real site.
+    command: `npx vite build --outDir ../temp/phone && npx vite preview --outDir ../temp/phone --port ${PHONE_APP_PORT}`,
     cwd: new URL("../..", import.meta.url).pathname,
     url: `http://localhost:${PHONE_APP_PORT}/login/`,
     timeout: 120_000,

@@ -82,7 +82,7 @@ function formatTime(grandTotal) {
 // `data-fair-share` (field spots over players available). They're fully
 // shaded once ahead by `data-shade-scale` ms. Computing it here — on the same
 // tick that updates the timer text — keeps it live instead of only
-// refreshing on the next full page morph.
+// refreshing when the page is drawn again.
 
 // The background blends smoothly, but the text is only ever dark or light:
 // whichever reads better on the blended color. Mid blends, where neither
@@ -201,18 +201,11 @@ class GameTimer {
 
     this.interval = +(el.dataset.interval ?? 0) || 1e3;
 
-    document.addEventListener("hz:completed", this);
-
-    this.update(Date.now());
-  }
-
-  handleEvent() {
     this.update(Date.now());
   }
 
   disconnectedCallback() {
     timer.remove(this);
-    document.removeEventListener("hz:completed", this);
   }
 
   /**
@@ -260,5 +253,7 @@ class GameTimer {
   }
 }
 
-// @ts-ignore
-window.app.gameTimer = ({ el }) => new GameTimer(el);
+// `_load=gameTimer`: a clock that runs from its data-start and data-total,
+// until it leaves the page.
+/** @param {{ el: HTMLElement }} ctx */
+export const gameTimer = ({ el }) => new GameTimer(el);

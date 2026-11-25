@@ -1,23 +1,23 @@
-import type { Team, TeamId } from "../server/db.js";
-import type { RoutePostHandler, RoutePage, RouteGetHandler } from "@jon49/sw/routes.middleware.js";
-
-const {
-  html,
-  layout,
-  repo: { teamGet, positionGetAll, positionsSave },
-  validation: {
-    createArrayOf,
-    createPositiveWholeNumber,
-    createString25,
-    createNumber,
-    maybe,
-    required,
-    queryTeamIdValidator,
-    validateObject,
-  },
-  views: { helpView, setupGuideView, teamNav },
-  utils: { when },
-} = self.sw;
+import type { Team, TeamId } from "../data/db.js";
+import type { Actions, Page } from "../app/page.js";
+import { replace } from "../app/dom.js";
+import { navigate } from "../app/router.js";
+import html from "html-template-tag-stream";
+import { teamGet } from "../data/repo-team.js";
+import { positionGetAll, positionsSave } from "../data/repo-player-game.js";
+import {
+  createArrayOf,
+  createPositiveWholeNumber,
+  createString25,
+  createNumber,
+  maybe,
+  required,
+} from "../data/validation.js";
+import { queryTeamIdValidator } from "../data/validators.js";
+import { validateObject } from "promise-validation";
+import { helpView, setupGuideView } from "./_help-views.js";
+import { teamNav } from "./_shared-views.js";
+import { when } from "../data/utils.js";
 
 interface PositionView {
   positions: string[][];
@@ -63,7 +63,7 @@ ${helpView(
   ${formationPreview(positions)}
   <div>
     <h3>Grid</h3>
-    ${positionsNameView(positions, team.id)}
+    ${positionsNameView(positions)}
   </div>
 </div>`;
 }
@@ -79,33 +79,43 @@ function formationPreview(positions: string[][]) {
   </figure>`;
 }
 
-function positionsNameView(positions: string[][], teamId: TeamId) {
+function positionsNameView(positions: string[][]) {
   return html`<form
   id=positionsForm
   class=form
-  method=post
-  action="?teamId=${teamId}&handler=editPositions"
-  _change=submit>
+  _change=editPositions>
   ${function* positionViews() {
     let count = 0;
     let row = 0;
-    yield html`<div class="names-row empty-row">
-<button id="inc--1" formaction="?teamId=${teamId}&handler=gridSize&action=inc&row=-1" class="inc add-row" aria-label="Add a row at the top">+ Row</button>
-</div>`;
+    yield html`
+      <div class="names-row empty-row">
+        <button
+          id="inc--1"
+          type="button"
+          _click="gridSize"
+          data-action="inc"
+          data-row="-1"
+          class="inc add-row"
+          aria-label="Add a row at the top"
+        >
+          + Row
+        </button>
+      </div>
+    `;
 
     for (let xs of positions) {
       yield html`<div class="names-row">
-<button id="dec-${row}" formaction="?teamId=${teamId}&handler=gridSize&action=dec&row=${row}" class=inc aria-label="Remove a position from row ${row + 1}">&minus;</button>
+<button id="dec-${row}" type=button _click=gridSize data-action=dec data-row="${row}" class=inc aria-label="Remove a position from row ${row + 1}">&minus;</button>
             <fieldset class="names nc-join">`;
       yield xs.map((x) => html`<input id="position${count++}" name="names[]" value="${x}">`);
       yield html`</fieldset>
-<button id="inc-${row}" formaction="?teamId=${teamId}&handler=gridSize&action=inc&row=${row}" class=inc aria-label="Add a position to row ${row + 1}">+</button>
+<button id="inc-${row}" type=button _click=gridSize data-action=inc data-row="${row}" class=inc aria-label="Add a position to row ${row + 1}">+</button>
     </div>`;
       row++;
     }
 
     yield html`<div class="names-row empty-row">
-<button id="inc-${row}" formaction="?teamId=${teamId}&handler=gridSize&action=inc&row=${row}" class="inc add-row" aria-label="Add a row at the bottom">+ Row</button>
+<button id="inc-${row}" type=button _click=gridSize data-action=inc data-row="${row}" class="inc add-row" aria-label="Add a row at the bottom">+ Row</button>
 </div>`;
   }}
 </form>`;
@@ -193,14 +203,14 @@ function getTemplate(positions: number[], { preview = false } = {}) {
 `;
 }
 
-function getTemplates(teamId: TeamId, numberOfPlayers: number) {
+function getTemplates(numberOfPlayers: number) {
   let playerCount = getNumberOfPlayers(numberOfPlayers);
   let grid = templates[playerCount];
   return html`
 <div id=templates class=grid style="--grid-item-width: 250px;">
     ${grid.map(
       (x, i) => html`
-  <form method=post action="?handler=createFormation&teamId=${teamId}" class=inline>
+  <form _submit=createFormation class=inline>
   <button class="outline secondary formation">${getTemplate(x)}</button>
   <input type=hidden name=index value="${i}">
   <input type=hidden name=numberOfPlayers value="${numberOfPlayers}">
@@ -214,13 +224,12 @@ async function getPositionTemplates(teamId: TeamId) {
   let positionCount = positions.reduce((acc, xs) => acc + xs.length, 0) || 4;
 
   return html`
-  <main id=main>
-    <a href="/web/positions?teamId=${teamId}&hz" >Cancel</a>
+    <a href="/web/positions?teamId=${teamId}">Cancel</a>
     <h2>Formation Templates</h2>
     <p>Choose how many players are on the field at once, then tap a shape.
     It replaces the team's formation, with each position named for you.</p>
 
-    <form _change=submit>
+    <form _change=numberOfPlayers>
       <fieldset class=fieldset-outline>
         <legend>Number of players</legend>
         <label class="inline p-1">
@@ -240,13 +249,10 @@ async function getPositionTemplates(teamId: TeamId) {
           &nbsp;11
         </label>
       </fieldset>
-      <input type=hidden name=teamId value="${teamId}">
-      <input type=hidden name=handler value="getTemplates">
     </form>
 
-    ${getTemplates(teamId, positionCount)}
-
-  </main>`;
+    ${getTemplates(positionCount)}
+`;
 }
 
 const positionNames = ["Striker", "Forward", "Midfield", "Fullback", "Goalkeeper"];
@@ -291,7 +297,7 @@ const gridValidator = {
   row: (num: number) => createNumber("Row", num),
 };
 
-const postHandlers: RoutePostHandler = {
+const actions: Actions = {
   async gridSize({ query }) {
     let { teamId, action, row } = await validateObject(query, gridValidator);
 
@@ -326,7 +332,12 @@ const postHandlers: RoutePostHandler = {
       positions,
     });
 
-    return html`${positionsNameView(positions, teamId)}${formationPreview(positions)}${setupGuideView(await teamGet(teamId), "formation")}`;
+    await replace(
+      positionsNameView(positions),
+      formationPreview(positions),
+      setupGuideView(await teamGet(teamId), "formation"),
+    );
+    return "Saved!";
   },
 
   async editPositions({ query, data }) {
@@ -339,7 +350,7 @@ const postHandlers: RoutePostHandler = {
     }
     o.positions = positions;
     await positionsSave(teamId, o);
-    return { status: 200 };
+    return "Saved!";
   },
 
   async createFormation({ query, data }) {
@@ -359,41 +370,28 @@ const postHandlers: RoutePostHandler = {
       positions,
     });
 
-    return html`<main id=main>${render(await start(query))}</main>`;
-  },
-};
-
-const getHandlers: RouteGetHandler = {
-  async get({ query }) {
-    const result = await start(query);
-    if (query.hz === "") {
-      return html`<main id=main>${render(result)}</main>`;
-    }
-    return layout({
-      main: render(result),
-      nav: teamNav(result.team.id),
-      title: `Formation - ${result.team.name} (${result.team.year})`,
-    });
+    await navigate(`/web/positions?teamId=${teamId}`, { replace: true });
+    return "Saved!";
   },
 
-  async showTemplates({ query }) {
-    let { teamId } = await validateObject(query, queryTeamIdValidator);
-    return getPositionTemplates(teamId);
-  },
-
-  async getTemplates({ query }) {
-    let { teamId, numberOfPlayers } = await validateObject(query, {
-      ...queryTeamIdValidator,
+  // The templates for another number of players.
+  async numberOfPlayers({ data }) {
+    let { numberOfPlayers } = await validateObject(data, {
       numberOfPlayers: createPositiveWholeNumber("Number of Players"),
     });
-
-    return html`${getTemplates(teamId, numberOfPlayers)}`;
+    await replace(getTemplates(numberOfPlayers));
   },
 };
 
-const route: RoutePage = {
-  get: getHandlers,
-  post: postHandlers,
-};
-
-export default route;
+export default {
+  async render({ query }) {
+    const result = await start(query);
+    return {
+      main:
+        query.handler === "showTemplates" ? getPositionTemplates(result.team.id) : render(result),
+      nav: teamNav(result.team.id),
+      title: `Formation - ${result.team.name} (${result.team.year})`,
+    };
+  },
+  actions,
+} satisfies Page;

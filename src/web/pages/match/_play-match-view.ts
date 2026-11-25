@@ -3,13 +3,10 @@ import { onDeckView } from "./_on-deck-view.js";
 import { outPlayersView } from "./_out-player-view.js";
 import { inPlayersView } from "./_in-play-players-view.js";
 import { notPlayingPlayersView } from "./_not-playing-players-view.js";
-
-let {
-  html,
-  repo: { statIds },
-  utils: { when },
-  views: { helpView },
-} = self.sw;
+import html from "html-template-tag-stream";
+import { statIds } from "../../data/repo-player-game.js";
+import { when } from "../../data/utils.js";
+import { helpView } from "../_help-views.js";
 
 export default async function playMatchView(state: PlayerStateView) {
   let [
@@ -53,21 +50,20 @@ export default async function playMatchView(state: PlayerStateView) {
   let creditScorer = stats.find((x) => x.id === statIds.Goal)?.active;
 
   return html`
-<main id=main data-sync-refresh="?$${queryTeamGame}&handler=playMain">
 <header class=match-bar>
-    <a class=match-back href="?${queryTeamGame}" target="_self" aria-label="Back to game">&lsaquo;</a>
+    <a class=match-back href="?${queryTeamGame}" aria-label="Back to game">&lsaquo;</a>
     ${
       creditScorer
         ? html`<button type=button class=score data-status=score aria-label="Our points ${points}. Tap, then tap the scorer. Press and hold to take a goal back.">${scoreView("Us", points)}</button>`
         : html`<button
+        type=button
         class=score
-        form=post
-        formaction="?${queryTeamGame}&handler=scorePoint"
+        _click=scorePoint
         aria-label="Our points ${points}. Press and hold to take a point back."
         >${scoreView("Us", points)}</button>`
     }
     <span aria-hidden=true>&ndash;</span>
-    ${opponentPointsView(queryTeamGame, gameCalc)}
+    ${opponentPointsView(gameCalc)}
 
     ${() => {
       let clock = html`<span id=gameTimer _load="gameTimer"
@@ -80,9 +76,9 @@ export default async function playMatchView(state: PlayerStateView) {
         : html`
     <button
         id=gameStatus
+        type=button
         class=match-clock
-        form=post
-        formaction="?$${queryTeamGame}&handler=${isGameInPlay ? "pauseGame" : "startGame"}"
+        _click="${isGameInPlay ? "pauseGame" : "startGame"}"
         aria-label="${isGameInPlay ? "Pause" : "Start"} the game"
         >${clock}<small>tap to ${isGameInPlay ? "pause" : "start"}</small></button>`;
     }}
@@ -90,9 +86,9 @@ export default async function playMatchView(state: PlayerStateView) {
       countOnDeckPlayersWithPosition > 0,
       () => html`
     <button
+        type=button
         class=swap-all
-        form=post
-        formaction="?$${queryTeamGame}&handler=swapAll"
+        _click=swapAll
         >Swap ${countOnDeckPlayersWithPosition}</button>`,
     )}
     <button
@@ -103,10 +99,9 @@ export default async function playMatchView(state: PlayerStateView) {
         aria-expanded=true
         >Bench (${countOnDeckWithNoPosition + outPlayers.length})</button>
     <button
+        type=button
         class=match-end
-        form=post
-        formaction="?$${queryTeamGame}&handler=${isGameEnded ? "restartGame" : "endGame"}"
-        _click="confirm"
+        _click="confirm ${isGameEnded ? "restartGame" : "endGame"}"
         data-confirm="Are you sure you would like to ${isGameEnded ? "restart" : "end"} the game?" >
         ${isGameEnded ? "Restart" : "End"}
     </button>
@@ -145,13 +140,15 @@ ${matchHelp(creditScorer)}
         ${when(
           playersExist,
           () => html`
-        <button
-            class="condense-padding match-end"
-            form=post
-            formaction="?$${queryTeamGame}&handler=allOut"
-            _click="confirm"
-            data-confirm="Are you sure you want to take all players out?"
-            >All Out</button>`,
+            <button
+              type="button"
+              class="condense-padding match-end"
+              _click="confirm allOut"
+              data-confirm="Are you sure you want to take all players out?"
+            >
+              All Out
+            </button>
+          `,
         )}
     </div>
 
@@ -169,8 +166,7 @@ ${matchHelp(creditScorer)}
     )}
     </div>
 </aside>
-</div>
-</main>`;
+</div>`;
 }
 
 // How to run the match, opened by the ? after End.
@@ -211,12 +207,12 @@ function matchHelp(creditScorer: boolean | undefined) {
   );
 }
 
-export function opponentPointsView(queryTeamGame: string, gameCalc: GameTimeCalculator) {
+export function opponentPointsView(gameCalc: GameTimeCalculator) {
   return html`<button
 id=opponentPoints
+type=button
 class="score score-them"
-form=post
-formaction="?$${queryTeamGame}&handler=oPointsIncPlay"
+_click=oPointsIncPlay
 aria-label="Opponent points ${gameCalc.gameState.opponentPoints}. Press and hold to take a point back."
 >${scoreView("Them", gameCalc.gameState.opponentPoints)}</button>`;
 }

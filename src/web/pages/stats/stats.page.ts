@@ -1,19 +1,18 @@
-import type { RoutePage, RouteGetHandler } from "@jon49/sw/routes.middleware.js";
+import type { Page, Query } from "../../app/page.js";
+import { replace } from "../../app/dom.js";
 import { StatsView } from "./shared.js";
-import type { PlayersShown } from "../../server/utils.js";
+import type { PlayersShown } from "../../data/utils.js";
 import { timePlayedView } from "./_positions-played-view.js";
 import { playerPointsView } from "./_player-points-view.js";
 import { percentagePlayed } from "./_percentage-played.js";
-import type { TeamId } from "../../server/db.js";
-
-const {
-  html,
-  layout,
-  repo: { teamGet },
-  utils: { when },
-  validation: { validateObject, queryTeamIdValidator },
-  views: { helpView, teamNav },
-} = self.sw;
+import type { TeamId } from "../../data/db.js";
+import html from "html-template-tag-stream";
+import { teamGet } from "../../data/repo-team.js";
+import { when } from "../../data/utils.js";
+import { validateObject } from "promise-validation";
+import { queryTeamIdValidator } from "../../data/validators.js";
+import { helpView } from "../_help-views.js";
+import { teamNav } from "../_shared-views.js";
 
 type StatTab = "timePlayed" | "percentagePlayed" | "activitiesPerformed";
 
@@ -43,7 +42,7 @@ function tabsView(teamId: TeamId, active: StatTab, show: PlayersShown) {
   <nav id=statTabs class=tabs aria-label="Stats">
     ${tabs.map(
       ([handler, label]) =>
-        html`<a id="${handler}" href="${statsQuery(teamId, handler, show)}" $${when(handler === active, `aria-current=page`)}>${label}</a>`,
+        html`<a id="${handler}" href="${statsQuery(teamId, handler, show)}" _click=tab $${when(handler === active, `aria-current=page`)}>${label}</a>`,
     )}
   </nav>`;
 }
@@ -52,7 +51,7 @@ function tabsView(teamId: TeamId, active: StatTab, show: PlayersShown) {
 // them, or take them away again, keeping the current tab.
 function playersShownView(teamId: TeamId, active: StatTab, show: PlayersShown) {
   let link = (id: string, next: PlayersShown, label: string) =>
-    html`<a id="${id}" href="${statsQuery(teamId, active, next)}" role=button class="nc-button condense-padding">${label}</a>`;
+    html`<a id="${id}" href="${statsQuery(teamId, active, next)}" _click=tab role=button class="nc-button condense-padding">${label}</a>`;
   return html`
   <p id=statPlayers class=stat-players>
     ${link("statSubs", { ...show, subs: !show.subs }, show.subs ? "Hide subs" : "Show subs")}
@@ -75,7 +74,7 @@ async function render(query: any) {
 
   return html`
   <h2 class=inline>${team.name}</h2>
-  <a href="/web/stats/edit?teamId=${teamId}" target="_self">Edit</a>
+  <a href="/web/stats/edit?teamId=${teamId}">Edit</a>
 
   ${helpView(html`
     <p>
@@ -101,25 +100,30 @@ async function render(query: any) {
     </p>
   `)}
 
-  ${tabView(query, "timePlayed")}`;
+  ${tabView(query, tabOf(query))}`;
 }
 
-const getHandler: RouteGetHandler = {
-  async get({ query }) {
-    return layout({
-      main: await render(query),
+function tabOf(query: Query): StatTab {
+  let tab = tabs.find(([x]) => x === query.handler);
+  return tab ? tab[0] : "timePlayed";
+}
+
+export default {
+  async render({ query }) {
+    return {
+      main: render(query),
       nav: teamNav((await validateObject(query, queryTeamIdValidator)).teamId),
       title: "Stats",
-    });
+    };
   },
 
-  timePlayed: ({ query }) => tabView(query, "timePlayed"),
-  percentagePlayed: ({ query }) => tabView(query, "percentagePlayed"),
-  activitiesPerformed: ({ query }) => tabView(query, "activitiesPerformed"),
-};
-
-const router: RoutePage = {
-  get: getHandler,
-};
-
-export default router;
+  actions: {
+    // A tab, or Show / Hide subs or inactive: its table in place of this
+    // one, where the page is scrolled.
+    async tab({ ev, el }) {
+      ev.preventDefault();
+      let query: Query = Object.fromEntries(new URL((el as HTMLAnchorElement).href).searchParams);
+      await replace(tabView(query, tabOf(query)));
+    },
+  },
+} satisfies Page;

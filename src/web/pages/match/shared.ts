@@ -1,4 +1,3 @@
-import type { DbCache as DbCacheType } from "@jon49/sw/utils.js";
 import type {
   InPlayPlayer,
   OnDeckPlayer,
@@ -8,7 +7,7 @@ import type {
   TeamPlayer,
   GameState,
   TeamId,
-} from "../../server/db.js";
+} from "../../data/db.js";
 import {
   PlayerGameTimeCalculatorBase,
   GameTimeCalculator,
@@ -19,23 +18,20 @@ import {
   isOutPlayer,
 } from "./state-logic.js";
 import { fairShareRatio, staleAfterMs } from "./player-state-logic.js";
+import html from "html-template-tag-stream";
+import {
+  playerGameAllGet,
+  playerGameSave,
+  positionGetAll,
+  statsGetAll,
+} from "../../data/repo-player-game.js";
+import { teamGet, getGameNotes, gameStateGet } from "../../data/repo-team.js";
+import { DbCache, when } from "../../data/utils.js";
+import { required } from "../../data/validation.js";
+import { queryTeamIdGameIdValidator } from "../../data/validators.js";
+import { validateObject } from "promise-validation";
 
 export { GameTimeCalculator, isInPlayPlayer, isOnDeckPlayer, isOutPlayer };
-
-let {
-  html,
-  repo: {
-    playerGameAllGet,
-    teamGet,
-    playerGameSave,
-    positionGetAll,
-    statsGetAll,
-    getGameNotes,
-    gameStateGet,
-  },
-  utils: { DbCache, when },
-  validation: { required, queryTeamIdGameIdValidator, validateObject },
-} = self.sw;
 
 // Follows a sub's name wherever a match shows it.
 export function subMark(player: TeamPlayer) {
@@ -91,7 +87,7 @@ export const DEFAULT_STALE_AFTER_MINUTES = 8;
 export class PlayerStateView {
   teamId: TeamId;
   gameId: number;
-  #cache: DbCacheType;
+  #cache: DbCache;
   constructor(teamId: TeamId, gameId: number) {
     this.teamId = teamId;
     this.gameId = gameId;
