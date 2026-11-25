@@ -41,6 +41,30 @@ test("the Players heading counts active players as they are added and toggled", 
   expect((await a.idb(["team", teamId]))?.players[0]).not.toHaveProperty("sub");
 });
 
+test("adding players keeps the Add a player box where it was on the screen", async ({
+  newCoach,
+}) => {
+  let a = await newCoach("a");
+  let teamId = await a.createTeam("Hawks", "2026");
+  await a.page.setViewportSize({ width: 400, height: 600 });
+  await a.goto(`/web/players?teamId=${teamId}`);
+  let input = a.page.locator("#newPlayer");
+  let top = () => input.evaluate((x) => Math.round(x.getBoundingClientRect().top));
+
+  // Enough players that the box sits low on the screen, with the page scrolled.
+  for (let name of ["Ann", "Bo", "Cy", "Dee", "Eve", "Fay", "Gus", "Hal"]) {
+    await a.tap("addPlayer", () => input.fill(name).then(() => input.press("Enter")));
+  }
+  await input.scrollIntoViewIfNeeded();
+  let before = await top();
+  expect(await a.page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+
+  await a.tap("addPlayer", () => input.fill("Ida").then(() => input.press("Enter")));
+  await expect(a.page.locator("input[value=Ida]")).toBeVisible();
+  await expect.poll(top).toBe(before);
+  await expect(input).toBeFocused();
+});
+
 test("a sub plays in a match and is marked as one", async ({ newCoach }) => {
   let coach = await newCoach("coach");
   let match = await matchSetup(coach);

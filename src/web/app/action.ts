@@ -141,6 +141,7 @@ function context(ev: Event, el: HTMLElement): ActionContext {
 
 export function run(names: string, ev: Event, el: HTMLElement) {
   let ctx: ActionContext | undefined;
+  let anyQueued = false;
   for (let name of names.split(" ")) {
     if (!name) continue;
     let fn = find(el, name);
@@ -155,8 +156,25 @@ export function run(names: string, ev: Event, el: HTMLElement) {
       if (ev.defaultPrevented && ev.type !== "submit") return;
     } else {
       queued(name, fn, c);
+      anyQueued = true;
     }
   }
+  if (anyQueued && ev.type === "submit") keepInPlace(ctx!.form ?? el);
+}
+
+// After a form's actions, scrolls the page by however far the form moved, so
+// it's back where it was on the screen: a player added above the Add a player
+// form pushes the page up instead of pushing the form down. (@jon49/web's
+// anchor.js did this before the rewrite.) Skipped if the page changed.
+function keepInPlace(form: HTMLElement) {
+  let { id } = form,
+    top = form.getBoundingClientRect().top,
+    url = location.href;
+  enqueue(() => {
+    if (location.href !== url) return;
+    let el = form.isConnected ? form : id ? document.getElementById(id) : null;
+    if (el) window.scrollBy(0, el.getBoundingClientRect().top - top);
+  });
 }
 
 // Runs the action `name` as if `el` named it, with `params` added to its

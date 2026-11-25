@@ -26,4 +26,34 @@ test.describe("the games list", () => {
     ]))!.games;
     expect(games.find((x) => x.opponent === "Grizzlies")?.date).toBe("2099-10-31");
   });
+
+  test("adds one game after another without leaving the page", async ({ newCoach }) => {
+    let coach = await newCoach("coach");
+    let teamId = await coach.createTeam("Tigers", "2026");
+    let { page } = coach;
+    await coach.goto(`/web/games?teamId=${teamId}`);
+
+    for (let [opponent, date] of [
+      ["Owls", "2099-11-01T10:00"],
+      ["Bears", "2099-11-08T09:30"],
+      ["Hawks", "2099-11-15T09:00"],
+    ]) {
+      await page.fill("#gameDate", date);
+      await page.fill("#gameOpponent", opponent);
+      let { failed, messages } = await coach.tap("addGame", () =>
+        page.click("form.form >> button:has-text('Save')"),
+      );
+      // Toasts stay a few seconds, so the newest is last.
+      expect({ opponent, failed, message: messages.at(-1) }).toEqual({
+        opponent,
+        failed: false,
+        message: "Saved!",
+      });
+    }
+    await expect(page.locator("#games .game-opponent")).toHaveText([
+      "vs Owls",
+      "vs Bears",
+      "vs Hawks",
+    ]);
+  });
 });

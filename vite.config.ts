@@ -9,6 +9,7 @@
 //   browsers that already have the app registered it as one), with the list
 //   of every file the build emitted to keep offline.
 import { createHash } from "node:crypto";
+import { existsSync } from "node:fs";
 import { cp, readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 import { build, defineConfig, type Connect, type Plugin } from "vite";
@@ -27,11 +28,17 @@ function isFile(p: string) {
   return p.lastIndexOf("/") < p.lastIndexOf(".");
 }
 
-// /web/teams?teamId=1 -> /web/index.html
-const shell: Connect.NextHandleFunction = (req, _res, next) => {
+// /web/teams?teamId=1 -> /web/index.html. And /login -> /login/, as NGINX
+// does for a folder, since the app links to /login, /register, ...
+const shell: Connect.NextHandleFunction = (req, res, next) => {
   let url = new URL(req.url ?? "/", "http://x");
-  if (url.pathname.startsWith("/web/") && !isFile(url.pathname) && req.method === "GET") {
+  let { pathname } = url;
+  if (req.method !== "GET" || isFile(pathname)) return next();
+  if (pathname.startsWith("/web/")) {
     req.url = "/web/index.html";
+  } else if (!pathname.endsWith("/") && existsSync(path.join(root, pathname, "index.html"))) {
+    res.writeHead(301, { Location: `${pathname}/${url.search}` });
+    return res.end();
   }
   next();
 };

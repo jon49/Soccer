@@ -25,8 +25,10 @@ test.describe("deleting your account", () => {
     expect(await a.idb(["team", teamId])).toBeUndefined();
     expect(await a.teamNames()).toEqual([]);
 
-    // The account is gone, so its password no longer logs in.
-    await a.page.goto("/login/");
+    // The account is gone, so its password no longer logs in. (The link is to
+    // /login, which the servers send on to /login/.)
+    await a.page.locator("#auth-link").click();
+    await a.page.waitForURL("**/login/");
     await a.fillLogin();
     await expect(a.page.locator("main .message")).toBeVisible();
     expect(a.page.url()).toContain("/login");
