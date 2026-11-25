@@ -974,27 +974,27 @@
             <tr>
               <td>App code: JavaScript, CSS, HTML, manifest (uncompressed)</td>
               <td class="n">249 KB (38 files)</td>
-              <td class="n">202 KB (37 files)</td>
+              <td class="n">202 KB (36 files)</td>
             </tr>
             <tr>
               <td>App code, download (compressed, as served)</td>
               <td class="n">88 KB</td>
-              <td class="n">71 KB</td>
+              <td class="n">70 KB</td>
             </tr>
             <tr>
               <td>Icons (uncompressed)</td>
               <td class="n">107 KB (7 files)</td>
-              <td class="n">120 KB (9 files)</td>
+              <td class="n">107 KB (7 files)</td>
             </tr>
             <tr>
               <td>Everything, uncompressed</td>
               <td class="n">356 KB</td>
-              <td class="n">322 KB</td>
+              <td class="n">309 KB</td>
             </tr>
             <tr class="strong">
               <td>Everything, download (compressed, as served)</td>
               <td class="n">191 KB</td>
-              <td class="n">187 KB</td>
+              <td class="n">173 KB</td>
             </tr>
           </tbody>
         </table>
@@ -1016,10 +1016,10 @@
           it's opened; the match page's CSS loads with it.
         </li>
         <li>
-          <strong>Icons are most of the download</strong> (116 of 187 KB): PNGs don't compress. 13
-          KB of them is waste: the build also ships hashed copies of <code>soccer.ico</code> and
-          <code>apple-touch-icon.png</code>, which the app shell links, beside the ones in
-          <code>/web/images/</code>. Not fixed yet.
+          <strong>Icons are most of the download</strong> (103 of 173 KB): PNGs don't compress. Each
+          ships once since 2026-11-25; before that, the build also shipped hashed copies of
+          <code>apple-touch-icon.png</code> and <code>soccer.ico</code> beside the unhashed ones,
+          and an unused unhashed <code>manifest.json</code> (14 KB in all).
         </li>
         <li>
           The download counts the <code>.gz</code> copies the publish script makes of HTML, CSS,
@@ -1030,7 +1030,7 @@
           icons, against 107 KB in the same version's build now, so they don't compare with these.
         </li>
         <li>
-          <strong>Why so small:</strong> it is about 11× smaller than the trimmed APK because it
+          <strong>Why so small:</strong> it is about 12× smaller than the trimmed APK because it
           relies on Chrome, which is already on the phone. The cost is Chrome's startup (above), not
           the download.
         </li>
@@ -1155,7 +1155,7 @@
             </tr>
             <tr class="strong">
               <td>Web app (measured)</td>
-              <td>187 KB (uses Chrome)</td>
+              <td>173 KB (uses Chrome)</td>
               <td>same, in any browser</td>
               <td>2.1–3.2 s cold, ~1.1 s with Chrome running</td>
             </tr>
@@ -1245,8 +1245,8 @@
         ["Linux binary", 4.9],
         ["Linux, no debug symbols", 4.7],
         ["Linux, compressed", 2.3],
-        ["Web app, uncompressed", 0.32],
-        ["Web app, download", 0.19],
+        ["Web app, uncompressed", 0.31],
+        ["Web app, download", 0.17],
       ];
       const tip = document.getElementById("tip");
       const fmtS = (ms) => (ms / 1000).toFixed(2) + " s";

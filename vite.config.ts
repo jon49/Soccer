@@ -21,8 +21,11 @@ const pages = ["index.html", "web/index.html", "login/index.html", "register/ind
   .concat(["forgot-password/index.html", "reset-password/index.html"])
   .map((x) => path.join(root, x));
 
-// Made by tasks/make-icons.sh and kept as they are, with no hash in the name.
-const copied = ["web/images", "web/manifest.json"];
+// Copied as they are, with no hash in the name: the icons the manifest names
+// and the header's logo. apple-touch-icon.png and manifest.json aren't: the
+// app shell links them, so the build ships hashed copies of them already.
+const copied = "web/images";
+const linkedFromHtml = ["apple-touch-icon.png"];
 
 function isFile(p: string) {
   return p.lastIndexOf("/") < p.lastIndexOf(".");
@@ -60,9 +63,10 @@ function serviceWorker(): Plugin {
       outDir = path.resolve(config.root, config.build.outDir);
     },
     async closeBundle() {
-      for (let x of copied) {
-        await cp(path.join(root, x), path.join(outDir, x), { recursive: true });
-      }
+      await cp(path.join(root, copied), path.join(outDir, copied), {
+        recursive: true,
+        filter: (x) => !linkedFromHtml.includes(path.basename(x)),
+      });
       let files = (await filesIn(outDir)).filter((x) => !x.endsWith(".gz")).sort();
       let hash = createHash("sha256");
       for (let x of files) hash.update(x).update(await readFile(path.join(outDir, x)));
