@@ -327,12 +327,13 @@
         with <code>tasks/measure-startup.sh</code>.
       </p>
       <p class="note">
-        The numbers below are from before 2026-11-24, when the web app's pages were rendered by
-        its service worker (and, once loaded, by the same routes run in the page). Since then the
-        pages render in the browser from modules loaded on demand, and the worker only keeps the
-        files, answers with the app shell and syncs. Startup (<code>tasks/measure-startup.sh</code>)
-        times the installed app from the live site, so it can only be measured again once that is
-        deployed. Speed in use, measured right after the change:
+        The startup and phone storage numbers below are from before 2026-11-24, when the web app's
+        pages were rendered by its service worker (and, once loaded, by the same routes run in the
+        page). Since then the pages render in the browser from modules loaded on demand, and the
+        worker only keeps the files, answers with the app shell and syncs. Startup
+        (<code>tasks/measure-startup.sh</code>) times the installed app from the live site, so it
+        can only be measured again once that is deployed. Speed in use, measured right after the
+        change:
       </p>
       <section>
         <h3>After the change: speed in use (2026-11-24)</h3>
@@ -345,10 +346,26 @@
             </tr>
           </thead>
           <tbody>
-            <tr><td>Match taps, all</td><td class="n">74 ms</td><td class="n">77, 69 ms</td></tr>
-            <tr><td>A stats tab</td><td class="n">57 ms</td><td class="n">49, 51 ms</td></tr>
-            <tr><td>Moving between pages (6 pages)</td><td class="n">39–59 ms</td><td class="n">44–59 ms</td></tr>
-            <tr><td>Page load, navigation to first paint (7 pages)</td><td class="n">216–276 ms</td><td class="n">244–324 ms</td></tr>
+            <tr>
+              <td>Match taps, all</td>
+              <td class="n">74 ms</td>
+              <td class="n">77, 69 ms</td>
+            </tr>
+            <tr>
+              <td>A stats tab</td>
+              <td class="n">57 ms</td>
+              <td class="n">49, 51 ms</td>
+            </tr>
+            <tr>
+              <td>Moving between pages (6 pages)</td>
+              <td class="n">39–59 ms</td>
+              <td class="n">44–59 ms</td>
+            </tr>
+            <tr>
+              <td>Page load, navigation to first paint (7 pages)</td>
+              <td class="n">216–276 ms</td>
+              <td class="n">244–324 ms</td>
+            </tr>
           </tbody>
         </table>
         <p class="note">
@@ -939,51 +956,88 @@
       </figure>
 
       <h3>Web app</h3>
-      <p>The production build (<code>npm run build</code>, as the publish script ships it):</p>
+      <p>
+        The production build (<code>npm run build</code>, as the publish script ships it), before
+        and after the 2026-11-24 change that moved drawing the pages from the service worker to the
+        browser. Both measured 2026-11-25, the same way:
+      </p>
       <div class="table-wrap">
         <table>
           <thead>
             <tr>
               <th>Web app</th>
-              <th class="n">Size</th>
+              <th class="n">Before</th>
+              <th class="n">After</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td>App files (38 files, uncompressed)</td>
-              <td class="n">270 KB</td>
+              <td>App code: JavaScript, CSS, HTML, manifest (uncompressed)</td>
+              <td class="n">249 KB (38 files)</td>
+              <td class="n">202 KB (37 files)</td>
+            </tr>
+            <tr>
+              <td>App code, download (compressed, as served)</td>
+              <td class="n">88 KB</td>
+              <td class="n">71 KB</td>
+            </tr>
+            <tr>
+              <td>Icons (uncompressed)</td>
+              <td class="n">107 KB (7 files)</td>
+              <td class="n">120 KB (9 files)</td>
+            </tr>
+            <tr>
+              <td>Everything, uncompressed</td>
+              <td class="n">356 KB</td>
+              <td class="n">322 KB</td>
             </tr>
             <tr class="strong">
-              <td>Download (compressed, as served)</td>
-              <td class="n">106 KB</td>
+              <td>Everything, download (compressed, as served)</td>
+              <td class="n">191 KB</td>
+              <td class="n">187 KB</td>
             </tr>
           </tbody>
         </table>
       </div>
       <ul>
         <li>
-          By type, uncompressed: JavaScript 190 KB (25 files), CSS 48 KB, HTML 8 KB, icons 23 KB.
+          <strong>The code is a fifth smaller.</strong> By type, uncompressed: JavaScript 139 KB in
+          27 files (was 193 KB in 28), CSS 56 KB (was 50 KB), HTML 6 KB (was 5.5 KB).
         </li>
         <li>
-          <strong>Biggest files:</strong> the service worker's shared code
-          (<code>shared.global.js</code>, 33 KB), the match page (31 KB), the CSS
-          (<code>base.css</code>, 31 KB), and the page script (<code>app.bundle.js</code>, 19 KB).
+          <strong>Where the JavaScript went:</strong> the service worker no longer draws pages, so
+          its shared code (<code>shared.global.js</code>, 36 KB), the route table and the sync page
+          are gone. The worker is now one 12 KB file, <code>sw.js</code>.
         </li>
         <li>
-          It used to be 290 KB (107 KB to download): <code>base.css</code> shipped twice, hashed and
-          unhashed, for the pages outside the service worker. Each page now links it itself, before
-          <code>app.css</code>, instead of <code>app.css</code> importing it (see "Hashed asset
-          names" in <code>CLAUDE.md</code>).
+          <strong>Biggest files now:</strong> the CSS (49 KB; <code>base.css</code> and
+          <code>app.css</code>, bundled into one file), the match page (25 KB), the app shell's
+          script (17 KB) and the service worker (12 KB). Each page's own code loads the first time
+          it's opened; the match page's CSS loads with it.
         </li>
-        <li>The build also ships pre-compressed <code>.gz</code> copies, which aren't counted.</li>
         <li>
-          <strong>Why so small:</strong> it is about 20× smaller than the trimmed APK because it
+          <strong>Icons are most of the download</strong> (116 of 187 KB): PNGs don't compress. 13
+          KB of them is waste: the build also ships hashed copies of <code>soccer.ico</code> and
+          <code>apple-touch-icon.png</code>, which the app shell links, beside the ones in
+          <code>/web/images/</code>. Not fixed yet.
+        </li>
+        <li>
+          The download counts the <code>.gz</code> copies the publish script makes of HTML, CSS,
+          JavaScript and SVG files over 450 bytes, which NGINX serves; everything else as it is.
+        </li>
+        <li>
+          This section used to give 270 KB (106 KB to download). Those figures counted 23 KB of
+          icons, against 107 KB in the same version's build now, so they don't compare with these.
+        </li>
+        <li>
+          <strong>Why so small:</strong> it is about 11× smaller than the trimmed APK because it
           relies on Chrome, which is already on the phone. The cost is Chrome's startup (above), not
           the download.
         </li>
       </ul>
 
       <h3>Web app on the phone</h3>
+      <p>Before the 2026-11-24 change: the live site still ran the old version.</p>
       <div class="table-wrap">
         <table>
           <thead>
@@ -1017,8 +1071,11 @@
           <strong>The cache keeps every old version.</strong> It holds 141 files (1.55 MB of
           responses; Chrome counts 3.4 MB with its overhead), against 36 in a build: 17 versions of
           the file map, 13 of the match page, 12 of the service worker's shared code, 9 of
-          <code>app.css</code>. Nothing removes a file's old version after an update, so the cache
-          grows with every release. Not fixed yet.
+          <code>app.css</code>. Nothing removed a file's old version after an update, so the cache
+          grew with every release. <strong>Fixed by the 2026-11-24 change:</strong> each version now
+          has a cache of its own, and the new worker deletes the others when it takes over. In a
+          rehearsal of the update from the old version, only the new version's cache was left. Not
+          yet measured on the phone.
         </li>
       </ul>
 
@@ -1098,7 +1155,7 @@
             </tr>
             <tr class="strong">
               <td>Web app (measured)</td>
-              <td>106 KB (uses Chrome)</td>
+              <td>187 KB (uses Chrome)</td>
               <td>same, in any browser</td>
               <td>2.1–3.2 s cold, ~1.1 s with Chrome running</td>
             </tr>
@@ -1188,8 +1245,8 @@
         ["Linux binary", 4.9],
         ["Linux, no debug symbols", 4.7],
         ["Linux, compressed", 2.3],
-        ["Web app, uncompressed", 0.27],
-        ["Web app, download", 0.11],
+        ["Web app, uncompressed", 0.32],
+        ["Web app, download", 0.19],
       ];
       const tip = document.getElementById("tip");
       const fmtS = (ms) => (ms / 1000).toFixed(2) + " s";

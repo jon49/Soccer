@@ -84,4 +84,3 @@ export function toast(...messages: string[]) {
     setTimeout(() => el.remove(), 3e3);
   }
 }
-
