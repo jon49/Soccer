@@ -320,7 +320,8 @@ fn index_of_player(players []PlayerGame, player_id int) int {
 
 // target_position sends a player to a field position: a field player moves
 // there (swapping with whoever holds it), and a bench or queued player is
-// queued for it (bumping whoever was queued there back to the bench).
+// queued for it. Whoever was queued there takes the incoming player's old
+// slot if it had one (the two switch), and otherwise goes back to the bench.
 // Returns the indexes changed.
 pub fn target_position(mut players []PlayerGame, player_id int, names []string, target int, game_on bool, now i64) []int {
 	i := index_of_player(players, player_id)
@@ -349,9 +350,15 @@ pub fn target_position(mut players []PlayerGame, player_id int, names []string, 
 		return changed
 	}
 	if players[i].status.kind in [.on_deck, .out, .none_] {
+		old := if players[i].is_on_deck() { players[i].status.target } else { -1 }
 		for j, mut p in players {
 			if j != i && p.is_on_deck() && p.status.target == target {
-				p.status = status_out()
+				if old >= 0 {
+					p.status = on_deck(old)
+					p.set_position(names[old], game_on, now)
+				} else {
+					p.status = status_out()
+				}
 				changed << j
 			}
 		}

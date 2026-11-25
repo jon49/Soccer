@@ -118,7 +118,15 @@ fn (mut app App) draw_match_bar(m core.Match, w f32, now i64) f32 {
 	// Right group: swap, bench, end. On a narrow window it gets its own row.
 	queued := m.on_deck().filter(it.status.target >= 0).len
 	benched := m.on_deck().filter(it.status.target < 0).len + m.benched().len
-	swap_label := 'Swap ${queued}'
+	// With a queued player selected, Swap swaps just them in.
+	sel := app.match.sel
+	swap_one := if sel.kind == .player && sel.status == .on_deck
+		&& m.on_deck().any(it.player_id == sel.player_id && it.status.target >= 0) {
+		sel.player_id
+	} else {
+		0
+	}
+	swap_label := if swap_one > 0 { 'Swap' } else { 'Swap ${queued}' }
 	bench_label := 'Bench (${benched})'
 	end_label := if m.state.is_ended() { 'Restart' } else { 'End' }
 	mut right_w := ui.button_width(bench_label) + gap + ui.button_width(end_label)
@@ -238,7 +246,8 @@ fn (mut app App) draw_match_bar(m core.Match, w f32, now i64) f32 {
 		})
 		ui.pointer_cursor(sr)
 		if ui.tap(sr, 'swap') {
-			app.match_swap(0)
+			app.match.clear()
+			app.match_swap(swap_one)
 		}
 	}
 	total_h := if two_rows { y + 2 * bh + gap + 6 } else { y + bh + 6 }

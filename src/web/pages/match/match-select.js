@@ -4,7 +4,8 @@ import { dispatch } from "../../app/action.js";
 // Match page: tap a player to select them, then tap where they go. A field
 // position queues a bench player for it (or moves a field player there); a
 // queued player's own spot swaps just them in; the Bench and Not playing boxes
-// move the selected player off. Tapping our score selects it too, and the next
+// move the selected player off. With a queued player selected, the Swap button
+// reads "Swap" and swaps just them in. Tapping our score selects it too, and the next
 // player tapped gets the goal. Tapping anywhere else clears the selection.
 // Holding a score takes a point back (with the Goal stat on, from the next
 // player tapped).
@@ -21,6 +22,23 @@ function clear() {
   selected?.classList.remove("is-selected");
   selected = null;
   delete document.body.dataset.selecting;
+  swapLabel();
+}
+
+// The selected player, when they're queued for a field position.
+function selectedQueued() {
+  return selected?.dataset.status === "onDeck" && selected.closest("[data-position]")
+    ? selected
+    : null;
+}
+
+// "Swap 3" swaps every queued player on; with one of them selected it reads
+// "Swap" and swaps just them.
+function swapLabel() {
+  let button = document.querySelector(".swap-all");
+  if (!(button instanceof HTMLElement)) return;
+  button.dataset.label ??= button.textContent ?? "";
+  button.textContent = selectedQueued() ? "Swap" : button.dataset.label;
 }
 
 /**
@@ -31,6 +49,7 @@ function select(el) {
   selected = el;
   el.classList.add("is-selected");
   document.body.dataset.selecting = el.dataset.status;
+  swapLabel();
 }
 
 /**
@@ -152,10 +171,19 @@ function onKeyDown(e) {
 }
 
 // Swallow the click that ends a hold, before it submits or selects anything.
+// With a queued player selected, the Swap button swaps just them, in place of
+// its own swapAll.
 /** @param {MouseEvent} e */
 function onClickCapture(e) {
-  if (!held) return;
-  held = false;
+  let queued = selectedQueued();
+  let swap = e.target instanceof Element && e.target.closest(".swap-all");
+  if (held) {
+    held = false;
+  } else if (queued && swap) {
+    post("swap", { playerId: queued.dataset.playerId ?? "" });
+  } else {
+    return;
+  }
   e.preventDefault();
   e.stopImmediatePropagation();
 }
@@ -214,6 +242,7 @@ function afterAction() {
     selected = same;
   }
   selected.classList.add("is-selected");
+  swapLabel();
 }
 
 /** @param {MouseEvent} e */

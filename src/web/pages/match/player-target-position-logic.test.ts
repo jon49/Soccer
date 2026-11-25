@@ -58,6 +58,41 @@ describe("applySwapToOnDeck", () => {
     assert.deepEqual(playersToSave, [occupant, incoming]);
   });
 
+  it("switches two queued players' slots", () => {
+    let incoming = makePlayer(1, {
+      status: { _: "onDeck", targetPosition: 0 },
+      gameTime: [{ position: "GK" }],
+    });
+    let occupant = makePlayer(2, {
+      status: { _: "onDeck", targetPosition: 1 },
+      gameTime: [{ position: "DEF" }],
+    });
+
+    let { playersToSave } = applySwapToOnDeck(incoming, [occupant], POSITIONS, 1, makeGameState());
+
+    assert.deepEqual(incoming.status, { _: "onDeck", targetPosition: 1 });
+    assert.deepEqual(occupant.status, { _: "onDeck", targetPosition: 0 });
+    assert.deepEqual(playersToSave, [occupant, incoming]);
+    assert.deepEqual(incoming.gameTime, [{ position: "DEF" }]);
+    assert.deepEqual(occupant.gameTime, [{ position: "GK" }]);
+  });
+
+  it("leaves a queued player in place when moved onto their own slot", () => {
+    let player = makePlayer(1, {
+      status: { _: "onDeck", targetPosition: 1 },
+      gameTime: [{ position: "DEF" }],
+    });
+    let self = makePlayer(1, {
+      status: { _: "onDeck", targetPosition: 1 },
+      gameTime: [{ position: "DEF" }],
+    });
+
+    let { playersToSave } = applySwapToOnDeck(player, [self], POSITIONS, 1, makeGameState());
+
+    assert.deepEqual(player.status, { _: "onDeck", targetPosition: 1 });
+    assert.deepEqual(playersToSave, [player]);
+  });
+
   it("does nothing when the player is currently in play", () => {
     let player = makePlayer(1, { status: { _: "inPlay", position: 0 } });
     let { playersToSave } = applySwapToOnDeck(player, [], POSITIONS, 1, makeGameState());

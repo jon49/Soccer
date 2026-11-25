@@ -236,6 +236,24 @@ fn test_queueing_bumps_whoever_was_queued_there() {
 	assert changed == [1, 0]
 }
 
+fn test_two_queued_players_switch_slots() {
+	mut players := [pg(1, on_deck(0), [PlayerGameTime{
+		position: 'GK'
+	}]), pg(2, on_deck(1), [PlayerGameTime{
+		position: 'DEF'
+	}])]
+	changed := target_position(mut players, 1, test_names, 1, true, 5)
+	assert players[0].status == on_deck(1)
+	assert players[1].status == on_deck(0)
+	assert changed == [1, 0]
+	assert players[0].game_time == [PlayerGameTime{
+		position: 'DEF'
+	}]
+	assert players[1].game_time == [PlayerGameTime{
+		position: 'GK'
+	}]
+}
+
 fn test_field_player_moves_and_swaps_positions() {
 	mut players := [pg(1, in_play(0), [PlayerGameTime{
 		start:    500

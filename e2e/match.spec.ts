@@ -415,6 +415,47 @@ test.describe("moving players during a match", () => {
     expect(isRunning((await match.playerGame("Fay"))?.gameTime)).toBe(false);
   });
 
+  test("with a queued player selected, the Swap button swaps just them", async ({ newCoach }) => {
+    let match = await matchSetup(await newCoach("coach"));
+    await match.lineup("Ann", "Bo", "Cy", "Dee");
+    await match.start();
+    await match.queue("Eve", 0);
+    await match.queue("Fay", 1);
+    let swap = match.page.locator(".swap-all");
+    await expect(swap).toHaveText("Swap 2");
+
+    await match.queued(1).click();
+    await expect(swap).toHaveText("Swap");
+    await match.page.keyboard.press("Escape");
+    await expect(swap).toHaveText("Swap 2");
+
+    await match.queued(1).click();
+    await match.act("swap", () => swap.click());
+
+    expect(await match.field()).toEqual(["Ann", "Fay", "Cy", "Dee"]);
+    await expect(match.queued(0)).toContainText("Eve next");
+    await expect(swap).toHaveText("Swap 1");
+    expect((await match.playerGame("Bo"))?.status).toEqual({ _: "out" });
+  });
+
+  test("a queued player moved onto another queued player switches spots with them", async ({
+    newCoach,
+  }) => {
+    let match = await matchSetup(await newCoach("coach"));
+    await match.lineup("Ann", "Bo", "Cy", "Dee");
+    await match.start();
+    await match.queue("Eve", 0);
+    await match.queue("Fay", 1);
+
+    await match.queued(0).click();
+    await match.act("updateUserPosition", () => match.queued(1).click());
+
+    await expect(match.queued(0)).toContainText("Fay next");
+    await expect(match.queued(1)).toContainText("Eve next");
+    expect((await match.playerGame("Eve"))?.status).toEqual({ _: "onDeck", targetPosition: 1 });
+    expect((await match.playerGame("Fay"))?.status).toEqual({ _: "onDeck", targetPosition: 0 });
+  });
+
   test("a queued player can go to an empty spot alone", async ({ newCoach }) => {
     let match = await matchSetup(await newCoach("coach"));
     await match.lineup("Ann", "Bo", "Cy");

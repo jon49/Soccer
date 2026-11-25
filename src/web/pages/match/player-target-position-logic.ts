@@ -11,8 +11,9 @@ export interface TargetPositionOutcome {
 }
 
 // A player who is currently on-deck, out, or has no status yet can be
-// (re)targeted at an on-deck slot. Bumps whoever already held that slot back
-// to "out".
+// (re)targeted at an on-deck slot. Whoever already held that slot takes the
+// incoming player's old slot when the incoming player was queued for one
+// (the two switch), and otherwise goes back to "out".
 export function applySwapToOnDeck(
   player: PlayerGame,
   players: PlayerGame[],
@@ -25,17 +26,24 @@ export function applySwapToOnDeck(
   }
 
   let playersToSave: PlayerGame[] = [];
+  let gameCalc = new GameTimeCalculator(gameState);
+  let oldTarget = isOnDeckPlayer(player) ? player.status.targetPosition : null;
 
   let onDeckPlayer = players
     .filter(isOnDeckPlayer)
-    .find((x) => x.status.targetPosition === targetPosition);
+    .find((x) => x.playerId !== player.playerId && x.status.targetPosition === targetPosition);
   if (onDeckPlayer) {
-    (<PlayerGame>onDeckPlayer).status = { _: "out" };
+    if (oldTarget != null) {
+      onDeckPlayer.status = { _: "onDeck", targetPosition: oldTarget };
+      new PlayerGameTimeCalculatorBase(onDeckPlayer, gameCalc).position(positions[oldTarget]);
+    } else {
+      (<PlayerGame>onDeckPlayer).status = { _: "out" };
+    }
     playersToSave.push(onDeckPlayer);
   }
 
   player.status = { _: "onDeck", targetPosition };
-  let playerCalc = new PlayerGameTimeCalculatorBase(player, new GameTimeCalculator(gameState));
+  let playerCalc = new PlayerGameTimeCalculatorBase(player, gameCalc);
   if (isOnDeckPlayer(player)) {
     playerCalc.position(positions[targetPosition]);
   }
