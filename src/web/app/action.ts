@@ -218,14 +218,12 @@ interface Disconnectable {
   disconnectedCallback: () => void;
 }
 
-let loaded = new WeakMap<Element, string[]>();
 let components = new Map<Element, Disconnectable>();
 
 function sweep() {
   for (let [el, component] of components) {
     if (el.isConnected) continue;
     components.delete(el);
-    loaded.delete(el);
     component.disconnectedCallback();
   }
 }
@@ -235,17 +233,19 @@ new MutationObserver(() => components.size && sweep()).observe(document.document
   subtree: true,
 });
 
-// Runs the `_load` actions of elements that haven't had them yet.
+// Runs the `_load` actions of elements that haven't had them yet, taking the
+// attribute off so they run once.
 export function runLoads() {
   for (let el of document.querySelectorAll<HTMLElement>("[_load]")) {
-    for (let name of el.getAttribute("_load")!.split(" ")) {
-      if (!name || loaded.get(el)?.includes(name)) continue;
+    let names = el.getAttribute("_load")!;
+    el.removeAttribute("_load");
+    for (let name of names.split(" ")) {
+      if (!name) continue;
       let fn = find(el, name);
       if (!fn) {
         console.warn(`ACTION: Could not find function ${name}. Target element`, el);
         continue;
       }
-      loaded.get(el)?.push(name) ?? loaded.set(el, [name]);
       let result = fn(context(new Event("load"), el)) as Partial<Disconnectable> | undefined;
       if (result?.disconnectedCallback) components.set(el, result as Disconnectable);
     }
