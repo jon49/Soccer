@@ -162,9 +162,9 @@ async function navReport(name: string, page: Page, paths: string[]) {
   console.log(`\n${name} (median ms): click → new page drawn`);
   for (let [path, ts] of rows) {
     let loads = ts.filter((t) => Number.isNaN(t)).length;
-    let morphed = ts.filter((t) => !Number.isNaN(t));
+    let inPlace = ts.filter((t) => !Number.isNaN(t));
     console.log(
-      `  ${path.replace(/[?&](teamId|gameId)=[^&]+/g, "").padEnd(22)} ${morphed.length ? ms(median(morphed)) : "      -"}${loads ? `  (${loads} of ${ts.length} loaded as a new document)` : ""}`,
+      `  ${path.replace(/[?&](teamId|gameId)=[^&]+/g, "").padEnd(22)} ${inPlace.length ? ms(median(inPlace)) : "      -"}${loads ? `  (${loads} of ${ts.length} loaded as a new document)` : ""}`,
     );
   }
 }
