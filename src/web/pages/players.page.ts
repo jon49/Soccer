@@ -1,5 +1,5 @@
 import type { Team, TeamPlayer, TeamPlayerStatus } from "../data/db.js";
-import type { Actions, Page } from "../app/page.js";
+import type { Actions, Page, Query } from "../app/page.js";
 import { append, replace, remove } from "../app/dom.js";
 import html from "html-template-tag-stream";
 import { isSharedTeamId, teamGet, playerCreate, teamSave } from "../data/repo-team.js";
@@ -140,22 +140,24 @@ const statusCycle: [TeamPlayerStatus, string][] = [
   ["sub", "Sub"],
 ];
 
-// One radio per status, with only the checked one's label showing (app.css).
-// Each label is for the next status's radio, so a tap checks that one and the
-// form submits on change.
+// A real button, so Tab reaches it and Space or Enter presses it, as a tap
+// does. It shows the current status and names the next one in data-next;
+// the hidden field sends the current one along when the name or number
+// changes. type=button, so Enter in the name field doesn't press it.
 function statusToggle(player: TeamPlayer) {
   let current = playerStatus(player);
-  let id = (status: TeamPlayerStatus) => `player-status-${player.id}-${status}`;
+  let i = statusCycle.findIndex(([status]) => status === current);
+  let [, label] = statusCycle[i];
+  let [next] = statusCycle[(i + 1) % statusCycle.length];
   return html`
-<span class=status-toggle>
-    ${statusCycle.map(
-      ([status]) =>
-        html`<input id="${id(status)}" name=status type=radio value="${status}" $${when(status === current, "checked")}>`,
-    )}
-    ${statusCycle.map(([status, label], i) => {
-      let next = statusCycle[(i + 1) % statusCycle.length][0];
-      return html`<label for="${id(next)}" class="is-${status} condense-padding nc-button" role="button">${label}</label>`;
-    })}
+<span id="player-status-${player.id}" class=status-toggle>
+    <input type=hidden name=status value="${current}">
+    <button
+        id="player-status-button-${player.id}"
+        type=button
+        _click=nextStatus
+        data-next="${next}"
+        class="is-${current} condense-padding nc-button">${label}</button>
 </span>`;
 }
 
@@ -184,34 +186,48 @@ function playerView(player: TeamPlayer) {
 </li>`;
 }
 
+// Saves a player's name, number and status from their row's form.
+async function savePlayer(q: Query, d: Record<string, any>) {
+  let [{ teamId, playerId }, { name: playerName, status, number }] = await validate([
+    validateObject(q, queryTeamIdPlayerIdValidator),
+    validateObject(d, dataPlayerNameStatusValidator),
+  ]);
+  let team = await teamGet(teamId);
+
+  let playerIndex = team.players.findIndex((x) => x.id === playerId);
+  await assert.isFalse(playerIndex === -1, `Unknown player "${playerId}"`);
+  let player = team.players[playerIndex];
+
+  // Check for duplicates
+  let existingPlayer = team.players.find((x) => equals(x.name, playerName));
+  await assert.isFalse(
+    !equals(player.name, playerName) && !!existingPlayer,
+    `The player name "${existingPlayer?.name}" has already been chosen.`,
+  );
+
+  player.name = playerName;
+  player.active = status !== "inactive";
+  if (status === "sub") player.sub = true;
+  else delete player.sub;
+  player.number = number;
+  // Player name will also need to be updated for the individual player when implemented!
+  await teamSave(team);
+
+  await replace(playersHeading(team));
+  return { team, player };
+}
+
 const actions: Actions = {
-  async editPlayer({ data: d, query: q }) {
-    let [{ teamId, playerId }, { name: playerName, status, number }] = await validate([
-      validateObject(q, queryTeamIdPlayerIdValidator),
-      validateObject(d, dataPlayerNameStatusValidator),
-    ]);
-    let team = await teamGet(teamId);
+  async editPlayer({ data, query }) {
+    await savePlayer(query, data);
+    return "Saved!";
+  },
 
-    let playerIndex = team.players.findIndex((x) => x.id === playerId);
-    await assert.isFalse(playerIndex === -1, `Unknown player "${playerId}"`);
-    let player = team.players[playerIndex];
-
-    // Check for duplicates
-    let existingPlayer = team.players.find((x) => equals(x.name, playerName));
-    await assert.isFalse(
-      !equals(player.name, playerName) && !!existingPlayer,
-      `The player name "${existingPlayer?.name}" has already been chosen.`,
-    );
-
-    player.name = playerName;
-    player.active = status !== "inactive";
-    if (status === "sub") player.sub = true;
-    else delete player.sub;
-    player.number = number;
-    // Player name will also need to be updated for the individual player when implemented!
-    await teamSave(team);
-
-    await replace(playersHeading(team));
+  // The status button: saves the player with the next status and draws the
+  // button again, which keeps its focus (replace).
+  async nextStatus({ data, query }) {
+    let { player } = await savePlayer(query, { ...data, status: query.next });
+    await replace(statusToggle(player));
     return "Saved!";
   },
 

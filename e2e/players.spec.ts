@@ -17,11 +17,11 @@ test("the Players heading counts active players as they are added and toggled", 
   await expect(heading).toHaveText("Players (2)");
 
   let ann = a.page.locator(".player-row", { has: a.page.locator("input[value=Ann]") });
-  let status = ann.locator(".status-toggle label:visible");
+  let status = ann.locator(".status-toggle button");
   await expect(status).toHaveText("Active");
 
   // Active, then Inactive, then Sub, then back to Active. Subs aren't counted.
-  let tap = () => a.tap("editPlayer", () => status.click());
+  let tap = () => a.tap("nextStatus", () => status.click());
   await tap();
   await expect(status).toHaveText("Inactive");
   await expect(heading).toHaveText("Players (1)");
@@ -70,8 +70,8 @@ test("a sub plays in a match and is marked as one", async ({ newCoach }) => {
   let match = await matchSetup(coach);
   await coach.goto(`/web/players?teamId=${match.teamId}`);
   let fay = coach.page.locator(".player-row", { has: coach.page.locator("input[value=Fay]") });
-  let status = fay.locator(".status-toggle label:visible");
-  let tap = () => coach.tap("editPlayer", () => status.click());
+  let status = fay.locator(".status-toggle button");
+  let tap = () => coach.tap("nextStatus", () => status.click());
   await tap();
   await tap();
   await expect(status).toHaveText("Sub");
@@ -93,8 +93,8 @@ test("players are listed active, then subs, then inactive, each by name", async 
   let status = (name: string) =>
     a.page
       .locator(".player-row", { has: a.page.locator(`input[value=${name}]`) })
-      .locator(".status-toggle label:visible");
-  let tap = (name: string) => a.tap("editPlayer", () => status(name).click());
+      .locator(".status-toggle button");
+  let tap = (name: string) => a.tap("nextStatus", () => status(name).click());
   let names = () =>
     a.page
       .locator("#playerCards input[name=name]")
@@ -129,4 +129,56 @@ test("players are listed active, then subs, then inactive, each by name", async 
   await expect(a.page.locator("#statSubs")).toHaveText("Show subs");
   await expect(rows).toHaveText(["Cy", "Eve", "Dee"]);
   await expect(a.page.locator("#activitiesPerformed")).toHaveAttribute("aria-current", "page");
+});
+
+test("the Active / Inactive / Sub toggles are in the tab order and work from the keyboard", async ({
+  newCoach,
+}) => {
+  let a = await newCoach("a");
+  let teamId = await a.createTeam("Hawks", "2026");
+  await a.addPlayer(teamId, "Ann");
+  await a.goto(`/web/players?teamId=${teamId}`);
+  let { page } = a;
+  let teamToggle = page.locator("#team-active .nc-button:visible");
+  let status = page.locator(".player-row .status-toggle button");
+
+  // Tab from Year lands on the team's toggle; Space flips it.
+  await page.focus("#year-input");
+  await page.keyboard.press("Tab");
+  await expect(page.locator("#team-active input")).toBeFocused();
+  await expect(teamToggle).toHaveText("Active");
+  await a.tap("editTeam", () => page.keyboard.press("Space"));
+  await expect(teamToggle).toHaveText("Inactive");
+  expect((await a.idb(["team", teamId]))?.active).toBe(false);
+
+  // On to the player's number, name, then status, a button: Space steps it
+  // Active → Inactive → Sub → Active, and it keeps the focus.
+  for (let i = 0; i < 3; i++) await page.keyboard.press("Tab");
+  await expect(status).toBeFocused();
+  for (let next of ["Inactive", "Sub", "Active"]) {
+    await a.tap("nextStatus", () => page.keyboard.press("Space"));
+    await expect(status).toHaveText(next);
+    await expect(status).toBeFocused();
+  }
+  await a.tap("nextStatus", () => page.keyboard.press("Enter"));
+  await expect(status).toHaveText("Inactive");
+
+  // Renaming the player keeps their status, and Enter in the name field
+  // doesn't press the status button.
+  let name = page.locator(".player-row input[name=name]");
+  await a.tap("editPlayer", () =>
+    name
+      .fill("Annie")
+      .then(() => name.press("Enter"))
+      .then(() => name.blur()),
+  );
+  await expect(status).toHaveText("Inactive");
+  expect((await a.idb(["team", teamId]))?.players[0]).toMatchObject({
+    name: "Annie",
+    active: false,
+  });
+
+  await status.focus();
+  await page.keyboard.press("Tab");
+  await expect(page.locator("#newPlayer")).toBeFocused();
 });

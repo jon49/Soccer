@@ -46,10 +46,10 @@ for (let scheme of ["light", "dark"] as const) {
     let status = (name: string) =>
       page
         .locator(".player-row", { has: page.locator(`input[value="${name}"]`) })
-        .locator(".status-toggle label:visible");
-    await coach.tap("editPlayer", () => status("Eve").click());
-    await coach.tap("editPlayer", () => status("Fay").click());
-    await coach.tap("editPlayer", () => status("Fay").click());
+        .locator(".status-toggle button");
+    await coach.tap("nextStatus", () => status("Eve").click());
+    await coach.tap("nextStatus", () => status("Fay").click());
+    await coach.tap("nextStatus", () => status("Fay").click());
     await expect(status("Fay")).toHaveText("Sub");
     await check("players");
     await page.click(".help-button");

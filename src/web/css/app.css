@@ -456,9 +456,27 @@ textarea {
  * row flip the toggle. Keep the hit area to the button itself. */
 .toggle {
   display: inline-block;
+  position: relative;
 }
 
-.toggle > [type="checkbox"],
+/* The checkbox behind a toggle is hidden from sight, not with display: none,
+ * so it stays in the tab order: Tab lands on the toggle and Space flips it.
+ * The button that shows gets the focus ring. */
+.toggle > [type="checkbox"] {
+  position: absolute;
+  inset: 0;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+.toggle > input:focus-visible ~ .nc-button,
+.status-toggle > button:focus-visible {
+  outline: 2px solid var(--nc-primary);
+  outline-offset: 2px;
+}
+
 .on,
 input:checked ~ .off,
 input:indeterminate ~ .off,
@@ -486,22 +504,13 @@ input:indeterminate ~ .none {
   display: inline-block;
 }
 
-/* A player's Active / Inactive / Sub button: only the checked status's label
- * shows (see statusToggle in players.page.ts). */
+/* A player's Active / Inactive / Sub button, a real button so Space presses
+ * it (see statusToggle in players.page.ts). */
 .status-toggle {
   display: inline-block;
 }
-.status-toggle > input,
-.status-toggle > label {
-  display: none;
-}
-.status-toggle > label {
+.status-toggle > button {
   margin: 0;
-}
-.status-toggle > [value="active"]:checked ~ .is-active,
-.status-toggle > [value="inactive"]:checked ~ .is-inactive,
-.status-toggle > [value="sub"]:checked ~ .is-sub {
-  display: inline-flex;
 }
 /* Same looks as the on and off toggles; Sub is hollow and dashed. */
 .status-toggle > .is-active {
