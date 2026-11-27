@@ -3,7 +3,7 @@ module core
 import json2
 
 // The record shapes match what the web client stores and syncs (see
-// src/web/server/db.ts), so both clients share the same TrailBase data.
+// src/web/server/db.ts), so both clients share the same ImageBase data.
 // Every record keeps the JSON it was read from (`raw`), and writing it back
 // starts from that, so fields this client does not know about survive.
 

@@ -3,12 +3,12 @@ module core
 import os
 import rand
 
-// Sync and sharing against a real, throwaway TrailBase (the e2e suite's
+// Sync and sharing against a real, throwaway ImageBase server (the e2e suite's
 // backend). Skipped unless SOCCER_TEST_SERVER and SOCCER_TEST_DB are set:
 //
 //   E2E_API_PORT=4011 ../e2e/backend.sh &
 //   SOCCER_TEST_SERVER=http://localhost:4011 \
-//   SOCCER_TEST_DB=../e2e/.depot/data/main.db v test core
+//   SOCCER_TEST_DB=../e2e/.depot/imagebase.db v test core
 
 const test_password = 'E2eTest!12345'
 

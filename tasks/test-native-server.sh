@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Runs the native client's tests, including core/server_test.v, against a
-# throwaway TrailBase on :4011 (e2e/backend.sh: needs trail and ../ImageBase).
+# throwaway ImageBase server on :4011 (e2e/backend.sh: needs ../ImageBase).
 # The server stops when the tests finish.
 set -euo pipefail
 root="$(cd "$(dirname "$0")/.." && pwd)"
@@ -22,5 +22,5 @@ for _ in $(seq 1 120); do
 done
 
 SOCCER_TEST_SERVER=http://localhost:$port \
-  SOCCER_TEST_DB="$root/e2e/.depot/data/main.db" \
+  SOCCER_TEST_DB="$root/e2e/.depot/imagebase.db" \
   make -C "$root/native" test

@@ -1,5 +1,5 @@
 // Sharing a team with other coaches: the calls to the server. A shared team
-// is a TrailBase "space" (see ../ImageBase): a set of users who all sync the
+// is an ImageBase "space" (see ../ImageBase): a set of users who all sync the
 // same rows as equals. The team's id *is* the space id, so its keys never
 // collide with anyone's personal teams. The local side of sharing is in
 // repo-share.ts.

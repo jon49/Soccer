@@ -1,4 +1,4 @@
-// Deleting the coach's account. TrailBase's `DELETE /api/auth/v1/delete`
+// Deleting the coach's account. ImageBase's `DELETE /api/auth/v1/delete`
 // removes the account and its sessions, and ImageBase's triggers remove the
 // data it synced (see ../ImageBase README, "Deleting an account"). Teams
 // shared with other coaches stay with them.

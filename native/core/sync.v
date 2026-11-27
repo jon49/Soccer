@@ -2,7 +2,7 @@ module core
 
 import json2
 
-// Sync with the same TrailBase endpoint as the web client (sync.ts):
+// Sync with the same ImageBase endpoint as the web client (sync.ts):
 // POST /api/data/soccer with the pending records, our personal cursor and a
 // cursor per shared team (space). The server saves every upload (the latest
 // write wins), returns what other devices changed since our cursors, and

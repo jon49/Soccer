@@ -4,15 +4,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Commands
 
-- `npm start` — Vite dev server on :8009, proxying `/api/*` to a local TrailBase on :4000 (`SOCCER_API` to change it).
+- `npm start` — Vite dev server on :8009, proxying `/api/*` to a local ImageBase server on :4000 (`SOCCER_API` to change it).
 - `npm run server` — production build into `./server/public`, served by `vite preview`.
-- `npm run start:full` — runs `start`, `server`, and `make -C ../ImageBase dev` (TrailBase backend) concurrently.
-- `./server/start.sh [--rebuild]` — production-shaped local harness: builds into `./server/public`, starts TrailBase on :4000, and runs a tiny Node static + reverse proxy on :8009.
+- `npm run start:full` — runs `start`, `server`, and `make -C ../ImageBase dev` (the ImageBase backend) concurrently.
+- `./server/start.sh [--rebuild]` — production-shaped local harness: builds into `./server/public`, starts the ImageBase server on :4000, and runs a tiny Node static + reverse proxy on :8009.
 - `npm run build` — production build into `./deploy`.
 - `npm run check` — `tsc --noEmit` typecheck of `src/`, then of `e2e/` (its own `e2e/tsconfig.json`).
 - `npm test` — runs every `src/**/*.test.ts` via `tsx --test`. Single test: `tsx --test src/web/pages/match/state-logic.test.ts`.
 - `npm run fmt` / `fmt:check` — format with oxfmt.
-- `npm run e2e` — Playwright end-to-end tests (`e2e/*.spec.ts`) against the real app in Chromium. Starts its own throwaway TrailBase on :4010 (fresh depot in `e2e/.depot`, seeded from `../ImageBase`, which must be on a branch with the features under test) and Vite on :8010, so it can run beside `npm start`. Needs `trail`, `sqlite3`, and the Rust toolchain for the ImageBase guest wasm. Single test: `npx playwright test -g "removing a coach"`. Each test registers fresh users through the API and marks them verified in SQL (`trail user add` fails on TrailBase v0.35); the `Coach` fixture in `e2e/fixtures.ts` is one logged-in device, with background auto-sync off (call `coach.sync()`). `coach.tap(action, ...)` taps and waits for that page action to finish (`app:done`). `MatchPage` in `e2e/match-page.ts` drives the match play view by tapping like a coach does (`lineup`, `start`, `goal`, `queue` + `swapAll` / `swapOne`, `move`, `toBench`, `end`); `setTeamStat` flips basketball mode or the Goal stat.
+- `npm run e2e` — Playwright end-to-end tests (`e2e/*.spec.ts`) against the real app in Chromium. Starts its own throwaway ImageBase server on :4010 (`e2e/backend.sh`: builds `../ImageBase`, which must be on a branch with the features under test, and runs it on an empty data dir, `e2e/.depot`, database `e2e/.depot/imagebase.db`) and Vite on :8010, so it can run beside `npm start`. Needs `sqlite3` and what `../ImageBase` builds with (Goose, gcc, the SQLite dev library). Single test: `npx playwright test -g "removing a coach"`. Each test registers fresh users through the API and marks them verified in SQL; the `Coach` fixture in `e2e/fixtures.ts` is one logged-in device, with background auto-sync off (call `coach.sync()`). `coach.tap(action, ...)` taps and waits for that page action to finish (`app:done`). `MatchPage` in `e2e/match-page.ts` drives the match play view by tapping like a coach does (`lineup`, `start`, `goal`, `queue` + `swapAll` / `swapOne`, `move`, `toBench`, `end`); `setTeamStat` flips basketball mode or the Goal stat.
 
 - `tasks/check-contrast.sh [shots-dir]` — `e2e/contrast.spec.ts`: every page, light and dark, must meet WCAG AAA contrast (text 7:1, large text 4.5:1, field edges 3:1); with a directory, also saves grayscale screenshots. The app must also read with a phone's grayscale filter on, so states differ by lightness, fill or border, not hue alone. Colors go through the tokens at the top of `src/web/css/app.css`.
 
@@ -20,11 +20,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `tasks/measure-startup.sh` / `tasks/measure-speed.sh` — time the web and native apps on the connected phone: startup, and taps during a match and moving between pages (`e2e/phone/speed.perf.ts`, Playwright driving the phone's Chrome against a production build on a localhost site of its own, the real site only read). Results and what they mean: `docs/startup-and-size.html`.
 - `tasks/*.sh` — one script per command the user runs by hand (setup, building and installing the APK, the emulator, phone logs, tests). When telling the user to run a command they will want again, add or update a script here.
 
-The `/api` path is owned by TrailBase (separate repo at `../ImageBase`). The Vite dev server and NGINX in production both forward `/api/*` there.
+The `/api` path is owned by the ImageBase server (separate repo at `../ImageBase`, a Goose program). The Vite dev server and NGINX in production both forward `/api/*` there.
 
 ## Architecture
 
-This is an **offline-first PWA** whose pages render **in the browser**, from IndexedDB. There is no web server for the app: TrailBase is only a sync target.
+This is an **offline-first PWA** whose pages render **in the browser**, from IndexedDB. There is no web server for the app: ImageBase is only a sync target.
 
 ### The app shell and its pages
 
@@ -47,7 +47,7 @@ The auth pages (`/login`, `/register`, `/forgot-password`, `/reset-password`) an
 ### Data layer & sync
 
 - All app data lives in **IndexedDB via `idb-keyval`**. `src/web/data/db.ts` wraps `set`/`update` so that anything with a `_rev` field is added to the `"updated"` set on write (and, in a page, fires `db:changed`).
-- `src/web/data/sync.ts` (run by the service worker) is the bidirectional sync against TrailBase at `/api/data/soccer`. It posts updated keys, receives server changes, writes them back, updates `lastSyncedId`, and clears `"updated"`. Auth tokens (TrailBase 1h TTL) are auto-refreshed once on 401 via `/api/auth/v1/refresh`.
+- `src/web/data/sync.ts` (run by the service worker) is the bidirectional sync against ImageBase at `/api/data/soccer`. It posts updated keys, receives server changes, writes them back, updates `lastSyncedId`, and clears `"updated"`. Auth tokens (1h TTL) are auto-refreshed once on 401 via `/api/auth/v1/refresh`.
 - `src/web/app/sync.ts` asks the worker to sync once per browser session and a moment after each `db:changed` (debounced), and keeps the header's sync count. When a sync brings new data it redraws the page. It is suppressed during a match when Settings' `disableAutoSyncDuringGame` is set. Errors are swallowed silently; the sync button reports them.
 - **Anything saved with `_rev` syncs to the backend.** Calling `set`/`update` with `sync: false` (or on a value with no `_rev`) keeps it local-only — used for auth tokens, settings, the `updated` set itself, and ephemeral `loggedIn` flag.
 
@@ -57,7 +57,7 @@ The auth pages (`/login`, `/register`, `/forgot-password`, `/reset-password`) an
 
 ### Native client
 
-`native/` is a second client, written in V on gg/sokol (the same stack as `../weight/desktop`). It syncs with the same TrailBase endpoint and stores records under the same keys and shapes, so changes to a record's shape, its key, or the sync protocol must be made in both clients. `native/core/` ports the TypeScript logic file by file (each file names what it ports); `native/core/match.v` mirrors `state-logic.ts` and its tests.
+`native/` is a second client, written in V on gg/sokol (the same stack as `../weight/desktop`). It syncs with the same ImageBase endpoint and stores records under the same keys and shapes, so changes to a record's shape, its key, or the sync protocol must be made in both clients. `native/core/` ports the TypeScript logic file by file (each file names what it ports); `native/core/match.v` mirrors `state-logic.ts` and its tests.
 
 ### Code conventions
 

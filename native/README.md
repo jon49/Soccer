@@ -5,7 +5,7 @@ the same toolkit as `../weight/desktop`. It does what the web app does and
 works offline: teams and players, games and the published schedule, the
 match view (positions, substitutions, clocks, goals), stats, formations,
 sharing a team with other coaches and joining one, and login, registration
-and password reset on their own screens. It syncs with the same TrailBase
+and password reset on their own screens. It syncs with the same ImageBase
 backend and record format, so the web and native clients share data.
 
 It builds and runs on Linux and Android. Windows and macOS type-check and
@@ -66,7 +66,7 @@ gui/                the immediate-mode toolkit from the weight app, plus long
                     segmented choices and paste
 core/               no GUI imports: records and keys, models, the match state
                     machine and its actions, stats tables, formations, the
-                    schedule page, the store file, sync, and the TrailBase API
+                    schedule page, the store file, sync, and the ImageBase API
 ```
 
 `core/` follows the web app's TypeScript closely; each file names the module

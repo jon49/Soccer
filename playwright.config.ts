@@ -2,7 +2,7 @@ import { defineConfig, devices } from "@playwright/test";
 import { API_PORT, APP_PORT } from "./e2e/env.js";
 
 // End-to-end tests: the real app (service worker and all) in Chromium against
-// a throwaway TrailBase. Ports differ from `npm start` (8009/4000) so the
+// a throwaway ImageBase server. Ports differ from `npm start` (8009/4000) so the
 // suite can run alongside a dev session.
 export default defineConfig({
   testDir: "./e2e",
@@ -24,7 +24,7 @@ export default defineConfig({
       command: "./e2e/backend.sh",
       url: `http://localhost:${API_PORT}/api/auth/v1/status`,
       env: { E2E_API_PORT: String(API_PORT) },
-      // The first run may build the ImageBase guest wasm.
+      // The first run builds the ImageBase server.
       timeout: 300_000,
       reuseExistingServer: false,
     },

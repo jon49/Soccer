@@ -5,7 +5,7 @@ import json2
 import encoding.base64
 import rand
 
-// HTTP calls to TrailBase. They are plain functions with no Store access so
+// HTTP calls to the ImageBase server. They are plain functions with no Store access so
 // the GUI can run them on a worker thread; the results are applied to the
 // Store on the UI thread.
 //
@@ -125,7 +125,7 @@ fn friendly_status(status int) string {
 	return 'Something went wrong (error ${status}). Please try again.'
 }
 
-// server_message is the error message TrailBase sent, if any.
+// server_message is the error message the server sent, if any.
 fn server_message(res http.Response) string {
 	m := as_map(decode_json(res.body))
 	msg := any_str(field(m, 'message'))
@@ -173,7 +173,7 @@ pub fn login(server string, email string, password string) !AuthTokens {
 	return tokens
 }
 
-// register creates an account. TrailBase requires email verification before
+// register creates an account. The server requires email verification before
 // login works, so this does not log in.
 pub fn register(server string, email string, password string, password_repeat string) ! {
 	body := json2.Any({

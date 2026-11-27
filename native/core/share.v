@@ -2,7 +2,7 @@ module core
 
 import json2
 
-// Moving a personal team into a shared team (a TrailBase "space"), the same
+// Moving a personal team into a shared team (an ImageBase "space"), the same
 // way the web client's share-logic.ts does. The team's id becomes the space
 // uuid; ["team", oldId] is left as a tombstone {movedTo, _rev} so other
 // devices know to ignore the old rows, which the server keeps forever.

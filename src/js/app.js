@@ -47,7 +47,7 @@
     logout();
   }
 
-  // The reset link's code. TrailBase emails use `password_reset_code`; accept
+  // The reset link's code, as `password_reset_code`; accept
   // legacy `?token=` for old reset emails still in inboxes.
   let resetForm = doc.querySelector("form[action$='/reset_password/update']");
   let resetCode = params.get("password_reset_code") || params.get("token");
@@ -123,7 +123,7 @@
     }
 
     if (action.includes("/api/auth/v1/register")) {
-      // TrailBase requires email verification before login works. Don't
+      // The server requires email verification before login works. Don't
       // attempt auto-login — direct the user to check their email.
       writeMessage("Registration received. Check your email for a verification link, then log in.");
       return;

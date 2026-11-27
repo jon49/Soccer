@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
-# Local-testing harness for the soccer tracker against the TrailBase backend.
+# Local-testing harness for the soccer tracker against the ImageBase backend.
 #
-# Production runs the static files behind NGINX with TrailBase upstream — this
+# Production runs the static files behind NGINX with ImageBase upstream — this
 # script reproduces that topology locally:
 #
 #   1. Build the static bundle into ./server/public with Vite.
-#   2. Start TrailBase from ../ImageBase on :4000 (background).
+#   2. Start the ImageBase server from ../ImageBase on :4000 (background).
 #   3. Run a tiny Node reverse proxy on :8009 that serves ./server/public for
-#      normal paths and forwards /api/* to TrailBase.
+#      normal paths and forwards /api/* to ImageBase.
 #
 # Usage:  ./server/start.sh [--rebuild]
 #
@@ -27,7 +27,7 @@ imagebase_dir="$(cd -- "$repo_root/../ImageBase" &> /dev/null && pwd)"
 
 public_dir="$current_dir/public"
 proxy_port=8009
-trail_port=4000
+api_port=4000
 
 if [[ "${1:-}" == "--rebuild" || ! -d "$public_dir" ]]; then
     echo "Building static bundle into $public_dir ..."
@@ -35,14 +35,14 @@ if [[ "${1:-}" == "--rebuild" || ! -d "$public_dir" ]]; then
 fi
 
 cleanup() {
-    [[ -n "${trail_pid:-}" ]] && kill "$trail_pid" 2>/dev/null || true
+    [[ -n "${api_pid:-}" ]] && kill "$api_pid" 2>/dev/null || true
     [[ -n "${proxy_pid:-}" ]] && kill "$proxy_pid" 2>/dev/null || true
 }
 trap cleanup EXIT INT TERM
 
-echo "Starting TrailBase on :$trail_port (from $imagebase_dir) ..."
+echo "Starting ImageBase on :$api_port (from $imagebase_dir) ..."
 (cd "$imagebase_dir" && make dev) &
-trail_pid=$!
+api_pid=$!
 
 echo "Starting static + reverse proxy on :$proxy_port ..."
 node - <<EOF &
@@ -51,7 +51,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 
 const root = ${public_dir@Q};
-const upstream = { host: "127.0.0.1", port: ${trail_port} };
+const upstream = { host: "127.0.0.1", port: ${api_port} };
 
 const mime = {
   ".html": "text/html; charset=utf-8",
@@ -105,7 +105,7 @@ http.createServer((req, res) => {
   if ((req.url || "").startsWith("/api/")) return proxy(req, res);
   serveStatic(req, res);
 }).listen(${proxy_port}, "localhost", () => {
-  console.log("Proxy listening on http://localhost:${proxy_port} -> TrailBase :${trail_port}");
+  console.log("Proxy listening on http://localhost:${proxy_port} -> ImageBase :${api_port}");
 });
 EOF
 proxy_pid=$!

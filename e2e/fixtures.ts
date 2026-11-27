@@ -7,15 +7,15 @@ import {
 } from "@playwright/test";
 import { execFileSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
-import { API_PORT, DEPOT } from "./env.js";
+import { API_PORT, DB } from "./env.js";
 
 const PASSWORD = "E2eTest!12345";
 
 export function sql(query: string): string {
-  return execFileSync("sqlite3", [`${DEPOT}data/main.db`, query], { encoding: "utf8" }).trim();
+  return execFileSync("sqlite3", [DB, query], { encoding: "utf8" }).trim();
 }
 
-// Hex form of a uuid, as TrailBase stores it in BLOB id columns.
+// Hex form of a uuid, as the server stores it in BLOB id columns.
 export const hex = (uuid: string) => uuid.replace(/-/g, "").toUpperCase();
 
 // Makes `email` the "soccer" app owner (only the owner may publish a personal
@@ -26,9 +26,7 @@ export function makeAppOwner(email: string) {
 }
 
 // Signs up through the API like a coach would, then marks the address
-// verified (unverified users can't log in). `trail user add` would do both,
-// but fails with an internal error as of TrailBase v0.35. Plain sqlite3 lacks
-// the is_email() that _user's CHECK constraints call, so skip those.
+// verified (unverified users can't log in), as `imagebase user verify` does.
 async function registerVerified(email: string) {
   let res = await fetch(`http://localhost:${API_PORT}/api/auth/v1/register`, {
     method: "POST",
@@ -36,8 +34,7 @@ async function registerVerified(email: string) {
     body: JSON.stringify({ email, password: PASSWORD, password_repeat: PASSWORD }),
   });
   expect(res.ok, `register ${email}: ${res.status}`).toBe(true);
-  sql(`PRAGMA ignore_check_constraints = ON;
-       UPDATE _user SET email = unverified_email, unverified_email = NULL
+  sql(`UPDATE _user SET email = unverified_email, unverified_email = NULL
        WHERE unverified_email = '${email}';`);
 }
 
