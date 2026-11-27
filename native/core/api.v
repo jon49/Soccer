@@ -115,7 +115,7 @@ fn refresh_auth_token(server string, refresh_token string) ?string {
 
 fn friendly_status(status int) string {
 	if status == 429 {
-		return 'Too many attempts. Please wait a minute and try again.'
+		return 'Too many attempts. Please try again later.'
 	}
 	if status >= 500 {
 		return 'The server is temporarily unavailable. Please try again in a moment.'
@@ -153,6 +153,9 @@ pub fn login(server string, email string, password string) !AuthTokens {
 			} else {
 				'Verify your email address first: check your email for the link.'
 			})
+		}
+		429 {
+			return error('Too many failed logins. Please wait 15 minutes and try again.')
 		}
 		else {
 			return error(friendly_status(res.status_code))
@@ -194,6 +197,10 @@ pub fn request_password_reset(server string, email string) ! {
 	})
 	res := http_request(.post, server + '/api/auth/v1/reset_password/request', body.json_str(),
 		'') or { return error('Network error. Please try again.') }
+	// The server sends at most one reset email per address per hour.
+	if res.status_code == 429 {
+		return error('A reset email was already sent in the last hour. Check your inbox (and spam), or try again in an hour.')
+	}
 	if res.status_code < 200 || res.status_code >= 300 {
 		msg := server_message(res)
 		return error(if msg != '' { msg } else { friendly_status(res.status_code) })

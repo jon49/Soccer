@@ -109,7 +109,7 @@
     }
 
     if (!response.ok) {
-      writeMessage(data?.message || data?.error || friendlyStatus(response.status));
+      writeMessage(data?.message || data?.error || friendlyStatus(response.status, action));
       return;
     }
 
@@ -148,8 +148,18 @@
     return template.content;
   }
 
-  function friendlyStatus(status) {
-    if (status === 429) return "Too many attempts. Please wait a minute and try again.";
+  // The server refuses with 429 a second reset email within an hour, and a
+  // login after 10 failures in 15 minutes (ImageBase auth.goose).
+  function friendlyStatus(status, action = "") {
+    if (status === 429) {
+      if (action.includes("/api/auth/v1/reset_password/request")) {
+        return "A reset email was already sent in the last hour. Check your inbox (and spam), or try again in an hour.";
+      }
+      if (action.includes("/api/auth/v1/login")) {
+        return "Too many failed logins. Please wait 15 minutes and try again.";
+      }
+      return "Too many attempts. Please try again later.";
+    }
     if (status >= 500) {
       return "The server is temporarily unavailable. Please try again in a moment.";
     }
