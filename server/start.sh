@@ -5,7 +5,8 @@
 # script reproduces that topology locally:
 #
 #   1. Build the static bundle into ./server/public with Vite.
-#   2. Start the ImageBase server from ../ImageBase on :4000 (background).
+#   2. Start soccer's ImageBase server from ../ImageBase on :4000 (background),
+#      with its own data dir, ../ImageBase/data/soccer.
 #   3. Run a tiny Node reverse proxy on :8009 that serves ./server/public for
 #      normal paths and forwards /api/* to ImageBase.
 #
@@ -41,7 +42,7 @@ cleanup() {
 trap cleanup EXIT INT TERM
 
 echo "Starting ImageBase on :$api_port (from $imagebase_dir) ..."
-(cd "$imagebase_dir" && make dev) &
+(cd "$imagebase_dir" && make dev DATA=data/soccer ADDRESS=localhost:$api_port) &
 api_pid=$!
 
 echo "Starting static + reverse proxy on :$proxy_port ..."

@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - `npm start` — Vite dev server on :8009, proxying `/api/*` to a local ImageBase server on :4000 (`SOCCER_API` to change it).
 - `npm run server` — production build into `./server/public`, served by `vite preview`.
-- `npm run start:full` — runs `start`, `server`, and `make -C ../ImageBase dev` (the ImageBase backend) concurrently.
+- `npm run start:full` — runs `start`, `server`, and soccer's own ImageBase backend (`make -C ../ImageBase dev DATA=data/soccer`, :4000) concurrently.
 - `./server/start.sh [--rebuild]` — production-shaped local harness: builds into `./server/public`, starts the ImageBase server on :4000, and runs a tiny Node static + reverse proxy on :8009.
 - `npm run build` — production build into `./deploy`.
 - `npm run check` — `tsc --noEmit` typecheck of `src/`, then of `e2e/` (its own `e2e/tsconfig.json`).
@@ -20,7 +20,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `tasks/measure-startup.sh` / `tasks/measure-speed.sh` — time the web and native apps on the connected phone: startup, and taps during a match and moving between pages (`e2e/phone/speed.perf.ts`, Playwright driving the phone's Chrome against a production build on a localhost site of its own, the real site only read). Results and what they mean: `docs/startup-and-size.html`.
 - `tasks/*.sh` — one script per command the user runs by hand (setup, building and installing the APK, the emulator, phone logs, tests). When telling the user to run a command they will want again, add or update a script here.
 
-The `/api` path is owned by the ImageBase server (separate repo at `../ImageBase`, a Goose program). The Vite dev server and NGINX in production both forward `/api/*` there.
+The `/api` path is owned by the ImageBase server (separate repo at `../ImageBase`, a Goose program). One ImageBase server serves one app, so soccer runs its own: :4000 with data in `../ImageBase/data/soccer` locally (weight's is :4001), and its own process and data dir in production. The Vite dev server and NGINX in production both forward `/api/*` there.
 
 ## Architecture
 
@@ -47,7 +47,7 @@ The auth pages (`/login`, `/register`, `/forgot-password`, `/reset-password`) an
 ### Data layer & sync
 
 - All app data lives in **IndexedDB via `idb-keyval`**. `src/web/data/db.ts` wraps `set`/`update` so that anything with a `_rev` field is added to the `"updated"` set on write (and, in a page, fires `db:changed`).
-- `src/web/data/sync.ts` (run by the service worker) is the bidirectional sync against ImageBase at `/api/data/soccer`. It posts updated keys, receives server changes, writes them back, updates `lastSyncedId`, and clears `"updated"`. Auth tokens (1h TTL) are auto-refreshed once on 401 via `/api/auth/v1/refresh`.
+- `src/web/data/sync.ts` (run by the service worker) is the bidirectional sync against ImageBase at `/api/data`. It posts updated keys, receives server changes, writes them back, updates `lastSyncedId`, and clears `"updated"`. Auth tokens (1h TTL) are auto-refreshed once on 401 via `/api/auth/v1/refresh`.
 - `src/web/app/sync.ts` asks the worker to sync once per browser session and a moment after each `db:changed` (debounced), and keeps the header's sync count. When a sync brings new data it redraws the page. It is suppressed during a match when Settings' `disableAutoSyncDuringGame` is set. Errors are swallowed silently; the sync button reports them.
 - **Anything saved with `_rev` syncs to the backend.** Calling `set`/`update` with `sync: false` (or on a value with no `_rev`) keeps it local-only — used for auth tokens, settings, the `updated` set itself, and ephemeral `loggedIn` flag.
 

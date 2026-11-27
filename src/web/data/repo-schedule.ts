@@ -5,12 +5,12 @@ import { authFetch } from "../app/worker.js";
 import { OFFLINE_STATUS } from "./api-client.js";
 import { renderScheduleHtml, type GameGoals } from "../pages/schedule-html.js";
 
-// Per ../ImageBase/README.md "Publishing HTML pages": a stable per-frontend
-// app id, an owner-authenticated Record API write, and a public read route
-// that serves the file inline as text/html.
-const SCHEDULE_APP = "soccer";
+// Per ../ImageBase/README.md "Published pages": an owner- or space-member-
+// authenticated write, and a public read route that serves the file inline as
+// text/html. (Links published before the server dropped its app id, as
+// /api/pages/soccer/{id}, still work.)
 const PUBLISH_URL = "/api/records/v1/pages";
-const readUrl = (guid: string) => `/api/pages/${SCHEDULE_APP}/${guid}`;
+const readUrl = (guid: string) => `/api/pages/${guid}`;
 
 function base64Encode(text: string): string {
   let bytes = new TextEncoder().encode(text);
@@ -49,7 +49,6 @@ export async function publishTeamSchedule(team: Team): Promise<{ url: string }> 
     method: "POST",
     body: JSON.stringify({
       id: guid,
-      app: SCHEDULE_APP,
       // Any member of a shared team's space may publish or overwrite its page.
       ...(isSharedTeamId(team.id) ? { space: team.id } : {}),
       html: {

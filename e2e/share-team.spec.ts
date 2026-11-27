@@ -1,4 +1,4 @@
-import { test, expect, sql, hex, makeAppOwner } from "./fixtures.js";
+import { test, expect, sql, hex, makePageOwner } from "./fixtures.js";
 
 test.describe("sharing a team", () => {
   test("moves the team to its shared id and offers an invite link", async ({ newCoach }) => {
@@ -99,7 +99,7 @@ test.describe("sharing a team", () => {
     newCoach,
   }) => {
     let a = await newCoach("a");
-    makeAppOwner(a.email);
+    makePageOwner(a.email);
     let teamId = await a.createTeam("Hawks", "2026");
     await a.addGame(teamId, "Owls");
     let scheduleId = await a.publishSchedule(teamId);

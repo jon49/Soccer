@@ -11,16 +11,14 @@ import rand
 //
 //   POST   /api/auth/v1/{login,register,refresh,logout,reset_password/request}
 //   DELETE /api/auth/v1/delete                  delete the account
-//   POST   /api/data/soccer                     sync (see sync.v)
-//   POST   /api/spaces/soccer                   share a team
-//   GET    /api/spaces/soccer/{space}/members
-//   DELETE /api/spaces/soccer/{space}/members/{user|me}
-//   POST   /api/spaces/soccer/{space}/invites
-//   GET    /api/invites/soccer/{code}
-//   POST   /api/invites/soccer/{code}/accept
-//   POST   /api/records/v1/pages               publish the schedule
-
-pub const app_name = 'soccer'
+//   POST   /api/data                     sync (see sync.v)
+//   POST   /api/spaces                   share a team
+//   GET    /api/spaces/{space}/members
+//   DELETE /api/spaces/{space}/members/{user|me}
+//   POST   /api/spaces/{space}/invites
+//   GET    /api/invites/{code}
+//   POST   /api/invites/{code}/accept
+//   POST   /api/records/v1/pages         publish the schedule
 
 // ApiResult is a response, or a message for the user. new_auth_token is set
 // when the auth token expired and was refreshed during the call.
@@ -223,7 +221,7 @@ pub fn delete_account(server string, auth AuthTokens) ApiResult {
 // ---- sharing ----
 
 fn spaces_path() string {
-	return '/api/spaces/${app_name}'
+	return '/api/spaces'
 }
 
 pub fn space_create(server string, auth AuthTokens) ApiResult {
@@ -246,11 +244,11 @@ pub fn space_invite_create(server string, auth AuthTokens, space string) ApiResu
 }
 
 pub fn invite_preview(server string, auth AuthTokens, code string) ApiResult {
-	return auth_request(.get, server, '/api/invites/${app_name}/${code}', '', auth)
+	return auth_request(.get, server, '/api/invites/${code}', '', auth)
 }
 
 pub fn invite_accept(server string, auth AuthTokens, code string) ApiResult {
-	return auth_request(.post, server, '/api/invites/${app_name}/${code}/accept', '', auth)
+	return auth_request(.post, server, '/api/invites/${code}/accept', '', auth)
 }
 
 pub fn invite_url(server string, code string) string {
@@ -293,7 +291,7 @@ pub fn members_from(res ApiResult) []SpaceMember {
 // ---- the published schedule ----
 
 pub fn schedule_url(server string, guid string) string {
-	return '${server}/api/pages/${app_name}/${guid}?t=${now_ms()}'
+	return '${server}/api/pages/${guid}?t=${now_ms()}'
 }
 
 pub fn new_uuid() string {
@@ -305,7 +303,6 @@ pub fn new_uuid() string {
 pub fn publish_schedule(server string, auth AuthTokens, guid string, team_id string, html string) ApiResult {
 	mut body := {
 		'id':   json2.Any(guid)
-		'app':  app_name
 		'html': json2.Any({
 			'filename':     json2.Any('schedule.html')
 			'content_type': 'text/html'

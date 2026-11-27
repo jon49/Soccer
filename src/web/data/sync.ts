@@ -15,7 +15,7 @@ import {
   type SyncItem,
 } from "./sync-logic.js";
 
-const SYNC_URL = "/api/data/soccer";
+const SYNC_URL = "/api/data";
 
 export interface SyncResult {
   status: number;

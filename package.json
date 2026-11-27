@@ -9,7 +9,7 @@
     "e2e": "playwright test",
     "start": "vite",
     "server": "vite build --outDir ../server/public && vite preview --outDir ../server/public",
-    "start:full": "concurrently -k -n start,server,api -c blue,green,yellow \"npm:start\" \"npm:server\" \"make -C ../ImageBase dev\"",
+    "start:full": "concurrently -k -n start,server,api -c blue,green,yellow \"npm:start\" \"npm:server\" \"make -C ../ImageBase dev DATA=data/soccer\"",
     "build": "vite build",
     "build:native": "make -C native build",
     "install:native": "make -C native install",

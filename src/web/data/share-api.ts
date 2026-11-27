@@ -6,8 +6,6 @@
 import { authFetch } from "../app/worker.js";
 import { OFFLINE_STATUS } from "./api-client.js";
 
-const APP = "soccer";
-
 export type ApiResult<T> = { ok: true; json: T } | { ok: false; status: number; message: string };
 
 async function api<T>(method: "GET" | "POST" | "DELETE", path: string): Promise<ApiResult<T>> {
@@ -43,8 +41,8 @@ export interface InvitePreview {
   member: boolean;
 }
 
-const spaces = `/api/spaces/${APP}`;
-const invites = `/api/invites/${APP}`;
+const spaces = "/api/spaces";
+const invites = "/api/invites";
 const seg = encodeURIComponent;
 
 export const spaceCreate = () => api<{ space: string }>("POST", spaces);

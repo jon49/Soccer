@@ -84,7 +84,7 @@ of its calculator classes, and extend `core/core_test.v` with them.
   Android. Override with `--data-dir` or `$SOCCER_DATA_DIR`. Every change
   rewrites the file atomically. Login tokens are in `auth.json` (mode 0600).
   Fields this client doesn't know about are kept when it writes a record.
-- Sync is the web app's: `POST /api/data/soccer` with a cursor for personal
+- Sync is the web app's: `POST /api/data` with a cursor for personal
   rows and one per shared team (space), last write wins. A 403 (a record
   names a space we've left) triggers a data-free sync to learn the current
   spaces, then one retry. Teams moved into a shared team on another device

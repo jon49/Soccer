@@ -3,7 +3,7 @@ module core
 import json2
 
 // Sync with the same ImageBase endpoint as the web client (sync.ts):
-// POST /api/data/soccer with the pending records, our personal cursor and a
+// POST /api/data with the pending records, our personal cursor and a
 // cursor per shared team (space). The server saves every upload (the latest
 // write wins), returns what other devices changed since our cursors, and
 // lists the spaces we're in. Records of shared teams name their space.
@@ -11,7 +11,7 @@ import json2
 // begin_sync and finish_sync run on the UI thread; perform_sync does the
 // network part and is safe to call from a worker thread.
 
-const sync_path = '/api/data/soccer'
+const sync_path = '/api/data'
 
 pub struct SyncRequest {
 pub:

@@ -27,7 +27,7 @@ fn sql(query string) string {
 fn new_coach(server string) !&Store {
 	email := 'native-${rand.ulid().to_lower()}@example.com'
 	register(server, email, test_password, test_password)!
-	sql("PRAGMA ignore_check_constraints = ON; UPDATE _user SET email = unverified_email, unverified_email = NULL WHERE unverified_email = '${email}';")
+	sql("UPDATE _user SET email = unverified_email, unverified_email = NULL WHERE unverified_email = '${email}';")
 	return device(server, email)
 }
 
@@ -87,7 +87,7 @@ fn test_sync_between_devices_and_coaches() {
 	assert a.team_get(team.id)!.rev > 0
 
 	// The server stores keys exactly as the web client sends them.
-	keys := sql("SELECT key FROM user_data WHERE app = 'soccer' AND user = (SELECT id FROM _user WHERE email = '${a.auth.email}') ORDER BY key;")
+	keys := sql("SELECT key FROM user_data WHERE user = (SELECT id FROM _user WHERE email = '${a.auth.email}') ORDER BY key;")
 	assert keys.contains('"teams"')
 	assert keys.contains('["team",1]')
 	assert keys.contains('["player-game",1,1,1]')

@@ -18,11 +18,11 @@ export function sql(query: string): string {
 // Hex form of a uuid, as the server stores it in BLOB id columns.
 export const hex = (uuid: string) => uuid.replace(/-/g, "").toUpperCase();
 
-// Makes `email` the "soccer" app owner (only the owner may publish a personal
-// team's schedule). There's one owner per app, so this replaces any other.
-export function makeAppOwner(email: string) {
-  sql(`INSERT INTO app_owners (app, owner) SELECT 'soccer', id FROM _user WHERE email = '${email}'
-       ON CONFLICT(app) DO UPDATE SET owner = excluded.owner;`);
+// Makes `email` the page owner (only the owner may publish a personal team's
+// schedule). There's one owner, so this replaces any other.
+export function makePageOwner(email: string) {
+  sql(`INSERT INTO page_owner (id, owner) SELECT 1, id FROM _user WHERE email = '${email}'
+       ON CONFLICT(id) DO UPDATE SET owner = excluded.owner;`);
 }
 
 // Signs up through the API like a coach would, then marks the address
