@@ -1,4 +1,6 @@
+import { readFileSync, statSync } from "node:fs";
 import { test, expect, sql, hex, makePageOwner } from "./fixtures.js";
+import { PAGES } from "./env.js";
 
 test.describe("sharing a team", () => {
   test("moves the team to its shared id and offers an invite link", async ({ newCoach }) => {
@@ -105,15 +107,14 @@ test.describe("sharing a team", () => {
     let scheduleId = await a.publishSchedule(teamId);
     let { space, invite } = await a.shareTeam(teamId);
 
+    // The page is a file; the space it belongs to is in .spaces/<id>.
     let pageRow = () =>
-      sql(`SELECT hex(space) || ' ' || updated FROM pages WHERE hex(id) = '${hex(scheduleId)}'`);
-    expect(pageRow()).toMatch(new RegExp(`^${hex(space)} `));
+      `${readFileSync(`${PAGES}.spaces/${scheduleId}`, "utf8").trim()} ${statSync(`${PAGES}${scheduleId}.html`).mtimeMs}`;
+    expect(pageRow()).toMatch(new RegExp(`^${space} `));
 
     let b = await newCoach("b");
     await b.join(invite);
     let before = pageRow();
-    // Page timestamps have one-second resolution.
-    await b.page.waitForTimeout(1100);
     expect(await b.publishSchedule(space)).toBe(scheduleId);
     expect(pageRow()).not.toBe(before);
   });

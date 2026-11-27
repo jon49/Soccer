@@ -3,6 +3,9 @@ export const APP_PORT = 8010;
 export const DEPOT = new URL("./.depot/", import.meta.url).pathname;
 // The throwaway server's database (e2e/backend.sh).
 export const DB = `${DEPOT}imagebase.db`;
+// Where the throwaway server writes published pages: <id>.html, and the space
+// a page belongs to in .spaces/<id>.
+export const PAGES = `${DEPOT}pages/`;
 
 // e2e/phone: the dev server the phone reaches through `adb reverse`, and the
 // local port forwarded to the phone's Chrome remote debugging.
