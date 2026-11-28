@@ -1,8 +1,8 @@
 import type { ApiResult, Invite, SpaceMember } from "../data/share-api.js";
 import type { Actions, Page } from "../app/page.js";
-import { replace } from "../app/dom.js";
+import { replace } from "@jon49/web/app/dom.js";
 import { loginView } from "../app/layout.js";
-import { navigate } from "../app/router.js";
+import { navigate } from "@jon49/web/app/router.js";
 import { call } from "../app/worker.js";
 import * as globalDb from "../data/global-model.js";
 import html from "html-template-tag-stream";

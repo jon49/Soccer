@@ -3,9 +3,9 @@
 // data it synced (see ../ImageBase README, "Deleting an account"). Teams
 // shared with other coaches stay with them.
 import { clear } from "idb-keyval";
-import { authFetch } from "./api-client.js";
+import { authFetch } from "@jon49/sw/auth.js";
 import * as globalDb from "./global-model.js";
-import { afterSync } from "./sync-queue.js";
+import { afterSync } from "@jon49/sw/sync-queue.js";
 
 const DELETE_URL = "/api/auth/v1/delete";
 

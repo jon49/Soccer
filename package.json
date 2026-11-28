@@ -19,6 +19,8 @@
     "fmt:check": "oxfmt --check"
   },
   "dependencies": {
+    "@jon49/sw": "file:../jon49-sw",
+    "@jon49/web": "file:../jon49-web",
     "html-template-tag-stream": "file:../html-template-tag-async",
     "idb-keyval": "^6.2.2",
     "promise-validation": "^5.0.0"

@@ -1,7 +1,7 @@
 import type { GameState, PlayerGame, TeamId } from "../../data/db.js";
 import type { Actions, Page, Query } from "../../app/page.js";
-import { fill, replace } from "../../app/dom.js";
-import { navigate } from "../../app/router.js";
+import { fill, replace } from "@jon49/web/app/dom.js";
+import { navigate } from "@jon49/web/app/router.js";
 import { gameTimer } from "./game-timer.js";
 import { matchSelect } from "./match-select.js";
 import "../../css/match.css";

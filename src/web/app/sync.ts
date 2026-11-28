@@ -1,20 +1,19 @@
 // Syncing, which the service worker does (sw.ts):
 //
 // - The sync button in the header syncs now and says how it went.
-// - Auto-sync syncs once per browser session, and again a moment after each
-//   change (a burst of edits makes one sync). It says nothing. Not during a
-//   match with Settings' "don't sync during games" set.
+// - Auto-sync (@jon49/web/app/auto-sync.js) syncs once per browser session,
+//   and again a moment after each change (a burst of edits makes one sync). It
+//   says nothing. Not during a match with Settings' "don't sync during games"
+//   set.
 //
 // When a sync brings new data, the page is drawn again. The sync count in
 // the header follows every change.
 import * as globalDb from "../data/global-model.js";
-import { replace } from "./dom.js";
+import { startAutoSync as autoSync } from "@jon49/web/app/auto-sync.js";
+import { replace } from "@jon49/web/app/dom.js";
+import { refresh } from "@jon49/web/app/router.js";
 import { loginView, syncCountView } from "./layout.js";
-import { refresh } from "./router.js";
 import { call } from "./worker.js";
-
-const SESSION_KEY = "auto-sync:init";
-const DEBOUNCE_MS = 1500;
 
 export async function updateSyncCount() {
   await replace(syncCountView((await globalDb.updated()).length));
@@ -23,6 +22,13 @@ export async function updateSyncCount() {
 async function sync() {
   let result = await call("sync");
   await updateSyncCount();
+  return result;
+}
+
+// A sync, then the page drawn again if it brought new data. Not for an
+// action: refresh() runs after the action that asks for it.
+async function syncAndDraw() {
+  let result = await sync();
   if (result.status === 200) await refresh();
   return result;
 }
@@ -36,6 +42,8 @@ export async function syncNow() {
     console.error("sync failed", e);
     return "Unknown error!";
   }
+  // Drawn after this action.
+  if (result.status === 200) refresh();
   switch (result.status) {
     case 200:
       return [...result.messages, "Synced!"].filter(Boolean);
@@ -52,61 +60,18 @@ export async function syncNow() {
   }
 }
 
-/*** Auto-sync ***/
-
-let inflight: Promise<void> | null = null;
-let pending = false;
-let timer: number | undefined;
-
-async function skip() {
-  // The e2e tests sync when they choose (e2e/fixtures.ts).
-  if ((window as any).e2eAutoSyncOff) return true;
-  if (!location.pathname.startsWith("/web/match")) return false;
-  return !!(await globalDb.settings()).disableAutoSyncDuringGame;
-}
-
-async function autoSync() {
-  if (await skip()) return;
-  try {
-    await sync();
-  } catch (e) {
-    console.warn("auto sync failed", e);
-  }
-}
-
-function trigger() {
-  if (inflight) {
-    pending = true;
-    return;
-  }
-  inflight = autoSync().finally(() => {
-    inflight = null;
-    if (pending) {
-      pending = false;
-      trigger();
-    }
-  });
-}
-
 // For the e2e tests (e2e/fixtures.ts): a sync, as the button does, with the
-// worker's result.
-(window as any).appSync = sync;
+// worker's result, once the page is drawn again.
+(window as any).appSync = syncAndDraw;
 
 export function startAutoSync() {
-  // Something to sync: a record with a _rev was saved (data/db.ts).
-  document.addEventListener("db:changed", () => {
-    updateSyncCount();
-    clearTimeout(timer);
-    timer = window.setTimeout(trigger, DEBOUNCE_MS);
+  autoSync({
+    sync: syncAndDraw,
+    // During a match, with Settings' "Disable auto-sync during games".
+    async skip() {
+      if (!location.pathname.startsWith("/web/match")) return false;
+      return !!(await globalDb.settings()).disableAutoSyncDuringGame;
+    },
+    changed: updateSyncCount,
   });
-
-  // Once per browser session. If it's skipped now (a match), it can run
-  // after the coach moves on.
-  (async () => {
-    try {
-      if (sessionStorage.getItem(SESSION_KEY) || (await skip())) return;
-      sessionStorage.setItem(SESSION_KEY, "1");
-    } catch {}
-    trigger();
-  })();
 }

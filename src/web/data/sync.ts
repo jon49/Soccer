@@ -1,7 +1,7 @@
-import { authFetch } from "./api-client.js";
+import { authFetch } from "@jon49/sw/auth.js";
 import { getMany, setMany, update, transaction, promisifyRequest } from "./db.js";
 import * as globalDb from "./global-model.js";
-import { afterSync } from "./sync-queue.js";
+import { afterSync } from "@jon49/sw/sync-queue.js";
 import { spacesForget, teamMoveLocal } from "./repo-share.js";
 import { isMovedTeam, isTeamKey, movesIn } from "./share-logic.js";
 import {

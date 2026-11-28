@@ -1,5 +1,5 @@
 import type { Page, Query } from "../../app/page.js";
-import { replace } from "../../app/dom.js";
+import { replace } from "@jon49/web/app/dom.js";
 import { StatsView } from "./shared.js";
 import type { PlayersShown } from "../../data/utils.js";
 import { timePlayedView } from "./_positions-played-view.js";

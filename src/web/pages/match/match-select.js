@@ -1,5 +1,5 @@
 // @ts-check
-import { dispatch } from "../../app/action.js";
+import { dispatch } from "@jon49/web/app/action.js";
 
 // Match page: tap a player to select them, then tap where they go. A field
 // position queues a bench player for it (or moves a field player there); a

@@ -1,7 +1,7 @@
 import type { Team, TeamId } from "../data/db.js";
 import type { Actions, Page } from "../app/page.js";
-import { replace } from "../app/dom.js";
-import { navigate } from "../app/router.js";
+import { replace } from "@jon49/web/app/dom.js";
+import { navigate } from "@jon49/web/app/router.js";
 import html from "html-template-tag-stream";
 import { teamGet } from "../data/repo-team.js";
 import { positionGetAll, positionsSave } from "../data/repo-player-game.js";

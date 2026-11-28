@@ -2,7 +2,7 @@ import type { GameState, Team } from "./db.js";
 import { gameStatesGet, isSharedTeamId, teamSave } from "./repo-team.js";
 import { playerGameAllGet, statIds } from "./repo-player-game.js";
 import { authFetch } from "../app/worker.js";
-import { OFFLINE_STATUS } from "./api-client.js";
+import { OFFLINE_STATUS } from "@jon49/sw/auth.js";
 import { renderScheduleHtml, type GameGoals } from "../pages/schedule-html.js";
 
 // Per ../ImageBase/README.md "Published pages": an owner- or space-member-

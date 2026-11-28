@@ -4,7 +4,7 @@
 // collide with anyone's personal teams. The local side of sharing is in
 // repo-share.ts.
 import { authFetch } from "../app/worker.js";
-import { OFFLINE_STATUS } from "./api-client.js";
+import { OFFLINE_STATUS } from "@jon49/sw/auth.js";
 
 export type ApiResult<T> = { ok: true; json: T } | { ok: false; status: number; message: string };
 

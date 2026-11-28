@@ -1,6 +1,6 @@
 import type { Team, TeamPlayer, TeamPlayerStatus } from "../data/db.js";
 import type { Actions, Page, Query } from "../app/page.js";
-import { append, replace, remove } from "../app/dom.js";
+import { append, replace, remove } from "@jon49/web/app/dom.js";
 import html from "html-template-tag-stream";
 import { isSharedTeamId, teamGet, playerCreate, teamSave } from "../data/repo-team.js";
 import { equals, playerStatus, playersInOrder, when } from "../data/utils.js";

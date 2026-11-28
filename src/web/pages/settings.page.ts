@@ -4,8 +4,8 @@ import html from "html-template-tag-stream";
 import { reject, when } from "../data/utils.js";
 import { loginView } from "../app/layout.js";
 import type { Actions, Page } from "../app/page.js";
-import { replace } from "../app/dom.js";
-import { navigate } from "../app/router.js";
+import { replace } from "@jon49/web/app/dom.js";
+import { navigate } from "@jon49/web/app/router.js";
 import { call } from "../app/worker.js";
 
 const render = async () => {

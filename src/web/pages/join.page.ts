@@ -1,5 +1,5 @@
 import type { Actions, Page } from "../app/page.js";
-import { replace } from "../app/dom.js";
+import { replace } from "@jon49/web/app/dom.js";
 import { loginView as headerLoginView } from "../app/layout.js";
 import { call } from "../app/worker.js";
 import * as globalDb from "../data/global-model.js";

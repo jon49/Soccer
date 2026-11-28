@@ -1,6 +1,6 @@
 import type { Game, GameState, Team, TeamId } from "../data/db.js";
 import type { Actions, Page } from "../app/page.js";
-import { replace } from "../app/dom.js";
+import { replace } from "@jon49/web/app/dom.js";
 import html from "html-template-tag-stream";
 import { teamGet, teamSave, gameStatesGet } from "../data/repo-team.js";
 import { publishTeamSchedule, getScheduleUrl } from "../data/repo-schedule.js";

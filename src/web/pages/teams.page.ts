@@ -1,6 +1,6 @@
 import type { Game, Team } from "../data/db.js";
 import type { Page } from "../app/page.js";
-import { append, remove } from "../app/dom.js";
+import { append, remove } from "@jon49/web/app/dom.js";
 import * as globalDb from "../data/global-model.js";
 import html from "html-template-tag-stream";
 import { isSharedTeamId, teamGetAll, teamsCreate } from "../data/repo-team.js";
