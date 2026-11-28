@@ -182,3 +182,43 @@ test("the Active / Inactive / Sub toggles are in the tab order and work from the
   await page.keyboard.press("Tab");
   await expect(page.locator("#newPlayer")).toBeFocused();
 });
+
+test("the Team and Players links scroll to their part of the page without drawing it again", async ({
+  newCoach,
+}) => {
+  let a = await newCoach("a");
+  let teamId = await a.createTeam("Hawks", "2026");
+  for (let name of ["Ann", "Bo", "Cy", "Dee", "Eve", "Fay", "Gus", "Hal", "Ivy", "Jo"]) {
+    await a.addPlayer(teamId, name);
+  }
+  await a.page.setViewportSize({ width: 400, height: 500 });
+  await a.goto(`/web/players?teamId=${teamId}`);
+  let scrollY = () => a.page.evaluate(() => window.scrollY);
+  let top = (id: string) =>
+    a.page.locator(`#${id}`).evaluate((x) => Math.abs(Math.round(x.getBoundingClientRect().top)));
+  // Where the link is on screen, as a coach taps it (click() would scroll to it first).
+  let tapLink = (id: string) =>
+    a.page.locator(`a[href='#${id}']`).evaluate((x: HTMLElement) => x.click());
+  // A page drawn again would lose this.
+  await a.page.evaluate(() => ((document.getElementById("players") as any).marked = true));
+
+  await tapLink("players");
+  await expect(a.page).toHaveURL(/#players$/);
+  await expect.poll(() => top("players")).toBe(0);
+  expect(await scrollY()).toBeGreaterThan(0);
+
+  await tapLink("team");
+  await expect(a.page).toHaveURL(/#team$/);
+  await expect.poll(() => top("team")).toBe(0);
+
+  // Back goes to the Players heading again, then to where the page was.
+  await a.page.goBack();
+  await expect(a.page).toHaveURL(/#players$/);
+  await expect.poll(() => top("players")).toBe(0);
+  await a.page.goBack();
+  await expect.poll(scrollY).toBe(0);
+
+  expect(await a.page.evaluate(() => (document.getElementById("players") as any).marked)).toBe(
+    true,
+  );
+});
